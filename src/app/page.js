@@ -1,17 +1,23 @@
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
-import mvpBanner from "../../../assets/mvp-banner.png";
+import mvpBanner from "../../assets/mvp-banner.png";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { homeCards, homeMenuBar, homeMenuLink } from "../data";
+import { homeCards, homeMenuBar, homeMenuLink } from "./data";
 
 const fetchData = async () => {
   const response = await fetch(
     "https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products"
+  );
+  return response.json();
+};
+const fetchCategoryData = async (id) => {
+  const response = await fetch(
+    `https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products/${id}`
   );
   return response.json();
 };
@@ -22,6 +28,14 @@ const Page = async () => {
   const mappedData = productData.flatMap((item) => {
     return item.products;
   });
+
+  const handleCategory = (id) => {
+    const categoryData = fetchCategoryData(id);
+    const mappedCategoryData = categoryData.flatMap((item) => {
+      return item.products;
+    });
+    return mappedCategoryData;
+  };
 
   console.log("products", mappedData);
 
@@ -146,7 +160,7 @@ const Page = async () => {
           <div className="flex flex-row justify-center items-center gap-4 mt-4">
             {productData.map((item, index) => {
               return (
-                <span
+                <button
                   key={index}
                   className="flex flex-row items-center gap-2 text-darkgray font-semibold text-sm px-4 py-1 border border-transparent rounded-full hover:cursor-pointer hover:text-lightgray hover:bg-darkgray"
                 >
@@ -154,7 +168,7 @@ const Page = async () => {
                   <HoverCard>
                     <HoverCardTrigger>{item.category_name}</HoverCardTrigger>
                   </HoverCard>
-                </span>
+                </button>
               );
             })}
           </div>
