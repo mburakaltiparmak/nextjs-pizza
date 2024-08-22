@@ -24,10 +24,10 @@ const fetchCategoryData = async (id) => {
 };
 
 const sleep = (ms) => {
-  return new Promise((resolve)=>{
-    setTimeout(resolve,ms);
-  })
-}
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+};
 
 const Page = async () => {
   await sleep(3000);
@@ -59,10 +59,7 @@ const Page = async () => {
           height: "90vh",
         }}
       >
-        <div className="flex flex-col justify-start items-center gap-4 mt-4">
-          <h1 className="font-Londrina_Solid text-3xl text-lightgray">
-            Teknolojik Yemekler
-          </h1>
+        <div className="flex flex-col justify-start items-center gap-4">
           <span className="flex flex-col justify-between items-center gap-4 text-center">
             <h4 className="font-Satisfy text-yellow text-2xl">
               fırsatı kaçırma
