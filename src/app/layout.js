@@ -2,6 +2,7 @@ import "./globals.css";
 import { Inter as FontSans } from "next/font/google"
  
 import { cn } from "@/lib/utils"
+import Footer from "@/components/footer";
  
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -27,7 +28,11 @@ export default function RootLayout({ children }) {
           "min-h-screen bg-background font-sans antialiased",
           fontSans.variable
         )}
-      >{children}</body>
+      >{children}
+      <footer>
+        <Footer />
+      </footer>
+      </body>
     </html>
   );
 }

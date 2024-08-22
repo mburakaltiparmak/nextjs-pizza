@@ -7,6 +7,12 @@ import gazliIcecekLogo from "../../assets/adv-aseets/icons/6.svg"
 import cardImg1 from "../../assets/adv-aseets/kart-1.png";
 import cardImg2 from "../../assets/adv-aseets/kart-2.png";
 import cardImg3 from "../../assets/adv-aseets/kart-3.png";
+import instaImg1 from "../../assets/adv-aseets/insta/li-0.png";
+import instaImg2 from "../../assets/adv-aseets/insta/li-1.png";
+import instaImg3 from "../../assets/adv-aseets/insta/li-2.png";
+import instaImg4 from "../../assets/adv-aseets/insta/li-3.png";
+import instaImg5 from "../../assets/adv-aseets/insta/li-4.png";
+import instaImg6 from "../../assets/adv-aseets/insta/li-5.png";
 
 export const homeMenuBar = {
     1:{
@@ -83,3 +89,25 @@ export const homeMenuLink = [
         logo:gazliIcecekLogo,
     },
 ]
+export const footerInstaPhoto = [
+    {
+        name:"photo1",
+        img:instaImg1,
+    },
+    {
+        name:"photo2",
+        img:instaImg2,
+    },{
+        name:"photo3",
+        img:instaImg3,
+    },{
+        name:"photo4",
+        img:instaImg4,
+    },{
+        name:"photo5",
+        img:instaImg5,
+    },{
+        name:"photo6",
+        img:instaImg6,
+    },
+];

@@ -8,6 +8,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { homeCards, homeMenuBar, homeMenuLink } from "./data";
+import { resolve } from "styled-jsx/css";
 
 const fetchData = async () => {
   const response = await fetch(
@@ -22,7 +23,15 @@ const fetchCategoryData = async (id) => {
   return response.json();
 };
 
+const sleep = (ms) => {
+  return new Promise((resolve)=>{
+    setTimeout(resolve,ms);
+  })
+}
+
 const Page = async () => {
+  await sleep(3000);
+
   const productData = await fetchData();
   console.log("fetched data", productData[2].category_img);
   const mappedData = productData.flatMap((item) => {
@@ -177,11 +186,11 @@ const Page = async () => {
               return (
                 <label
                   htmlFor={item.name}
-                  className="flex flex-col justify-between items-center text-center font-Barlow text-darkgray border border-lightgray shadow-darkgray shadow-md  w-[300px] h-[400px] py-4"
+                  className="flex flex-col justify-between items-center text-center font-Barlow text-darkgray border border-lightgray shadow-darkgray shadow-md  w-[275px] h-[350px] py-4"
                   key={index}
                 >
                   <img
-                    className="object-cover w-[150px] h-fit"
+                    className="object-cover w-[125px] h-fit"
                     src={item.product_img}
                     alt={item.name}
                   />
