@@ -9,19 +9,8 @@ import {
 } from "@/components/ui/hover-card";
 import { homeCards, homeMenuBar, homeMenuLink } from "./data";
 import { resolve } from "styled-jsx/css";
-
-const fetchData = async () => {
-  const response = await fetch(
-    "https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products"
-  );
-  return response.json();
-};
-const fetchCategoryData = async (id) => {
-  const response = await fetch(
-    `https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products/${id}`
-  );
-  return response.json();
-};
+import Products from "@/components/products/products";
+import Categories from "@/components/categories/categories";
 
 const sleep = (ms) => {
   return new Promise((resolve) => {
@@ -32,22 +21,6 @@ const sleep = (ms) => {
 const Page = async () => {
   await sleep(3000);
 
-  const productData = await fetchData();
-  console.log("fetched data", productData[2].category_img);
-  const mappedData = productData.flatMap((item) => {
-    return item.products;
-  });
-
-  const handleCategory = (id) => {
-    const categoryData = fetchCategoryData(id);
-    const mappedCategoryData = categoryData.flatMap((item) => {
-      return item.products;
-    });
-    return mappedCategoryData;
-  };
-
-  console.log("products", mappedData);
-
   return (
     <div className="flex flex-col justify-between items-center gap-2 text-lightgray">
       <div
@@ -56,10 +29,10 @@ const Page = async () => {
           backgroundImage: `url(${mvpBanner.src})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
-          height: "90vh",
+          height: "80vh",
         }}
       >
-        <div className="flex flex-col justify-start items-center gap-4">
+        <div className="flex flex-col justify-start items-center gap-4 mt-4">
           <span className="flex flex-col justify-between items-center gap-4 text-center">
             <h4 className="font-Satisfy text-yellow text-2xl">
               fırsatı kaçırma
@@ -78,7 +51,7 @@ const Page = async () => {
       </div>
       <div className="flex flex-col items-center gap-4">
         <div className="flex flex-row justify-center items-center gap-4">
-          {productData.map((item, index) => {
+          {/*productData.map((item, index) => {
             return (
               <span
                 key={index}
@@ -91,7 +64,7 @@ const Page = async () => {
                 </HoverCard>
               </span>
             );
-          })}
+          })*/}
         </div>
         <div className="flex flex-row justify-center gap-4 mt-4">
           <div
@@ -163,47 +136,8 @@ const Page = async () => {
               Acıktıran Kodlara Doyuran Lezzetler
             </h4>
           </span>
-          <div className="flex flex-row justify-center items-center gap-4 mt-4">
-            {productData.map((item, index) => {
-              return (
-                <button
-                  key={index}
-                  className="flex flex-row items-center gap-2 text-darkgray font-semibold text-sm px-4 py-1 border border-transparent rounded-full hover:cursor-pointer hover:text-lightgray hover:bg-darkgray"
-                >
-                  <img src={item.category_img} width={50} height={50} />
-                  <HoverCard>
-                    <HoverCardTrigger>{item.category_name}</HoverCardTrigger>
-                  </HoverCard>
-                </button>
-              );
-            })}
-          </div>
-          <div className="flex flex-row flex-wrap justify-between items-center gap-8 mx-24">
-            {mappedData.map((item, index) => {
-              return (
-                <label
-                  htmlFor={item.name}
-                  className="flex flex-col justify-between items-center text-center font-Barlow text-darkgray border border-lightgray shadow-darkgray shadow-md  w-[275px] h-[350px] py-4"
-                  key={index}
-                >
-                  <img
-                    className="object-cover w-[125px] h-fit"
-                    src={item.product_img}
-                    alt={item.name}
-                  />
-                  <p className="font-bold text-xl">{item.name}</p>
-                  <span className="flex flex-row justify-between gap-4 text-lg">
-                    <p>{item.rating}</p>
-                    <p>({item.stock})</p>
-                    <p className="font-semibold">{item.price} ₺</p>
-                  </span>
-                  <button className="buttonStyle bg-lightgray text-red hover:bg-yellow hover:text-darkgray hover:border-red hover:border-2">
-                    SİPARİŞ VER
-                  </button>
-                </label>
-              );
-            })}
-          </div>
+          <Categories />
+          <Products />
         </div>
       </div>
     </div>

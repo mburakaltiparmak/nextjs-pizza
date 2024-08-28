@@ -111,3 +111,57 @@ export const footerInstaPhoto = [
         img:instaImg6,
     },
 ];
+export const items = [
+    {
+      id: "pepperoni",
+      label: "Pepperoni",
+    },
+    {
+      id: "domates",
+      label: "Domates",
+    },
+    {
+      id: "biber",
+      label: "Biber",
+    },
+    {
+      id: "sosis",
+      label: "Sosis",
+    },
+    {
+      id: "misir",
+      label: "Mısır",
+    },
+    {
+      id: "sucuk",
+      label: "Sucuk",
+    },
+    {
+      id:"kanada jambonu",
+      label:"Kanada Jambonu",
+    },
+    {
+      id:"ananas",
+      label:"Ananas",
+    },
+    {
+      id:"tavuk izgara",
+      label:"Tavuk Izgara",
+    },
+    {
+      id:"jalepeno",
+      label:"Jalepeno",
+    },
+    {
+      id:"kabak",
+      label:"Kabak",
+    },
+    {
+      id:"sogan",
+      label:"Soğan",
+    },
+    {
+      id:"sarimsak",
+      label:"Sarımsak",
+    },
+  ] ;
