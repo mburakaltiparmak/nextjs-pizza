@@ -137,7 +137,6 @@ const Page = async () => {
             </h4>
           </span>
           <Categories />
-          <Products />
         </div>
       </div>
     </div>

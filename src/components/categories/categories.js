@@ -12,6 +12,7 @@ import {
   HoverCardTrigger,
 } from "../ui/hover-card";
 import { useRouter } from "next/navigation";
+import Products from "../products/products";
 
 const Categories = () => {
   const dispatch = useAppDispatch();
@@ -42,7 +43,6 @@ const Categories = () => {
       setMappedData([]);
     }
 
-    // Update selectedCategoryProducts when products change
     if (categoryId) {
       setSelectedCategoryProducts(itemsByCategory);
     }
@@ -52,7 +52,7 @@ const Categories = () => {
     dispatch(setSelectedCategory(id));
     try {
       const result = await dispatch(fetchProductsById(id));
-      // Check if the action was successful and returned data
+
       if (result.payload) {
         setSelectedCategoryProducts(result.payload);
       }
@@ -83,6 +83,7 @@ const Categories = () => {
           </button>
         ))}
       </div>
+      <Products selectedCategoryProducts={selectedCategoryProducts} />
     </div>
   );
 };

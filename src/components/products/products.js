@@ -7,7 +7,8 @@ import {
   fetchProductsById,
 } from "@/lib/store/actions/productActions";
 
-const Products = () => {
+const Products = ({ props }) => {
+  const selectedCategoryProducts = props;
   const dispatch = useAppDispatch();
   const [mappedData, setMappedData] = useState([]);
   const categoryId = useAppSelector((store) => store.product.selectedCategory);
@@ -16,8 +17,8 @@ const Products = () => {
     (store) => store.product.itemsByCategory
   );
   const products = useMemo(() => {
-    return categoryId ? itemsByCategory : allItems;
-  }, [categoryId, itemsByCategory, allItems]);
+    return categoryId ? selectedCategoryProducts : allItems;
+  }, [categoryId, itemsByCategory, selectedCategoryProducts, allItems]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,12 +43,12 @@ const Products = () => {
     }
     /*
     if (Array.isArray(products)) {
-      // Ensure products is an array
+
       const mappedData = products.map((item) => item.products);
       setMappedData(mappedData);
       console.log("mapped data:", mappedData);
     } else {
-      setMappedData([]); // Reset to empty array if products is not an array
+      setMappedData([]); 
     }
       */
   }, [products]);

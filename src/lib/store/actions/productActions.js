@@ -28,7 +28,7 @@ export const fetchProductsById = (id) => async (useAppDispatch) => {
     const data = await response.json();
     useAppDispatch(setFetchState(fetchStates.FETCHED));
     useAppDispatch(setItemsByCategory(data));
-    return { payload: data }; // Make sure this line is present
+    return { payload: data };
   } catch (err) {
     console.error("AN ERROR OCCURED WHEN FETCHING PRODUCTS BY CATEGORY", err);
     useAppDispatch(setFetchState(fetchStates.FAILED));
