@@ -48,6 +48,8 @@ import {
   setCustomPizza,
   setPrice,
   setCount,
+  setName,
+  setProductId,
 } from "@/lib/store/actions/orderActions";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 
@@ -56,7 +58,7 @@ const formSchema = z.object({
   boyut: z.enum(["S", "M", "L"], {
     message: "Pizza boyutu seçmelisiniz.",
   }),
-  hamur: z.enum(["ince", "normal", "kalin"], {
+  hamur: z.enum(["ince", "standart", "kalin"], {
     message: "Hamur tipini seçmelisiniz.",
   }),
   items: z
@@ -73,6 +75,7 @@ const formSchema = z.object({
 const Page = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
+
   const { boyut, hamur, malzemeler, siparisNotu, customPizza } = useAppSelector(
     (state) => state.order
   );
@@ -114,7 +117,7 @@ const Page = () => {
       switch (selectedHamur) {
         case "ince":
           return 20;
-        case "normal":
+        case "standart":
           return 30;
         case "kalin":
           return 40;
@@ -127,26 +130,36 @@ const Page = () => {
   useEffect(() => {
     setToplam(malzemeFiyat + boyutFiyat + hamurFiyat);
   }, [malzemeFiyat, boyutFiyat, hamurFiyat]);
+  const idCreator = () => {
+    const numberCreator = (max) => {
+      let number = Math.round(Math.random() * max);
+      return number;
+    };
+    let number = numberCreator(100);
+    while (number <= 18) {
+      number = numberCreator(100);
+    }
+    return number;
+  };
+  let id = idCreator();
 
   const onSubmit = (data) => {
-    dispatch(setBoyut(data.boyut));
-    dispatch(setHamur(data.hamur));
-    dispatch(setMalzemeler(data.items));
-    dispatch(setSiparisNotu(0, data.siparisNotu));
-    dispatch(setPrice(toplam * count));
-
-    const newCustomPizza = {
-      boyut: data.boyut,
-      hamur: data.hamur,
-      malzemeler: data.items,
+    const customPizza = {
+      name: "Custom Pizza",
+      category_id: 2,
+      rating: 4.9,
+      stock: 1,
+      price: toplam,
+      product_img:
+        "https://res.cloudinary.com/dqjqkgpt3/image/upload/v1724010330/food-2_zwrtrh.png",
+      product_id: id,
+      items: data.items,
+      size: data.boyut,
+      dough: data.hamur,
       siparisNotu: data.siparisNotu,
-      fiyat: toplam,
     };
-    dispatch(setCustomPizza(newCustomPizza)); // Assuming 0 as the index for the first pizza
-    dispatch(setCustomPizza(newCustomPizza));
     dispatch(addCart(customPizza));
-
-    console.log("Form Data:", newCustomPizza);
+    console.log("Form Data:", customPizza);
     router.push("/payment");
   };
   return (
@@ -267,7 +280,7 @@ const Page = () => {
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="ince">İnce</SelectItem>
-                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="standart">Standart</SelectItem>
                       <SelectItem value="kalin">Kalın</SelectItem>
                     </SelectContent>
                   </Select>

@@ -31,53 +31,58 @@ const FloatingCartButton = () => {
   const { toast } = useToast();
   const router = useRouter();
   const cart = useAppSelector((store) => store.order.cart);
-  const dough = useAppSelector((store) => store.order.customPizza.dough);
-  const customPizza = useAppSelector((store) => store.order.customPizza);
-  const [localCart, setLocalCart] = useState(cart);
+  //const customPizza = useAppSelector((store) => store.order.customPizza);
 
+  const mappedCart = cart.map((item, index) => {
+    return {
+      Product: index + 1,
+      Name: item.product.name,
+      Category_ID: item.product.category_id,
+      Rating: item.product.rating,
+      Stock: item.product.stock,
+      Price: item.product.price,
+      Count: item.count,
+      Img: item.product.product_img,
+      ProductId: item.product.product_id,
+    };
+  });
+  const [localCart, setLocalCart] = useState(mappedCart);
+  /*
   useEffect(() => {
-    if (customPizza.hamur) {
+    if (customPizza.dough) {
       dispatch(addCart({ product: customPizza }));
     }
   }, [customPizza, dispatch]);
+  */
 
   useEffect(() => {
     setLocalCart(cart);
+    console.log("localCart :", cart);
   }, [cart]);
 
-  const handleDecrementCount = (index, count) => {
-    if (count <= 1) {
-      dispatch(removeFromCart(index));
+  const handleDecrementCount = (item) => {
+    if (item.count <= 1) {
+      dispatch(removeFromCart(item.product.product_id));
+      toast({
+        title: "Ürün sepetten kaldırıldı.",
+      });
     } else {
-      dispatch(setCount(index, count - 1));
+      dispatch(updateCart(item.product.product_id, item.count - 1));
+      toast({
+        title: "Ürün miktarı güncellendi",
+      });
     }
-    setLocalCart((prevCart) =>
-      prevCart
-        .map((item, i) =>
-          i === index ? { ...item, count: Math.max(count - 1, 0) } : item
-        )
-        .filter((item) => item.count > 0)
-    );
+  };
+
+  const handleIncrementCount = (item) => {
+    dispatch(updateCart(item.product.product_id, item.count + 1));
     toast({
       title: "Ürün miktarı güncellendi",
     });
   };
 
-  const handleIncrementCount = (index, count) => {
-    dispatch(setCount(index, count + 1));
-    setLocalCart((prevCart) =>
-      prevCart.map((item, i) =>
-        i === index ? { ...item, count: count + 1 } : item
-      )
-    );
-    toast({
-      title: "Ürün miktarı güncellendi",
-    });
-  };
-
-  const handleRemoveFromCart = (index) => {
-    dispatch(removeFromCart(index));
-    setLocalCart((prevCart) => prevCart.filter((_, i) => i !== index));
+  const handleRemoveFromCart = (item) => {
+    dispatch(removeFromCart(item.product.product_id));
     toast({
       title: "Ürün sepetten çıkarıldı.",
     });
@@ -85,7 +90,6 @@ const FloatingCartButton = () => {
 
   const handleClearCart = () => {
     dispatch(clearCart());
-    setLocalCart([]);
     toast({
       title: "Sepet başarıyla temizlendi",
     });
@@ -110,9 +114,9 @@ const FloatingCartButton = () => {
                 <div>Sepetiniz boş.</div>
               ) : (
                 <div className="space-y-4">
-                  {localCart.map((item, index) => (
+                  {localCart.map((item) => (
                     <div
-                      key={index}
+                      key={item.product.product_id}
                       className="flex flex-row justify-between items-center gap-8 border-b pb-2"
                     >
                       <span className="flex flex-row justify-between items-center gap-4">
@@ -129,25 +133,21 @@ const FloatingCartButton = () => {
                       <span className="flex flex-row justify-between items-center gap-4">
                         <div className="flex flex-row items-center">
                           <button
-                            onClick={() =>
-                              handleDecrementCount(index, item.count)
-                            }
+                            onClick={() => handleDecrementCount(item)}
                             className="px-2 py-1 bg-gray-200 rounded"
                           >
                             <span>-</span>
                           </button>
-                          <span>{item.count}</span>
+                          <span className="mx-2">{item.count}</span>
                           <button
-                            onClick={() =>
-                              handleIncrementCount(index, item.count)
-                            }
+                            onClick={() => handleIncrementCount(item)}
                             className="px-2 py-1 bg-gray-200 rounded"
                           >
                             <span>+</span>
                           </button>
                         </div>
                         <button
-                          onClick={() => handleRemoveFromCart(index)}
+                          onClick={() => handleRemoveFromCart(item)}
                           className="text-red"
                         >
                           <span>

@@ -17,6 +17,7 @@ const Products = ({ products }) => {
       Price: item.product.price,
       Count: item.count,
       Img: item.product.product_img,
+      ProductId: item.product.product_id,
     };
   });
   console.log("cart : ", mappedCart);
