@@ -18,6 +18,7 @@ export const productActions = {
   setFetchState: "SET_FETCH_STATE",
   setSelectedCategory: "SET_SELECTED_CATEGORY",
   setItemsByCategory: "SET_ITEMS_BY_CATEGORY",
+  
 };
 
 export const productReducer = (state = initialState, action) => {

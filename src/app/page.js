@@ -1,6 +1,7 @@
+"use client";
 import Link from "next/link";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import mvpBanner from "../../assets/mvp-banner.png";
 import {
   HoverCard,
@@ -11,6 +12,8 @@ import { homeCards, homeMenuBar, homeMenuLink } from "./data";
 import { resolve } from "styled-jsx/css";
 import Products from "@/components/products/products";
 import Categories from "@/components/categories/categories";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowDown } from "@fortawesome/free-solid-svg-icons";
 
 const sleep = (ms) => {
   return new Promise((resolve) => {
@@ -18,8 +21,19 @@ const sleep = (ms) => {
   });
 };
 
-const Page = async () => {
-  await sleep(3000);
+const Page =  () => {
+
+  const [showScrollButton, setShowScrollButton] = useState(true);
+
+
+
+  const scrollToCategories = () => {
+    const categoriesSection = document.getElementById('categories');
+    setShowScrollButton(false);
+    if (categoriesSection) {
+      categoriesSection.scrollIntoView({ behavior: 'smooth' }); 
+    }
+  };
 
   return (
     <div className="flex flex-col justify-between items-center gap-2 text-lightgray">
@@ -29,7 +43,7 @@ const Page = async () => {
           backgroundImage: `url(${mvpBanner.src})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
-          height: "80vh",
+          height: "100vh",
         }}
       >
         <div className="flex flex-col justify-start items-center gap-4 mt-4">
@@ -50,22 +64,6 @@ const Page = async () => {
         </div>
       </div>
       <div className="flex flex-col items-center gap-4">
-        <div className="flex flex-row justify-center items-center gap-4">
-          {/*productData.map((item, index) => {
-            return (
-              <span
-                key={index}
-                className="flex flex-row items-center gap-2 text-darkgray font-semibold text-xs px-4 py-1 border border-transparent rounded-full hover:cursor-pointer hover:text-lightgray hover:bg-darkgray"
-              >
-                <img src={item.category_img} alt={item.category_name} />
-                <HoverCard>
-                  <HoverCardTrigger>{item.category_name}</HoverCardTrigger>
-                  <HoverCardContent>Used shadcnUI & next.js</HoverCardContent>
-                </HoverCard>
-              </span>
-            );
-          })*/}
-        </div>
         <div className="flex flex-row justify-center gap-4 mt-4">
           <div
             className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md"
@@ -136,9 +134,22 @@ const Page = async () => {
               Acıktıran Kodlara Doyuran Lezzetler
             </h4>
           </span>
+          <span id="categories">
           <Categories />
+          </span>
+          
         </div>
       </div>
+      {showScrollButton && (
+        <div className="fixed bottom-0 left-0 right-0 flex justify-center pb-8">
+        <button
+          onClick={scrollToCategories}
+          className="bg-yellow text-darkgray text-xs font-Barlow px-6 py-3 rounded-full shadow-lg hover:bg-red hover:text-lightgray transition-colors duration-300 font-semibold"
+        >
+          <p className=""> MENÜLERE GİT </p>
+        </button>
+        </div>
+      )}
     </div>
   );
 };

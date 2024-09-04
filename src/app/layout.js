@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils"
 import Footer from "@/components/footer";
 import Header from "@/components/header"; 
 import StoreProvider from "./StoreProvider";
+import { Toaster } from "@/components/ui/toaster";
+import FloatingCartButton from "@/components/floatingCartButton";
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -28,8 +30,11 @@ export default function RootLayout({ children }) {
       >
         <header>
           <Header />
+         
         </header>
+        <FloatingCartButton />
         {children}
+        <Toaster />
       <footer>
         <Footer />
       </footer>
