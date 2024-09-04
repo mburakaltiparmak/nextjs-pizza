@@ -6,8 +6,6 @@ import {
   removeFromCart,
   updateCart,
   clearCart,
-  addCart,
-  setCount,
 } from "@/lib/store/actions/orderActions";
 import { useToast } from "@/hooks/use-toast";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -31,7 +29,6 @@ const FloatingCartButton = () => {
   const { toast } = useToast();
   const router = useRouter();
   const cart = useAppSelector((store) => store.order.cart);
-  //const customPizza = useAppSelector((store) => store.order.customPizza);
 
   const mappedCart = cart.map((item, index) => {
     return {
@@ -47,13 +44,6 @@ const FloatingCartButton = () => {
     };
   });
   const [localCart, setLocalCart] = useState(mappedCart);
-  /*
-  useEffect(() => {
-    if (customPizza.dough) {
-      dispatch(addCart({ product: customPizza }));
-    }
-  }, [customPizza, dispatch]);
-  */
 
   useEffect(() => {
     setLocalCart(cart);
@@ -94,7 +84,6 @@ const FloatingCartButton = () => {
       title: "Sepet başarıyla temizlendi",
     });
   };
-
   return (
     <div className="fixed top-4 right-4 z-50">
       <AlertDialog>

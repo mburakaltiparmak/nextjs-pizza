@@ -1,32 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { useAppDispatch } from "@/lib/hooks";
 import { addCart } from "@/lib/store/actions/orderActions";
 import { useToast } from "@/hooks/use-toast";
 const Products = ({ products }) => {
   const { toast } = useToast();
   const dispatch = useAppDispatch();
-  const cart = useAppSelector((store) => store.order.cart);
-  const mappedCart = cart.map((item, index) => {
-    return {
-      Product: index + 1,
-      Name: item.product.name,
-      Category_ID: item.product.category_id,
-      Rating: item.product.rating,
-      Stock: item.product.stock,
-      Price: item.product.price,
-      Count: item.count,
-      Img: item.product.product_img,
-      ProductId: item.product.product_id,
-    };
-  });
-  console.log("cart : ", mappedCart);
-  // Flatten products
+
   const flattenedProducts = Array.isArray(products)
     ? products.flatMap((category) => category.products || [])
     : products.products || [];
 
-  // Check if flattenedProducts is an array and has items
   if (!Array.isArray(flattenedProducts) || flattenedProducts.length === 0) {
     return <p>No products found</p>;
   }
@@ -51,7 +35,7 @@ const Products = ({ products }) => {
         <label
           htmlFor={item.name}
           className="flex flex-col justify-between items-center text-center font-Barlow text-darkgray border border-lightgray shadow-darkgray shadow-md w-[275px] h-[350px] py-4"
-          key={index} // Use a unique key for better performance
+          key={index}
         >
           <img
             className="object-cover w-[125px] h-fit"

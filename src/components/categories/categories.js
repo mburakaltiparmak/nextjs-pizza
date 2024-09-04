@@ -13,29 +13,30 @@ const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
 const Categories = () => {
   const dispatch = useAppDispatch();
-  const selectedCategory = useAppSelector((store) => store.product.selectedCategory);
+  const selectedCategory = useAppSelector(
+    (store) => store.product.selectedCategory
+  );
 
-  // First API call to get the list of categories
   const { data: firstApiData, error: firstApiError } = useSWR(
     "https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products",
     fetcher
   );
 
-  // Second API call to get products based on the selected category
   const { data: secondApiData, error: secondApiError } = useSWR(
-    selectedCategory ? `https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products/${selectedCategory}` : null,
+    selectedCategory
+      ? `https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products/${selectedCategory}`
+      : null,
     fetcher
   );
 
-  const [mappedData, setMappedData] = useState([]);
-  console.log("mappedData", mappedData);
+  const [data, setData] = useState([]);
+  console.log("data : ", data);
 
   useEffect(() => {
-    // When a category is selected, update mappedData only when secondApiData is available
     if (selectedCategory && secondApiData) {
-      setMappedData(secondApiData); // Assuming secondApiData contains the products array
+      setData(secondApiData);
     } else if (!selectedCategory && firstApiData) {
-      setMappedData(firstApiData); // Show all products when no category is selected
+      setData(firstApiData);
     }
   }, [firstApiData, secondApiData, selectedCategory]);
 
@@ -75,7 +76,7 @@ const Categories = () => {
           <p>No categories available.</p>
         )}
       </div>
-      <Products products={mappedData} />
+      <Products products={data} />
     </div>
   );
 };

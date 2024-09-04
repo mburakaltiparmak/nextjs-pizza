@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -16,14 +15,11 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,26 +30,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import headImg from "../../../assets/adv-aseets/adv-form-banner.png";
 import { items } from "../data";
 import { useRouter } from "next/navigation";
-import {
-  setHamur,
-  setBoyut,
-  setMalzemeler,
-  setSiparisNotu,
-  addCart,
-  setCustomPizza,
-  setPrice,
-  setCount,
-  setName,
-  setProductId,
-} from "@/lib/store/actions/orderActions";
+import { addCart } from "@/lib/store/actions/orderActions";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 
-// Updated Zod schema for form validation
 const formSchema = z.object({
   boyut: z.enum(["S", "M", "L"], {
     message: "Pizza boyutu seçmelisiniz.",
@@ -76,7 +59,7 @@ const Page = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const { boyut, hamur, malzemeler, siparisNotu, customPizza } = useAppSelector(
+  const { boyut, hamur, malzemeler, siparisNotu } = useAppSelector(
     (state) => state.order
   );
   const [malzemeFiyat, setMalzemeFiyat] = useState(0);
