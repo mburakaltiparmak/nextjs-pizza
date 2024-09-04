@@ -30,13 +30,14 @@ const Categories = () => {
   );
 
   const [data, setData] = useState([]);
-  console.log("data : ", data);
 
   useEffect(() => {
     if (selectedCategory && secondApiData) {
       setData(secondApiData);
+      console.log("data by category : ", secondApiData);
     } else if (!selectedCategory && firstApiData) {
       setData(firstApiData);
+      console.log("full data : ", firstApiData);
     }
   }, [firstApiData, secondApiData, selectedCategory]);
 

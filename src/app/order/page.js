@@ -36,6 +36,9 @@ import { items } from "../data";
 import { useRouter } from "next/navigation";
 import { addCart } from "@/lib/store/actions/orderActions";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faStar } from "@fortawesome/free-regular-svg-icons";
+import { faRankingStar } from "@fortawesome/free-solid-svg-icons";
 
 const formSchema = z.object({
   boyut: z.enum(["S", "M", "L"], {
@@ -174,12 +177,16 @@ const Page = () => {
         </Breadcrumb>
       </span>
       <div className="flex flex-col justify-between py-4 gap-4 w-[80vh] font-Barlow">
-        <h3 className="text-lg font-semibold">Ürün Adı</h3>
+        <h3 className="text-lg font-semibold">Custom Pizza</h3>
         <span className="flex flex-row justify-between items-center gap-4 ">
-          <p className="text-lg font-semibold">85.50 ₺</p>
+          <p className="text-lg font-semibold">
+            {toplam ? `${toplam} ₺` : "Seçimlerine göre fiyat belirlenir."}
+          </p>
           <span className="flex flex-row justify-between items-center gap-16 text-gray">
-            <p>4.9</p>
-            <p>(564)</p>
+            <p className="text-yellow font-semibold">
+              <FontAwesomeIcon icon={faRankingStar} /> 4.9
+            </p>
+            <p className="text-red font-semibold">(564)</p>
           </span>
         </span>
         <p className="text-sm text-gray ">
@@ -314,33 +321,37 @@ const Page = () => {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="siparisNotu"
-            render={({ field }) => (
-              <FormItem className="w-full">
-                <FormLabel>Sipariş Notu</FormLabel>
-                <FormControl>
-                  <Textarea
-                    {...field}
-                    placeholder="Siparişine eklemek istediğin bir not var mı?"
-                    className="border border-gray bg-lightgray h-[75px]"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
           <div className="flex flex-row justify-between gap-8 items-start w-full">
+            <span className="w-full border border-gray bg-lightgray rounded-lg p-4">
+              <FormField
+                control={form.control}
+                name="siparisNotu"
+                render={({ field }) => (
+                  <FormItem className="w-full">
+                    <FormLabel className="text-lg font-semibold">
+                      Sipariş Notu
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="Siparişine eklemek istediğin bir not var mı?"
+                        className="w-[40vh] h-fit"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </span>
+
             <span className="flex flex-col items-start justify-between bg-lightgray border border-gray w-full gap-2 rounded-lg">
-              <span className="flex flex-col justify-between items-stretch gap-4 p-8 w-full">
-                <p className="font-semibold text-base">Sipariş Toplamı</p>
-                <span className="flex flex-col justify-between items-stretch font-semibold gap-4 w-full">
-                  <span className="flex flex-row justify-between items-center text-sm text-gray">
+              <span className="flex flex-col justify-between  items-stretch gap-4 p-4 w-full">
+                <p className="font-semibold text-lg">Sipariş Toplamı</p>
+                <span className="flex flex-col justify-between items-stretch font-semibold gap-4 w-full text-base">
+                  <span className="flex flex-row justify-between items-center text-gray">
                     <p>Seçimler</p> <p>{malzemeFiyat} ₺</p>
                   </span>
-                  <span className="flex flex-row justify-between items-center text-sm text-red">
+                  <span className="flex flex-row justify-between items-center text-red">
                     <p>Toplam</p> <p>{toplam * count} ₺</p>
                   </span>
                 </span>

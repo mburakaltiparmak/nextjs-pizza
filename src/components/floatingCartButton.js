@@ -47,7 +47,6 @@ const FloatingCartButton = () => {
 
   useEffect(() => {
     setLocalCart(cart);
-    console.log("localCart :", cart);
   }, [cart]);
 
   const handleDecrementCount = (item) => {
@@ -88,7 +87,7 @@ const FloatingCartButton = () => {
     <div className="fixed top-4 right-4 z-50">
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <div className="bg-yellow text-red p-3 rounded-full shadow-lg hover:bg-darkred transition-colors duration-200 cursor-pointer">
+          <div className="bg-yellow text-red p-3 rounded-full shadow-lg hover:bg-darkred hover:border-2 hover:border-lightgray transition-colors duration-200 cursor-pointer">
             <FontAwesomeIcon icon={faShoppingCart} />
             <span className="ml-2">
               {localCart.reduce((sum, item) => sum + item.count, 0)}
