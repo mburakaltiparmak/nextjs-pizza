@@ -1,6 +1,4 @@
-const NotFound = ()  => {
-    return(
-        <div>not found</div>
-    )
-}
+const NotFound = () => {
+  return <div className="">Böyle bir sayfa yok.</div>;
+};
 export default NotFound;
