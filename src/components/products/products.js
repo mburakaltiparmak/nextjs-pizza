@@ -30,11 +30,11 @@ const Products = ({ products }) => {
     });
   };
   return (
-    <div className="flex flex-row flex-wrap justify-between items-center gap-8 mx-24">
+    <div className="flex flex-row flex-wrap justify-between items-center gap-8 w-[150vh] ">
       {flattenedProducts.map((item, index) => (
         <label
           htmlFor={item.name}
-          className="flex flex-col justify-between items-center text-center font-Barlow text-darkgray border border-lightgray shadow-darkgray shadow-md w-[275px] h-[350px] py-4"
+          className="flex flex-col justify-between items-center text-center font-Barlow text-darkgray border border-lightgray shadow-darkgray shadow-md w-[250px] h-[350px] py-4"
           key={index}
         >
           <img

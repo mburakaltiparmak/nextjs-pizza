@@ -21,17 +21,14 @@ const sleep = (ms) => {
   });
 };
 
-const Page =  () => {
-
+const Page = () => {
   const [showScrollButton, setShowScrollButton] = useState(true);
 
-
-
   const scrollToCategories = () => {
-    const categoriesSection = document.getElementById('categories');
+    const categoriesSection = document.getElementById("categories");
     setShowScrollButton(false);
     if (categoriesSection) {
-      categoriesSection.scrollIntoView({ behavior: 'smooth' }); 
+      categoriesSection.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -64,7 +61,7 @@ const Page =  () => {
         </div>
       </div>
       <div className="flex flex-col items-center gap-4">
-        <div className="flex flex-row justify-center gap-4 mt-4">
+        <div className="flex flex-row justify-center gap-4 mt-4 w-[150vh]">
           <div
             className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md"
             style={{
@@ -125,7 +122,7 @@ const Page =  () => {
             </div>
           </span>
         </div>
-        <div className="flex flex-col items-center gap-8 my-16">
+        <div className="flex flex-col items-center gap-8 my-16 ">
           <span className="flex flex-col items-center gap-4">
             <h3 className="font-Satisfy font-normal text-3xl text-red">
               en çok paketlenen menüler
@@ -134,20 +131,18 @@ const Page =  () => {
               Acıktıran Kodlara Doyuran Lezzetler
             </h4>
           </span>
-          <span id="categories">
+
           <Categories />
-          </span>
-          
         </div>
       </div>
       {showScrollButton && (
         <div className="fixed bottom-0 left-0 right-0 flex justify-center pb-8">
-        <button
-          onClick={scrollToCategories}
-          className="bg-yellow text-darkgray text-xs font-Barlow px-6 py-3 rounded-full shadow-lg hover:bg-red hover:text-lightgray transition-colors duration-300 font-semibold"
-        >
-          <p className=""> MENÜLERE GİT </p>
-        </button>
+          <button
+            onClick={scrollToCategories}
+            className="bg-yellow text-darkgray text-xs font-Barlow px-6 py-3 rounded-full shadow-lg hover:bg-red hover:text-lightgray transition-colors duration-300 font-semibold"
+          >
+            <p className=""> MENÜLERE GİT </p>
+          </button>
         </div>
       )}
     </div>

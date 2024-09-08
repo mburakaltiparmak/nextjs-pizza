@@ -168,7 +168,7 @@ const FloatingCartButton = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Kapat</AlertDialogCancel>
             <AlertDialogAction>
-              <button onClick={() => router.push("/payment")}>
+              <button onClick={() => router.push("/create-order")}>
                 <span>Siparişi Tamamla</span>
               </button>
             </AlertDialogAction>

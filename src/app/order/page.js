@@ -146,7 +146,7 @@ const Page = () => {
     };
     dispatch(addCart(customPizza));
     console.log("Form Data:", customPizza);
-    router.push("/payment");
+    router.push("/create-order");
   };
   return (
     <div className="flex flex-col items-center justify-between gap-8 mb-8">
@@ -155,11 +155,11 @@ const Page = () => {
           src={headImg.src}
           alt="Pizza"
           className="object-cover"
-          width={400}
+          width={300}
           height={100}
         />
       </span>
-      <span className="flex flex-row items-center justify-center w-[80vh] px-4">
+      <span className="flex flex-row items-center justify-center w-[100vh] px-4">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -176,7 +176,7 @@ const Page = () => {
           </BreadcrumbList>
         </Breadcrumb>
       </span>
-      <div className="flex flex-col justify-between py-4 gap-4 w-[80vh] font-Barlow">
+      <div className="flex flex-col justify-between py-4 gap-4 w-[100vh] font-Barlow">
         <h3 className="text-lg font-semibold">Custom Pizza</h3>
         <span className="flex flex-row justify-between items-center gap-4 ">
           <p className="text-lg font-semibold">
@@ -206,9 +206,9 @@ const Page = () => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="flex flex-col items-center justify-between gap-8 w-[80vh]"
+          className="flex flex-col items-center justify-between gap-8 w-[100vh]"
         >
-          <div className="flex flex-row justify-between items-center  w-[80vh]">
+          <div className="flex flex-row justify-between items-center  w-[100vh]">
             <FormField
               control={form.control}
               name="boyut"
@@ -321,7 +321,7 @@ const Page = () => {
             )}
           />
 
-          <div className="flex flex-row justify-between gap-8 items-start w-full">
+          <div className="flex flex-row justify-between gap-8 items-start w-[100vh]">
             <span className="w-full border border-gray bg-lightgray rounded-lg p-4">
               <FormField
                 control={form.control}
