@@ -81,7 +81,7 @@ const Page = () => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-2 mb-8">
+    <div className="flex flex-col items-center gap-4 mb-8">
       <span>
         <Image
           src={headImg.src}
@@ -91,15 +91,15 @@ const Page = () => {
           height={100}
         />
       </span>
-      <div className="flex flex-col gap-2 ">
-        <span className="grid w-[100vh] grid-cols-3 bg-lightgray gap-2 place-content-center py-8">
+      <div className="flex flex-col gap-4 ">
+        <span className="grid w-[100vh] grid-cols-3 gap-4 place-content-center">
           {steps.map((item, index) => (
             <Button
               disabled={item.disabled}
               key={index}
-              className="flex flex-row items-center gap-2 py-4 bg-darkgray transition duration-300 ease-in-out text-lightgray border border-transparent hover:py-6 data-[state=active]:border-darkgray data-[state=active]:bg-lightgray data-[state=active]:text-darkgray disabled:cursor-not-allowed"
+              className="flex flex-row gap-2 items-center bg-primary/90 border-2 border-transparent rounded-md text-lightgray py-8 hover:bg-lightgray hover:text-primary/90 hover:border-primary/90 disabled:bg-red disabled:text-lightgray disabled:border-transparent"
             >
-              <FontAwesomeIcon className="text-xl" icon={item.icon} />
+              <FontAwesomeIcon className="text-2xl" icon={item.icon} />
               <p>{item.title}</p>
             </Button>
           ))}

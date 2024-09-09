@@ -66,11 +66,13 @@
   body {
     @apply bg-background text-foreground;
   }
-  
 }
 .buttonStyle {
   @apply border border-darkgray rounded-3xl font-Barlow text-xs font-bold w-[144px] h-[48px];
 }
 .size {
   @apply border border-darkgray rounded-xl w-[40px] h-[40px] bg-lightgray text-gray  hover:text-lightgray hover:bg-red data-[state=on]:bg-yellow;
+}
+.optionStyle {
+  @apply flex flex-row justify-center items-center gap-2 text-darkgray font-semibold  border border-transparent hover:cursor-pointer hover:text-lightgray hover:bg-darkgray;
 }

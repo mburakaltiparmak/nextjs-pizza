@@ -30,7 +30,7 @@ const Products = ({ products }) => {
     });
   };
   return (
-    <div className="grid grid-cols-3 gap-8 w-[150vh] ">
+    <div className="grid grid-cols-3 place-items-center gap-8 w-[150vh] ">
       {flattenedProducts.map((item, index) => (
         <label
           htmlFor={item.name}

@@ -61,7 +61,7 @@ const Categories = () => {
             <button
               key={index}
               onClick={() => handleCategory(item.id)}
-              className="flex flex-row items-center gap-2 text-darkgray font-semibold text-sm px-4 py-1 border border-transparent rounded-full hover:cursor-pointer hover:text-lightgray hover:bg-darkgray"
+              className="optionStyle rounded-full text-sm py-1"
             >
               <img
                 className="w-[50px] h-fit object-cover"

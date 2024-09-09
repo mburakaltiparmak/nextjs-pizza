@@ -166,10 +166,6 @@ const Page = () => {
               <BreadcrumbLink href="/">Anasayfa</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Seçenekler</BreadcrumbPage>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
             <BreadcrumbItem className="text-red">
               <BreadcrumbPage>Sipariş Oluştur</BreadcrumbPage>
             </BreadcrumbItem>

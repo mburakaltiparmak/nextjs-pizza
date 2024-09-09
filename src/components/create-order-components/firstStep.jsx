@@ -44,7 +44,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
 
   return (
     <div>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2">
         <Card className="flex flex-col bg-lightgray">
           <CardHeader>
             <CardTitle>Kişisel Bilgiler</CardTitle>
@@ -77,16 +77,16 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
               )}
             </div>
           </CardContent>
-          <CardFooter>
-            <Button
-              type="submit"
-              disabled={!isStep1Valid}
-              className="buttonStyle bg-yellow text-darkgray hover:bg-red hover:text-lightgray"
-            >
-              İLERLE
-            </Button>
-          </CardFooter>
         </Card>
+        <span className="flex flex-row justify-end">
+          <Button
+            type="submit"
+            disabled={!isStep1Valid}
+            className="buttonStyle bg-yellow text-darkgray hover:bg-red hover:text-lightgray"
+          >
+            İLERLE
+          </Button>
+        </span>
       </form>
     </div>
   );

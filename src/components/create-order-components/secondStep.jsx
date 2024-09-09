@@ -20,8 +20,12 @@ const secondStep = ({ setCurrentStep, setStep2 }) => {
     setStep2(true);
     setCurrentStep(3);
   };
+  const handleBack = () => {
+    setStep2(false);
+    setCurrentStep(1);
+  };
   return (
-    <div>
+    <div className="flex flex-col gap-2">
       <Card className="bg-lightgray">
         <CardHeader>
           <CardTitle>Sipariş Özeti</CardTitle>
@@ -60,7 +64,20 @@ const secondStep = ({ setCurrentStep, setStep2 }) => {
           </p>
         </Label>
       </Card>
-      <Button onClick={handleNext}>İLERLE</Button>
+      <span className="flex flex-row justify-between">
+        <Button
+          className="buttonStyle bg-yellow text-darkgray hover:bg-red hover:text-lightgray"
+          onClick={handleBack}
+        >
+          GERİ
+        </Button>
+        <Button
+          className="buttonStyle  bg-yellow text-darkgray hover:bg-red hover:text-lightgray"
+          onClick={handleNext}
+        >
+          İLERLE
+        </Button>
+      </span>
     </div>
   );
 };
