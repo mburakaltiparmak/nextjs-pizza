@@ -11,6 +11,7 @@ export const orderActions = {
   clearCart: "CLEAR_CART",
   setUserData: "SET_USER_DATA",
   setPaymentData: "SET_PAYMENT_DATA",
+  createOrder: "CREATE_ORDER",
 };
 
 export const orderReducer = (state = initialState, action) => {
@@ -65,12 +66,17 @@ export const orderReducer = (state = initialState, action) => {
     case orderActions.setUserData:
       return {
         ...state,
-        userData: [],
+        userData: action.payload,
       };
     case orderActions.setPaymentData:
       return {
         ...state,
-        paymentData: [],
+        paymentData: action.payload,
+      };
+    case orderActions.createOrder:
+      return {
+        ...state,
+        lastOrder: action.payload,
       };
     default:
       return state;

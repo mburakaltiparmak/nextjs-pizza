@@ -2,7 +2,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useAppSelector } from "@/lib/hooks";
+
 import Image from "next/image";
 import headImg from "../../../assets/adv-aseets/adv-form-banner.png";
 import { faUser } from "@fortawesome/free-regular-svg-icons";
@@ -60,7 +60,6 @@ const Page = () => {
     },
   ];
 
-  // Koşullu render için uygun yapı
   const displaySteps = () => {
     switch (currentStep) {
       case 1:

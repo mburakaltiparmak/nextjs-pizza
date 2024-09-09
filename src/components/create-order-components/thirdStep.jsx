@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Card,
   CardHeader,
@@ -25,7 +25,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { setPaymentData } from "@/lib/store/actions/orderActions";
+import { createOrder, setPaymentData } from "@/lib/store/actions/orderActions";
 
 const formSchema = z.object({
   cardNumber: z
@@ -42,6 +42,7 @@ const formSchema = z.object({
 });
 
 const ThirdStep = ({ setCurrentStep, setStep3 }) => {
+  const dispatch = useAppDispatch();
   const { toast } = useToast();
   const router = useRouter();
   const {
@@ -58,16 +59,63 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
       cvc: "",
     },
   });
-  const dispatch = useAppDispatch();
-  const useSelector = useAppSelector();
   const onSubmit = (data) => {
     dispatch(setPaymentData(data));
-    toast({
-      title: "Siparişiniz alınıyor...",
-    });
-    setStep3(true);
-    router.push("/success");
+    console.log("payment data : ", data);
+
+    // router.push("/success");
+
+    /*
+    try {
+      await dispatch(createOrder(userData2, paymentData));
+      toast({
+        title: "Siparişiniz alınıyor...",
+      });
+      setStep3(true);
+      router.push("/success");
+    } catch (error) {
+      toast({
+        title: "Sipariş oluşturulurken bir hata oluştu.",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+      */
   };
+
+  const userData = useAppSelector((state) => state.order.userData);
+  const paymentData = useAppSelector((state) => state.order.paymentData);
+  const cartData = useAppSelector((state) => state.order.cart);
+  const createOrder = async () => {
+    const orderData = {
+      userData,
+      paymentData,
+      cartData,
+    };
+
+    try {
+      // await dispatch(createOrder(userData2, paymentData));
+      console.log("order data : ", orderData);
+      toast({
+        title: "Siparişiniz alınıyor...",
+      });
+      setStep3(true);
+      router.push("/success");
+    } catch (error) {
+      toast({
+        title: "Sipariş oluşturulurken bir hata oluştu.",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+  useEffect(() => {
+    console.log("userData", userData);
+    console.log("paymentData", paymentData);
+    console.log("cartData", cartData);
+    createOrder();
+  }, [userData, paymentData, cartData]);
+
   const handleBack = () => {
     setCurrentStep(2);
     setStep3(false);
