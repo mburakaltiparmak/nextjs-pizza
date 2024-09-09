@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useAppSelector } from "@/lib/hooks";
 import { Separator } from "../ui/separator";
 
-const secondStep = ({ setCurrentStep, setStep2 }) => {
+const SecondStep = ({ setCurrentStep, setStep2 }) => {
   const cart = useAppSelector((store) => store.order.cart);
   const cartArray = Object.values(cart);
   console.log("cart array : ", cartArray);
@@ -94,4 +94,4 @@ const secondStep = ({ setCurrentStep, setStep2 }) => {
     </div>
   );
 };
-export default secondStep;
+export default SecondStep;
