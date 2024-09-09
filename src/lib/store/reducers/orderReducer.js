@@ -1,5 +1,7 @@
 const initialState = {
   cart: [],
+  userData: [],
+  paymentData: [],
 };
 
 export const orderActions = {
@@ -7,6 +9,8 @@ export const orderActions = {
   removeFromCart: "REMOVE_FROM_CART",
   updateCart: "UPDATE_CART",
   clearCart: "CLEAR_CART",
+  setUserData: "SET_USER_DATA",
+  setPaymentData: "SET_PAYMENT_DATA",
 };
 
 export const orderReducer = (state = initialState, action) => {
@@ -57,6 +61,16 @@ export const orderReducer = (state = initialState, action) => {
       return {
         ...state,
         cart: [],
+      };
+    case orderActions.setUserData:
+      return {
+        ...state,
+        userData: [],
+      };
+    case orderActions.setPaymentData:
+      return {
+        ...state,
+        paymentData: [],
       };
     default:
       return state;

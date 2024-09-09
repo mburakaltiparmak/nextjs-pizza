@@ -1,7 +1,6 @@
-"use client";
 import Link from "next/link";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import mvpBanner from "../../assets/mvp-banner.png";
 import {
   HoverCard,
@@ -14,6 +13,7 @@ import Products from "@/components/products/products";
 import Categories from "@/components/categories/categories";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowDown } from "@fortawesome/free-solid-svg-icons";
+import GoToMenu from "@/components/goToMenu";
 
 const sleep = (ms) => {
   return new Promise((resolve) => {
@@ -22,8 +22,9 @@ const sleep = (ms) => {
 };
 
 const Page = () => {
-  const [showScrollButton, setShowScrollButton] = useState(true);
+  // const [showScrollButton, setShowScrollButton] = useState(true);
 
+  /*
   const scrollToCategories = () => {
     const categoriesSection = document.getElementById("categories");
     setShowScrollButton(false);
@@ -31,7 +32,7 @@ const Page = () => {
       categoriesSection.scrollIntoView({ behavior: "smooth" });
     }
   };
-
+*/
   return (
     <div className="flex flex-col justify-between items-center gap-2 text-lightgray">
       <div
@@ -135,7 +136,7 @@ const Page = () => {
           <Categories />
         </div>
       </div>
-      {showScrollButton && (
+      {/*showScrollButton && (
         <div className="fixed bottom-0 left-0 right-0 flex justify-center pb-8">
           <button
             onClick={scrollToCategories}
@@ -144,7 +145,8 @@ const Page = () => {
             <p className=""> MENÜLERE GİT </p>
           </button>
         </div>
-      )}
+      )*/}
+      <GoToMenu />
     </div>
   );
 };

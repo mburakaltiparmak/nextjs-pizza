@@ -18,3 +18,13 @@ export const updateCart = (id, newCount) => ({
 export const clearCart = () => ({
   type: orderActions.clearCart,
 });
+
+export const setUserData = (userData) => ({
+  type: orderActions.setUserData,
+  payload: userData,
+});
+
+export const setPaymentData = (paymentData) => ({
+  type: orderActions.setPaymentData,
+  payload: paymentData,
+});

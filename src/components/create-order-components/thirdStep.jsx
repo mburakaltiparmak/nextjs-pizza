@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import {
   Card,
@@ -22,6 +23,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { setPaymentData } from "@/lib/store/actions/orderActions";
 
 const formSchema = z.object({
   cardNumber: z
@@ -39,6 +43,7 @@ const formSchema = z.object({
 
 const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   const { toast } = useToast();
+  const router = useRouter();
   const {
     control,
     handleSubmit,
@@ -53,13 +58,15 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
       cvc: "",
     },
   });
-
+  const dispatch = useAppDispatch();
+  const useSelector = useAppSelector();
   const onSubmit = (data) => {
-    console.log("Payment data:", data);
+    dispatch(setPaymentData(data));
     toast({
       title: "Siparişiniz alınıyor...",
     });
     setStep3(true);
+    router.push("/success");
   };
   const handleBack = () => {
     setCurrentStep(2);

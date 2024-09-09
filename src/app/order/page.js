@@ -288,11 +288,11 @@ const Page = () => {
                   En fazla 10 malzeme seçebilirsiniz. 5₺
                 </FormLabel>
                 <FormControl>
-                  <div className="flex flex-row flex-wrap items-center justify-between gap-8">
+                  <div className="grid grid-cols-3 gap-4 place-items-start w-[100vh] ">
                     {items.map((item) => (
                       <div
                         key={item.id}
-                        className="flex flex-row justify-start items-center w-[100px] gap-2"
+                        className="flex flex-row justify-start items-center  gap-2 "
                       >
                         <Checkbox
                           checked={field.value.includes(item.id)}

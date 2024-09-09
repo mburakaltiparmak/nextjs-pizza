@@ -14,13 +14,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { setUserData } from "@/lib/store/actions/orderActions";
 
 const schema = z.object({
   fullname: z.string().min(1, { message: "Required" }),
   address: z.string().min(1, { message: "Required" }),
 });
 
-// Burada destructuring doğrudan parametre içinde yapılır.
 const FirstStep = ({ setCurrentStep, setStep1 }) => {
   const { toast } = useToast();
   const {
@@ -31,7 +32,8 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
   } = useForm({
     resolver: zodResolver(schema),
   });
-
+  const dispatch = useAppDispatch();
+  const useSelector = useAppSelector();
   const fullname = watch("fullname");
   const address = watch("address");
   const isStep1Valid = fullname && address;
@@ -40,6 +42,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
     console.log("Final data:", data);
     setStep1(true);
     setCurrentStep(2);
+    dispatch(setUserData(data));
   };
 
   return (
