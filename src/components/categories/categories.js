@@ -55,7 +55,7 @@ const Categories = () => {
 
   return (
     <div className="flex flex-col justify-between items-center gap-8 ">
-      <div className="flex flex-row justify-center items-center gap-4 mt-4 w-[150vh]">
+      <div className="grid grid-cols-6 grid-flow-row mt-4 w-[150vh]">
         {firstApiData.length > 0 ? (
           firstApiData.map((item, index) => (
             <button

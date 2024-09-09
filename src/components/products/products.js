@@ -30,7 +30,7 @@ const Products = ({ products }) => {
     });
   };
   return (
-    <div className="flex flex-row flex-wrap justify-between items-center gap-8 w-[150vh] ">
+    <div className="grid grid-cols-3 gap-8 w-[150vh] ">
       {flattenedProducts.map((item, index) => (
         <label
           htmlFor={item.name}
@@ -38,7 +38,7 @@ const Products = ({ products }) => {
           key={index}
         >
           <img
-            className="object-cover w-[125px] h-fit"
+            className="object-cover h-[125px]"
             src={item.product_img}
             alt={item.name}
           />
