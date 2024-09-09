@@ -45,6 +45,7 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
   const router = useRouter();
+
   const {
     control,
     handleSubmit,
@@ -59,34 +60,11 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
       cvc: "",
     },
   });
-  const onSubmit = (data) => {
-    dispatch(setPaymentData(data));
-    console.log("payment data : ", data);
-
-    // router.push("/success");
-
-    /*
-    try {
-      await dispatch(createOrder(userData2, paymentData));
-      toast({
-        title: "Siparişiniz alınıyor...",
-      });
-      setStep3(true);
-      router.push("/success");
-    } catch (error) {
-      toast({
-        title: "Sipariş oluşturulurken bir hata oluştu.",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-      */
-  };
 
   const userData = useAppSelector((state) => state.order.userData);
-  const paymentData = useAppSelector((state) => state.order.paymentData);
   const cartData = useAppSelector((state) => state.order.cart);
-  const createOrder = async () => {
+
+  const createOrder = async (paymentData) => {
     const orderData = {
       userData,
       paymentData,
@@ -94,7 +72,6 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
     };
 
     try {
-      // await dispatch(createOrder(userData2, paymentData));
       console.log("order data : ", orderData);
       toast({
         title: "Siparişiniz alınıyor...",
@@ -109,12 +86,11 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
       });
     }
   };
-  useEffect(() => {
-    console.log("userData", userData);
-    console.log("paymentData", paymentData);
-    console.log("cartData", cartData);
-    createOrder();
-  }, [userData, paymentData, cartData]);
+  const onSubmit = (data) => {
+    dispatch(setPaymentData(data));
+    console.log("payment data : ", data);
+    createOrder(data);
+  };
 
   const handleBack = () => {
     setCurrentStep(2);

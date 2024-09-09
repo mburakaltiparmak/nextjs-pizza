@@ -16,7 +16,6 @@ import { Separator } from "../ui/separator";
 const SecondStep = ({ setCurrentStep, setStep2 }) => {
   const cart = useAppSelector((store) => store.order.cart);
   const cartArray = Object.values(cart);
-  console.log("cart array : ", cartArray);
   const handleNext = () => {
     setStep2(true);
     setCurrentStep(3);

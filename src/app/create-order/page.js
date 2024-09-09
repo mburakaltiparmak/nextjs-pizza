@@ -2,7 +2,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
 import Image from "next/image";
 import headImg from "../../../assets/adv-aseets/adv-form-banner.png";
 import { faUser } from "@fortawesome/free-regular-svg-icons";
@@ -13,23 +12,9 @@ import {
   faCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import { useToast } from "@/hooks/use-toast";
-
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import FirstStep from "@/components/create-order-components/firstStep";
 import SecondStep from "@/components/create-order-components/secondStep";
 import ThirdStep from "@/components/create-order-components/thirdStep";
-
-const schema = z.object({
-  fullname: z.string().min(1, { message: "Required" }),
-  address: z.string().min(1, { message: "Required" }),
-  cardNumber: z.number().min(16, { message: "Required" }),
-  nameOnCard: z.string().min(1, { message: "Required" }),
-  expirationMonth: z.number().min(1, { message: "Required" }),
-  expirationYear: z.number().min(4, { message: "Required" }),
-  cvc: z.number().min(3, { message: "Required" }),
-});
 
 const Page = () => {
   const { toast } = useToast();
