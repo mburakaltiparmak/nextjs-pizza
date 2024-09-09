@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button } from "./ui/button";
 
 const FloatingCartButton = () => {
   const dispatch = useAppDispatch();
@@ -118,30 +119,30 @@ const FloatingCartButton = () => {
                           <span>{item.product.price} ₺</span>
                         </div>
                       </span>
-                      <span className="flex flex-row justify-between items-center gap-4">
-                        <div className="flex flex-row items-center">
-                          <button
+                      <span className="flex flex-row justify-between items-center gap-4 ">
+                        <div className="flex flex-row items-center border border-blue-950 rounded-md bg-blue-950  text-lightgray ">
+                          <Button
                             onClick={() => handleDecrementCount(item)}
-                            className="px-2 py-1 bg-gray-200 rounded"
+                            className="w-[32px] h-[32px] bg-blue-950 border-blue-950 rounded-md hover:bg-lightgray hover:text-blue-950 "
                           >
                             <span>-</span>
-                          </button>
-                          <span className="mx-2">{item.count}</span>
-                          <button
+                          </Button>
+                          <span className="mx-3">{item.count}</span>
+                          <Button
                             onClick={() => handleIncrementCount(item)}
-                            className="px-2 py-1 bg-gray-200 rounded"
+                            className="w-[32px] h-[32px] bg-blue-950 border-blue-950 rounded-md hover:bg-lightgray hover:text-blue-950 "
                           >
                             <span>+</span>
-                          </button>
+                          </Button>
                         </div>
-                        <button
+                        <Button
                           onClick={() => handleRemoveFromCart(item)}
-                          className="text-red"
+                          className="text-red bg-transparent hover:bg-red hover:text-lightgray"
                         >
                           <span>
                             <FontAwesomeIcon icon={faTrash} />
                           </span>
-                        </button>
+                        </Button>
                       </span>
                     </div>
                   ))}
@@ -154,23 +155,28 @@ const FloatingCartButton = () => {
                       )}{" "}
                       ₺
                     </span>
-                    <button
+                    <Button
                       onClick={handleClearCart}
-                      className="bg-red text-white px-4 py-2 rounded hover:bg-darkred transition-colors duration-200"
+                      className="bg-red text-white px-4 py-2 border border-transparent rounded hover:bg-lightgray hover:text-red hover:border-red transition-colors duration-200"
                     >
                       <span>Sepeti Temizle</span>
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Kapat</AlertDialogCancel>
+          <AlertDialogFooter className="flex flex-row items-center">
+            <AlertDialogCancel className="border-2 border-primary bg-primary text-lightgray hover:bg-secondary hover:text-primary">
+              Kapat
+            </AlertDialogCancel>
             <AlertDialogAction>
-              <button onClick={() => router.push("/create-order")}>
+              <Button
+                className="rounded-md border-2 border-transparent bg-blue-950 text-lightgray hover:bg-lightgray hover:text-blue-950 hover:border-blue-950"
+                onClick={() => router.push("/create-order")}
+              >
                 <span>Siparişi Tamamla</span>
-              </button>
+              </Button>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

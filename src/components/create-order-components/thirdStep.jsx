@@ -45,6 +45,13 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      cardNumber: "",
+      nameOnCard: "",
+      expirationMonth: "",
+      expirationYear: "",
+      cvc: "",
+    },
   });
 
   const onSubmit = (data) => {
