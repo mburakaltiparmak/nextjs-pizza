@@ -70,7 +70,6 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
       paymentData,
       cartData,
     };
-
     try {
       console.log("order data : ", orderData);
       toast({

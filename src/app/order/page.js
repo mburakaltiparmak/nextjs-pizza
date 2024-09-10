@@ -39,6 +39,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-regular-svg-icons";
 import { faRankingStar } from "@fortawesome/free-solid-svg-icons";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   boyut: z.enum(["S", "M", "L"], {
@@ -61,6 +62,7 @@ const formSchema = z.object({
 const Page = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { toast } = useToast();
 
   const { boyut, hamur, malzemeler, siparisNotu } = useAppSelector(
     (state) => state.order
@@ -145,8 +147,19 @@ const Page = () => {
       siparisNotu: data.siparisNotu,
     };
     dispatch(addCart(customPizza));
-    console.log("Form Data:", customPizza);
-    router.push("/create-order");
+    toast({
+      title: (
+        <div className="flex flex-row gap-4 items-center py-4">
+          <img
+            src={customPizza.product_img}
+            alt={customPizza.name}
+            className="w-[32px] h-fit object-cover"
+          />
+          <p>{customPizza.name} sepete başarıyla eklendi.</p>
+        </div>
+      ),
+    });
+    router.push("/cart");
   };
   return (
     <div className="flex flex-col items-center justify-between gap-8 mb-8">
@@ -331,7 +344,6 @@ const Page = () => {
                       <Textarea
                         {...field}
                         placeholder="Siparişine eklemek istediğin bir not var mı?"
-                        className="w-[40vh] h-fit"
                       />
                     </FormControl>
                     <FormMessage />
@@ -356,7 +368,7 @@ const Page = () => {
                 type="submit"
                 className="w-full bg-yellow text-darkgray font-bold hover:bg-red hover:text-lightgray"
               >
-                SİPARİŞ VER
+                SEPETE EKLE
               </Button>
             </span>
           </div>
