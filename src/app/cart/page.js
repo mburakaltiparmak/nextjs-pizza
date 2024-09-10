@@ -1,6 +1,6 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 import React, { useState, useEffect } from "react";
+import headImg from "../../../assets/adv-aseets/adv-form-banner.png";
 import { useAppSelector, useAppDispatch } from "@/lib/hooks";
 import {
   removeFromCart,
@@ -22,6 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Image from "next/image";
 
 const Page = () => {
   const dispatch = useAppDispatch();
@@ -65,8 +66,17 @@ const Page = () => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-2 py-4 ">
-      <Card className="w-[75vh] py-3">
+    <div className="flex flex-col items-center gap-2 pb-4">
+      <span>
+        <Image
+          src={headImg.src}
+          alt="Pizza"
+          className="object-cover"
+          width={300}
+          height={100}
+        />
+      </span>
+      <Card className="w-[75vh] ">
         <CardHeader className="flex flex-col gap-4">
           <CardTitle>Sipariş Özeti</CardTitle>
           <CardDescription>
