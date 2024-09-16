@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useAppSelector, useAppDispatch } from "@/lib/hooks";
 import {
   removeFromCart,
@@ -21,7 +21,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 
@@ -84,6 +83,7 @@ const FloatingCartButton = () => {
       title: "Sepet başarıyla temizlendi",
     });
   };
+
   return (
     <div className="fixed top-4 right-4 z-50">
       <AlertDialog>
@@ -99,86 +99,88 @@ const FloatingCartButton = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Sepetiniz</AlertDialogTitle>
             <AlertDialogDescription>
-              {localCart.length === 0 ? (
-                <div>Sepetiniz boş.</div>
-              ) : (
-                <div className="space-y-4">
-                  {localCart.map((item) => (
-                    <div
-                      key={item.product.product_id}
-                      className="flex flex-row justify-between items-center gap-8 border-b pb-2"
-                    >
-                      <span className="flex flex-row justify-between items-center gap-4">
-                        <img
-                          src={item.product.product_img}
-                          alt={item.product.product_name}
-                          className="w-16 h-16 object-cover"
-                        />
-                        <div className="flex flex-row justify-between items-center gap-4">
-                          <span className="font-bold">
-                            {item.product.product_name}
+              <span className="block">
+                {localCart.length === 0 ? (
+                  <span>Sepetiniz boş.</span>
+                ) : (
+                  <span className="block space-y-4">
+                    {localCart.map((item) => (
+                      <span
+                        key={item.product.product_id}
+                        className="flex flex-row justify-between items-center gap-8 border-b pb-2"
+                      >
+                        <span className="flex flex-row justify-between items-center gap-4">
+                          <img
+                            src={item.product.product_img}
+                            alt={item.product.product_name}
+                            className="w-16 h-16 object-cover"
+                          />
+                          <span className="flex flex-row justify-between items-center gap-4">
+                            <span className="font-bold">
+                              {item.product.product_name}
+                            </span>
+                            <span>{item.product.price} ₺</span>
                           </span>
-                          <span>{item.product.price} ₺</span>
-                        </div>
-                      </span>
-                      <span className="flex flex-row justify-between items-center gap-4 ">
-                        <div className="flex flex-row items-center border border-blue-950 rounded-md bg-blue-950  text-lightgray ">
-                          <Button
-                            onClick={() => handleDecrementCount(item)}
-                            className="w-[32px] h-[32px] bg-blue-950 border-blue-950 rounded-md hover:bg-lightgray hover:text-blue-950 "
-                          >
-                            <span>-</span>
-                          </Button>
-                          <span className="mx-3">{item.count}</span>
-                          <Button
-                            onClick={() => handleIncrementCount(item)}
-                            className="w-[32px] h-[32px] bg-blue-950 border-blue-950 rounded-md hover:bg-lightgray hover:text-blue-950 "
-                          >
-                            <span>+</span>
-                          </Button>
-                        </div>
-                        <Button
-                          onClick={() => handleRemoveFromCart(item)}
-                          className="text-red bg-transparent hover:bg-red hover:text-lightgray"
-                        >
-                          <span>
-                            <FontAwesomeIcon icon={faTrash} />
+                        </span>
+                        <span className="flex flex-row justify-between items-center gap-4 ">
+                          <span className="flex flex-row items-center border border-blue-950 rounded-md bg-blue-950  text-lightgray ">
+                            <span
+                              onClick={() => handleDecrementCount(item)}
+                              className="w-[32px] h-[32px] bg-blue-950 border-blue-950 rounded-md hover:bg-lightgray hover:text-blue-950 flex items-center justify-center cursor-pointer"
+                            >
+                              <span>-</span>
+                            </span>
+                            <span className="mx-3">{item.count}</span>
+                            <span
+                              onClick={() => handleIncrementCount(item)}
+                              className="w-[32px] h-[32px] bg-blue-950 border-blue-950 rounded-md hover:bg-lightgray hover:text-blue-950 flex items-center justify-center cursor-pointer"
+                            >
+                              <span>+</span>
+                            </span>
                           </span>
-                        </Button>
+                          <Button
+                            onClick={() => handleRemoveFromCart(item)}
+                            className="text-red bg-transparent hover:bg-red hover:text-lightgray"
+                          >
+                            <span>
+                              <FontAwesomeIcon icon={faTrash} />
+                            </span>
+                          </Button>
+                        </span>
                       </span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between items-center pt-4">
-                    <span className="font-bold">
-                      Toplam:{" "}
-                      {localCart.reduce(
-                        (sum, item) => sum + item.product.price * item.count,
-                        0
-                      )}{" "}
-                      ₺
+                    ))}
+                    <span className="flex justify-between items-center pt-4">
+                      <span className="font-bold">
+                        Toplam:{" "}
+                        {localCart.reduce(
+                          (sum, item) => sum + item.product.price * item.count,
+                          0
+                        )}{" "}
+                        ₺
+                      </span>
+                      <Button
+                        onClick={handleClearCart}
+                        className="bg-red text-white px-4 py-2 border border-transparent rounded hover:bg-lightgray hover:text-red hover:border-red transition-colors duration-200"
+                      >
+                        <span>Sepeti Temizle</span>
+                      </Button>
                     </span>
-                    <Button
-                      onClick={handleClearCart}
-                      className="bg-red text-white px-4 py-2 border border-transparent rounded hover:bg-lightgray hover:text-red hover:border-red transition-colors duration-200"
-                    >
-                      <span>Sepeti Temizle</span>
-                    </Button>
-                  </div>
-                </div>
-              )}
+                  </span>
+                )}
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-row items-center">
             <AlertDialogCancel className="border-2 border-primary bg-primary text-lightgray hover:bg-secondary hover:text-primary">
               Kapat
             </AlertDialogCancel>
-            <AlertDialogAction>
-              <Button
-                className="rounded-md border-2 border-transparent bg-blue-950 text-lightgray hover:bg-lightgray hover:text-blue-950 hover:border-blue-950"
+            <AlertDialogAction asChild>
+              <span
+                className="rounded-md border-2 border-transparent bg-blue-950 text-lightgray hover:bg-lightgray hover:text-blue-950 hover:border-blue-950 cursor-pointer px-4 py-2"
                 onClick={() => router.push("/create-order")}
               >
                 <span>Siparişi Tamamla</span>
-              </Button>
+              </span>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
