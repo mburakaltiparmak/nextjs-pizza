@@ -34,7 +34,7 @@ const FloatingCartButton = () => {
   const mappedCart = cart.map((item, index) => {
     return {
       Product: index + 1,
-      Name: item.product.name,
+      Name: item.product.product_name,
       Category_ID: item.product.category_id,
       Rating: item.product.rating,
       Stock: item.product.stock,
@@ -111,11 +111,13 @@ const FloatingCartButton = () => {
                       <span className="flex flex-row justify-between items-center gap-4">
                         <img
                           src={item.product.product_img}
-                          alt={item.product.name}
+                          alt={item.product.product_name}
                           className="w-16 h-16 object-cover"
                         />
                         <div className="flex flex-row justify-between items-center gap-4">
-                          <span className="font-bold">{item.product.name}</span>
+                          <span className="font-bold">
+                            {item.product.product_name}
+                          </span>
                           <span>{item.product.price} ₺</span>
                         </div>
                       </span>

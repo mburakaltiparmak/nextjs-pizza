@@ -2,7 +2,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { setSelectedCategory } from "@/lib/store/actions/productActions";
+import { fetchProductsById, setSelectedCategory } from "@/lib/store/actions/productActions";
 import { HoverCard, HoverCardTrigger } from "../ui/hover-card";
 import useSWR from "swr";
 import Products from "../products/products";
@@ -13,10 +13,15 @@ const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
 const Categories = () => {
   const dispatch = useAppDispatch();
-  const selectedCategory = useAppSelector(
-    (store) => store.product.selectedCategory
-  );
-
+  const categories = useAppSelector((store) => store.product.categories);
+  
+  const handleCategory = (id) => {
+    dispatch(setSelectedCategory(id));
+   // dispatch(fetchProductsById(id));
+  };
+  
+  
+/*
   const { data: firstApiData, error: firstApiError } = useSWR(
     "https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products",
     fetcher
@@ -28,9 +33,9 @@ const Categories = () => {
       : null,
     fetcher
   );
-
+*/
   const [data, setData] = useState([]);
-
+/*
   useEffect(() => {
     if (selectedCategory && secondApiData) {
       setData(secondApiData);
@@ -52,18 +57,18 @@ const Categories = () => {
   if (!firstApiData) {
     return <Loading />;
   }
-
+*/
   return (
     <div
       id="categories"
       className="flex flex-col justify-between items-center gap-8 "
     >
       <div className="grid grid-cols-6 grid-flow-row mt-4 w-[150vh]">
-        {firstApiData.length > 0 ? (
-          firstApiData.map((item, index) => (
+        {categories.length > 0 ? (
+          categories.map((item, index) => (
             <button
               key={index}
-              onClick={() => handleCategory(item.id)}
+              onClick={() => handleCategory(item.category_id)}
               className="optionStyle rounded-full text-sm py-1"
             >
               <img
@@ -77,10 +82,16 @@ const Categories = () => {
             </button>
           ))
         ) : (
-          <p>No categories available.</p>
+          <p>Kategori bulunamadı.</p>
         )}
       </div>
-      <Products products={data} />
+      {
+      
+      
+      <Products />
+      
+      
+      }
     </div>
   );
 };

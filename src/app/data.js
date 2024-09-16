@@ -123,55 +123,55 @@ export const footerInstaPhoto = [
 ];
 export const items = [
   {
-    id: "pepperoni",
+    id: "Pepperoni",
     label: "Pepperoni",
   },
   {
-    id: "domates",
+    id: "Domates",
     label: "Domates",
   },
   {
-    id: "biber",
+    id: "Biber",
     label: "Biber",
   },
   {
-    id: "sosis",
+    id: "Sosis",
     label: "Sosis",
   },
   {
-    id: "misir",
+    id: "Misir",
     label: "Mısır",
   },
   {
-    id: "sucuk",
+    id: "Sucuk",
     label: "Sucuk",
   },
   {
-    id: "kanada jambonu",
+    id: "Kanada Jambonu",
     label: "Kanada Jambonu",
   },
   {
-    id: "ananas",
+    id: "Ananas",
     label: "Ananas",
   },
   {
-    id: "tavuk izgara",
+    id: "Tavuk Izgara",
     label: "Tavuk Izgara",
   },
   {
-    id: "jalepeno",
+    id: "Jalepeno",
     label: "Jalepeno",
   },
   {
-    id: "kabak",
+    id: "Kabak",
     label: "Kabak",
   },
   {
-    id: "sogan",
+    id: "Sogan",
     label: "Soğan",
   },
   {
-    id: "sarimsak",
+    id: "Sarimsak",
     label: "Sarımsak",
   },
 ];

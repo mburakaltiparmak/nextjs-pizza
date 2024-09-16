@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,11 +42,12 @@ import { faStar } from "@fortawesome/free-regular-svg-icons";
 import { faRankingStar } from "@fortawesome/free-solid-svg-icons";
 import { useToast } from "@/hooks/use-toast";
 
+
 const formSchema = z.object({
   boyut: z.enum(["S", "M", "L"], {
     message: "Pizza boyutu seçmelisiniz.",
   }),
-  hamur: z.enum(["ince", "standart", "kalin"], {
+  hamur: z.enum(["Ince", "Standart", "Kalin"], {
     message: "Hamur tipini seçmelisiniz.",
   }),
   items: z
@@ -103,11 +105,11 @@ const Page = () => {
     });
     setHamurFiyat(() => {
       switch (selectedHamur) {
-        case "ince":
+        case "Ince":
           return 20;
-        case "standart":
+        case "Standart":
           return 30;
-        case "kalin":
+        case "Kalin":
           return 40;
         default:
           return 0;
@@ -151,15 +153,16 @@ const Page = () => {
       title: (
         <div className="flex flex-row gap-4 items-center py-4">
           <img
-            src={customPizza.product_img}
+            src={customPizza?.product_img}
             alt={customPizza.name}
-            className="w-[32px] h-fit object-cover"
+            
+            className="object-cover w-[32px]"
           />
           <p>{customPizza.name} sepete başarıyla eklendi.</p>
         </div>
       ),
     });
-    router.push("/cart");
+    router.push("/");
   };
   return (
     <div className="flex flex-col items-center justify-between gap-8 mb-8">
@@ -278,9 +281,9 @@ const Page = () => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="ince">İnce</SelectItem>
-                      <SelectItem value="standart">Standart</SelectItem>
-                      <SelectItem value="kalin">Kalın</SelectItem>
+                      <SelectItem value="Ince">İnce</SelectItem>
+                      <SelectItem value="Standart">Standart</SelectItem>
+                      <SelectItem value="Kalin">Kalın</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage className="font-extrabold text-xs" />

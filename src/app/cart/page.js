@@ -91,14 +91,14 @@ const Page = () => {
                 <span className="flex flex-row gap-4 items-center w-[200px]">
                   <img
                     src={item.product.product_img}
-                    alt={item.product.name}
+                    alt={item.product.product_name}
                     className="w-[96px] h-[96px] object-cover"
                   />
                   <Separator className="h-[96px]" orientation="vertical" />
                 </span>
                 <span className="flex flex-row items-center justify-start gap-4 w-[200px]">
                   <span className="text-base w-[128px]" htmlFor="name">
-                    {item.product.name}
+                    {item.product.product_name}
                   </span>
                   <Separator className="h-[96px]" orientation="vertical" />
                 </span>

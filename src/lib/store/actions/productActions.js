@@ -1,48 +1,85 @@
-import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { useDispatch } from "react-redux";
 import { fetchStates, productActions } from "../reducers/productReducer";
 
-export const fetchProducts = () => async (useAppDispatch) => {
-  useAppDispatch(setFetchState(fetchStates.FETCHING));
-  try {
-    const response = await fetch(
-      "https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products"
-    );
-    const data = await response.json();
-    console.log("response", data);
-    useAppDispatch(setFetchState(fetchStates.FETCHED));
+const API_BASE_URL = "https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products";
 
-    useAppDispatch(setProducts(data));
+export const fetchProducts = () => async (dispatch) => {
+  dispatch(setFetchState(fetchStates.FETCHING));
+
+  try {
+    const response = await fetch(API_BASE_URL);
+    if (!response.ok) {
+      throw new Error("Failed to fetch product data");
+    }
+    const data = await response.json();
+    dispatch(setFetchState(fetchStates.FETCHED));
+
+    const categories = data.map((category) => ({
+      category_id: category.id,
+      category_img: category.category_img,
+      category_name: category.category_name,
+    }));
+
+    const products = data.flatMap((category) =>
+      category.products.map((product) => ({
+        product_id: product.product_id,
+        product_name: product.name,
+        price: product.price,
+        product_img: product.product_img,
+        rating: product.rating,
+        stock: product.stock,
+        category_id: category.id,
+      }))
+    );
+
+    dispatch(setCategories(categories));
+    dispatch(setProducts(products));
   } catch (err) {
-    console.error("AN ERROR OCCURED WHEN FETCHING PRODUCTS", err);
-    useAppDispatch(setFetchState(fetchStates.FAILED));
+    console.error("Error fetching products:", err);
+    dispatch(setFetchState(fetchStates.FAILED));
   }
 };
 
-export const fetchProductsById = (id) => async (useAppDispatch) => {
-  useAppDispatch(setFetchState(fetchStates.FETCHING));
+export const fetchProductsById = (id) => async (dispatch) => {
+  dispatch(setFetchState(fetchStates.FETCHING));
+
   try {
-    const response = await fetch(
-      `https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products/${id}`
-    );
+    const response = await fetch(`${API_BASE_URL}/${id}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch product data by ID");
+    }
     const data = await response.json();
-    useAppDispatch(setFetchState(fetchStates.FETCHED));
-    useAppDispatch(setItemsByCategory(data));
-    return { payload: data };
+    dispatch(setFetchState(fetchStates.FETCHED));
+
+    if (data && data.products) {
+      const products = data.products.map((product) => ({
+        product_id: product.product_id,
+        product_name: product.name,
+        price: product.price,
+        product_img: product.product_img,
+        rating: product.rating,
+        stock: product.stock,
+        category_id: data.id,
+      }));
+      dispatch(setProducts(products));
+    } else {
+      console.error("Unexpected data structure:", data);
+      dispatch(setProducts([]));
+    }
   } catch (err) {
-    console.error("AN ERROR OCCURED WHEN FETCHING PRODUCTS BY CATEGORY", err);
-    useAppDispatch(setFetchState(fetchStates.FAILED));
-    throw err;
+    console.error("Error fetching product by ID:", err);
+    dispatch(setFetchState(fetchStates.FAILED));
   }
 };
+
+// Action creators
 export const setProducts = (products) => ({
   type: productActions.setProductList,
   payload: products,
 });
 
-export const setSelectedCategory = (category) => ({
-  type: productActions.setSelectedCategory,
-  payload: category,
+export const setCategories = (categories) => ({
+  type: productActions.setCategories,
+  payload: categories,
 });
 
 export const setFetchState = (fetchState) => ({
@@ -50,9 +87,7 @@ export const setFetchState = (fetchState) => ({
   payload: fetchState,
 });
 
-export const setItemsByCategory = (itemsByCategory) => ({
-  type: productActions.setItemsByCategory,
-  payload: itemsByCategory,
+export const setSelectedCategory = (selectedCategory) => ({
+  type: productActions.setSelectedCategory,
+  payload: selectedCategory,
 });
-
-

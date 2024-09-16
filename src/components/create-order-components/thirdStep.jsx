@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect } from "react";
+import useSWRMutation from "swr/mutation";
 import {
   Card,
   CardHeader,
@@ -25,7 +26,12 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { createOrder, setPaymentData } from "@/lib/store/actions/orderActions";
+import {
+  clearCart,
+  createOrder,
+  setOrderData,
+  setPaymentData,
+} from "@/lib/store/actions/orderActions";
 
 const formSchema = z.object({
   cardNumber: z
@@ -41,10 +47,24 @@ const formSchema = z.object({
   cvc: z.string().min(3, { message: "CVC 3 haneli olmalıdır." }),
 });
 
+async function sendRequest(url, { arg }) {
+  return fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(arg),
+  }).then((res) => res.json());
+}
+
 const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
   const router = useRouter();
+  const { trigger, isMutating } = useSWRMutation(
+    "https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/order",
+    sendRequest
+  );
 
   const {
     control,
@@ -64,18 +84,19 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   const userData = useAppSelector((state) => state.order.userData);
   const cartData = useAppSelector((state) => state.order.cart);
 
-  const createOrder = async (paymentData) => {
+  const createOrder = (paymentData) => {
     const orderData = {
       userData,
       paymentData,
       cartData,
     };
     try {
-      console.log("order data : ", orderData);
       toast({
         title: "Siparişiniz alınıyor...",
       });
       setStep3(true);
+      dispatch(setOrderData(orderData));
+      //dispatch(clearCart());
       router.push("/success");
     } catch (error) {
       toast({

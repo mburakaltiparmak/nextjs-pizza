@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
@@ -14,6 +15,8 @@ import Categories from "@/components/categories/categories";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowDown } from "@fortawesome/free-solid-svg-icons";
 import GoToMenu from "@/components/goToMenu";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { fetchProducts, fetchProductsById } from "@/lib/store/actions/productActions";
 
 const sleep = (ms) => {
   return new Promise((resolve) => {
@@ -22,17 +25,18 @@ const sleep = (ms) => {
 };
 
 const Page = () => {
-  // const [showScrollButton, setShowScrollButton] = useState(true);
+  const dispatch = useAppDispatch();
+  const selectedCategory = useAppSelector((store) => store.product.selectedCategory);
+  if(selectedCategory) {
+    dispatch(fetchProductsById(selectedCategory));
+  }
+  else {
 
-  /*
-  const scrollToCategories = () => {
-    const categoriesSection = document.getElementById("categories");
-    setShowScrollButton(false);
-    if (categoriesSection) {
-      categoriesSection.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-*/
+    dispatch(fetchProducts());
+  }
+
+
+
   return (
     <div className="flex flex-col justify-between items-center gap-2 text-lightgray">
       <div
@@ -49,7 +53,7 @@ const Page = () => {
             <h4 className="font-Satisfy text-yellow text-2xl">
               fırsatı kaçırma
             </h4>
-            <h2 className="font-Barlow text-4xl tracking-tighter font-lightgray">
+            <h2 className="font-Barlow text-4xl tracking-tighter text-lightgray">
               KOD ACIKTIRIR, <br /> PİZZA DOYURUR
             </h2>
 
@@ -136,16 +140,6 @@ const Page = () => {
           <Categories />
         </div>
       </div>
-      {/*showScrollButton && (
-        <div className="fixed bottom-0 left-0 right-0 flex justify-center pb-8">
-          <button
-            onClick={scrollToCategories}
-            className="bg-yellow text-darkgray text-xs font-Barlow px-6 py-3 rounded-full shadow-lg hover:bg-red hover:text-lightgray transition-colors duration-300 font-semibold"
-          >
-            <p className=""> MENÜLERE GİT </p>
-          </button>
-        </div>
-      )*/}
       <GoToMenu />
     </div>
   );

@@ -15,9 +15,21 @@ import { useToast } from "@/hooks/use-toast";
 import FirstStep from "@/components/create-order-components/firstStep";
 import SecondStep from "@/components/create-order-components/secondStep";
 import ThirdStep from "@/components/create-order-components/thirdStep";
+import { useAppSelector } from "@/lib/hooks";
+import { useRouter } from "next/navigation";
 
 const Page = () => {
   const { toast } = useToast();
+  const router = useRouter();
+  const cart = useAppSelector((store)=>store.order.cart);
+  if(cart.length <= 0){
+    toast({
+      title: "Sepetiniz boş.",
+      description: "Anasayfaya yönlendiriliyorsunuz.",
+     
+    });
+    router.push("/");
+  }
 
   const [currentStep, setCurrentStep] = useState(1);
   const [step1, setStep1] = useState(false);
@@ -29,7 +41,7 @@ const Page = () => {
       title: "Kişisel Bilgiler",
       icon: faUser,
       success: faCheck,
-      disabled: "",
+      disabled: !cart,
     },
     {
       title: "Sipariş Özeti",

@@ -1,5 +1,3 @@
-import { act } from "react";
-
 export const fetchStates = {
   NOT_FETCHED: "NOT_FETCHED",
   FETCHING: "FETCHING",
@@ -10,15 +8,14 @@ const initialState = {
   products: [],
   fetchState: fetchStates.NOT_FETCHED,
   selectedCategory: null,
-  itemsByCategory: [],
+  categories: [],
 };
 
 export const productActions = {
   setProductList: "SET_PRODUCT_LIST",
   setFetchState: "SET_FETCH_STATE",
   setSelectedCategory: "SET_SELECTED_CATEGORY",
-  setItemsByCategory: "SET_ITEMS_BY_CATEGORY",
-  
+  setCategories: "SET_ITEMS_BY_CATEGORY",
 };
 
 export const productReducer = (state = initialState, action) => {
@@ -38,10 +35,10 @@ export const productReducer = (state = initialState, action) => {
         ...state,
         fetchState: action.payload,
       };
-    case productActions.setItemsByCategory:
+    case productActions.setCategories:
       return {
         ...state,
-        itemsByCategory: action.payload,
+        categories: action.payload,
       };
     default:
       return state;
