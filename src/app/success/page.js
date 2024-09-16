@@ -1,5 +1,6 @@
+"use client";
 import { Separator } from "@/components/ui/separator";
-import React from "react";
+import React, { useEffect } from "react";
 import NotFound from "../not-found";
 import { useAppDispatch } from "@/lib/hooks";
 import { clearCart } from "@/lib/store/actions/orderActions";
@@ -31,15 +32,25 @@ const calculateCartTotal = (cart) => {
 };
 
 export default async function Page() {
-  const latestOrder = await getLatestOrder();
-  const cart = latestOrder?.cartData;
   const dispatch = useAppDispatch();
+  const [latestOrder, setLatestOrder] = React.useState(null);
+
+  useEffect(() => {
+    // En son siparişi almak için async işlemi useEffect'te yönetiyoruz
+    const fetchOrder = async () => {
+      const fetchedOrder = await getLatestOrder();
+      setLatestOrder(fetchedOrder);
+      dispatch(clearCart()); // clearCart burada dispatch ediliyor
+    };
+
+    fetchOrder();
+  }, [dispatch]); // dispatch bağımlılık listesinde eklenir
+
   if (!latestOrder) {
-    setTimeout(() => {
-      router.push("/");
-    }, 3000);
+    return <p>Yükleniyor...</p>;
   }
-  dispatch(clearCart());
+
+  const cart = latestOrder?.cartData;
 
   return (
     <div className="bg-red min-h-screen flex flex-col items-center py-8">
