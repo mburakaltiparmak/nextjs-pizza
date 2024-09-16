@@ -1,9 +1,10 @@
 "use client";
 import { Separator } from "@/components/ui/separator";
-import React, { useEffect } from "react";
-import NotFound from "../not-found";
+import React, { useEffect, useState } from "react";
 import { useAppDispatch } from "@/lib/hooks";
 import { clearCart } from "@/lib/store/actions/orderActions";
+import Loading from "../loading";
+import NotFound from "../not-found";
 
 async function getLatestOrder() {
   const res = await fetch(
@@ -31,27 +32,36 @@ const calculateCartTotal = (cart) => {
   return cart.reduce((total, item) => total + calculateTotal(item), 0);
 };
 
-export default async function Page() {
+export default function Page() {
   const dispatch = useAppDispatch();
-  const [latestOrder, setLatestOrder] = React.useState(null);
+  const [latestOrder, setLatestOrder] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // En son siparişi almak için async işlemi useEffect'te yönetiyoruz
     const fetchOrder = async () => {
-      const fetchedOrder = await getLatestOrder();
-      setLatestOrder(fetchedOrder);
-      dispatch(clearCart()); // clearCart burada dispatch ediliyor
+      try {
+        const fetchedOrder = await getLatestOrder();
+        setLatestOrder(fetchedOrder);
+        dispatch(clearCart());
+      } catch (error) {
+        console.error("Error fetching order:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchOrder();
-  }, [dispatch]); // dispatch bağımlılık listesinde eklenir
+  }, [dispatch]);
 
-  if (!latestOrder) {
-    return <p>Yükleniyor...</p>;
+  if (isLoading) {
+    return <Loading />;
   }
 
-  const cart = latestOrder?.cartData;
+  if (!latestOrder) {
+    return <NotFound />;
+  }
 
+  const cart = latestOrder.cartData;
   return (
     <div className="bg-red min-h-screen flex flex-col items-center py-8">
       <div className="w-[100vh] flex flex-col items-center gap-4">

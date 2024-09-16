@@ -4,7 +4,7 @@ const API_BASE_URL = "https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products";
 
 export const fetchProducts = () => async (dispatch) => {
   dispatch(setFetchState(fetchStates.FETCHING));
-
+  dispatch(setLoading(true));
   try {
     const response = await fetch(API_BASE_URL);
     if (!response.ok) {
@@ -12,6 +12,7 @@ export const fetchProducts = () => async (dispatch) => {
     }
     const data = await response.json();
     dispatch(setFetchState(fetchStates.FETCHED));
+    dispatch(setLoading(false));
 
     const categories = data.map((category) => ({
       category_id: category.id,
@@ -90,4 +91,9 @@ export const setFetchState = (fetchState) => ({
 export const setSelectedCategory = (selectedCategory) => ({
   type: productActions.setSelectedCategory,
   payload: selectedCategory,
+});
+
+export const setLoading = (loading) => ({
+  type: productActions.setLoading,
+  payload: loading,
 });

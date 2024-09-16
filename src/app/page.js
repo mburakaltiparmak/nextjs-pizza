@@ -30,27 +30,24 @@ const sleep = (ms) => {
 
 const Page = () => {
   const dispatch = useAppDispatch();
-  const [isLoading, setIsLoading] = useState(true);
   const selectedCategory = useAppSelector(
     (store) => store.product.selectedCategory
   );
-  const fetchState = useAppSelector((store) => store.product.fetchState);
+  const loading = useAppSelector((store) => store.product.loading);
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
       if (selectedCategory) {
         await dispatch(fetchProductsById(selectedCategory));
       } else {
         await dispatch(fetchProducts());
       }
-      setIsLoading(false);
     };
 
     fetchData();
   }, [dispatch, selectedCategory]);
 
-  if (isLoading || fetchState === "FETCHING") {
+  if (loading) {
     return <Loading />;
   }
   return (
