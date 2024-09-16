@@ -21,6 +21,7 @@ import {
   fetchProductsById,
 } from "@/lib/store/actions/productActions";
 import Loading from "./loading";
+import { useToast } from "@/hooks/use-toast";
 
 const sleep = (ms) => {
   return new Promise((resolve) => {
@@ -30,6 +31,7 @@ const sleep = (ms) => {
 
 const Page = () => {
   const dispatch = useAppDispatch();
+  const { toast } = useToast();
   const selectedCategory = useAppSelector(
     (store) => store.product.selectedCategory
   );
@@ -46,6 +48,11 @@ const Page = () => {
 
     fetchData();
   }, [dispatch, selectedCategory]);
+  const buttonNotifyHandler = () => {
+    toast({
+      title: "You can customize this button.",
+    });
+  };
 
   if (loading) {
     return <Loading />;
@@ -94,7 +101,10 @@ const Page = () => {
               <p className="text-5xl font-bold font-Quattrocento w-[50%] text-left ">
                 {homeCards[0].text}
               </p>
-              <button className="buttonStyle bg-lightgray text-red hover:bg-yellow hover:text-darkgray hover:border-lightgray hover:border-2">
+              <button
+                onClick={buttonNotifyHandler}
+                className="buttonStyle bg-lightgray text-red hover:bg-yellow hover:text-darkgray hover:border-lightgray hover:border-2"
+              >
                 {homeCards[0].buttonText}
               </button>
             </span>
@@ -114,7 +124,10 @@ const Page = () => {
                 <p className="text-xl font-bold font-Barlow w-[75%] text-left ">
                   {homeCards[1].text}
                 </p>
-                <button className="buttonStyle bg-lightgray text-red hover:bg-yellow hover:text-darkgray hover:border-lightgray hover:border-2">
+                <button
+                  onClick={buttonNotifyHandler}
+                  className="buttonStyle bg-lightgray text-red hover:bg-yellow hover:text-darkgray hover:border-lightgray hover:border-2"
+                >
                   {homeCards[1].buttonText}
                 </button>
               </span>
@@ -133,7 +146,10 @@ const Page = () => {
                 <p className="text-xl text-darkgray font-bold font-Barlow w-[60%] text-left ">
                   {homeCards[2].text}
                 </p>
-                <button className="buttonStyle bg-lightgray text-red hover:bg-yellow hover:text-darkgray hover:border-red hover:border-2">
+                <button
+                  onClick={buttonNotifyHandler}
+                  className="buttonStyle bg-lightgray text-red hover:bg-yellow hover:text-darkgray hover:border-red hover:border-2"
+                >
                   {homeCards[2].buttonText}
                 </button>
               </span>
