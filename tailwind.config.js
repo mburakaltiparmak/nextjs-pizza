@@ -1,22 +1,21 @@
-const { Barlow, Quattrocento_Sans, Londrina_Solid, Satisfy, Quattrocento } = require('next/font/google');
-const defaultTheme = require('tailwindcss/defaultTheme');
+/** @type {import('tailwindcss').Config} */
+const defaultTheme = require("tailwindcss/defaultTheme");
 
 module.exports = {
   darkMode: ["class"],
   content: [
-    './pages/**/*.{js,jsx}',
-    './components/**/*.{js,jsx}',
-    './app/**/*.{js,jsx}',
-    './src/**/*.{js,jsx}',
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+
+    // Or if using `src` directory:
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   prefix: "",
   theme: {
     container: {
       center: true,
       padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
     },
     extend: {
       colors: {
@@ -53,19 +52,19 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        'yellow':'#FDC913',
-        'gray':'#5F5F5F',
-        'darkgray':'#292929',
-        'red':'#CE2829',
-        'lightgray':'#FAF7F2',
+        yellow: "#FDC913",
+        gray: "#5F5F5F",
+        darkgray: "#292929",
+        red: "#CE2829",
+        lightgray: "#FAF7F2",
       },
       fontFamily: {
         sans: ["var(--font-sans)", ...defaultTheme.fontFamily.sans],
-        Barlow: ["Barlow","sans-serif"],
-        Quattrocento_Sans: ["Quattrocento Sans","sans-serif"],
-        Quattrocento:["Quattrocento","sans-serif"],
-        Londrina_Solid: ["Londrina Solid","sans-serif"],
-        Satisfy: ["Satisfy","sans-serif"],
+        Barlow: ["Barlow", "sans-serif"],
+        Quattrocento_Sans: ["Quattrocento Sans", "sans-serif"],
+        Quattrocento: ["Quattrocento", "sans-serif"],
+        Londrina_Solid: ["Londrina Solid", "sans-serif"],
+        Satisfy: ["Satisfy", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -86,7 +85,17 @@ module.exports = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      backgroundImage: {
+        mvpBanner: "url('/assets/mvp-banner.png')",
+      },
+    },
+    screens: {
+      sm: "640px",
+      md: "768px",
+      lg: "1024px",
+      xl: "1280px",
+      "2xl": "1536px",
     },
   },
   plugins: [require("tailwindcss-animate")],
-}
+};

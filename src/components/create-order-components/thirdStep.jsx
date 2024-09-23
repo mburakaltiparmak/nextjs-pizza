@@ -28,10 +28,10 @@ import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import {
   clearCart,
-  createOrder,
   setOrderData,
   setPaymentData,
 } from "@/lib/store/actions/orderActions";
+import axios from "axios";
 
 const formSchema = z.object({
   cardNumber: z
@@ -47,24 +47,13 @@ const formSchema = z.object({
   cvc: z.string().min(3, { message: "CVC 3 haneli olmalıdır." }),
 });
 
-async function sendRequest(url, { arg }) {
-  return fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(arg),
-  }).then((res) => res.json());
-}
 
 const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
   const router = useRouter();
-  const { trigger, isMutating } = useSWRMutation(
-    "https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/order",
-    sendRequest
-  );
+  const baseURL = "https://66c0ce8bba6f27ca9a57a405.mockapi.io/api";
+  const instance = axios.create({baseURL});
 
   const {
     control,
@@ -84,7 +73,7 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   const userData = useAppSelector((state) => state.order.userData);
   const cartData = useAppSelector((state) => state.order.cart);
 
-  const createOrder = (paymentData) => {
+  const createOrder = async (paymentData) => {
     const orderData = {
       userData,
       paymentData,
@@ -95,10 +84,13 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
         title: "Siparişiniz alınıyor...",
       });
       setStep3(true);
+      const response = await instance.post("/order", orderData);
+      console.log("response", response.data);
       dispatch(setOrderData(orderData));
       //dispatch(clearCart());
       router.push("/success");
     } catch (error) {
+      console.error("Sipariş oluşturulurken bir hata oluştu.", error);
       toast({
         title: "Sipariş oluşturulurken bir hata oluştu.",
         description: error.message,
@@ -118,7 +110,7 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2 max-md:w-screen">
       <Card className="flex flex-col bg-lightgray">
         <CardHeader>
           <CardTitle>Ödeme Bilgileri</CardTitle>
@@ -234,7 +226,7 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
           </div>
         </CardContent>
       </Card>
-      <span className="flex flex-row justify-between">
+      <span className="flex flex-row justify-between max-md:px-4">
         <Button
           className="buttonStyle bg-yellow text-darkgray hover:bg-red hover:text-lightgray"
           onClick={handleBack}

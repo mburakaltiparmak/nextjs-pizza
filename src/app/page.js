@@ -58,22 +58,14 @@ const Page = () => {
     return <Loading />;
   }
   return (
-    <div className="flex flex-col justify-between items-center gap-2 text-lightgray">
-      <div
-        className="w-full"
-        style={{
-          backgroundImage: `url(${mvpBanner.src})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          height: "100vh",
-        }}
-      >
+    <div className="flex flex-col justify-between items-center gap-2  text-lightgray ">
+      <div className="bg-[url('../../assets/mvp-banner.png')] bg-cover bg-center h-screen w-full max-md:h-[50vh]">
         <div className="flex flex-col justify-start items-center gap-4 mt-4">
           <span className="flex flex-col justify-between items-center gap-4 text-center">
             <h4 className="font-Satisfy text-yellow text-2xl">
               fırsatı kaçırma
             </h4>
-            <h2 className="font-Barlow text-4xl tracking-tighter text-lightgray">
+            <h2 className="font-Barlow text-4xl tracking-tighter text-lightgray ">
               KOD ACIKTIRIR, <br /> PİZZA DOYURUR
             </h2>
 
@@ -86,15 +78,11 @@ const Page = () => {
         </div>
       </div>
       <div className="flex flex-col items-center gap-4">
-        <div className="flex flex-row justify-center gap-4 mt-4 w-[150vh]">
+        <div className="flex flex-row justify-center gap-4 mt-4 w-[150vh] max-md:flex-col max-md:w-full  max-md:items-center max-md:mt-0 max-md:gap-2">
           <div
-            className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md"
+            className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0  max-md:w-[40vh] bg-cover w-[60vh] bg-center  "
             style={{
               backgroundImage: `url(${homeCards[0].background.src})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              height: "60vh",
-              width: "100%",
             }}
           >
             <span className="m-4 flex flex-col items-start gap-4">
@@ -109,15 +97,11 @@ const Page = () => {
               </button>
             </span>
           </div>
-          <span className="flex flex-col gap-4">
+          <span className="flex flex-col gap-4 max-md:gap-2 max-md:items-center">
             <div
-              className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md"
+              className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0  bg-cover bg-center h-full w-[75vh] max-md:w-[40vh] "
               style={{
                 backgroundImage: `url(${homeCards[1].background.src})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                height: "100%",
-                width: "75vh",
               }}
             >
               <span className="m-4 flex flex-col items-start gap-4">
@@ -133,13 +117,9 @@ const Page = () => {
               </span>
             </div>
             <div
-              className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md"
+              className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0  bg-cover bg-center h-full w-[75vh] max-md:w-[40vh]"
               style={{
                 backgroundImage: `url(${homeCards[2].background.src})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                height: "100%",
-                width: "75vh",
               }}
             >
               <span className="m-4 flex flex-col items-start gap-4">
@@ -156,12 +136,12 @@ const Page = () => {
             </div>
           </span>
         </div>
-        <div className="flex flex-col items-center gap-8 my-16 ">
-          <span className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-8 my-16 max-md:my-0 max-md:w-screen max-md:px-8 " >
+          <span className="flex flex-col items-center gap-4 max-md:text-center ">
             <h3 className="font-Satisfy font-normal text-3xl text-red">
               en çok paketlenen menüler
             </h3>
-            <h4 className="text-darkgray font-semibold text-3xl font-Barlow">
+            <h4 className="text-darkgray font-semibold text-4xl font-Barlow ">
               Acıktıran Kodlara Doyuran Lezzetler
             </h4>
           </span>

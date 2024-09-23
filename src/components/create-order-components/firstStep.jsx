@@ -81,7 +81,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
             </div>
           </CardContent>
         </Card>
-        <span className="flex flex-row justify-end">
+        <span className="flex flex-row justify-end max-md:px-4">
           <Button
             type="submit"
             disabled={!isStep1Valid}

@@ -83,7 +83,7 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
           </p>
         </span>
       </Card>
-      <span className="flex flex-row justify-between">
+      <span className="flex flex-row justify-between max-md:px-4">
         <Button
           className="buttonStyle bg-yellow text-darkgray hover:bg-red hover:text-lightgray"
           onClick={handleBack}

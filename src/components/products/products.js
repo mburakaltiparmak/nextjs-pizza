@@ -36,7 +36,7 @@ const Products = () => {
   return (
     <div
       id="product-field"
-      className="grid grid-cols-3 place-items-center gap-8 w-[150vh] "
+      className="grid grid-cols-3 place-items-center gap-8 w-[150vh] max-md:w-screen max-md:flex max-md:flex-col max-md:py-4 "
     >
       {products.length > 0 ? (
         products.map((item, index) => (
