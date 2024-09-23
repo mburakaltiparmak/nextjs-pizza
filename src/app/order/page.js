@@ -173,7 +173,7 @@ const Page = () => {
           height={100}
         />
       </span>
-      <span className="flex flex-row items-center justify-center max-md:w-screen px-4">
+      <span className="flex flex-row items-center justify-center px-4">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -186,7 +186,7 @@ const Page = () => {
           </BreadcrumbList>
         </Breadcrumb>
       </span>
-      <div className="flex flex-col justify-between py-4 gap-4 w-[50%] max-md:w-screen max-md:px-8 font-Barlow">
+      <div className="flex flex-col justify-between py-4 gap-4 w-[50%] max-md:w-full max-md:px-8 font-Barlow">
         <h3 className="text-lg font-semibold">Custom Pizza</h3>
         <span className="flex flex-row justify-between items-center gap-4 max-md:gap-2">
           <p className="text-lg font-semibold">
@@ -216,14 +216,14 @@ const Page = () => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="flex flex-col items-center justify-between gap-8 w-[50%] max-md:w-screen max-md:px-8"
+          className="flex flex-col items-center justify-between gap-8 w-[50%] max-md:w-full max-md:px-8"
         >
-          <div className="flex flex-row justify-between items-center w-full max-md:w-screen max-md:px-8">
+          <div className="flex flex-row justify-between items-center w-full  max-md:px-8">
             <FormField
               control={form.control}
               name="boyut"
               render={({ field }) => (
-                <FormItem className="flex flex-col justify-between w-full max-md:w-screen">
+                <FormItem className="flex flex-col justify-between w-full ">
                   <FormLabel className="flex flex-row items-center">
                     <p className="text-darkgray "> Boyut Seç </p>{" "}
                     <p className="text-red">*</p>{" "}
@@ -264,7 +264,7 @@ const Page = () => {
               control={form.control}
               name="hamur"
               render={({ field }) => (
-                <FormItem className="w-full max-md:w-screen">
+                <FormItem className="w-full ">
                   <FormLabel className="flex flex-row items-center">
                     <p className="text-darkgray "> Hamur Seç </p>{" "}
                     <p className="text-red">*</p>{" "}
@@ -293,7 +293,7 @@ const Page = () => {
             control={form.control}
             name="items"
             render={({ field }) => (
-              <FormItem className="flex flex-col justify-between gap-4 w-full max-md:w-screen  max-md:items-center">
+              <FormItem className="flex flex-col justify-between gap-4 w-full max-md:items-center">
                 <FormLabel className="flex flex-row items-center ">
                   <p className="text-darkgray "> Ekstra Malzemeler </p>{" "}
                   <p className="text-red">*</p>{" "}
@@ -302,7 +302,7 @@ const Page = () => {
                   En fazla 10 malzeme seçebilirsiniz. 5₺
                 </FormLabel>
                 <FormControl>
-                  <div className="grid grid-cols-3 gap-4 place-items-start  max-md:w-screen max-md:grid-cols-2 max-md:gap-2 max-md:place-content-center max-md:px-8 ">
+                  <div className="grid grid-cols-3 gap-4 place-items-start max-md:w-full max-md:flex-1 max-md:flex-row max-md:flex-wrap max-md:gap-4 max-md:items-center max-md:justify-between ">
                     {items.map((item) => (
                       <div
                         key={item.id}
@@ -331,7 +331,7 @@ const Page = () => {
             )}
           />
 
-          <div className="flex flex-row justify-between gap-8 items-start w-full  max-md:w-screen max-md:flex-col max-md:items-center max-md:px-8">
+          <div className="flex flex-row justify-between gap-8 items-start w-full   max-md:flex-col max-md:items-center max-md:px-8">
             <span className="w-full border border-gray bg-lightgray rounded-lg p-4">
               <FormField
                 control={form.control}

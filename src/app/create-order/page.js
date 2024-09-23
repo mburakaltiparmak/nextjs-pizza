@@ -21,12 +21,11 @@ import { useRouter } from "next/navigation";
 const Page = () => {
   const { toast } = useToast();
   const router = useRouter();
-  const cart = useAppSelector((store)=>store.order.cart);
-  if(cart.length <= 0){
+  const cart = useAppSelector((store) => store.order.cart);
+  if (cart.length <= 0) {
     toast({
       title: "Sepetiniz boş.",
       description: "Anasayfaya yönlendiriliyorsunuz.",
-     
     });
     router.push("/");
   }
@@ -87,20 +86,23 @@ const Page = () => {
           height={100}
         />
       </span>
-      <div className="flex flex-col items-center gap-4 ">
-        <span className="grid grid-cols-3  w-[100vh] max-md:w-screen max-md:gap-2 gap-4 max-md:px-4 ">
+      <div className="flex flex-col items-center gap-4 w-full">
+        <span className="grid grid-cols-3 place-content-between w-full max-md:gap-2 gap-4 max-md:px-4 ">
           {steps.map((item, index) => (
             <Button
               disabled={item.disabled}
               key={index}
               className="flex flex-row gap-2 items-center bg-primary/90 border-2 border-transparent rounded-md text-lightgray py-8 hover:bg-lightgray hover:text-primary/90 hover:border-primary/90 disabled:bg-red disabled:text-lightgray disabled:border-transparent w-full"
             >
-              <FontAwesomeIcon className="text-2xl max-md:text-xl" icon={item.icon} />
+              <FontAwesomeIcon
+                className="text-2xl max-md:text-xl"
+                icon={item.icon}
+              />
               <p>{item.title}</p>
             </Button>
           ))}
         </span>
-        <span className="w-[100vh] max-md:w-screen">{displaySteps()}</span>
+        <span className="w-full max-md:px-4">{displaySteps()}</span>
       </div>
     </div>
   );

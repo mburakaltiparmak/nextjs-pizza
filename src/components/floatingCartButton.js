@@ -95,7 +95,7 @@ const FloatingCartButton = () => {
                     {localCart.map((item) => (
                       <span
                         key={item.product.product_id}
-                        className="flex flex-col justify-between items-start gap-4  max-md:gap-2 border-b pb-2"
+                        className="flex flex-col justify-between items-start gap-4  max-md:gap-2 border-b py-4"
                       >
                         <span className="flex flex-row justify-between items-center gap-4 max-md:gap-2 w-full max-md:w-auto">
                           <img

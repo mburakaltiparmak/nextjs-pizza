@@ -58,8 +58,8 @@ const Page = () => {
     return <Loading />;
   }
   return (
-    <div className="flex flex-col justify-between items-center gap-2  text-lightgray w-screen">
-      <div className="bg-[url('../../assets/mvp-banner.png')] bg-cover bg-center h-screen w-screen  max-md:h-[50vh]">
+    <div className="flex flex-col justify-between items-center gap-2  text-lightgray">
+      <div className="bg-[url('../../assets/mvp-banner.png')] bg-cover bg-center h-screen w-full max-md:h-[50vh]">
         <div className="flex flex-col justify-start items-center gap-4 mt-4">
           <span className="flex flex-col justify-between items-center gap-4 text-center">
             <h4 className="font-Satisfy text-yellow text-2xl">
@@ -136,7 +136,7 @@ const Page = () => {
             </div>
           </span>
         </div>
-        <div className="flex flex-col items-center gap-8 my-16 max-md:my-0 max-md:w-screen max-md:px-8 ">
+        <div className="flex flex-col items-center gap-8 my-16 max-md:my-0 max-md:px-8 ">
           <span className="flex flex-col items-center gap-4 max-md:text-center ">
             <h3 className="font-Satisfy font-normal text-3xl text-red">
               en çok paketlenen menüler

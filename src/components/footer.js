@@ -46,7 +46,7 @@ const InstagramPhoto = ({ img }) => (
 
 const Footer = () => {
   return (
-    <div className="flex flex-col items-center gap-4 py-2  bg-darkgray text-lightgray w-screen ">
+    <div className="flex flex-col items-center gap-4 py-2  bg-darkgray text-lightgray">
       <div className="flex flex-row justify-around  max-md:flex-col max-md:items-center  ">
         <div className="flex flex-col items-start justify-start gap-8 max-lg:gap-2">
           <span className="flex flex-col font-Londrina_Solid text-3xl w-[256px] h-[80px]">

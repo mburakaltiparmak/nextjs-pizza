@@ -65,7 +65,7 @@ export default function Page() {
   const cart = latestOrder.cartData;
   console.log("order", cart);
   return (
-    <div className="bg-red min-h-screen flex flex-col items-center py-8 w-screen">
+    <div className="bg-red min-h-screen flex flex-col items-center py-8 ">
       <div className="flex flex-col items-center gap-4">
         <h3 className="text-2xl font-normal font-Satisfy text-yellow">
           lezzetin yolda
@@ -74,7 +74,7 @@ export default function Page() {
           SİPARİŞ ALINDI
         </h2>
         <Separator orientation="horizontal" className="my-4 " />
-        <div className="flex flex-col items-center gap-4 text-lightgray">
+        <div className="flex flex-col items-center gap-4 text-lightgray w-full">
           {cart && cart.length > 0 ? (
             cart.map((item, index) => (
               <div
@@ -134,7 +134,7 @@ export default function Page() {
           )}
           <div
             id="success-order-summary"
-            className="flex flex-col justify-center items-start gap-4 border border-lightgray rounded-md p-8 text-base"
+            className="flex flex-col justify-center items-start gap-4 border border-lightgray rounded-md p-8 text-base w-full"
           >
             <p className="font-semibold">Sipariş Toplamı</p>
             {cart && cart.length > 0 && (

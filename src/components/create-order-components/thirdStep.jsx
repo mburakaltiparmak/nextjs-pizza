@@ -47,13 +47,12 @@ const formSchema = z.object({
   cvc: z.string().min(3, { message: "CVC 3 haneli olmalıdır." }),
 });
 
-
 const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
   const router = useRouter();
   const baseURL = "https://66c0ce8bba6f27ca9a57a405.mockapi.io/api";
-  const instance = axios.create({baseURL});
+  const instance = axios.create({ baseURL });
 
   const {
     control,
@@ -110,7 +109,7 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2 max-md:w-screen">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2 ">
       <Card className="flex flex-col bg-lightgray">
         <CardHeader>
           <CardTitle>Ödeme Bilgileri</CardTitle>
