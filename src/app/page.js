@@ -78,9 +78,9 @@ const Page = () => {
         </div>
       </div>
       <div className="flex flex-col items-center gap-4">
-        <div className="flex flex-row justify-center gap-4 mt-4 max-md:flex-col max-md:items-center max-md:mt-0 max-md:gap-2">
+        <div className="flex flex-row justify-center gap-4 mt-4 max-md:flex-col max-md:items-center max-md:mt-0 max-md:gap-2 w-full">
           <div
-            className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0 w-[30vh] max-md:w-[40vh] bg-cover bg-center"
+            className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0 w-full max-md:w-[40vh] bg-cover bg-center"
             style={{
               backgroundImage: `url(${homeCards[0].background.src})`,
             }}
