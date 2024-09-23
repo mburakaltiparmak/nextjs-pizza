@@ -5,6 +5,11 @@ import { addCart } from "@/lib/store/actions/orderActions";
 import { useToast } from "@/hooks/use-toast";
 import { fetchProductsById } from "@/lib/store/actions/productActions";
 import { useEffect } from "react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 const Products = () => {
   const { toast } = useToast();
   const dispatch = useAppDispatch();
@@ -45,11 +50,24 @@ const Products = () => {
             className="flex flex-col justify-between items-center text-center font-Barlow text-darkgray border border-lightgray shadow-darkgray shadow-md w-[250px] h-[350px] py-4"
             key={index}
           >
-            <img
-              className="object-cover h-[125px]"
-              src={item.product_img}
-              alt={item.product_name}
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <span className="cursor-pointer">
+                  <img
+                    className="object-cover h-[125px]"
+                    src={item.product_img}
+                    alt={item.product_name}
+                  />
+                </span>
+              </PopoverTrigger>
+              <PopoverContent>
+                <img
+                  className="object-cover h-[250px]"
+                  src={item.product_img}
+                  alt={item.product_name}
+                />
+              </PopoverContent>
+            </Popover>
             <p className="font-bold text-xl">{item.product_name}</p>
             <span className="flex flex-row justify-between gap-4 text-lg">
               <p>{item.rating}</p>
