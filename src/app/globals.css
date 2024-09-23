@@ -74,5 +74,5 @@
   @apply border border-darkgray rounded-xl w-[40px] h-[40px] bg-lightgray text-gray  hover:text-lightgray hover:bg-red data-[state=on]:bg-yellow;
 }
 .optionStyle {
-  @apply flex flex-row justify-center max-md:w-[100px] items-center gap-2 text-darkgray font-semibold  border border-transparent hover:cursor-pointer hover:text-lightgray hover:bg-darkgray;
+  @apply flex flex-row justify-center max-md:w-[150px] items-center gap-2 text-darkgray font-semibold  border border-transparent hover:cursor-pointer hover:text-lightgray hover:bg-darkgray;
 }

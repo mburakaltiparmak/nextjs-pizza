@@ -42,7 +42,7 @@ export default function Page() {
       try {
         const fetchedOrder = await getLatestOrder();
         setLatestOrder(fetchedOrder);
-        
+
         dispatch(clearCart());
       } catch (error) {
         console.error("Error fetching order:", error);
@@ -63,24 +63,24 @@ export default function Page() {
   }
 
   const cart = latestOrder.cartData;
-  console.log("order",cart);
+  console.log("order", cart);
   return (
-    <div className="bg-red min-h-screen flex flex-col items-center py-8">
-      <div className="w-[100vh] flex flex-col items-center gap-4 max-md:w-screen">
+    <div className="bg-red min-h-screen flex flex-col items-center py-8 w-screen">
+      <div className="flex flex-col items-center gap-4">
         <h3 className="text-2xl font-normal font-Satisfy text-yellow">
           lezzetin yolda
         </h3>
         <h2 className="font-Barlow font-extralight text-5xl tracking-tighter text-lightgray">
           SİPARİŞ ALINDI
         </h2>
-        <Separator orientation="horizontal" className="w-[100vh] my-4 max-md:w-[35vh]" />
+        <Separator orientation="horizontal" className="my-4 " />
         <div className="flex flex-col items-center gap-4 text-lightgray">
           {cart && cart.length > 0 ? (
             cart.map((item, index) => (
               <div
                 id="success-order-product"
                 key={index}
-                className="flex flex-col items-start gap-4 w-[75vh] max-md:w-[35vh]"
+                className="flex flex-col items-start gap-4 w-full "
               >
                 <h4 id="success-order-name" className="text-base font-semibold">
                   {item.product.product_name}
@@ -126,7 +126,7 @@ export default function Page() {
                     </div>
                   )}
                 </div>
-                <Separator className="w-[75vh] max-md:w-[35vh]" orientation="horizontal" />
+                <Separator className="" orientation="horizontal" />
               </div>
             ))
           ) : (
@@ -134,7 +134,7 @@ export default function Page() {
           )}
           <div
             id="success-order-summary"
-            className="flex flex-col justify-center items-start gap-4 border border-lightgray rounded-md w-[75vh] p-8 max-md:w-[35vh]  text-base"
+            className="flex flex-col justify-center items-start gap-4 border border-lightgray rounded-md p-8 text-base"
           >
             <p className="font-semibold">Sipariş Toplamı</p>
             {cart && cart.length > 0 && (

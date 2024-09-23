@@ -30,9 +30,8 @@ const FloatingCartButton = () => {
   const router = useRouter();
   const cart = useAppSelector((store) => store.order.cart);
 
- 
   const [localCart, setLocalCart] = useState(cart);
-  console.log("cart : ",localCart);
+  console.log("cart : ", localCart);
 
   useEffect(() => {
     setLocalCart(cart);
@@ -77,18 +76,18 @@ const FloatingCartButton = () => {
     <div className="fixed top-4 right-4 z-50">
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <div className="bg-yellow text-red p-3 rounded-full shadow-lg hover:bg-darkred hover:border-2 hover:border-lightgray transition-colors duration-200 cursor-pointer max-md:w-auto w-full flex justify-center items-center">
+          <div className="bg-yellow text-red p-3 rounded-full shadow-lg hover:bg-darkred hover:border-2 hover:border-lightgray transition-colors duration-200 cursor-pointer max-md:w-auto  flex justify-center items-center">
             <FontAwesomeIcon icon={faShoppingCart} />
             <span className="ml-2">
               {localCart.reduce((sum, item) => sum + item.count, 0)}
             </span>
           </div>
         </AlertDialogTrigger>
-        <AlertDialogContent className="max-w-3xl w-full max-md:fixed max-md:bottom-0 max-md:top-1/3  max-md:max-h-screen  max-md:rounded-none max-md:flex max-md:flex-col">
+        <AlertDialogContent className="max-w-3xl w-full max-md:fixed max-md:bottom-0 max-md:top-1/3 max-md:h-fit max-md:rounded-none max-md:flex max-md:flex-col max-md:justify-center">
           <AlertDialogHeader>
             <AlertDialogTitle>Sepetiniz</AlertDialogTitle>
             <AlertDialogDescription>
-              <span className="block max-h-[60vh] max-md:max-h-screen overflow-y-auto">
+              <span className="block max-h-[60vh] overflow-y-auto">
                 {localCart.length === 0 ? (
                   <span>Sepetiniz boş.</span>
                 ) : (

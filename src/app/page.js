@@ -58,8 +58,8 @@ const Page = () => {
     return <Loading />;
   }
   return (
-    <div className="flex flex-col justify-between items-center gap-2  text-lightgray ">
-      <div className="bg-[url('../../assets/mvp-banner.png')] bg-cover bg-center h-screen w-full max-md:h-[50vh]">
+    <div className="flex flex-col justify-between items-center gap-2  text-lightgray w-screen">
+      <div className="bg-[url('../../assets/mvp-banner.png')] bg-cover bg-center h-screen w-screen  max-md:h-[50vh]">
         <div className="flex flex-col justify-start items-center gap-4 mt-4">
           <span className="flex flex-col justify-between items-center gap-4 text-center">
             <h4 className="font-Satisfy text-yellow text-2xl">
@@ -78,9 +78,9 @@ const Page = () => {
         </div>
       </div>
       <div className="flex flex-col items-center gap-4">
-        <div className="flex flex-row justify-center gap-4 mt-4 w-[150vh] max-md:flex-col max-md:w-full  max-md:items-center max-md:mt-0 max-md:gap-2">
+        <div className="flex flex-row justify-center gap-4 mt-4 max-md:flex-col max-md:items-center max-md:mt-0 max-md:gap-2">
           <div
-            className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0  max-md:w-[40vh] bg-cover w-[60vh] bg-center  "
+            className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0 w-[30vh] max-md:w-[40vh] bg-cover bg-center"
             style={{
               backgroundImage: `url(${homeCards[0].background.src})`,
             }}
@@ -99,7 +99,7 @@ const Page = () => {
           </div>
           <span className="flex flex-col gap-4 max-md:gap-2 max-md:items-center">
             <div
-              className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0  bg-cover bg-center h-full w-[75vh] max-md:w-[40vh] "
+              className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0  bg-cover bg-center h-full w-[40vh] max-md:w-[40vh] "
               style={{
                 backgroundImage: `url(${homeCards[1].background.src})`,
               }}
@@ -117,7 +117,7 @@ const Page = () => {
               </span>
             </div>
             <div
-              className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0  bg-cover bg-center h-full w-[75vh] max-md:w-[40vh]"
+              className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0  bg-cover bg-center h-full w-[40vh] max-md:w-[40vh]"
               style={{
                 backgroundImage: `url(${homeCards[2].background.src})`,
               }}
@@ -136,7 +136,7 @@ const Page = () => {
             </div>
           </span>
         </div>
-        <div className="flex flex-col items-center gap-8 my-16 max-md:my-0 max-md:w-screen max-md:px-8 " >
+        <div className="flex flex-col items-center gap-8 my-16 max-md:my-0 max-md:w-screen max-md:px-8 ">
           <span className="flex flex-col items-center gap-4 max-md:text-center ">
             <h3 className="font-Satisfy font-normal text-3xl text-red">
               en çok paketlenen menüler

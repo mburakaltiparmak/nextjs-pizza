@@ -65,7 +65,7 @@ const Categories = () => {
       id="categories"
       className="flex flex-col justify-between items-center gap-8 "
     >
-      <div className="grid grid-cols-6 grid-flow-row mt-4 w-[150vh] max-md:w-screen max-md:grid-cols-2 max-md:place-items-center">
+      <div className="grid grid-cols-6 grid-flow-row mt-4 max-md:grid-cols-2 max-md:place-items-center max-md:gap-4">
         {categories.length > 0 ? (
           categories.map((item, index) => (
             <button
