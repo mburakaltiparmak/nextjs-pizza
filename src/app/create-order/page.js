@@ -86,13 +86,13 @@ const Page = () => {
           height={100}
         />
       </span>
-      <div className="flex flex-col items-center gap-4 w-full">
-        <span className="grid grid-cols-3 place-content-between w-full max-md:gap-2 gap-4 max-md:px-4 ">
+      <div className="flex flex-col items-center gap-4 ">
+        <span className="grid grid-cols-3 place-content-between w-full max-w-[50vh] max-md:w-fit max-md:gap-2 gap-4 max-md:px-4 ">
           {steps.map((item, index) => (
             <Button
               disabled={item.disabled}
               key={index}
-              className="flex flex-row gap-2 items-center bg-primary/90 border-2 border-transparent rounded-md text-lightgray py-8 hover:bg-lightgray hover:text-primary/90 hover:border-primary/90 disabled:bg-red disabled:text-lightgray disabled:border-transparent w-full"
+              className="flex flex-row gap-2 max-md:flex-col items-center bg-primary/90 border-2 border-transparent rounded-md text-lightgray py-8 hover:bg-lightgray hover:text-primary/90 hover:border-primary/90 disabled:bg-red disabled:text-lightgray disabled:border-transparent w-full"
             >
               <FontAwesomeIcon
                 className="text-2xl max-md:text-xl"
@@ -102,7 +102,9 @@ const Page = () => {
             </Button>
           ))}
         </span>
-        <span className="w-full max-md:px-4">{displaySteps()}</span>
+        <span className="max-w-[50vh] max-md:w-fit max-md:px-4">
+          {displaySteps()}
+        </span>
       </div>
     </div>
   );
