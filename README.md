@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Pizza Restoranı Web Sitesi
 
-## Getting Started
+Bu proje, **Next.js** ile geliştirilmiş bir Pizza Restoranı web sitesidir. Kullanıcıların pizza sipariş edebileceği, ürünleri sepetlerine ekleyip sipariş işlemlerini tamamlayabileceği dinamik alışveriş özellikleri sunar. Proje, kullanıcı deneyimini geliştirmek amacıyla **Tailwind CSS** ve **ShadcnUI** kullanılarak optimize edilmiş ve **React Redux** ile verimli durum yönetimi sağlanmıştır.
 
-First, run the development server:
+## Proje Özeti
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Pizza Restoranı web sitesi, modern web teknolojilerini kullanarak aşağıdaki özellikleri sunar:
+
+- Kullanıcı dostu ve mobil uyumlu bir arayüz
+- Pizza çeşitlerini görüntüleme ve dinamik ürün filtreleme
+- Ürünleri sepete ekleyebilme, sepet içeriğini yönetebilme
+- Sipariş tamamlama (checkout) süreci
+- React Redux ile gelişmiş durum yönetimi
+- Tailwind CSS ve ShadcnUI ile özelleştirilebilir ve modern tasarım
+- Hızlı yükleme süreleri ve cihazlar arasında kesintisiz uyumlu deneyim
+
+## Kullanılan Teknolojiler
+
+- **Next.js**: React tabanlı bir framework, sunucu tarafında render edilen dinamik web uygulamaları geliştirmek için kullanıldı.
+- **Tailwind CSS**: CSS frameworkü kullanılarak esnek ve hızlı bir şekilde stil oluşturuldu.
+- **ShadcnUI**: UI bileşenleri için ShadcnUI kullanılarak modern ve estetik bir kullanıcı arayüzü geliştirildi.
+- **React Redux**: Uygulamanın durum yönetimi için verimli bir şekilde kullanıldı, özellikle alışveriş sepeti ve ürün yönetimi süreçlerinde.
+- **SWR**: API isteklerini yönetmek için Next.js'in SWR kütüphanesi kullanıldı, bu sayede veri güncellemeleri optimize edildi.
+
+## Özellikler
+
+- **Pizza Ürünleri Görüntüleme**: Farklı kategorilerdeki pizzaları görüntüleyin ve filtreleyin.
+- **Dinamik Sepet Yönetimi**: Ürünleri sepete ekleyin, miktarları ayarlayın ve siparişi tamamlayın.
+- **Kullanıcı Dostu Deneyim**: Tüm cihazlar için optimize edilmiş, duyarlı (responsive) tasarım.
+- **Verimli Durum Yönetimi**: Redux ile uygulama durumu efektif bir şekilde yönetildi.
+- **SEO Optimizasyonu**: Next.js'in sunucu tarafı render (SSR) ve statik site oluşturma (SSG) özellikleri kullanılarak SEO dostu hale getirildi.
+
+## Kurulum ve Çalıştırma
+
+1. Projeyi klonlayın:
+
+   ```bash
+   git clone https://github.com/mburakaltiparmak/nextjs-pizza
+   ```
+
+2. Gerekli bağımlılıkları yükleyin:
+
+   ```bash
+   cd nextjs-pizza
+   npm install
+   ```
+
+3. Geliştirme ortamını başlatın:
+
+   ```bash
+   npm run dev
+   ```
+
+4. Tarayıcınızda `http://localhost:3000` adresine gidin ve projeyi keşfedin.
+
+## Proje Yapısı
+
+```
+/components     # UI bileşenleri
+/pages          # Next.js sayfaları
+/lib            # Redux store ve slice'lar
+/globals.css    # Tailwind CSS ve global stiller
+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Katkıda Bulunma
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Bu projeye katkıda bulunmak isterseniz, lütfen önce bir pull request oluşturun. Herhangi bir hata bildirimi veya öneri için de issues kısmını kullanabilirsiniz.
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## Lisans
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Bu proje MIT lisansı altında lisanslanmıştır. Daha fazla bilgi için `LICENSE` dosyasına bakabilirsiniz.
