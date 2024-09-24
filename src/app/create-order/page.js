@@ -87,7 +87,7 @@ const Page = () => {
         />
       </span>
       <div className="flex flex-col items-center gap-4 ">
-        <span className="grid grid-cols-3 place-content-between w-full max-w-[50vh] max-md:w-fit max-md:gap-2 gap-4 max-md:px-4 ">
+        <span className="grid grid-cols-3 place-content-between max-w-[50vh] max-md:gap-2 gap-4 max-md:px-4 ">
           {steps.map((item, index) => (
             <Button
               disabled={item.disabled}
@@ -102,7 +102,7 @@ const Page = () => {
             </Button>
           ))}
         </span>
-        <span className="max-w-[50vh] max-md:w-fit max-md:px-4">
+        <span className="max-w-[50vh] w-full max-md:px-4">
           {displaySteps()}
         </span>
       </div>

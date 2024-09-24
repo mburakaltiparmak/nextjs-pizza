@@ -38,26 +38,35 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
           cartArray.map((item, index) => (
             <CardContent
               key={index}
-              className="space-y-2 flex flex-col gap-4 text-base"
+              className="space-y-2 flex flex-col gap-4 text-base max-sm:text-sm "
             >
-              <div className="grid grid-cols-3 place-content-between place-items-center gap-2 ">
-                <span className="grid grid-cols-4 place-items-center">
+              <div className="flex flex-row items-center justify-between gap-2 ">
+                <span className="flex flex-row items-center justify-between gap-2 max-sm:flex-col">
                   <img
                     src={item.product.product_img}
                     alt={item.product.product_name}
                     className="w-[64px] h-[64px] object-cover"
                   />
-                  <Separator className="h-[64px]" orientation="vertical" />
+                  <Separator
+                    className="h-[64px] max-sm:hidden"
+                    orientation="vertical"
+                  />
                   <span className="flex flex-row gap-2 items-center">
                     <p>{item.count}</p> <p>Adet</p>{" "}
                   </span>
-                  <Separator className="h-[64px]" orientation="vertical" />
+                  <Separator
+                    className="h-[64px] max-sm:hidden"
+                    orientation="vertical"
+                  />
                 </span>
-                <span className="flex flex-row gap-4 items-center ">
+                <span className="flex flex-row gap-4 items-center  max-sm:text-center ">
                   <span className="w-[128px] " htmlFor="name">
                     {item.product.product_name}
                   </span>
-                  <Separator className="h-[64px]" orientation="vertical" />
+                  <Separator
+                    className="h-[64px] max-sm:hidden"
+                    orientation="vertical"
+                  />
                 </span>
 
                 <span htmlFor="price">{item.product.price} ₺</span>
@@ -83,7 +92,7 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
           </p>
         </span>
       </Card>
-      <span className="flex flex-row justify-between max-md:px-4">
+      <span className="flex flex-row justify-between">
         <Button
           className="buttonStyle bg-yellow text-darkgray hover:bg-red hover:text-lightgray"
           onClick={handleBack}

@@ -150,7 +150,7 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
               )}
             />
           </div>
-          <div className="grid grid-cols-2 place-content-center gap-4 ">
+          <div className="grid grid-cols-2 place-content-center gap-4 max-md:flex max-md:flex-col ">
             <div className="space-y-2 flex flex-col gap-2">
               <Label className="" htmlFor="expiration-date">
                 Son Kullanma Tarihi
