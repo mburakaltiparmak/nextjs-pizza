@@ -92,7 +92,7 @@ const Page = () => {
             <Button
               disabled={item.disabled}
               key={index}
-              className="flex flex-row gap-2 max-md:flex-col items-center bg-primary/90 border-2 border-transparent rounded-md text-lightgray py-8 hover:bg-lightgray hover:text-primary/90 hover:border-primary/90 disabled:bg-red disabled:text-lightgray disabled:border-transparent w-full"
+              className="flex flex-col gap-2 items-center bg-primary/90 border-2 border-transparent rounded-md text-lightgray py-8 hover:bg-lightgray hover:text-primary/90 hover:border-primary/90 disabled:bg-red disabled:text-lightgray disabled:border-transparent w-full"
             >
               <FontAwesomeIcon
                 className="text-2xl max-md:text-xl"
