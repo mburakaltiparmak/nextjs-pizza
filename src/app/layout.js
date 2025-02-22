@@ -1,50 +1,31 @@
 import "./globals.css";
-import { Inter as FontSans } from "next/font/google";
-import { cn } from "@/lib/utils";
+import { Inter } from "next/font/google";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import StoreProvider from "./StoreProvider";
 import { Toaster } from "@/components/ui/toaster";
 import FloatingCartButton from "@/components/floatingCartButton";
-const fontSans = FontSans({
+
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-sans",
+  display: "swap",
 });
+
 export const metadata = {
   title: "Teknolojik Yemekler",
   description: "made by burak altiparmak",
 };
+
 export default function RootLayout({ children }) {
   return (
-    <StoreProvider>
-      <html lang="en">
-        <head>
-          <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1.0"
-          />
-          <link
-            href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,100..."
-            rel="stylesheet"
-          />
-        </head>
-        <body
-          className={cn(
-            "min-h-screen bg-background font-sans antialiased",
-            fontSans.variable
-          )}
-        >
-          <header>
-            <Header />
-          </header>
-          <FloatingCartButton />
-          {children}
-          <Toaster />
-          <footer>
-            <Footer />
-          </footer>
-        </body>
-      </html>
-    </StoreProvider>
+    <html lang="en">
+      <body>
+        <StoreProvider>
+          <div className="min-h-screen bg-background antialiased">
+            {children}
+          </div>
+        </StoreProvider>
+      </body>
+    </html>
   );
 }
