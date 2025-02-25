@@ -4,9 +4,14 @@ import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { 
   fetchProducts, 
-  fetchCategories 
+  fetchCategories, 
+  setLoading,
+  setError
 } from "@/lib/store/actions/productActionsFromApi";
 import { instance } from "@/lib/hooks";
+import { 
+  postNewProduct
+} from "@/lib/store/actions/productActionsFromApi";
 import { 
   Plus,
   Edit,
@@ -26,6 +31,7 @@ const Page = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [searchTerm, setSearchTerm] = useState("");
+  
   const [filterCategory, setFilterCategory] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -50,7 +56,7 @@ const Page = () => {
   const loading = useAppSelector((state) => state.productAPI.loading);
   const error = useAppSelector((state) => state.productAPI.error);
 
-  useEffect(() => {
+  useEffect(() => {    
     dispatch(fetchProducts());
     dispatch(fetchCategories());
   }, [dispatch]);
@@ -130,71 +136,30 @@ const Page = () => {
   const removeNotification = (id) => {
     setNotifications(prev => prev.filter(notification => notification.id !== id));
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setFormSubmitting(true);
-
+    dispatch(setLoading(true));
+    dispatch(setError(""));
     try {
-      const formData = new FormData();
-      formData.append('name', newProduct.name);
-      formData.append('price', newProduct.price);
-      formData.append('stock', newProduct.stock);
-      formData.append('rating', newProduct.rating);
-      formData.append('categoryId', newProduct.categoryId);
-      
-      if (newProduct.image) {
-        formData.append('image', newProduct.image);
-      }
-
-      let response;
-      
-      if (editingProduct) {
-        // Update product
-        response = await instance.put(`/product/${editingProduct.id}`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        addNotification("Ürün başarıyla güncellendi");
-      } else {
-        // Add new product
-        response = await instance.post('/product', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        addNotification("Ürün başarıyla eklendi");
-      }
-      
-      // Update Redux store
-      dispatch(fetchProducts());
-      
-      closeModal();
-    } catch (error) {
-      console.error("API hatası:", error);
-      addNotification(error.response?.data?.message || "Bir hata oluştu", 'error');
-    } finally {
-      setFormSubmitting(false);
+      const formData = {
+        name : product_name,
+        rating : product_rating,
+        stock : product_stock,
+        price : product_price,
+        image : product_image,
+        categoryId : product_categoryId,
+      };
+      console.log("formData : \n",formData);
     }
-  };
-
-  const handleDelete = async () => {
-    if (!productToDelete) return;
-    
-    try {
-      await instance.delete(`/product/${productToDelete.id}`);
-      addNotification("Ürün başarıyla silindi");
-      
-      // Update Redux store
-      dispatch(fetchProducts());
-      
-      closeDeleteModal();
-    } catch (error) {
-      console.error("Silme hatası:", error);
-      addNotification(error.response?.data?.message || "Ürün silinirken bir hata oluştu", 'error');
+    catch (err){
+      console.error("error occured while posting products data",err);
+      dispatch(setError("error occured while posting products data"));
     }
-  };
+    finally {
+      dispatch(setLoading(false));
+    }
+
+  }
 
   // Filter products
   const filteredProducts = useMemo(() => {
@@ -354,7 +319,7 @@ const Page = () => {
           />
         }
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} >
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Ürün Adı
@@ -362,7 +327,7 @@ const Page = () => {
             <input
               type="text"
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red focus:border-transparent"
-              value={newProduct.name}
+              value={product_name}
               onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
               required
             />
@@ -374,7 +339,7 @@ const Page = () => {
             </label>
             <select
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red focus:border-transparent"
-              value={newProduct.categoryId}
+              value={product_categoryId}
               onChange={(e) => setNewProduct({...newProduct, categoryId: e.target.value})}
               required
             >
@@ -448,7 +413,7 @@ const Page = () => {
       <ConfirmationModal
         isOpen={deleteModalOpen}
         onClose={closeDeleteModal}
-        onConfirm={handleDelete}
+        onConfirm={""}
         title="Ürünü Sil"
         message={`${productToDelete?.name} ürününü silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
       />

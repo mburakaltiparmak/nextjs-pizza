@@ -93,7 +93,17 @@ export const fetchCategoryById = (id) => async (dispatch) => {
     return null;
   }
 };
-
+export const postNewProduct = (formData) => async (dispatch) => {
+  dispatch(setLoading(true));
+  dispatch(setError(null));
+  try {
+    const res = await instance.post("/product",formData);
+    const data = res.data;
+  }
+  catch (err) {
+    handleApiError(err,dispatch);
+  }
+}
 // Action creators
 export const setProducts = (products) => ({
   type: productActions.setProductList,

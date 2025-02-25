@@ -14,7 +14,7 @@ export const Modal = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 font-Barlow">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-md mx-4">
-        <div className="p-6 border-b">
+        <div className="px-4 py-2 border-b">
           <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
         </div>
         <div className="p-6">

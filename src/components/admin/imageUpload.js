@@ -6,7 +6,7 @@ const ImageUpload = ({
   onChange, 
   maxSize = 2 * 1024 * 1024, // Default 2MB
   label = "Resim", 
-  height = "h-48",
+  height = "h-24",
   onError
 }) => {
   const handleImageChange = (e) => {
