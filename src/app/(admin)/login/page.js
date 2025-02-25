@@ -58,10 +58,10 @@ const Page = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
+    <div className="flex min-h-screen bg-red items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full bg-yellow max-w-md space-y-8 border-2 shadow-black border-white rounded-md p-8  ">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight font-Barlow text-red">
             Admin Girişi
           </h2>
         </div>
@@ -72,7 +72,7 @@ const Page = () => {
           </div>
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6 font-Quattrocento_Sans" onSubmit={handleSubmit}>
           <div className="-space-y-px rounded-md shadow-sm">
             <div>
               <label htmlFor="username" className="sr-only">

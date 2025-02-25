@@ -39,6 +39,7 @@
     "react-dom": "^18",
     "react-hook-form": "^7.52.2",
     "react-redux": "^9.1.2",
+    "recharts": "^2.15.1",
     "redux": "^5.0.1",
     "redux-logger": "^3.0.6",
     "swr": "^2.2.5",

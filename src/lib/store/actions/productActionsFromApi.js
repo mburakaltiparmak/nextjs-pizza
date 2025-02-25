@@ -16,6 +16,8 @@ export const fetchProducts = () => async (dispatch) => {
   
   try {
     const res = await instance.get("/product");
+    const data = res.data;
+    console.log("product data : \n",data);
     dispatch(setProducts(res.data));
     dispatch(setFetchState(fetchStates.FETCHED));
     dispatch(setLoading(false));

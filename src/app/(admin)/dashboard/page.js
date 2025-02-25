@@ -3,17 +3,22 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { fetchCategoriesWithProducts } from "@/lib/store/actions/productActionsFromApi";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { ListOrdered, Package, TrendingUp } from 'lucide-react';
 
-const Page = () => {
+// Components
+import AdminLayout from "@/components/admin/adminLayout";
+import StatCard from "@/components/admin/statCard";
+const DashboardPage = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   
-  // Redux durumunu tek seferde alalım
+  // Redux durumunu alalım
   const categories = useAppSelector((state) => state.productAPI.categories);
   const loading = useAppSelector((state) => state.productAPI.loading);
   const error = useAppSelector((state) => state.productAPI.error);
   
-  // useMemo kullanarak gereksiz hesaplamaları önleyelim
+  // İstatistikler
   const statistics = useMemo(() => {
     if (!categories || !Array.isArray(categories)) {
       return { totalCategories: 0, totalProducts: 0, totalStock: 0 };
@@ -21,13 +26,25 @@ const Page = () => {
     
     let totalProducts = 0;
     let totalStock = 0;
+    let categoryData = [];
     
     categories.forEach(category => {
       if (category.products && Array.isArray(category.products)) {
-        totalProducts += category.products.length;
+        const productCount = category.products.length;
+        totalProducts += productCount;
         
+        let categoryStock = 0;
         category.products.forEach(product => {
-          totalStock += product.stock || 0;
+          categoryStock += product.stock || 0;
+        });
+        
+        totalStock += categoryStock;
+        
+        // Kategori verilerini grafik için hazırla
+        categoryData.push({
+          name: category.name,
+          ürünSayısı: productCount,
+          stokMiktarı: categoryStock
         });
       }
     });
@@ -35,7 +52,8 @@ const Page = () => {
     return {
       totalCategories: categories.length,
       totalProducts,
-      totalStock
+      totalStock,
+      categoryData
     };
   }, [categories]);
 
@@ -43,80 +61,106 @@ const Page = () => {
     dispatch(fetchCategoriesWithProducts());
   }, [dispatch]);
 
-  const handleLogout = (e) => {
-    e.preventDefault();
-    router.push("/login");
-  };
-
   return (
-    <div>
-      {/* Navbar */}
-      <nav className="bg-red border-b border-gray-200 font-Barlow px-4 py-2.5 fixed left-0 right-0 top-0 z-50">
-        <div className="flex flex-wrap justify-between items-center">
-          <div className="flex justify-start items-center">
-            <span className="text-xl font-bold">Admin Panel</span>
-          </div>
-          <div className="flex items-center lg:order-2">
-            <button
-              onClick={handleLogout}
-              className="text-white bg-red-500 hover:bg-red-600 font-medium rounded-lg text-sm px-4 py-2"
-            >
-              Çıkış Yap
-            </button>
+    <AdminLayout 
+      title="Dashboard"
+      activePage="dashboard"
+      loading={loading}
+      error={error}
+    >
+      {/* İstatistik Kartları */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <StatCard
+          title="Toplam Kategori"
+          value={statistics.totalCategories}
+          unit="Kategori"
+          icon={<ListOrdered size={20} />}
+          bgColor="bg-blue-50"
+          textColor="text-blue-500"
+        />
+
+        <StatCard
+          title="Toplam Ürün"
+          value={statistics.totalProducts}
+          unit="Ürün"
+          icon={<Package size={20} />}
+          bgColor="bg-green-50"
+          textColor="text-green-500"
+        />
+
+        <StatCard
+          title="Toplam Stok"
+          value={statistics.totalStock}
+          unit="Adet"
+          icon={<TrendingUp size={20} />}
+          bgColor="bg-purple-50"
+          textColor="text-purple-500"
+        />
+      </div>
+
+      {/* Grafik Bölümü */}
+      {statistics.categoryData.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-8">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 font-Barlow">Kategori Analizi</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={statistics.categoryData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="ürünSayısı" fill="#4FD1C5" name="Ürün Sayısı" />
+                <Bar dataKey="stokMiktarı" fill="#9F7AEA" name="Stok Miktarı" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
-      </nav>
+      )}
 
-      {/* Sidebar */}
-      <aside className="fixed left-0 top-16 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0">
-        <div className="h-full px-3 py-4 overflow-y-auto bg-white border-r border-gray-200">
-          <ul className="space-y-2 font-medium">
-            <li>
-              <a href="/dashboard" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 bg-gray-200">
-                <span>Dashboard</span>
-              </a>
-            </li>
-            <li>
-              <a href="/categories" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
-                <span>Kategoriler</span>
-              </a>
-            </li>
-            <li>
-              <a href="/products" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
-                <span>Ürünler</span>
-              </a>
-            </li>
-          </ul>
+      {/* Kategori Listesi */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div className="p-6 border-b">
+          <h3 className="text-lg font-semibold text-gray-800 font-Barlow">Kategoriler</h3>
         </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="p-4 sm:ml-64">
-        <div className="p-4 border-2 border-gray-200 rounded-lg mt-14">
-          {loading ? (
-            <div className="text-center p-4">Yükleniyor...</div>
-          ) : error ? (
-            <div className="text-center p-4 text-red-500">Hata: {error}</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-              <div className="bg-white rounded-lg shadow p-4">
-                <h3 className="text-xl font-bold mb-2">Toplam Kategori</h3>
-                <p className="text-3xl">{statistics.totalCategories}</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <h3 className="text-xl font-bold mb-2">Toplam Ürün</h3>
-                <p className="text-3xl">{statistics.totalProducts}</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <h3 className="text-xl font-bold mb-2">Toplam Stok</h3>
-                <p className="text-3xl">{statistics.totalStock}</p>
-              </div>
-            </div>
-          )}
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Kategori Adı
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ürün Sayısı
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Toplam Stok
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {statistics.categoryData.map((category, index) => (
+                <tr key={index} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {category.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {category.ürünSayısı}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {category.stokMiktarı}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 
-export default Page;
+export default DashboardPage;
