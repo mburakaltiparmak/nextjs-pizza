@@ -1,14 +1,8 @@
 "use client";
-import { Trash2 } from 'lucide-react';
+import { Trash2 } from "lucide-react";
 
 // Base Modal Component (tüm modaller için temel bileşen)
-export const Modal = ({ 
-  isOpen, 
-  onClose, 
-  title, 
-  children,
-  footer
-}) => {
+export const Modal = ({ isOpen, onClose, title, children, footer }) => {
   if (!isOpen) return null;
 
   return (
@@ -17,9 +11,7 @@ export const Modal = ({
         <div className="px-4 py-2 border-b">
           <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
         </div>
-        <div className="px-4">
-          {children}
-        </div>
+        <div className="px-4">{children}</div>
         {footer && (
           <div className="p-2 border-t flex justify-end space-x-3">
             {footer}
@@ -41,7 +33,7 @@ export const ConfirmationModal = ({
   confirmButtonText = "Evet",
   cancelButtonText = "İptal",
   icon = <Trash2 className="h-6 w-6 text-red-600" />,
-  isLoading = false
+  isLoading = false,
 }) => {
   if (!isOpen) return null;
 
@@ -52,15 +44,17 @@ export const ConfirmationModal = ({
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
             {icon}
           </div>
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-2">{title}</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-2">
+            {title}
+          </h3>
           <p className="text-sm text-gray-500 mb-4">{message}</p>
-          
+
           {warning && (
             <div className="p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg mb-4 text-sm">
               <strong>Uyarı:</strong> {warning}
             </div>
           )}
-          
+
           <div className="flex justify-center space-x-3 mt-4">
             <button
               type="button"
@@ -93,11 +87,11 @@ export const ConfirmationModal = ({
 };
 
 // Form Button Component (Form düğmeleri için)
-export const FormButtons = ({ 
-  onCancel, 
-  isSubmitting = false, 
-  submitText = "Kaydet", 
-  cancelText = "İptal" 
+export const FormButtons = ({
+  onCancel,
+  isSubmitting = false,
+  submitText = "Kaydet",
+  cancelText = "İptal",
 }) => {
   return (
     <>

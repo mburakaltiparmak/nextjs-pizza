@@ -2,30 +2,32 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { 
-  fetchProducts, 
-  fetchCategories, 
+import {
+  fetchProducts,
+  fetchCategories,
   setLoading,
   setError,
   postNewProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
 } from "@/lib/store/actions/productActionsFromApi";
-import { 
-  Plus,
-  Edit,
-  Trash2,
-  Package,
-  Image
-} from 'lucide-react';
+import { Plus, Edit, Trash2, Package, Image } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 // Components
 import AdminLayout from "@/components/admin/adminLayout";
-import { ConfirmationModal, FormButtons, Modal } from "@/components/admin/modal";
-import { SearchBar, CategoryFilter, SearchFilterContainer } from "@/components/admin/searchAndFilter";
+import {
+  ConfirmationModal,
+  FormButtons,
+  Modal,
+} from "@/components/admin/modal";
+import {
+  SearchBar,
+  CategoryFilter,
+  SearchFilterContainer,
+} from "@/components/admin/searchAndFilter";
 import ImageUpload from "@/components/admin/imageUpload";
 import RatingStars from "@/components/admin/ratingStars";
 import {
@@ -52,16 +54,19 @@ const formSchema = z.object({
   categoryId: z.string().min(1, "Kategori seçmelisiniz."),
   price: z.coerce.number().positive("Fiyat pozitif bir değer olmalıdır."),
   stock: z.coerce.number().int().nonnegative("Stok negatif olamaz."),
-  rating: z.coerce.number().min(0, "En düşük puan 0 olabilir.").max(5, "En yüksek puan 5 olabilir."),
-  image: z.any().optional(),
-  preview: z.any().optional()
+  rating: z.coerce
+    .number()
+    .min(0, "En düşük puan 0 olabilir.")
+    .max(5, "En yüksek puan 5 olabilir."),
+  image: z.any(),
+  preview: z.any(),
 });
 
 const Page = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   const [filterCategory, setFilterCategory] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -69,10 +74,12 @@ const Page = () => {
   const [productToDelete, setProductToDelete] = useState(null);
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  
+
   // Redux state
   const products = useAppSelector((state) => state.productAPI.products || []);
-  const categories = useAppSelector((state) => state.productAPI.categories || []);
+  const categories = useAppSelector(
+    (state) => state.productAPI.categories || []
+  );
   const loading = useAppSelector((state) => state.productAPI.loading);
   const error = useAppSelector((state) => state.productAPI.error);
 
@@ -86,11 +93,11 @@ const Page = () => {
       stock: 0,
       rating: 0,
       image: null,
-      preview: null
-    }
+      preview: null,
+    },
   });
 
-  useEffect(() => {    
+  useEffect(() => {
     dispatch(fetchProducts());
     dispatch(fetchCategories());
   }, [dispatch]);
@@ -105,7 +112,7 @@ const Page = () => {
         rating: product.rating,
         categoryId: product.categoryId.toString(),
         image: null,
-        preview: product.img
+        preview: product.img,
       });
     } else {
       setEditingProduct(null);
@@ -116,7 +123,7 @@ const Page = () => {
         stock: 0,
         rating: 0,
         image: null,
-        preview: null
+        preview: null,
       });
     }
     setModalOpen(true);
@@ -129,12 +136,12 @@ const Page = () => {
   };
 
   const handleImageChange = (imageData) => {
-    form.setValue('image', imageData.file);
-    form.setValue('preview', imageData.preview);
+    form.setValue("image", imageData.file);
+    form.setValue("preview", imageData.preview);
   };
 
   const handleImageError = (errorMessage) => {
-    addNotification(errorMessage, 'error');
+    addNotification(errorMessage, "error");
   };
 
   const openDeleteModal = (product) => {
@@ -147,22 +154,24 @@ const Page = () => {
     setDeleteModalOpen(false);
   };
 
-  const addNotification = (message, type = 'success') => {
+  const addNotification = (message, type = "success") => {
     const newNotification = { id: Date.now(), message, type };
-    setNotifications(prev => [...prev, newNotification]);
-    
+    setNotifications((prev) => [...prev, newNotification]);
+
     setTimeout(() => {
       removeNotification(newNotification.id);
     }, 5000);
   };
 
   const removeNotification = (id) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
+    setNotifications((prev) =>
+      prev.filter((notification) => notification.id !== id)
+    );
   };
 
   const onSubmit = async (data) => {
     setFormSubmitting(true);
-    
+
     try {
       // Ürün verilerini hazırla
       const productData = {
@@ -171,11 +180,11 @@ const Page = () => {
         stock: data.stock,
         price: data.price,
         categoryId: data.categoryId,
-        image: data.image
+        image: data.image,
       };
-      
+
       let result;
-      
+
       // Eğer düzenleme modundaysak
       if (editingProduct) {
         productData.id = editingProduct.id;
@@ -190,11 +199,14 @@ const Page = () => {
           addNotification(`"${data.name}" başarıyla eklendi`);
         }
       }
-      
+
       closeModal();
     } catch (err) {
-      console.error("Error occurred while processing product data", err);
-      addNotification(`İşlem sırasında bir hata oluştu: ${err.message || "Beklenmeyen hata"}`, "error");
+      console.error("API hatası", err);
+      addNotification(
+        `İşlem sırasında bir hata oluştu: ${err.message || "Beklenmeyen hata"}`,
+        "error"
+      );
     } finally {
       setFormSubmitting(false);
     }
@@ -202,14 +214,19 @@ const Page = () => {
 
   const handleDeleteProduct = async () => {
     if (!productToDelete) return;
-    
+
     try {
       const success = await dispatch(deleteProduct(productToDelete.id));
       if (success) {
         addNotification(`"${productToDelete.name}" başarıyla silindi`);
       }
     } catch (err) {
-      addNotification(`Silme işlemi sırasında bir hata oluştu: ${err.message || "Beklenmeyen hata"}`, "error");
+      addNotification(
+        `Silme işlemi sırasında bir hata oluştu: ${
+          err.message || "Beklenmeyen hata"
+        }`,
+        "error"
+      );
     } finally {
       closeDeleteModal();
     }
@@ -218,11 +235,15 @@ const Page = () => {
   // Filter products
   const filteredProducts = useMemo(() => {
     if (!products || !Array.isArray(products)) return [];
-    
-    return products.filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = filterCategory === "" || product.categoryId.toString() === filterCategory;
-      
+
+    return products.filter((product) => {
+      const matchesSearch = product.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesCategory =
+        filterCategory === "" ||
+        product.categoryId.toString() === filterCategory;
+
       return matchesSearch && matchesCategory;
     });
   }, [products, searchTerm, filterCategory]);
@@ -230,13 +251,13 @@ const Page = () => {
   // Get category name
   const getCategoryName = (categoryId) => {
     if (!categories || !Array.isArray(categories)) return "Bilinmeyen Kategori";
-    
-    const category = categories.find(cat => cat.id === categoryId);
+
+    const category = categories.find((cat) => cat.id === categoryId);
     return category ? category.name : "Bilinmeyen Kategori";
   };
 
   return (
-    <AdminLayout 
+    <AdminLayout
       title="Ürünler"
       activePage="product"
       loading={loading}
@@ -267,22 +288,40 @@ const Page = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Ürün
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Kategori
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Fiyat
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Stok
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Puan
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   İşlemler
                 </th>
               </tr>
@@ -294,10 +333,10 @@ const Page = () => {
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
                         {product.img ? (
-                          <img 
-                            className="h-10 w-10 rounded-full object-cover" 
-                            src={product.img} 
-                            alt={product.name} 
+                          <img
+                            className="h-10 w-10 rounded-full object-cover"
+                            src={product.img}
+                            alt={product.name}
                           />
                         ) : (
                           <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
@@ -318,7 +357,9 @@ const Page = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{product.price.toFixed(2)} ₺</div>
+                    <div className="text-sm text-gray-900">
+                      {product.price.toFixed(2)} ₺
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{product.stock}</div>
@@ -327,14 +368,14 @@ const Page = () => {
                     <RatingStars rating={product.rating} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button 
-                      onClick={() => openModal(product)} 
+                    <button
+                      onClick={() => openModal(product)}
                       className="text-blue-600 hover:text-blue-900 mr-3"
                     >
                       <Edit size={18} />
                     </button>
-                    <button 
-                      onClick={() => openDeleteModal(product)} 
+                    <button
+                      onClick={() => openDeleteModal(product)}
                       className="text-red hover:text-red-900"
                     >
                       <Trash2 size={18} />
@@ -364,30 +405,37 @@ const Page = () => {
       <Modal
         isOpen={modalOpen}
         onClose={closeModal}
-        title={editingProduct ? 'Ürün Düzenle' : 'Yeni Ürün Ekle'}
+        title={editingProduct ? "Ürün Düzenle" : "Yeni Ürün Ekle"}
         footer={
           <div className="flex justify-end space-x-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={closeModal} 
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeModal}
               disabled={formSubmitting}
             >
               İptal
             </Button>
-            <Button 
+            <Button
               type="submit"
               className="bg-red text-white hover:bg-red-700"
               disabled={formSubmitting}
               onClick={form.handleSubmit(onSubmit)}
             >
-              {formSubmitting ? 'İşleniyor...' : (editingProduct ? 'Güncelle' : 'Kaydet')}
+              {formSubmitting
+                ? "İşleniyor..."
+                : editingProduct
+                ? "Güncelle"
+                : "Kaydet"}
             </Button>
           </div>
         }
       >
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 py-2"
+          >
             <FormField
               control={form.control}
               name="name"
@@ -428,11 +476,15 @@ const Page = () => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {Array.isArray(categories) && categories.map(category => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
+                      {Array.isArray(categories) &&
+                        categories.map((category) => (
+                          <SelectItem
+                            key={category.id}
+                            value={category.id.toString()}
+                          >
+                            {category.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   <FormMessage className="text-xs font-semibold text-red-500" />
@@ -525,7 +577,7 @@ const Page = () => {
                   </FormLabel>
                   <FormControl>
                     <ImageUpload
-                      preview={form.getValues('preview')}
+                      preview={form.getValues("preview")}
                       onChange={handleImageChange}
                       onError={handleImageError}
                       label="Ürün Resmi"
