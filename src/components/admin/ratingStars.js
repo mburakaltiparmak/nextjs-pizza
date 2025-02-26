@@ -25,7 +25,7 @@ const RatingStars = ({ rating, showValue = true, size = 16 }) => {
         </span>
       ))}
       {showValue && (
-        <span className="ml-1 text-xs text-gray-500">{rating.toFixed(1)}</span>
+        <span className="ml-1 text-xs text-gray-500">{rating}</span>
       )}
     </div>
   );

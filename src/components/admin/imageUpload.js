@@ -6,7 +6,6 @@ const ImageUpload = ({
   onChange, 
   maxSize = 2 * 1024 * 1024, // Default 2MB
   label = "Resim", 
-  height = "h-24",
   onError
 }) => {
   const handleImageChange = (e) => {
@@ -34,7 +33,7 @@ const ImageUpload = ({
       <div className="mt-1 flex items-center">
         <label className="w-full flex flex-col items-center px-4 py-6 bg-white rounded-lg border border-gray-300 border-dashed cursor-pointer hover:bg-gray-50">
           {preview ? (
-            <div className={`relative w-full ${height} mb-4`}>
+            <div className={`relative object-cover max-w-[250px] mb-4`}>
               <img
                 src={preview}
                 alt="Preview"

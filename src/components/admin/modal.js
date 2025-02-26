@@ -17,11 +17,11 @@ export const Modal = ({
         <div className="px-4 py-2 border-b">
           <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
         </div>
-        <div className="p-6">
+        <div className="px-4">
           {children}
         </div>
         {footer && (
-          <div className="p-4 border-t flex justify-end space-x-3">
+          <div className="p-2 border-t flex justify-end space-x-3">
             {footer}
           </div>
         )}

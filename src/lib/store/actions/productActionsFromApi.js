@@ -94,16 +94,50 @@ export const fetchCategoryById = (id) => async (dispatch) => {
   }
 };
 export const postNewProduct = (formData) => async (dispatch) => {
+  const token = localStorage.getItem("token");
   dispatch(setLoading(true));
   dispatch(setError(null));
+  
   try {
-    const res = await instance.post("/product",formData);
-    const data = res.data;
+    console.log("Gönderilecek form verileri:", formData);
+    
+    // FormData nesnesi oluştur
+    const formDataObj = new FormData();
+    
+    // Form verilerini ekle ve konsola logla
+    formDataObj.append("name", formData.name);
+    formDataObj.append("rating", formData.rating.toString());
+    formDataObj.append("stock", formData.stock.toString());
+    formDataObj.append("price", formData.price.toString());
+    formDataObj.append("image", formData.image);    
+    formDataObj.append("categoryId", formData.categoryId);
+    // FormData içeriğini kontrol et
+    console.log("FormData gönderiliyor...");
+    for (let pair of formDataObj.entries()) {
+      console.log(pair[0] + ': ' + pair[1]);
+    }
+    
+    const res = await instance.post("/product", formDataObj, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // multipart/form-data için Content-Type header'ı axios tarafından otomatik ayarlanır
+        // Content-Type header'ını manuel olarak eklemeyin
+      }
+    });
+    
+    console.log("API Yanıtı:", res.data);
+    
+    dispatch(setLoading(false));
+    // Başarılı işlem sonrası ürünleri yeniden yükle
+    dispatch(fetchProducts());
+    return res.data;
+  } catch (err) {
+    console.error("API İsteği Hatası:", err);
+    console.error("Hata Detayları:", err.response ? err.response.data : "Yanıt yok");
+    handleApiError(err, dispatch);
+    return null;
   }
-  catch (err) {
-    handleApiError(err,dispatch);
-  }
-}
+};
 // Action creators
 export const setProducts = (products) => ({
   type: productActions.setProductList,
