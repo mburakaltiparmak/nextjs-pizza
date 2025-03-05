@@ -3,17 +3,18 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import {
+  deleteCategory,
   fetchCategoriesWithProducts,
   postNewCategory,
+  fetchProducts
 } from "@/lib/store/actions/productActionsFromApi";
-import { instance } from "@/lib/hooks";
+import { toast } from "react-toastify";
 import { Image, Search } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 // Components
-import AdminLayout from "@/components/admin/adminLayout";
 import {
   ConfirmationModal,
   FormButtons,
@@ -35,7 +36,7 @@ import { Button } from "@/components/ui/button";
 //Form validation schema
 const formSchema = z.object({
   name: z.string().min(3, "Kategori adı en az 3 karakter olmalıdır."),
-  image: z.any().optional(),
+  image: z.any("Bir kategori görseli ekleyin!"),
   preview: z.any().optional(),
 });
 
@@ -48,8 +49,7 @@ const CategoryPage = () => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [formSubmitting, setFormSubmitting] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-
+  
   // Redux durumunu alalım
   const categories = useAppSelector((state) => state.productAPI.categories);
   const loading = useAppSelector((state) => state.productAPI.loading);
@@ -68,6 +68,23 @@ const CategoryPage = () => {
   useEffect(() => {
     dispatch(fetchCategoriesWithProducts());
   }, [dispatch]);
+
+  // Hata durumunu toast ile göster
+  useEffect(() => {
+    if (error) {
+      toast.error(`Hata: ${error}`);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    // Sayfa yüklendiğinde, component DOM elemanına openModal fonksiyonunu ekleyelim
+    if (typeof document !== 'undefined') {
+      const pageElement = document.getElementById('admin-page-component');
+      if (pageElement) {
+        pageElement.openModal = openModal;
+      }
+    }
+  }, []);
 
   const openModal = (category = null) => {
     if (category) {
@@ -99,29 +116,14 @@ const CategoryPage = () => {
   };
 
   const handleImageChange = (imageData) => {
-    console.log("ImageUpload'dan gelen veri:", imageData);
-
     if (imageData && imageData.file) {
-      console.log("Dosya adı:", imageData.file.name);
-      console.log("Dosya tipi:", imageData.file.type);
-      console.log("Dosya boyutu:", imageData.file.size, "bytes");
-
       form.setValue("image", imageData.file);
       form.setValue("preview", imageData.preview);
-
-      // Doğru şekilde set edildi mi kontrol et
-      const currentImage = form.getValues("image");
-      console.log(
-        "Form'a set edilen image:",
-        currentImage ? currentImage.name : "null"
-      );
-    } else {
-      console.warn("ImageUpload geçerli bir dosya döndürmedi");
     }
   };
 
   const handleImageError = (errorMessage) => {
-    addNotification(errorMessage, "error");
+    toast.error(errorMessage);
   };
 
   const openDeleteModal = (category) => {
@@ -134,31 +136,13 @@ const CategoryPage = () => {
     setDeleteModalOpen(false);
   };
 
-  const addNotification = (message, type = "success") => {
-    const newNotification = { id: Date.now(), message, type };
-    setNotifications((prev) => [...prev, newNotification]);
-
-    setTimeout(() => {
-      removeNotification(newNotification.id);
-    }, 5000);
-  };
-
-  const removeNotification = (id) => {
-    setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== id)
-    );
-  };
-
   const onSubmit = async (data) => {
     setFormSubmitting(true);
 
     try {
-      console.log("Form submit verileri:", data);
-
       // Image kontrolü
       if (!data.image) {
         console.warn("Resim seçilmedi. Devam edilsin mi?");
-        // İsteğe bağlı: Resim zorunlu ise burada hata mesajı gösterebilirsiniz
       }
 
       const categoryData = {
@@ -166,29 +150,20 @@ const CategoryPage = () => {
         image: data.image,
       };
 
-      console.log("API'ye gönderilecek veriler:", categoryData);
-
       let result;
 
       if (editingCategory) {
         // Kategori güncelleme
         // Kodunuzu buraya ekleyin
+        toast.info("Güncelleme özelliği henüz eklenmedi.");
       } else {
         // Yeni kategori ekleme
         result = await dispatch(postNewCategory(categoryData));
-        if (result) {
-          addNotification(`"${data.name}" başarıyla eklendi`);
-        } else {
-          addNotification("Kategori eklenemedi", "error");
-        }
+        // Toast bildirimi action içinde yapılıyor
       }
       closeModal();
     } catch (err) {
-      console.error("API hatası:", err);
-      addNotification(
-        `İşlem sırasında bir hata oluştu: ${err.message || "Beklenmeyen hata"}`,
-        "error"
-      );
+      toast.error(`İşlem sırasında bir hata oluştu: ${err.message || "Beklenmeyen hata"}`);
     } finally {
       setFormSubmitting(false);
     }
@@ -196,21 +171,39 @@ const CategoryPage = () => {
 
   const handleDelete = async () => {
     if (!categoryToDelete) return;
-
+  
     try {
-      await instance.delete(`/category/${categoryToDelete.id}`);
-      addNotification("Kategori başarıyla silindi");
-
-      // Redux store'u güncelle
-      dispatch(fetchCategoriesWithProducts());
-
+      // Check if category has products before deletion
+      if (categoryToDelete.products && categoryToDelete.products.length > 0) {
+        // You might want to confirm again or handle this case specially
+        if (!window.confirm(`Bu kategori ${categoryToDelete.products.length} ürün içeriyor. Silmek istediğinize emin misiniz?`)) {
+          return;
+        }
+      }
+  
+      setFormSubmitting(true); // Show loading state
+      
+      const result = await dispatch(deleteCategory(categoryToDelete.id));
+      
+      if (result) {
+        toast.success(`"${categoryToDelete.name}" başarıyla silindi`);
+      }
+        
       closeDeleteModal();
     } catch (error) {
-      console.error("Silme hatası:", error);
-      addNotification(
-        error.response?.data?.message || "Kategori silinirken bir hata oluştu",
-        "error"
-      );
+      let errorMessage = "Kategori silinirken bir hata oluştu";
+      
+      if (error.response) {
+        errorMessage = error.response.data?.message || `Sunucu hatası (${error.response.status})`;
+      } else if (error.request) {
+        errorMessage = "Sunucudan yanıt alınamadı. Lütfen bağlantınızı kontrol edin.";
+      } else {
+        errorMessage = error.message || errorMessage;
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setFormSubmitting(false);
     }
   };
 
@@ -223,18 +216,43 @@ const CategoryPage = () => {
     );
   }, [categories, searchTerm]);
 
+  CategoryPage.openModal = openModal;
+
+  const handleModalOpen = () => {
+    console.log("Modal açılıyor...");
+    openModal();
+  };
+
+  // Admin layout için props tanımlama - BU ÖNEMLİ
+ useEffect(() => {
+  // Sayfa yüklendiğinde, component DOM elemanına openModal fonksiyonunu ekleyelim
+  if (typeof document !== 'undefined') {
+    const pageElement = document.getElementById('admin-page-component');
+    if (pageElement) {
+      pageElement.openModal = openModal;
+    }
+  }
+}, []);
+
+// Admin layout için props tanımlama - BU ÖNEMLİ (mevcut kodu değiştirin)
+CategoryPage.props = {
+  title: "Kategoriler",
+  activePage: "category",
+  loading: loading,
+  error: error,
+  showAddButton: true,
+  addButtonText: "Yeni Kategori",
+  onAddButtonClick: () => {
+    if (window.openAdminModal) {
+      window.openAdminModal();
+    } else {
+      console.log("openAdminModal fonksiyonu bulunamadı");
+    }
+  }
+};
+
   return (
-    <AdminLayout
-      title="Kategoriler"
-      activePage="category"
-      loading={loading}
-      error={error}
-      notifications={notifications}
-      onNotificationClose={removeNotification}
-      showAddButton={true}
-      addButtonText="Yeni Kategori"
-      onAddButtonClick={() => openModal()}
-    >
+    <div>
       {/* Arama ve Filtreleme */}
       <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex items-center border border-gray-100">
         <SearchBar
@@ -249,14 +267,14 @@ const CategoryPage = () => {
         {filteredCategories.map((category) => (
           <div
             key={category.id}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden group"
+            className="bg-white rounded-xl shadow-sm border-2 border-lightgray overflow-hidden group"
           >
-            <div className="relative h-48 overflow-hidden bg-gray-100">
+            <div className="relative flex items-center justify-center h-36 overflow-hidden bg-gray-100">
               {category.img ? (
                 <img
                   src={category.img}
                   alt={category.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="w-16 object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">
@@ -342,10 +360,10 @@ const CategoryPage = () => {
         onClose={closeModal}
         title={editingCategory ? "Kategori Düzenle" : "Yeni Kategori Ekle"}
         footer={
-          <div className="flex justify-end space-x-2">
+          <div className="flex flex-row items-center justify-between space-x-2 p-4">
             <Button
               type="button"
-              variant="outline"
+              className=""
               onClick={closeModal}
               disabled={formSubmitting}
             >
@@ -353,7 +371,7 @@ const CategoryPage = () => {
             </Button>
             <Button
               type="submit"
-              className="bg-red text-white hover:bg-red-700"
+              className="bg-red text-white hover:bg-yellow hover:text-red"
               disabled={formSubmitting}
               onClick={form.handleSubmit(onSubmit)}
             >
@@ -367,7 +385,7 @@ const CategoryPage = () => {
         }
       >
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
             <FormField
               control={form.control}
               name="name"
@@ -393,7 +411,7 @@ const CategoryPage = () => {
               control={form.control}
               name="image"
               render={({ field: { onChange, value, ...rest } }) => (
-                <FormItem className="py-4">
+                <FormItem className="">
                   <FormLabel className="flex flex-row items-center">
                     <p className="text-darkgray">Kategori Logo</p>
                     <p className="text-red pl-1">*</p>
@@ -403,7 +421,7 @@ const CategoryPage = () => {
                       preview={form.getValues("preview")}
                       onChange={handleImageChange}
                       onError={handleImageError}
-                      label="Kategori Logo"
+                    
                     />
                   </FormControl>
                   <FormMessage className="text-xs font-semibold text-red-500" />
@@ -427,7 +445,7 @@ const CategoryPage = () => {
             : null
         }
       />
-    </AdminLayout>
+    </div>
   );
 };
 

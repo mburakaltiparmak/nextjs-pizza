@@ -17,6 +17,8 @@ import SecondStep from "@/components/create-order-components/secondStep";
 import ThirdStep from "@/components/create-order-components/thirdStep";
 import { useAppSelector } from "@/lib/hooks";
 import { useRouter } from "next/navigation";
+import Header from "@/components/header";
+import Footer from "@/components/footer";
 
 const Page = () => {
   const { toast } = useToast();
@@ -76,6 +78,8 @@ const Page = () => {
   };
 
   return (
+    <div>
+      <Header />
     <div className="flex flex-col items-center gap-4 mb-8">
       <span>
         <Image
@@ -106,6 +110,8 @@ const Page = () => {
           {displaySteps()}
         </span>
       </div>
+    </div>
+    <Footer />
     </div>
   );
 };

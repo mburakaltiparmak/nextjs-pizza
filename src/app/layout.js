@@ -1,28 +1,32 @@
+// app/layout.js
 import "./globals.css";
 import { Barlow, Quattrocento, Satisfy } from 'next/font/google';
-import Footer from "@/components/footer";
-import Header from "@/components/header";
-import StoreProvider from "./StoreProvider";
-import { Toaster } from "@/components/ui/toaster";
-import FloatingCartButton from "@/components/floatingCartButton";
+import Providers from "./Providers";
 
+// Font tanımlamaları
 const barlow = Barlow({
   subsets: ['latin'],
   weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
   variable: '--font-barlow',
+  display: 'swap',
 });
 
 const quattrocento = Quattrocento({
   subsets: ['latin'],
   weight: ['400', '700'],
   variable: '--font-quattrocento',
+  display: 'swap',
 });
 
 const satisfy = Satisfy({
   subsets: ['latin'],
   weight: ['400'],
   variable: '--font-satisfy',
+  display: 'swap',
 });
+
+// Font sınıflarını global olarak tanımlama
+export const fontClasses = `${barlow.variable} ${quattrocento.variable} ${satisfy.variable}`;
 
 export const metadata = {
   title: "Teknolojik Yemekler",
@@ -31,13 +35,11 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" className={fontClasses}>
       <body>
-        <StoreProvider>
-          <div className="min-h-screen bg-background antialiased">
-            {children}
-          </div>
-        </StoreProvider>
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

@@ -7,7 +7,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { ListOrdered, Package, TrendingUp } from 'lucide-react';
 
 // Components
-import AdminLayout from "@/components/admin/adminLayout";
 import StatCard from "@/components/admin/statCard";
 const DashboardPage = () => {
   const router = useRouter();
@@ -62,12 +61,7 @@ const DashboardPage = () => {
   }, [dispatch]);
 
   return (
-    <AdminLayout 
-      title="Dashboard"
-      activePage="dashboard"
-      loading={loading}
-      error={error}
-    >
+    <div>
       {/* İstatistik Kartları */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatCard
@@ -159,7 +153,7 @@ const DashboardPage = () => {
           </table>
         </div>
       </div>
-    </AdminLayout>
+      </div>
   );
 };
 

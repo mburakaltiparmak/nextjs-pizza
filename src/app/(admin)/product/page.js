@@ -17,7 +17,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 // Components
-import AdminLayout from "@/components/admin/adminLayout";
 import {
   ConfirmationModal,
   FormButtons,
@@ -47,6 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { toast } from "react-toastify";
 
 // Form validation schema
 const formSchema = z.object({
@@ -62,7 +62,7 @@ const formSchema = z.object({
   preview: z.any(),
 });
 
-const Page = () => {
+const ProductPage = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [searchTerm, setSearchTerm] = useState("");
@@ -141,7 +141,7 @@ const Page = () => {
   };
 
   const handleImageError = (errorMessage) => {
-    addNotification(errorMessage, "error");
+    toast.error(errorMessage);
   };
 
   const openDeleteModal = (product) => {
@@ -255,19 +255,44 @@ const Page = () => {
     const category = categories.find((cat) => cat.id === categoryId);
     return category ? category.name : "Bilinmeyen Kategori";
   };
+  ProductPage.openModal = openModal;
+
+// Doğru şekilde handleModalOpen fonksiyonunu tanımlayalım
+const handleModalOpen = () => {
+  console.log("Modal açılıyor...");
+  openModal();
+};
+
+// Props tanımını güncelleyelim, onAddButtonClick doğru fonksiyonu çağırmalı
+useEffect(() => {
+  // Sayfa yüklendiğinde, component DOM elemanına openModal fonksiyonunu ekleyelim
+  if (typeof document !== 'undefined') {
+    const pageElement = document.getElementById('admin-page-component');
+    if (pageElement) {
+      pageElement.openModal = openModal;
+    }
+  }
+}, []);
+
+// Admin layout için props tanımlama - BU ÖNEMLİ (mevcut kodu değiştirin)
+ProductPage.props = {
+  title: "Ürünler", 
+  activePage: "product",
+  loading: loading,
+  error: error,
+  showAddButton: true,
+  addButtonText: "Yeni Ürün",
+  onAddButtonClick: () => {
+    if (window.openAdminModal) {
+      window.openAdminModal();
+    } else {
+      console.log("openAdminModal fonksiyonu bulunamadı");
+    }
+  }
+};
 
   return (
-    <AdminLayout
-      title="Ürünler"
-      activePage="product"
-      loading={loading}
-      error={error}
-      notifications={notifications}
-      onNotificationClose={removeNotification}
-      showAddButton={true}
-      addButtonText="Yeni Ürün"
-      onAddButtonClick={() => openModal()}
-    >
+    <div>
       {/* Search and Filter */}
       <SearchFilterContainer>
         <SearchBar
@@ -407,10 +432,10 @@ const Page = () => {
         onClose={closeModal}
         title={editingProduct ? "Ürün Düzenle" : "Yeni Ürün Ekle"}
         footer={
-          <div className="flex justify-end space-x-2">
+          <div className="flex flex-row items-center justify-between space-x-2 p-4">
             <Button
               type="button"
-              variant="outline"
+              className=""
               onClick={closeModal}
               disabled={formSubmitting}
             >
@@ -418,7 +443,7 @@ const Page = () => {
             </Button>
             <Button
               type="submit"
-              className="bg-red text-white hover:bg-red-700"
+              className="bg-red text-white hover:text-red hover:bg-yellow"
               disabled={formSubmitting}
               onClick={form.handleSubmit(onSubmit)}
             >
@@ -434,7 +459,7 @@ const Page = () => {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 py-2"
+            className="flex flex-col gap-4"
           >
             <FormField
               control={form.control}
@@ -492,7 +517,7 @@ const Page = () => {
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2">
               <FormField
                 control={form.control}
                 name="price"
@@ -570,7 +595,7 @@ const Page = () => {
               control={form.control}
               name="image"
               render={({ field }) => (
-                <FormItem className="py-4">
+                <FormItem className="">
                   <FormLabel className="flex flex-row items-center">
                     <p className="text-darkgray">Ürün Resmi</p>
                     <p className="text-red pl-1">*</p>
@@ -599,8 +624,7 @@ const Page = () => {
         title="Ürünü Sil"
         message={`${productToDelete?.name} ürününü silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
       />
-    </AdminLayout>
-  );
+</div>  );
 };
 
-export default Page;
+export default ProductPage;

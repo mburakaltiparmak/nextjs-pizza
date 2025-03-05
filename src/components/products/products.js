@@ -2,7 +2,6 @@
 "use client";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { addCart } from "@/lib/store/actions/orderActions";
-import { useToast } from "@/hooks/use-toast";
 import { fetchProductsById } from "@/lib/store/actions/productActions";
 import { useEffect } from "react";
 import {
@@ -10,8 +9,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { toast } from "react-toastify";
 const Products = () => {
-  const { toast } = useToast();
   const dispatch = useAppDispatch();
   const products = useAppSelector((store) => store.product.products);
   const selectedCategory = useAppSelector(
@@ -25,18 +24,25 @@ const Products = () => {
 
   const handleAddCart = (product) => {
     dispatch(addCart(product));
-    toast({
-      title: (
-        <div className="flex flex-row gap-4 items-center py-4">
-          <img
-            src={product.product_img}
-            alt={product.product_name}
-            className="w-[32px] h-fit object-cover"
-          />
-          <p>{product.product_name} sepete başarıyla eklendi.</p>
-        </div>
-      ),
-    });
+    toast.info(
+      <div className="flex flex-row gap-4 items-center">
+        <img
+          src={product.product_img}
+          alt={product.product_name}
+          className="w-[32px] h-fit object-cover"
+        />
+        <p>{product.product_name} sepete başarıyla eklendi.</p>
+      </div>,
+      {
+        // Ek ayarlar burada
+        position: "top-left", // Bildirimin konumu
+        autoClose: 3000, // 3 saniye sonra kapanacak
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true
+      }
+    );
   };
   return (
     <div

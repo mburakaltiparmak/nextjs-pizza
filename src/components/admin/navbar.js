@@ -3,19 +3,30 @@ import { Plus } from 'lucide-react';
 
 const Navbar = ({ 
   title, 
-  showAddButton = false, 
+  showAddButton = true, 
   addButtonText = "Yeni Ekle", 
   onAddButtonClick 
 }) => {
+  // Ensure we have a valid function to call
+  const handleAddButtonClick = (e) => {
+    e.preventDefault();
+    if (typeof onAddButtonClick === 'function') {
+      onAddButtonClick();
+    } else {
+      console.error('No valid onAddButtonClick function provided to Navbar');
+    }
+  };
+
   return (
     <header className="bg-white border-b shadow-sm p-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-semibold text-gray-800 font-Barlow">{title}</h1>
+        <h1 className="text-xl font-semibold text-gray font-Barlow">Admin Panel</h1>
         <div className="flex items-center space-x-4">
           {showAddButton && (
             <button
-              onClick={onAddButtonClick}
-              className="flex items-center px-4 py-2 bg-red text-white rounded-lg hover:bg-red-700 transition-colors"
+              id='addButton'
+              onClick={handleAddButtonClick}
+              className="flex items-center px-4 py-2 bg-red text-white rounded-lg transition-colors hover:bg-yellow hover:text-red"
             >
               <Plus size={18} className="mr-2" />
               <span>{addButtonText}</span>

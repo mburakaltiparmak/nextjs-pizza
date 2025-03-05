@@ -6,14 +6,14 @@ export const Modal = ({ isOpen, onClose, title, children, footer }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 font-Barlow">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-md mx-4">
-        <div className="px-4 py-2 border-b">
-          <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center font-Barlow">
+      <div className="flex flex-col justify-between bg-white rounded-lg shadow-lg h-fit w-[500px] mx-4">
+        <div className="p-4 border-b">
+          <h3 className="text-xl font-semibold text-gray">{title}</h3>
         </div>
-        <div className="px-4">{children}</div>
+        <div className="p-4">{children}</div>
         {footer && (
-          <div className="p-2 border-t flex justify-end space-x-3">
+          <div className="border-t flex space-x-3">
             {footer}
           </div>
         )}
@@ -32,33 +32,34 @@ export const ConfirmationModal = ({
   warning,
   confirmButtonText = "Evet",
   cancelButtonText = "İptal",
-  icon = <Trash2 className="h-6 w-6 text-red-600" />,
+  icon = <Trash2 className="h-6 w-6 text-red" />,
   isLoading = false,
 }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 font-Barlow">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 p-6">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 ">
         <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-lightgray ">
             {icon}
           </div>
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-2">
+          <span className="flex flex-col gap-2">
+          <h3 className="text-lg leading-6 font-medium text-gray">
             {title}
           </h3>
-          <p className="text-sm text-gray-500 mb-4">{message}</p>
-
+          <p className="text-sm text-gray">{message}</p>
+          </span>
           {warning && (
-            <div className="p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg mb-4 text-sm">
+            <div className="p-4 bg-lightgray border-y border-red text-red  text-sm">
               <strong>Uyarı:</strong> {warning}
             </div>
           )}
 
-          <div className="flex justify-center space-x-3 mt-4">
+          <div className="flex justify-center space-x-3 my-4">
             <button
               type="button"
-              className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 bg-red text-white rounded-lg hover:bg-yellow hover:text-red transition-colors"
               onClick={onClose}
               disabled={isLoading}
             >
@@ -66,7 +67,7 @@ export const ConfirmationModal = ({
             </button>
             <button
               type="button"
-              className="px-4 py-2 bg-red text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center"
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-900  transition-colors flex items-center justify-center"
               onClick={onConfirm}
               disabled={isLoading}
             >
@@ -94,7 +95,7 @@ export const FormButtons = ({
   cancelText = "İptal",
 }) => {
   return (
-    <>
+    <div className="flex flex-row">
       <button
         type="button"
         className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors"
@@ -117,6 +118,6 @@ export const FormButtons = ({
           <span>{submitText}</span>
         )}
       </button>
-    </>
+    </div>
   );
 };

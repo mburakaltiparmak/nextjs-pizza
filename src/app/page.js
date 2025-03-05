@@ -21,7 +21,9 @@ import {
   fetchProductsById,
 } from "@/lib/store/actions/productActions";
 import Loading from "./loading";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "react-toastify";
+import Header from "@/components/header";
+import Footer from "@/components/footer";
 
 const sleep = (ms) => {
   return new Promise((resolve) => {
@@ -31,7 +33,6 @@ const sleep = (ms) => {
 
 const Page = () => {
   const dispatch = useAppDispatch();
-  const { toast } = useToast();
   const selectedCategory = useAppSelector(
     (store) => store.product.selectedCategory
   );
@@ -49,15 +50,15 @@ const Page = () => {
     fetchData();
   }, [dispatch, selectedCategory]);
   const buttonNotifyHandler = () => {
-    toast({
-      title: "You can customize this button.",
-    });
+    toast.info("You can customize this button!");
   };
 
   if (loading) {
     return <Loading />;
   }
   return (
+    <div>
+      <Header />
     <div className="flex flex-col justify-between items-center gap-2  text-lightgray">
       <div className="bg-[url('../../assets/mvp-banner.png')] bg-cover bg-center h-screen w-full max-md:h-[50vh]">
         <div className="flex flex-col justify-start items-center gap-4 mt-4">
@@ -150,6 +151,8 @@ const Page = () => {
         </div>
       </div>
       <GoToMenu />
+    </div>
+    <Footer />
     </div>
   );
 };

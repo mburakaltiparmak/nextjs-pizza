@@ -4,10 +4,9 @@ import { useState, useEffect } from "react";
 const ImageUpload = ({
   preview,
   onChange,
-  maxSize = 2 * 1024 * 1024, // Default 2MB
-  label = "Resim",
+  
   onError,
-  height = "h-auto",
+  height = "h-[250px]",
 }) => {
   // State for tracking loading and errors
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +38,7 @@ const ImageUpload = ({
       file.size,
       "bytes"
     );
-
+/*
     // Validate file size
     if (file.size > maxSize) {
       const errorMsg = `Dosya boyutu ${(maxSize / (1024 * 1024)).toFixed(
@@ -52,7 +51,7 @@ const ImageUpload = ({
       setIsLoading(false);
       return;
     }
-
+*/
     // Create preview URL
     const previewUrl = URL.createObjectURL(file);
     setLocalPreview(previewUrl);
@@ -75,14 +74,12 @@ const ImageUpload = ({
   };
 
   return (
-    <div className="w-full">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
+    <div className="">
+      
       <div className="mt-1 flex flex-col items-center">
-        <label className="w-full flex flex-col items-center px-4 py-6 bg-white rounded-lg border border-gray-300 border-dashed cursor-pointer hover:bg-gray-50">
+        <label className="flex flex-col items-center p-4 bg-white rounded-lg border border-gray-300 border-dashed cursor-pointer hover:bg-gray-50">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
+            <div className="flex items-center justify-center ">
               <svg
                 className="animate-spin h-6 w-6 text-gray-500"
                 xmlns="http://www.w3.org/2000/svg"
@@ -105,11 +102,11 @@ const ImageUpload = ({
               </svg>
             </div>
           ) : localPreview ? (
-            <div className={`relative max-w-full mb-4 ${height}`}>
+            <div className={`relative `}>
               <img
                 src={localPreview}
                 alt="Preview"
-                className="h-full mx-auto object-contain"
+                className="h-[150px] mx-auto object-cover"
               />
               <button
                 type="button"
@@ -138,7 +135,7 @@ const ImageUpload = ({
               </button>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+            <div className="flex flex-col items-center justify-center ">
               <svg
                 className="w-8 h-8 mb-4 text-gray-500"
                 fill="none"
@@ -153,13 +150,13 @@ const ImageUpload = ({
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 ></path>
               </svg>
-              <p className="mb-2 text-sm text-gray-500">
+              <p className="mb-2> text-sm text-gray-500">
                 <span className="font-semibold">
                   Resim yüklemek için tıklayın
                 </span>
               </p>
               <p className="text-xs text-gray-500">
-                PNG, JPG (MAX {(maxSize / (1024 * 1024)).toFixed(1)}MB)
+                PNG, JPG (MAX {/*(maxSize / (1024 * 1024)).toFixed(1)*/}MB)
               </p>
             </div>
           )}
