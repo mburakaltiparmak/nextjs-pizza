@@ -1,4 +1,6 @@
 "use client";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { setLoading } from "@/lib/store/actions/globalActions";
 import { Trash2 } from "lucide-react";
 
 // Base Modal Component (tüm modaller için temel bileşen)
@@ -33,8 +35,11 @@ export const ConfirmationModal = ({
   confirmButtonText = "Evet",
   cancelButtonText = "İptal",
   icon = <Trash2 className="h-6 w-6 text-red" />,
-  isLoading = false,
+  
 }) => {
+  const dispatch = useAppDispatch();
+  dispatch(setLoading(false));
+  const loading = useAppSelector((state)=>state.global.loading);
   if (!isOpen) return null;
 
   return (
@@ -61,7 +66,7 @@ export const ConfirmationModal = ({
               type="button"
               className="px-4 py-2 bg-red text-white rounded-lg hover:bg-yellow hover:text-red transition-colors"
               onClick={onClose}
-              disabled={isLoading}
+              disabled={loading}
             >
               {cancelButtonText}
             </button>
@@ -69,9 +74,9 @@ export const ConfirmationModal = ({
               type="button"
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-900  transition-colors flex items-center justify-center"
               onClick={onConfirm}
-              disabled={isLoading}
+              disabled={loading}
             >
-              {isLoading ? (
+              {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
                   <span>İşleniyor...</span>

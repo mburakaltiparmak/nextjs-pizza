@@ -2,22 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { login } from "@/lib/store/actions/userActions";
+import { setError, setLoading } from "@/lib/store/actions/globalActions";
 
 const Page = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMeState] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const loading = useAppSelector((state)=>state.global.loading);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setIsLoading(true);
+    dispatch(setError(""));
+    dispatch(setLoading(true));
 
     try {
       const formData = {
@@ -51,9 +51,9 @@ const Page = () => {
         errorMessage = "Geçersiz kullanıcı adı veya şifre";
       }
       
-      setError(errorMessage);
+      dispatch(setError(errorMessage));
     } finally {
-      setIsLoading(false);
+      dispatch(setLoading(false));
     }
   };
 
@@ -83,7 +83,7 @@ const Page = () => {
                 name="username"
                 type="string"
                 required
-                disabled={isLoading}
+                disabled={loading}
                 className="relative block w-full rounded-t-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
                 placeholder="Kullanıcı adı"
                 value={username}
@@ -99,7 +99,7 @@ const Page = () => {
                 name="password"
                 type="password"
                 required
-                disabled={isLoading}
+                disabled={loading}
                 className="relative block w-full rounded-b-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
                 placeholder="Şifre"
                 value={password}
@@ -114,7 +114,7 @@ const Page = () => {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                disabled={isLoading}
+                disabled={loading}
                 className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
                 checked={rememberMe}
                 onChange={(e) => setRememberMeState(e.target.checked)}
@@ -128,14 +128,14 @@ const Page = () => {
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={loading}
               className={`group relative flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${
-                isLoading 
+                loading 
                   ? 'bg-blue-400 cursor-not-allowed' 
                   : 'bg-blue-600 hover:bg-blue-500'
               }`}
             >
-              {isLoading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
+              {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
             </button>
           </div>
         </form>

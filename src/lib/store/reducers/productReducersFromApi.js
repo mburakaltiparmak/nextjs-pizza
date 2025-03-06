@@ -11,8 +11,6 @@ const initialState = {
   categories: [],
   fetchState: fetchStates.NOT_FETCHED,
   selectedCategory: null,
-  loading: false,
-  error: null
 };
 
 export const productActions = {
@@ -20,8 +18,6 @@ export const productActions = {
   setFetchState: "SET_FETCH_STATE",
   setSelectedCategory: "SET_SELECTED_CATEGORY",
   setCategories: "SET_CATEGORIES", // İsmi düzeltildi
-  setLoading: "SET_LOADING",
-  setError: "SET_ERROR"
 };
 
 export const productReducersFromApi = (state = initialState, action) => {
@@ -46,16 +42,6 @@ export const productReducersFromApi = (state = initialState, action) => {
       return {
         ...state,
         categories: action.payload,
-      };
-    case productActions.setLoading:
-      return {
-        ...state,
-        loading: action.payload,
-      };
-    case productActions.setError:
-      return {
-        ...state,
-        error: action.payload,
       };
     default:
       return state;

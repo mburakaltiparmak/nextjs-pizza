@@ -6,10 +6,10 @@ import {
   deleteCategory,
   fetchCategoriesWithProducts,
   postNewCategory,
-  fetchProducts
-} from "@/lib/store/actions/productActionsFromApi";
+  updateCategory
+} from "@/lib/store/actions/categoryActions";
 import { toast } from "react-toastify";
-import { Image, Search } from "lucide-react";
+import { Image } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -17,7 +17,6 @@ import { z } from "zod";
 // Components
 import {
   ConfirmationModal,
-  FormButtons,
   Modal,
 } from "@/components/admin/modal";
 import { SearchBar } from "@/components/admin/searchAndFilter";
@@ -32,6 +31,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import SecondaryLoading from "@/components/secondaryLoading";
 
 //Form validation schema
 const formSchema = z.object({
@@ -50,10 +50,11 @@ const CategoryPage = () => {
   const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [formSubmitting, setFormSubmitting] = useState(false);
   
-  // Redux durumunu alalım
-  const categories = useAppSelector((state) => state.productAPI.categories);
-  const loading = useAppSelector((state) => state.productAPI.loading);
-  const error = useAppSelector((state) => state.productAPI.error);
+  // Redux state
+  const categories = useAppSelector((state) => state.categoryAPI.categories);
+  const loading = useAppSelector((state) => state.global.loading);
+  const error = useAppSelector((state) => state.global.error);
+  const fetchState = useAppSelector((state) => state.categoryAPI.fetchState);
 
   // Initialize form
   const form = useForm({
@@ -69,15 +70,15 @@ const CategoryPage = () => {
     dispatch(fetchCategoriesWithProducts());
   }, [dispatch]);
 
-  // Hata durumunu toast ile göster
+  // Show error message when there's an error
   useEffect(() => {
     if (error) {
       toast.error(`Hata: ${error}`);
     }
   }, [error]);
 
+  // Add openModal function to DOM element
   useEffect(() => {
-    // Sayfa yüklendiğinde, component DOM elemanına openModal fonksiyonunu ekleyelim
     if (typeof document !== 'undefined') {
       const pageElement = document.getElementById('admin-page-component');
       if (pageElement) {
@@ -140,30 +141,27 @@ const CategoryPage = () => {
     setFormSubmitting(true);
 
     try {
-      // Image kontrolü
-      if (!data.image) {
-        console.warn("Resim seçilmedi. Devam edilsin mi?");
-      }
-
       const categoryData = {
         name: data.name,
         image: data.image,
+        preview: form.getValues("preview")
       };
 
       let result;
 
       if (editingCategory) {
         // Kategori güncelleme
-        // Kodunuzu buraya ekleyin
-        toast.info("Güncelleme özelliği henüz eklenmedi.");
+        result = await dispatch(updateCategory(categoryData, editingCategory.id));
+        if (result) {
+          closeModal();
+        }
       } else {
         // Yeni kategori ekleme
         result = await dispatch(postNewCategory(categoryData));
-        // Toast bildirimi action içinde yapılıyor
+        if (result) {
+          closeModal();
+        }
       }
-      closeModal();
-    } catch (err) {
-      toast.error(`İşlem sırasında bir hata oluştu: ${err.message || "Beklenmeyen hata"}`);
     } finally {
       setFormSubmitting(false);
     }
@@ -186,24 +184,13 @@ const CategoryPage = () => {
       const result = await dispatch(deleteCategory(categoryToDelete.id));
       
       if (result) {
+        // Başarılı silme durumunda modalı kapat
         toast.success(`"${categoryToDelete.name}" başarıyla silindi`);
+        closeDeleteModal();
       }
-        
-      closeDeleteModal();
-    } catch (error) {
-      let errorMessage = "Kategori silinirken bir hata oluştu";
-      
-      if (error.response) {
-        errorMessage = error.response.data?.message || `Sunucu hatası (${error.response.status})`;
-      } else if (error.request) {
-        errorMessage = "Sunucudan yanıt alınamadı. Lütfen bağlantınızı kontrol edin.";
-      } else {
-        errorMessage = error.message || errorMessage;
-      }
-      
-      toast.error(errorMessage);
     } finally {
       setFormSubmitting(false);
+      closeDeleteModal();
     }
   };
 
@@ -216,40 +203,26 @@ const CategoryPage = () => {
     );
   }, [categories, searchTerm]);
 
-  CategoryPage.openModal = openModal;
-
-  const handleModalOpen = () => {
-    console.log("Modal açılıyor...");
-    openModal();
+  // Admin layout için props tanımlama
+  CategoryPage.props = {
+    title: "Kategoriler",
+    activePage: "category",
+    showAddButton: true,
+    addButtonText: "Yeni Kategori",
+    onAddButtonClick: () => {
+      if (window.openAdminModal) {
+        window.openAdminModal();
+      } else {
+        console.log("openAdminModal fonksiyonu bulunamadı");
+        openModal(); // Fallback olarak kendi modalımızı açalım
+      }
+    }
   };
 
-  // Admin layout için props tanımlama - BU ÖNEMLİ
- useEffect(() => {
-  // Sayfa yüklendiğinde, component DOM elemanına openModal fonksiyonunu ekleyelim
-  if (typeof document !== 'undefined') {
-    const pageElement = document.getElementById('admin-page-component');
-    if (pageElement) {
-      pageElement.openModal = openModal;
-    }
+  // Show loading indicator
+  if (loading) {
+    return <SecondaryLoading />;
   }
-}, []);
-
-// Admin layout için props tanımlama - BU ÖNEMLİ (mevcut kodu değiştirin)
-CategoryPage.props = {
-  title: "Kategoriler",
-  activePage: "category",
-  loading: loading,
-  error: error,
-  showAddButton: true,
-  addButtonText: "Yeni Kategori",
-  onAddButtonClick: () => {
-    if (window.openAdminModal) {
-      window.openAdminModal();
-    } else {
-      console.log("openAdminModal fonksiyonu bulunamadı");
-    }
-  }
-};
 
   return (
     <div>
@@ -421,7 +394,6 @@ CategoryPage.props = {
                       preview={form.getValues("preview")}
                       onChange={handleImageChange}
                       onError={handleImageError}
-                    
                     />
                   </FormControl>
                   <FormMessage className="text-xs font-semibold text-red-500" />

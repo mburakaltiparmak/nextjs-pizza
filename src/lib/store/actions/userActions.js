@@ -1,6 +1,6 @@
 import { instance } from "@/lib/hooks";
 import { userActions } from "../reducers/userReducer";
-import { setLoading } from "./productActions";
+import { setError, setLoading } from "./globalActions";
 
 export const setEmail = (email) => ({
     type: userActions.setEmail,
@@ -24,6 +24,7 @@ export const setToken = (token) => ({
 
 export const login = (formData) => async (dispatch) => {
     dispatch(setLoading(true));
+    dispatch(setError(""));
     
     try {
         const res = await instance.post("/auth/login", {
@@ -54,14 +55,13 @@ export const login = (formData) => async (dispatch) => {
 
             return res; // Önemli: Tüm response'u dön
         }
-        
-        throw new Error("Token alınamadı");
+        dispatch(setError("Token alınamadı!"));
     } catch (err) {
         console.error("Login action error:", err); // Debug için
         dispatch(setIsLogin(false));
         localStorage.removeItem("token");
         delete instance.defaults.headers.common['Authorization'];
-        throw err;
+        dispatch(setError(err));
     } finally {
         dispatch(setLoading(false));
     }

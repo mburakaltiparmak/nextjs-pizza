@@ -4,14 +4,12 @@ import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import {
   fetchProducts,
-  fetchCategories,
-  setLoading,
-  setError,
   postNewProduct,
   updateProduct,
   deleteProduct,
 } from "@/lib/store/actions/productActionsFromApi";
-import { Plus, Edit, Trash2, Package, Image } from "lucide-react";
+import { fetchCategories } from "@/lib/store/actions/categoryActions";
+import { Plus, Edit, Trash2, Package } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -19,7 +17,6 @@ import { z } from "zod";
 // Components
 import {
   ConfirmationModal,
-  FormButtons,
   Modal,
 } from "@/components/admin/modal";
 import {
@@ -47,6 +44,8 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
+import CustomToastContent from "@/components/ui/customToastContent";
+import SecondaryLoading from "@/components/secondaryLoading";
 
 // Form validation schema
 const formSchema = z.object({
@@ -73,15 +72,15 @@ const ProductPage = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [productToDelete, setProductToDelete] = useState(null);
   const [formSubmitting, setFormSubmitting] = useState(false);
-  const [notifications, setNotifications] = useState([]);
 
   // Redux state
   const products = useAppSelector((state) => state.productAPI.products || []);
   const categories = useAppSelector(
-    (state) => state.productAPI.categories || []
+    (state) => state.categoryAPI.categories || []
   );
-  const loading = useAppSelector((state) => state.productAPI.loading);
-  const error = useAppSelector((state) => state.productAPI.error);
+  const loading = useAppSelector((state) => state.global.loading);
+  const error = useAppSelector((state) => state.global.error);
+  const fetchState = useAppSelector((state) => state.productAPI.fetchState);
 
   // Initialize form
   const form = useForm({
@@ -97,10 +96,28 @@ const ProductPage = () => {
     },
   });
 
+  // Load initial data
   useEffect(() => {
     dispatch(fetchProducts());
     dispatch(fetchCategories());
   }, [dispatch]);
+
+  // Show error message when there's an error
+  useEffect(() => {
+    if (error) {
+      toast.error(`Hata: ${error}`);
+    }
+  }, [error]);
+
+  // Add openModal function to DOM element
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const pageElement = document.getElementById('admin-page-component');
+      if (pageElement) {
+        pageElement.openModal = openModal;
+      }
+    }
+  }, []);
 
   const openModal = (product = null) => {
     if (product) {
@@ -136,8 +153,10 @@ const ProductPage = () => {
   };
 
   const handleImageChange = (imageData) => {
-    form.setValue("image", imageData.file);
-    form.setValue("preview", imageData.preview);
+    if (imageData && imageData.file) {
+      form.setValue("image", imageData.file);
+      form.setValue("preview", imageData.preview);
+    }
   };
 
   const handleImageError = (errorMessage) => {
@@ -154,25 +173,15 @@ const ProductPage = () => {
     setDeleteModalOpen(false);
   };
 
-  const addNotification = (message, type = "success") => {
-    const newNotification = { id: Date.now(), message, type };
-    setNotifications((prev) => [...prev, newNotification]);
-
-    setTimeout(() => {
-      removeNotification(newNotification.id);
-    }, 5000);
-  };
-
-  const removeNotification = (id) => {
-    setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== id)
-    );
-  };
-
   const onSubmit = async (data) => {
     setFormSubmitting(true);
-
+    
     try {
+      // Form validasyonu yapılabilir
+      if (!data.name || !data.categoryId) {
+        throw new Error("Ürün adı ve kategori zorunludur");
+      }
+      
       // Ürün verilerini hazırla
       const productData = {
         name: data.name,
@@ -181,6 +190,7 @@ const ProductPage = () => {
         price: data.price,
         categoryId: data.categoryId,
         image: data.image,
+        preview: form.getValues("preview")
       };
 
       let result;
@@ -188,25 +198,17 @@ const ProductPage = () => {
       // Eğer düzenleme modundaysak
       if (editingProduct) {
         productData.id = editingProduct.id;
-        result = await dispatch(updateProduct(productData));
+        result = await dispatch(updateProduct(productData, editingProduct.id));
         if (result) {
-          addNotification(`"${data.name}" başarıyla güncellendi`);
+          closeModal();
         }
       } else {
         // Yeni ürün ekleme
         result = await dispatch(postNewProduct(productData));
         if (result) {
-          addNotification(`"${data.name}" başarıyla eklendi`);
+          closeModal();
         }
       }
-
-      closeModal();
-    } catch (err) {
-      console.error("API hatası", err);
-      addNotification(
-        `İşlem sırasında bir hata oluştu: ${err.message || "Beklenmeyen hata"}`,
-        "error"
-      );
     } finally {
       setFormSubmitting(false);
     }
@@ -216,19 +218,17 @@ const ProductPage = () => {
     if (!productToDelete) return;
 
     try {
-      const success = await dispatch(deleteProduct(productToDelete.id));
-      if (success) {
-        addNotification(`"${productToDelete.name}" başarıyla silindi`);
+      setFormSubmitting(true);
+      
+      const result = await dispatch(deleteProduct(productToDelete.id));
+      
+      if (result) {
+        // Başarılı silme durumunda toast gösterilir ve modal kapatılır
+        toast.success(`"${productToDelete.name}" başarıyla silindi`);
+        closeDeleteModal();
       }
-    } catch (err) {
-      addNotification(
-        `Silme işlemi sırasında bir hata oluştu: ${
-          err.message || "Beklenmeyen hata"
-        }`,
-        "error"
-      );
     } finally {
-      closeDeleteModal();
+      setFormSubmitting(false);
     }
   };
 
@@ -255,41 +255,30 @@ const ProductPage = () => {
     const category = categories.find((cat) => cat.id === categoryId);
     return category ? category.name : "Bilinmeyen Kategori";
   };
+  
+  // Expose openModal for external access
   ProductPage.openModal = openModal;
 
-// Doğru şekilde handleModalOpen fonksiyonunu tanımlayalım
-const handleModalOpen = () => {
-  console.log("Modal açılıyor...");
-  openModal();
-};
-
-// Props tanımını güncelleyelim, onAddButtonClick doğru fonksiyonu çağırmalı
-useEffect(() => {
-  // Sayfa yüklendiğinde, component DOM elemanına openModal fonksiyonunu ekleyelim
-  if (typeof document !== 'undefined') {
-    const pageElement = document.getElementById('admin-page-component');
-    if (pageElement) {
-      pageElement.openModal = openModal;
+  // Admin layout için props tanımlama
+  ProductPage.props = {
+    title: "Ürünler", 
+    activePage: "product",
+    showAddButton: true,
+    addButtonText: "Yeni Ürün",
+    onAddButtonClick: () => {
+      if (window.openAdminModal) {
+        window.openAdminModal();
+      } else {
+        console.log("openAdminModal fonksiyonu bulunamadı");
+        openModal(); // Fallback olarak kendi modalımızı açalım
+      }
     }
+  };
+  
+  // Show loading indicator
+  if (loading) {
+    return <SecondaryLoading />;
   }
-}, []);
-
-// Admin layout için props tanımlama - BU ÖNEMLİ (mevcut kodu değiştirin)
-ProductPage.props = {
-  title: "Ürünler", 
-  activePage: "product",
-  loading: loading,
-  error: error,
-  showAddButton: true,
-  addButtonText: "Yeni Ürün",
-  onAddButtonClick: () => {
-    if (window.openAdminModal) {
-      window.openAdminModal();
-    } else {
-      console.log("openAdminModal fonksiyonu bulunamadı");
-    }
-  }
-};
 
   return (
     <div>
@@ -412,7 +401,7 @@ ProductPage.props = {
           </table>
         </div>
 
-        {filteredProducts.length === 0 && (
+        {filteredProducts.length === 0 && !loading && (
           <div className="py-10 text-center">
             <p className="text-gray-500">Ürün bulunamadı</p>
             <button
@@ -624,7 +613,8 @@ ProductPage.props = {
         title="Ürünü Sil"
         message={`${productToDelete?.name} ürününü silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
       />
-</div>  );
+    </div>
+  );
 };
 
 export default ProductPage;

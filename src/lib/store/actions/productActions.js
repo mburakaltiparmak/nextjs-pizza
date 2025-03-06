@@ -1,14 +1,16 @@
 import { fetchStates, productActions } from "../reducers/productReducer";
+import { setError, setLoading } from "./globalActions";
 
 const API_BASE_URL = "https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products";
 
 export const fetchProducts = () => async (dispatch) => {
   dispatch(setFetchState(fetchStates.FETCHING));
   dispatch(setLoading(true));
+  dispatch(setError(""));
   try {
     const response = await fetch(API_BASE_URL);
     if (!response.ok) {
-      throw new Error("Failed to fetch product data");
+      dispatch(setError("Failed to fetch product data"));
     }
     const data = await response.json();
     dispatch(setFetchState(fetchStates.FETCHED));
@@ -35,21 +37,24 @@ export const fetchProducts = () => async (dispatch) => {
     dispatch(setCategories(categories));
     dispatch(setProducts(products));
   } catch (err) {
-    console.error("Error fetching products:", err);
+    dispatch(setError(err));
     dispatch(setFetchState(fetchStates.FAILED));
   }
 };
 
 export const fetchProductsById = (id) => async (dispatch) => {
   dispatch(setFetchState(fetchStates.FETCHING));
+  dispatch(setLoading(true));
+  dispatch(setError(""));
 
   try {
     const response = await fetch(`${API_BASE_URL}/${id}`);
     if (!response.ok) {
-      throw new Error("Failed to fetch product data by ID");
+      dispatch(setError("Failed to fetch product data by ID"));
     }
     const data = await response.json();
     dispatch(setFetchState(fetchStates.FETCHED));
+    dispatch(setLoading(false));
 
     if (data && data.products) {
       const products = data.products.map((product) => ({
@@ -63,12 +68,13 @@ export const fetchProductsById = (id) => async (dispatch) => {
       }));
       dispatch(setProducts(products));
     } else {
-      console.error("Unexpected data structure:", data);
+      dispatch("Unexpected data strucutre from fetchProductsById");
       dispatch(setProducts([]));
     }
   } catch (err) {
-    console.error("Error fetching product by ID:", err);
+    dispatch(setError("Error fetching product by ID"));
     dispatch(setFetchState(fetchStates.FAILED));
+    dispatch(setLoading(false));
   }
 };
 
@@ -91,9 +97,4 @@ export const setFetchState = (fetchState) => ({
 export const setSelectedCategory = (selectedCategory) => ({
   type: productActions.setSelectedCategory,
   payload: selectedCategory,
-});
-
-export const setLoading = (loading) => ({
-  type: productActions.setLoading,
-  payload: loading,
 });

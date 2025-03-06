@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { fetchCategoriesWithProducts } from "@/lib/store/actions/productActionsFromApi";
+import { fetchCategoriesWithProducts } from "@/lib/store/actions/categoryActions";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { ListOrdered, Package, TrendingUp } from 'lucide-react';
 
@@ -14,8 +14,6 @@ const DashboardPage = () => {
   
   // Redux durumunu alalım
   const categories = useAppSelector((state) => state.productAPI.categories);
-  const loading = useAppSelector((state) => state.productAPI.loading);
-  const error = useAppSelector((state) => state.productAPI.error);
   
   // İstatistikler
   const statistics = useMemo(() => {

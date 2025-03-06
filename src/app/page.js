@@ -36,7 +36,7 @@ const Page = () => {
   const selectedCategory = useAppSelector(
     (store) => store.product.selectedCategory
   );
-  const loading = useAppSelector((store) => store.product.loading);
+  const loading = useAppSelector((store) => store.global.loading);
 
   useEffect(() => {
     const fetchData = async () => {

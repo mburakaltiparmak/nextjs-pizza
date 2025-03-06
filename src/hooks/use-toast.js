@@ -1,155 +1,45 @@
-"use client";
-// Inspired by react-hot-toast library
-import * as React from "react"
+'use client';
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+import { toast as toastify } from 'react-toastify';
 
-const actionTypes = {
-  ADD_TOAST: "ADD_TOAST",
-  UPDATE_TOAST: "UPDATE_TOAST",
-  DISMISS_TOAST: "DISMISS_TOAST",
-  REMOVE_TOAST: "REMOVE_TOAST"
-}
-
-let count = 0
-
-function genId() {
-  count = (count + 1) % Number.MAX_SAFE_INTEGER
-  return count.toString();
-}
-
-const toastTimeouts = new Map()
-
-const addToRemoveQueue = (toastId) => {
-  if (toastTimeouts.has(toastId)) {
-    return
-  }
-
-  const timeout = setTimeout(() => {
-    toastTimeouts.delete(toastId)
-    dispatch({
-      type: "REMOVE_TOAST",
-      toastId: toastId,
-    })
-  }, TOAST_REMOVE_DELAY)
-
-  toastTimeouts.set(toastId, timeout)
-}
-
-export const reducer = (state, action) => {
-  switch (action.type) {
-    case "ADD_TOAST":
-      return {
-        ...state,
-        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
-      };
-
-    case "UPDATE_TOAST":
-      return {
-        ...state,
-        toasts: state.toasts.map((t) =>
-          t.id === action.toast.id ? { ...t, ...action.toast } : t),
-      };
-
-    case "DISMISS_TOAST": {
-      const { toastId } = action
-
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
-      if (toastId) {
-        addToRemoveQueue(toastId)
-      } else {
-        state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id)
-        })
+// React-toastify'ı sarmalayan bir hook
+export function useToast() {
+  // Özel içerikli toast bildirimi
+  const customToast = ({ title, description, type = 'info', duration = 5000 }) => {
+    return toastify(
+      <div>{title || description}</div>,
+      {
+        autoClose: duration,
+        type: type,
       }
+    );
+  };
 
-      return {
-        ...state,
-        toasts: state.toasts.map((t) =>
-          t.id === toastId || toastId === undefined
-            ? {
-                ...t,
-                open: false,
-              }
-            : t),
-      };
+  // Standart toast fonksiyonunu kullanmak için
+  const toast = (message, type = 'info', options = {}) => {
+    if (typeof message === 'object') {
+      // Nesne olarak geçilirse özel içerikli toast olarak ele alınır
+      return customToast(message);
     }
-    case "REMOVE_TOAST":
-      if (action.toastId === undefined) {
-        return {
-          ...state,
-          toasts: [],
-        }
-      }
-      return {
-        ...state,
-        toasts: state.toasts.filter((t) => t.id !== action.toastId),
-      };
-  }
-}
 
-const listeners = []
+    // Normal string mesajı olarak kullanım
+    return toastify[type](message, options);
+  };
 
-let memoryState = { toasts: [] }
+  // Toast'ı kapatmak için
+  const dismiss = (toastId) => {
+    toastify.dismiss(toastId);
+  };
 
-function dispatch(action) {
-  memoryState = reducer(memoryState, action)
-  listeners.forEach((listener) => {
-    listener(memoryState)
-  })
-}
-
-function toast({
-  ...props
-}) {
-  const id = genId()
-
-  const update = (props) =>
-    dispatch({
-      type: "UPDATE_TOAST",
-      toast: { ...props, id },
-    })
-  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
-
-  dispatch({
-    type: "ADD_TOAST",
-    toast: {
-      ...props,
-      id,
-      open: true,
-      onOpenChange: (open) => {
-        if (!open) dismiss()
-      },
-    },
-  })
-
+  // React-toastify kütüphanesinin tüm fonksiyonlarını da dışarı ver
   return {
-    id: id,
-    dismiss,
-    update,
-  }
-}
-
-function useToast() {
-  const [state, setState] = React.useState(memoryState)
-
-  React.useEffect(() => {
-    listeners.push(setState)
-    return () => {
-      const index = listeners.indexOf(setState)
-      if (index > -1) {
-        listeners.splice(index, 1)
-      }
-    };
-  }, [state])
-
-  return {
-    ...state,
     toast,
-    dismiss: (toastId) => dispatch({ type: "DISMISS_TOAST", toastId }),
+    dismiss,
+    success: (message, options) => toastify.success(message, options),
+    error: (message, options) => toastify.error(message, options),
+    info: (message, options) => toastify.info(message, options),
+    warning: (message, options) => toastify.warning(message, options),
   };
 }
 
-export { useToast, toast }
+export default useToast;

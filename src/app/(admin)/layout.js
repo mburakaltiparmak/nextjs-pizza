@@ -13,6 +13,7 @@ const AdminLayoutClient = ({ children }) => {
   const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
   
+  
   // URL yolundan aktif sayfayı belirle
   const getActivePageFromPath = (path) => {
     if (path.includes('/dashboard')) return 'dashboard';
@@ -56,6 +57,7 @@ const AdminLayoutClient = ({ children }) => {
   
   // console.log("Sidebar activePage:", activePage);
   // console.log("Current pathname:", pathname);
+  
   
   return (
     <div className="flex h-screen font-Quattrocento_Sans bg-lightgray">

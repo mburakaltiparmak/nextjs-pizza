@@ -9,7 +9,6 @@ const initialState = {
   fetchState: fetchStates.NOT_FETCHED,
   selectedCategory: null,
   categories: [],
-  loading: null,
 };
 
 export const productActions = {
@@ -17,7 +16,6 @@ export const productActions = {
   setFetchState: "SET_FETCH_STATE",
   setSelectedCategory: "SET_SELECTED_CATEGORY",
   setCategories: "SET_ITEMS_BY_CATEGORY",
-  setLoading: "SET_LOADING",
 };
 
 export const productReducer = (state = initialState, action) => {
@@ -42,11 +40,7 @@ export const productReducer = (state = initialState, action) => {
         ...state,
         categories: action.payload,
       };
-    case productActions.setLoading:
-      return {
-        ...state,
-        loading: action.payload,
-      };
+
     default:
       return state;
   }
