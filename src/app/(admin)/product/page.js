@@ -277,7 +277,7 @@ const ProductPage = () => {
   
   // Show loading indicator
   if (loading) {
-    return <SecondaryLoading />;
+    return <SecondaryLoading size="fullPage" />;
   }
 
   return (

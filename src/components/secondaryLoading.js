@@ -18,6 +18,11 @@ const SecondaryLoading = ({ text = "Yükleniyor", size = "medium" }) => {
       container: "py-6",
       loader: "h-8 w-8",
       text: "text-base"
+    },
+    fullPage: {
+      container: "py-16",
+      loader: "h-32 w-32",
+      text: "text-lg"
     }
   };
 

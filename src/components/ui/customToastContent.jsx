@@ -5,7 +5,7 @@ import React from 'react';
 // Özel toast içeriği bileşeni
 export const CustomToastContent = ({ title, image, message }) => {
   return (
-    <div className="flex items-center">
+    <div className="flex items-center text-sm">
       {image && (
         <div className="flex-shrink-0 mr-3">
           <img 
@@ -16,7 +16,7 @@ export const CustomToastContent = ({ title, image, message }) => {
         </div>
       )}
       <div>
-        {title && <p className="font-normal">{title}</p>}
+        {title && <p className="font-light">{title}</p>}
         {message && <p className="text-xs">{message}</p>}
       </div>
     </div>
