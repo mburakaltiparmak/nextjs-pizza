@@ -16,7 +16,8 @@ const Sidebar = ({ activePage = 'dashboard' }) => {
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = (e) => {
-    e.preventDefault();
+    
+    localStorage.removeItem("token");
     router.push("/login");
   };
 

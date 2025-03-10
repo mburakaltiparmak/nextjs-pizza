@@ -202,8 +202,3 @@ export const setFetchState = (fetchState) => ({
   type: productActions.setFetchState,
   payload: fetchState,
 });
-
-export const setSelectedCategory = (selectedCategory) => ({
-  type: productActions.setSelectedCategory,
-  payload: selectedCategory,
-});

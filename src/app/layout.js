@@ -1,7 +1,9 @@
 // app/layout.js
 import "./globals.css";
-import { Barlow, Quattrocento, Satisfy } from 'next/font/google';
+import { Barlow, Londrina_Solid, Quattrocento, Satisfy } from 'next/font/google';
 import Providers from "./Providers";
+import FloatingCartButton from "@/components/floatingCartButton";
+import FloatingUserButton from "@/components/floatingUserButton";
 
 // Font tanımlamaları
 const barlow = Barlow({
@@ -25,8 +27,14 @@ const satisfy = Satisfy({
   display: 'swap',
 });
 
+const londrina = Londrina_Solid({
+  subsets: ['latin'],
+  weight: ['100', '300', '400',  '900'],
+  variable: '--font-londrina_solid',
+  display: 'swap',
+});
 // Font sınıflarını global olarak tanımlama
-export const fontClasses = `${barlow.variable} ${quattrocento.variable} ${satisfy.variable}`;
+export const fontClasses = `${barlow.variable} ${quattrocento.variable} ${satisfy.variable} ${londrina.variable}`;
 
 export const metadata = {
   title: "Teknolojik Yemekler",

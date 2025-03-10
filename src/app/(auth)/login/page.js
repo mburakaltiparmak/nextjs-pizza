@@ -1,74 +1,105 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { login } from "@/lib/store/actions/userActions";
-import { setError, setLoading } from "@/lib/store/actions/globalActions";
+import { login, checkAuthStatus } from "@/lib/store/actions/userActions";
+import SecondaryLoading from "@/components/secondaryLoading";
+import { AUTH_ERRORS } from "@/lib/authErrorMessages"; // güvenli hata mesajları için
 
 const Page = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMeState] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(""); // Yerel hata durumu
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const loading = useAppSelector((state)=>state.global.loading);
+  const loading = useAppSelector((state) => state.global.loading);
+  const globalError = useAppSelector((state) => state.global.error);
+  const isLogin = useAppSelector((state) => state.user.isLogin);
+
+  // Global hata durumunu yerel hata durumuna aktarma
+  useEffect(() => {
+    if (globalError) {
+      setErrorMessage(globalError);
+    }
+  }, [globalError]);
+
+  // Kullanıcı zaten giriş yapmışsa dashboard'a yönlendir
+  useEffect(() => {
+    const isAuthenticated = dispatch(checkAuthStatus());
+    if (isAuthenticated || isLogin) {
+      router.push("/dashboard");
+    }
+  }, [dispatch, router, isLogin]);
+
+  const validateForm = () => {
+    // Form doğrulama
+    if (!username.trim()) {
+      setErrorMessage("Kullanıcı adı gereklidir");
+      return false;
+    }
+    
+    if (!password.trim()) {
+      setErrorMessage("Şifre gereklidir");
+      return false;
+    }
+    
+    // Hata mesajını temizle
+    setErrorMessage("");
+    return true;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(setError(""));
-    dispatch(setLoading(true));
+    
+    // Form alanlarını doğrula
+    if (!validateForm()) {
+      return;
+    }
+
+    const formData = {
+      email: username,
+      password: password,
+      rememberMe: rememberMe
+    };
 
     try {
-      const formData = {
-        email: username,
-        password: password,
-        rememberMe: rememberMe
-      };
-
       const result = await dispatch(login(formData));
       
-      console.log("Login response:", result); // Debug için
-
-      // API yanıtını ve token'ı kontrol et
-      if (result?.data?.token) {
-        console.log("Login successful, navigating to dashboard..."); // Debug için
+      // Login başarılıysa ve token varsa dashboard'a yönlendir
+      if (result && result.token) {
         router.push("/dashboard");
-      } else {
-        setError("Token alınamadı. Lütfen tekrar deneyin.");
+      } else if (result && result.error) {
+        // Yine de güvenli bir hata mesajı kullan
+        setErrorMessage(AUTH_ERRORS.INVALID_CREDENTIALS);
       }
-
     } catch (err) {
-      console.error("Login error:", err); // Debug için
+      // Asla ham hataları gösterme, her zaman güvenli bir mesaj kullan
+      console.error("Login error:", err);
+      setErrorMessage(AUTH_ERRORS.LOGIN_FAILED);
+    }
+  };
 
-      let errorMessage = "Giriş yapılırken bir hata oluştu.";
-      
-      if (err.code === "ERR_NETWORK") {
-        errorMessage = "Sunucuya bağlanılamadı. API'nin çalıştığından emin olun (http://localhost:9000)";
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.response?.status === 401) {
-        errorMessage = "Geçersiz kullanıcı adı veya şifre";
-      }
-      
-      dispatch(setError(errorMessage));
-    } finally {
-      dispatch(setLoading(false));
+  // Formdaki değişiklikler için hata mesajını temizle
+  const handleInputChange = () => {
+    if (errorMessage) {
+      setErrorMessage("");
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-red items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full bg-yellow max-w-md space-y-8 border-2 shadow-black border-white rounded-md p-8  ">
+    <div className="flex flex-col min-h-screen bg-red items-center justify-center">
+      <div className="w-full bg-yellow max-w-md space-y-4 border-2 shadow-black border-transparent rounded-md p-16">
         <div>
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight font-Barlow text-red">
             Admin Girişi
           </h2>
         </div>
 
-        {error && (
-          <div className="rounded-md bg-red-50 p-4">
-            <div className="text-sm text-red-700">{error}</div>
+        {errorMessage && (
+          <div className="font-Barlow rounded-md bg-red p-4">
+            <div className="text-sm text-lightgray">{errorMessage}</div>
           </div>
         )}
 
@@ -76,7 +107,7 @@ const Page = () => {
           <div className="-space-y-px rounded-md shadow-sm">
             <div>
               <label htmlFor="username" className="sr-only">
-                E-posta
+                Kullanıcı Adı
               </label>
               <input
                 id="username"
@@ -84,10 +115,13 @@ const Page = () => {
                 type="string"
                 required
                 disabled={loading}
-                className="relative block w-full rounded-t-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                className="relative block w-full rounded-t-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-red sm:text-sm sm:leading-6"
                 placeholder="Kullanıcı adı"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  handleInputChange();
+                }}
               />
             </div>
             <div>
@@ -100,10 +134,13 @@ const Page = () => {
                 type="password"
                 required
                 disabled={loading}
-                className="relative block w-full rounded-b-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                className="relative block w-full rounded-b-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-red sm:text-sm sm:leading-6"
                 placeholder="Şifre"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  handleInputChange();
+                }}
               />
             </div>
           </div>
@@ -115,7 +152,7 @@ const Page = () => {
                 name="remember-me"
                 type="checkbox"
                 disabled={loading}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+                className="h-4 w-4 rounded border-gray-300 text-red focus:ring-red"
                 checked={rememberMe}
                 onChange={(e) => setRememberMeState(e.target.checked)}
               />
@@ -129,13 +166,20 @@ const Page = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`group relative flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${
+              className={`group relative flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red ${
                 loading 
-                  ? 'bg-blue-400 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-500'
+                  ? 'bg-red-400 cursor-not-allowed' 
+                  : 'bg-red hover:bg-red-700'
               }`}
             >
-              {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <SecondaryLoading size="small" />
+                  <span className="ml-2">Giriş Yapılıyor...</span>
+                </div>
+              ) : (
+                'Giriş Yap'
+              )}
             </button>
           </div>
         </form>

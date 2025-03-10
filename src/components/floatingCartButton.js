@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAppSelector, useAppDispatch } from "@/lib/hooks";
 import {
   removeFromCart,
@@ -29,9 +29,84 @@ const FloatingCartButton = () => {
   const { toast } = useToast();
   const router = useRouter();
   const cart = useAppSelector((store) => store.order.cart);
-
+  const cartButtonRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
   const [localCart, setLocalCart] = useState(cart);
-  console.log("cart : ", localCart);
+  
+  // Hesaplanmış değerleri saklayacak ref
+  const calculatedRightRef = useRef(null);
+
+  // Buton pozisyonunu hesapla ve sakla
+  useEffect(() => {
+    // Scrollbar genişliğini hesapla
+    const getScrollbarWidth = () => {
+      return window.innerWidth - document.documentElement.clientWidth;
+    };
+
+    const handleBeforeOpen = () => {
+      if (cartButtonRef.current) {
+        // Dialog açılmadan önce butonun orijinal konumunu kaydedelim
+        calculatedRightRef.current = getScrollbarWidth();
+        
+        // Butonun son konumunu ayarlayalım - scrollbar gözönüne alınarak
+        cartButtonRef.current.style.right = `16px`;
+      }
+    };
+
+    const handleAfterOpen = () => {
+      if (cartButtonRef.current && calculatedRightRef.current !== null) {
+        // Dialog açıldıktan sonra scrollbar kaybolduğunda butonun 
+        // konumunu aynı yerde tutmak için hesaplanan genişliği uygula
+        cartButtonRef.current.style.right = `${16 + calculatedRightRef.current}px`;
+      }
+    };
+
+    // Dialog açılıp kapandığında olayları dinle
+    const handleOpen = (event) => {
+      if (event.target.getAttribute('data-state') === 'open') {
+        setIsOpen(true);
+        handleAfterOpen();
+      } else {
+        setIsOpen(false);
+        handleBeforeOpen();
+      }
+    };
+
+    // İlk yüklemede pozisyonu hesapla
+    handleBeforeOpen();
+
+    // Event dinleyicileri ekle
+    document.addEventListener('dialog-state-change', handleOpen);
+
+    return () => {
+      document.removeEventListener('dialog-state-change', handleOpen);
+    };
+  }, []);
+
+  // Dialog state'ini izleyen fonksiyon
+  const onOpenChange = (open) => {
+    // Dialog açılmadan önce
+    if (open && !isOpen) {
+      // Özel event fırlatarak butonun konumunu güncelleyelim
+      const event = new CustomEvent('dialog-state-change', { 
+        detail: { state: 'opening' },
+        bubbles: true 
+      });
+      cartButtonRef.current.dispatchEvent(event);
+    }
+    
+    // Dialog kapandıktan sonra
+    if (!open && isOpen) {
+      // Özel event fırlatarak butonun konumunu güncelleyelim
+      const event = new CustomEvent('dialog-state-change', { 
+        detail: { state: 'closed' },
+        bubbles: true 
+      });
+      cartButtonRef.current.dispatchEvent(event);
+    }
+    
+    setIsOpen(open);
+  };
 
   useEffect(() => {
     setLocalCart(cart);
@@ -73,10 +148,13 @@ const FloatingCartButton = () => {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50">
-      <AlertDialog>
+    <div 
+      className="fixed top-14 right-4 z-50 transition-none"
+      ref={cartButtonRef}
+    >
+      <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
         <AlertDialogTrigger asChild>
-          <div className="bg-yellow text-red p-3 rounded-full shadow-lg hover:bg-darkred hover:border-2 hover:border-lightgray transition-colors duration-200 cursor-pointer max-md:w-auto  flex justify-center items-center">
+          <div className="bg-yellow text-red p-3 rounded-full shadow-lg hover:bg-darkred hover:border-2 hover:border-lightgray transition-colors duration-200 cursor-pointer max-md:w-auto font-Quattrocento_Sans flex justify-center items-center">
             <FontAwesomeIcon icon={faShoppingCart} />
             <span className="ml-2">
               {localCart.reduce((sum, item) => sum + item.count, 0)}

@@ -5,6 +5,7 @@ import { productReducer } from "./reducers/productReducer";
 import { productReducersFromApi } from "./reducers/productReducersFromApi";
 import { categoryReducer } from "./reducers/categoryReducer";
 import globalReducer from "./reducers/globalReducer";
+import { userReducer } from "./reducers/userReducer";
 
 export const API_BASE_URL = "http://localhost:9000/pizza/api";
 export const fetchStates = {
@@ -20,6 +21,7 @@ export const store = configureStore({
     productAPI : productReducersFromApi,
     categoryAPI : categoryReducer,
     global : globalReducer,
+    user: userReducer
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
 });

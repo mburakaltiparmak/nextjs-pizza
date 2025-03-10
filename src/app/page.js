@@ -1,47 +1,28 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
-import React, { useEffect, useState } from "react";
-import mvpBanner from "../../assets/mvp-banner.png";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { homeCards, homeMenuBar, homeMenuLink } from "./data";
-import { resolve } from "styled-jsx/css";
-import Products from "@/components/products/products";
+import React, { useEffect } from "react";
+import { homeCards } from "./data";
 import Categories from "@/components/categories/categories";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowDown } from "@fortawesome/free-solid-svg-icons";
 import GoToMenu from "@/components/goToMenu";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import {
-  fetchProducts,
-  fetchProductsById,
-} from "@/lib/store/actions/productActions";
 import Loading from "./loading";
 import { toast } from "react-toastify";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-
-const sleep = (ms) => {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-};
+import { fetchCategoryById } from "@/lib/store/actions/categoryActions";
+import { fetchProducts } from "@/lib/store/actions/productActionsFromApi";
 
 const Page = () => {
   const dispatch = useAppDispatch();
   const selectedCategory = useAppSelector(
-    (store) => store.product.selectedCategory
+    (store) => store.productAPI.selectedCategory
   );
   const loading = useAppSelector((store) => store.global.loading);
 
   useEffect(() => {
     const fetchData = async () => {
       if (selectedCategory) {
-        await dispatch(fetchProductsById(selectedCategory));
+        await dispatch(fetchCategoryById(selectedCategory));
       } else {
         await dispatch(fetchProducts());
       }

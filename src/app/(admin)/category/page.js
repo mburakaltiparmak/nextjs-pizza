@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import {
   deleteCategory,
+  fetchCategories,
   fetchCategoriesWithProducts,
   postNewCategory,
   updateCategory

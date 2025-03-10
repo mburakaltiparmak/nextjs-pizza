@@ -24,45 +24,98 @@ export const setToken = (token) => ({
 
 export const login = (formData) => async (dispatch) => {
     dispatch(setLoading(true));
-    dispatch(setError(""));
+    dispatch(setError(null));
     
     try {
         const res = await instance.post("/auth/login", {
-            username: formData.email,
+            username: formData.username || formData.email, // Make sure username is correctly sent
             password: formData.password
         });
         
-        console.log("API Response:", res); // Debug için
-
-        if (res?.data?.token) {
-            // Token'ı store'a kaydet
-            dispatch(setToken(res.data.token));
-            // Login durumunu güncelle
-            dispatch(setIsLogin(true));
-            
-            // Token'ı localStorage'a kaydet ve header'a ekle
-            localStorage.setItem("token", res.data.token);
-            instance.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
-
-            if (formData.rememberMe) {
-                dispatch(setRememberMe(true));
-            }
-
-            // Kullanıcı email'ini kaydet
-            if (formData.email) {
-                dispatch(setEmail(formData.email));
-            }
-
-            return res; // Önemli: Tüm response'u dön
+        // Yanıtı doğrula
+        if (!res || !res.data) {
+            throw new Error("Sunucudan geçersiz yanıt alındı");
         }
-        dispatch(setError("Token alınamadı!"));
-    } catch (err) {
-        console.error("Login action error:", err); // Debug için
-        dispatch(setIsLogin(false));
-        localStorage.removeItem("token");
-        delete instance.defaults.headers.common['Authorization'];
-        dispatch(setError(err));
-    } finally {
+        
+        // Token kontrolü
+        const token = res.data.token;
+        if (!token) {
+            throw new Error("Kimlik doğrulama başarısız");
+        }
+        
+        dispatch(setToken(token));
+        dispatch(setIsLogin(true));
+        
+        localStorage.setItem("token", token);
+        instance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        if (formData.rememberMe) {
+            dispatch(setRememberMe(true));
+        }
+
+        // Kullanıcı bilgilerini kaydet
+        const userIdentifier = formData.email || formData.username;
+        
+        // Redux store'a kaydet
+        dispatch(setEmail(userIdentifier));
+        
+        // localStorage'a da kaydet - checkAuthStatus için gerekli
+        localStorage.setItem("userEmail", userIdentifier);
+        
         dispatch(setLoading(false));
+        return { token };
+        
+    } catch (err) {
+        // Hata işleme...
+        dispatch(setIsLogin(false));
+        dispatch(setToken(null));
+        localStorage.removeItem("token");
+        localStorage.removeItem("userEmail"); // Email bilgisini de kaldır
+        delete instance.defaults.headers.common['Authorization'];
+        
+        // Hata mesajını belirle...
+        let errorMessage = "Kullanıcı adı veya şifre hatalı";
+        
+        // Diğer hata işleme kodları...
+        
+        dispatch(setError(errorMessage));
+        dispatch(setLoading(false));
+        return { error: errorMessage };
     }
+};
+export const logout = () => (dispatch) => {
+    // Token ve login durumunu temizle
+    dispatch(setToken(null));
+    dispatch(setIsLogin(false));
+    
+    // LocalStorage'dan token'ı kaldır
+    localStorage.removeItem("token");
+    
+    // Axios instance header'ındaki Authorization'ı temizle
+    delete instance.defaults.headers.common['Authorization'];
+    
+    return { success: true };
+};
+
+export const checkAuthStatus = () => (dispatch) => {
+    const token = localStorage.getItem("token");
+    
+    if (token) {
+        // Token varsa, kullanıcıyı giriş yapmış olarak işaretle
+        dispatch(setToken(token));
+        dispatch(setIsLogin(true));
+        
+        // Axios instance'ına token ekle
+        instance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        // Önemli: Ayrıca kullanıcı email/username bilgisini de al
+        const savedEmail = localStorage.getItem("userEmail");
+        if (savedEmail) {
+            dispatch(setEmail(savedEmail));
+        }
+        
+        return true;
+    }
+    
+    return false;
 };

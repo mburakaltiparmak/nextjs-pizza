@@ -2,6 +2,7 @@
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { setLoading } from "@/lib/store/actions/globalActions";
 import { Trash2 } from "lucide-react";
+import { useEffect } from "react";
 
 // Base Modal Component (tüm modaller için temel bileşen)
 export const Modal = ({ isOpen, onClose, title, children, footer }) => {
@@ -38,9 +39,17 @@ export const ConfirmationModal = ({
   
 }) => {
   const dispatch = useAppDispatch();
-  dispatch(setLoading(false));
-  const loading = useAppSelector((state)=>state.global.loading);
+  const loading = useAppSelector((state) => state.global.loading);
+  
+  // Render sırasında değil, bileşen mount edildiğinde loading'i false yapıyoruz
+  useEffect(() => {
+    if (isOpen) {
+      dispatch(setLoading(false));
+    }
+  }, [isOpen, dispatch]);
+
   if (!isOpen) return null;
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 font-Barlow">

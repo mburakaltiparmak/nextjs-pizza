@@ -1,5 +1,6 @@
 "use client";
 import { Plus } from 'lucide-react';
+import { useSelector } from "react-redux";
 
 const Navbar = ({ 
   title, 
@@ -7,6 +8,9 @@ const Navbar = ({
   addButtonText = "Yeni Ekle", 
   onAddButtonClick 
 }) => {
+  // Redux store'dan email bilgisini al
+  const email = useSelector((state) => state.user.email);
+  
   // Ensure we have a valid function to call
   const handleAddButtonClick = (e) => {
     e.preventDefault();
@@ -33,7 +37,7 @@ const Navbar = ({
             </button>
           )}
           <div className="text-sm text-gray-600 font-Barlow">
-            <span className="font-medium">Admin</span>
+            <span className="font-medium">{email}</span>
           </div>
         </div>
       </div>

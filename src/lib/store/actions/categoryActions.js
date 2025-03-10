@@ -37,6 +37,7 @@ export const fetchCategories = () => async (dispatch) => {
     dispatch(setCategories(res.data));
     dispatch(setFetchState(fetchStates.FETCHED));
     dispatch(setLoading(false));
+    console.log("categories : ",res.data);
     return res.data;
   } catch (err) {
     handleApiError(err, dispatch, "Categories", setFetchState, fetchStates);

@@ -2,40 +2,33 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import {
-  fetchProductsById,
-  setSelectedCategory,
-} from "@/lib/store/actions/productActions";
+
 import { HoverCard, HoverCardTrigger } from "../ui/hover-card";
-import useSWR from "swr";
 import Products from "../products/products";
 import NotFound from "@/app/not-found";
 import Loading from "@/app/loading";
-
-const fetcher = (...args) => fetch(...args).then((res) => res.json());
+import allLogo from "../../../assets/adv-aseets/icons/all-logo.png";
+import { fetchCategoriesWithProducts, setSelectedCategory } from "@/lib/store/actions/categoryActions";
 
 const Categories = () => {
   const dispatch = useAppDispatch();
-  const categories = useAppSelector((store) => store.product.categories);
+  const categories = useAppSelector((state)=>state.categoryAPI.categories);
 
-  const handleCategory = (id) => {
+  useEffect(()=>{
+    if (!categories || categories.length === 0) {
+      dispatch(fetchCategoriesWithProducts());
+    }
+  },[dispatch, categories?.length])
+
+  const handleCategory = (id,e) => {
+    e.preventDefault();
     dispatch(setSelectedCategory(id));
-    // dispatch(fetchProductsById(id));
   };
+  const handleAllOfThem = (e) => {
+    e.preventDefault();
+    dispatch(setSelectedCategory(null));
+  }
 
-  /*
-  const { data: firstApiData, error: firstApiError } = useSWR(
-    "https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products",
-    fetcher
-  );
-
-  const { data: secondApiData, error: secondApiError } = useSWR(
-    selectedCategory
-      ? `https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products/${selectedCategory}`
-      : null,
-    fetcher
-  );
-*/
   const [data, setData] = useState([]);
   /*
   useEffect(() => {
@@ -65,21 +58,36 @@ const Categories = () => {
       id="categories"
       className="flex flex-col justify-between items-center gap-8 "
     >
-      <div className="grid grid-cols-6 grid-flow-row mt-4 max-md:grid-cols-2 max-md:place-items-center max-md:gap-4">
-        {categories.length > 0 ? (
-          categories.map((item, index) => (
-            <button
-              key={index}
-              onClick={() => handleCategory(item.category_id)}
-              className="optionStyle rounded-full text-sm py-1"
+      <div className="grid grid-cols-8 grid-flow-row mt-4 max-md:grid-cols-2 max-md:place-items-center max-md:gap-4">
+      <button
+              
+              onClick={(e) => handleAllOfThem(e)}
+              className="optionStyle rounded-full text-sm p-2"
             >
               <img
                 className="w-[50px] h-fit object-cover"
-                src={item.category_img}
-                alt={item.category_name}
+               src={allLogo.src}
+               alt="all"
               />
               <HoverCard>
-                <HoverCardTrigger>{item.category_name}</HoverCardTrigger>
+                <HoverCardTrigger>All</HoverCardTrigger>
+              </HoverCard>
+            </button>
+        { 
+        categories?.length > 0 ? (
+          categories.map((item, index) => (
+            <button
+              key={index}
+              onClick={(e) => handleCategory(item.id,e)}
+              className="optionStyle rounded-full text-sm p-2"
+            >
+              <img
+                className="w-[50px] h-fit object-cover"
+                src={item.img}
+                alt={item.name}
+              />
+              <HoverCard>
+                <HoverCardTrigger>{item.name}</HoverCardTrigger>
               </HoverCard>
             </button>
           ))
