@@ -10,12 +10,12 @@ import { toast } from "react-toastify";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { fetchCategoryById } from "@/lib/store/actions/categoryActions";
-import { fetchProducts } from "@/lib/store/actions/productActionsFromApi";
+import { fetchProducts } from "@/lib/store/actions/productActions";
 
 const Page = () => {
   const dispatch = useAppDispatch();
   const selectedCategory = useAppSelector(
-    (store) => store.productAPI.selectedCategory
+    (store) => store.product.selectedCategory
   );
   const loading = useAppSelector((store) => store.global.loading);
 

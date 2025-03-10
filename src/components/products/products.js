@@ -13,9 +13,9 @@ import RatingStars from "../admin/ratingStars";
 
 const Products = () => {
   const dispatch = useAppDispatch();
-  const categories = useAppSelector((state) => state.categoryAPI.categories);
+  const categories = useAppSelector((state) => state.category.categories);
   const selectedCategory = useAppSelector(
-    (state) => state.categoryAPI.selectedCategory
+    (state) => state.category.selectedCategory
   );
   
   // Seçilen kategorinin ürünlerini kategoriler dizisinden bulma

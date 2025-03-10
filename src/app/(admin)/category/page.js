@@ -1,15 +1,16 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { useDispatch, useSelector } from "react-redux";
 import {
   deleteCategory,
   fetchCategories,
-  fetchCategoriesWithProducts,
-  postNewCategory,
+  createCategory,
   updateCategory
 } from "@/lib/store/actions/categoryActions";
-import { toast } from "react-toastify";
+import { setSuccess } from "@/lib/store/actions/globalActions";
+import { fetchStates } from "@/lib/store/constants";
+import { useToast } from "@/hooks/use-toast";
 import { Image } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -37,25 +38,28 @@ import SecondaryLoading from "@/components/secondaryLoading";
 //Form validation schema
 const formSchema = z.object({
   name: z.string().min(3, "Kategori adı en az 3 karakter olmalıdır."),
-  image: z.any("Bir kategori görseli ekleyin!"),
+  image: z.any().optional(),
   preview: z.any().optional(),
 });
 
 const CategoryPage = () => {
   const router = useRouter();
-  const dispatch = useAppDispatch();
+  const dispatch = useDispatch();
+  const { toast } = useToast();
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
-  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [dataFetchAttempted, setDataFetchAttempted] = useState(false);
   
   // Redux state
-  const categories = useAppSelector((state) => state.categoryAPI.categories);
-  const loading = useAppSelector((state) => state.global.loading);
-  const error = useAppSelector((state) => state.global.error);
-  const fetchState = useAppSelector((state) => state.categoryAPI.fetchState);
+  const categories = useSelector((state) => state.category.categories);
+  const categoryFetchState = useSelector((state) => state.category.fetchState);
+  const loading = useSelector((state) => state.global.loading);
+  const error = useSelector((state) => state.global.error);
+  const success = useSelector((state) => state.global.success);
 
   // Initialize form
   const form = useForm({
@@ -67,18 +71,33 @@ const CategoryPage = () => {
     },
   });
 
+  // Kategorileri yükle
   useEffect(() => {
-    dispatch(fetchCategoriesWithProducts());
-  }, [dispatch]);
+    if (categoryFetchState === fetchStates.NOT_FETCHED && !dataFetchAttempted) {
+      setDataFetchAttempted(true);
+      dispatch(fetchCategories());
+    }
+  }, [dispatch, categoryFetchState, dataFetchAttempted]);
 
-  // Show error message when there's an error
+  // Toast mesajları için
   useEffect(() => {
     if (error) {
-      toast.error(`Hata: ${error}`);
+      toast({
+        title: "Hata",
+        description: error,
+        variant: "destructive",
+      });
     }
-  }, [error]);
+    
+    if (success) {
+      toast({
+        title: "Başarılı",
+        description: success,
+      });
+    }
+  }, [error, success, toast]);
 
-  // Add openModal function to DOM element
+  // Add openModal function to DOM element (for external access)
   useEffect(() => {
     if (typeof document !== 'undefined') {
       const pageElement = document.getElementById('admin-page-component');
@@ -125,7 +144,11 @@ const CategoryPage = () => {
   };
 
   const handleImageError = (errorMessage) => {
-    toast.error(errorMessage);
+    toast({
+      title: "Hata",
+      description: errorMessage,
+      variant: "destructive",
+    });
   };
 
   const openDeleteModal = (category) => {
@@ -139,32 +162,31 @@ const CategoryPage = () => {
   };
 
   const onSubmit = async (data) => {
-    setFormSubmitting(true);
-
     try {
       const categoryData = {
         name: data.name,
-        image: data.image,
-        preview: form.getValues("preview")
+        image: data.image
       };
 
       let result;
 
       if (editingCategory) {
         // Kategori güncelleme
-        result = await dispatch(updateCategory(categoryData, editingCategory.id));
-        if (result) {
+        result = await dispatch(updateCategory(editingCategory.id, categoryData));
+        if (!result.error) {
+          dispatch(setSuccess(`"${data.name}" kategorisi başarıyla güncellendi`));
           closeModal();
         }
       } else {
         // Yeni kategori ekleme
-        result = await dispatch(postNewCategory(categoryData));
-        if (result) {
+        result = await dispatch(createCategory(categoryData));
+        if (!result.error) {
+          dispatch(setSuccess(`"${data.name}" kategorisi başarıyla oluşturuldu`));
           closeModal();
         }
       }
-    } finally {
-      setFormSubmitting(false);
+    } catch (err) {
+      console.error("Kategori işlemi sırasında hata:", err);
     }
   };
 
@@ -174,35 +196,35 @@ const CategoryPage = () => {
     try {
       // Check if category has products before deletion
       if (categoryToDelete.products && categoryToDelete.products.length > 0) {
-        // You might want to confirm again or handle this case specially
         if (!window.confirm(`Bu kategori ${categoryToDelete.products.length} ürün içeriyor. Silmek istediğinize emin misiniz?`)) {
           return;
         }
       }
-  
-      setFormSubmitting(true); // Show loading state
       
       const result = await dispatch(deleteCategory(categoryToDelete.id));
       
-      if (result) {
-        // Başarılı silme durumunda modalı kapat
-        toast.success(`"${categoryToDelete.name}" başarıyla silindi`);
+      if (!result.error) {
+        dispatch(setSuccess(`"${categoryToDelete.name}" kategorisi başarıyla silindi`));
         closeDeleteModal();
       }
-    } finally {
-      setFormSubmitting(false);
-      closeDeleteModal();
+    } catch (err) {
+      console.error("Kategori silme işlemi sırasında hata:", err);
     }
   };
 
   // Kategorileri filtrele
-  const filteredCategories = useMemo(() => {
-    if (!categories || !Array.isArray(categories)) return [];
+  // Kategorileri filtrele
+const filteredCategories = useMemo(() => {
+  if (!categories || !Array.isArray(categories)) return [];
 
-    return categories.filter((category) =>
-      category.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [categories, searchTerm]);
+  return categories.filter((category) => {
+    // Kategori adı yoksa veya geçersizse filtreleme işleminden geçirme
+    if (!category || !category.name || typeof category.name !== 'string') {
+      return false;
+    }
+    return category.name.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+}, [categories, searchTerm]);
 
   // Admin layout için props tanımlama
   CategoryPage.props = {
@@ -214,14 +236,13 @@ const CategoryPage = () => {
       if (window.openAdminModal) {
         window.openAdminModal();
       } else {
-        console.log("openAdminModal fonksiyonu bulunamadı");
         openModal(); // Fallback olarak kendi modalımızı açalım
       }
     }
   };
 
-  // Show loading indicator
-  if (loading) {
+  // Yükleniyor durumu
+  if (categoryFetchState === fetchStates.FETCHING) {
     return <SecondaryLoading size="fullPage" />;
   }
 
@@ -303,11 +324,11 @@ const CategoryPage = () => {
               </div>
             </div>
             <div className="p-4">
-              <h3 className="font-medium text-gray-800 text-lg">
+              <h3 className="font-medium text-darkgray text-lg font-Quattrocento_Sans">
                 {category.name}
               </h3>
               {category.products && (
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray mt-1 font-Barlow">
                   {category.products.length} ürün
                 </p>
               )}
@@ -315,12 +336,12 @@ const CategoryPage = () => {
           </div>
         ))}
 
-        {filteredCategories.length === 0 && !loading && (
+        {filteredCategories.length === 0 && categoryFetchState !== fetchStates.FETCHING && (
           <div className="col-span-full text-center py-10">
-            <p className="text-gray-500">Herhangi bir kategori bulunamadı.</p>
+            <p className="text-gray font-Barlow">Herhangi bir kategori bulunamadı.</p>
             <button
               onClick={() => openModal()}
-              className="mt-4 px-4 py-2 bg-red text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="mt-4 px-4 py-2 bg-red text-lightgray rounded-lg hover:bg-yellow hover:text-red transition-colors font-Barlow"
             >
               Yeni Kategori Ekle
             </button>
@@ -337,19 +358,19 @@ const CategoryPage = () => {
           <div className="flex flex-row items-center justify-between space-x-2 p-4">
             <Button
               type="button"
-              className=""
+              className="border-gray text-darkgray hover:bg-gray hover:text-lightgray font-Barlow"
               onClick={closeModal}
-              disabled={formSubmitting}
+              disabled={loading}
             >
               İptal
             </Button>
             <Button
               type="submit"
-              className="bg-red text-white hover:bg-yellow hover:text-red"
-              disabled={formSubmitting}
+              className="bg-red text-lightgray hover:bg-yellow hover:text-red font-Barlow"
+              disabled={loading}
               onClick={form.handleSubmit(onSubmit)}
             >
-              {formSubmitting
+              {loading
                 ? "İşleniyor..."
                 : editingCategory
                 ? "Güncelle"
@@ -365,18 +386,18 @@ const CategoryPage = () => {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex flex-row items-center">
+                  <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
                     <p className="text-darkgray">Kategori Adı</p>
                     <p className="text-red pl-1">*</p>
                   </FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red focus:border-transparent"
+                      className="w-full p-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-red focus:border-transparent font-Barlow"
                       placeholder="Kategori adını girin"
                     />
                   </FormControl>
-                  <FormMessage className="text-xs font-semibold text-red-500" />
+                  <FormMessage className="text-xs font-semibold text-red" />
                 </FormItem>
               )}
             />
@@ -386,7 +407,7 @@ const CategoryPage = () => {
               name="image"
               render={({ field: { onChange, value, ...rest } }) => (
                 <FormItem className="">
-                  <FormLabel className="flex flex-row items-center">
+                  <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
                     <p className="text-darkgray">Kategori Logo</p>
                     <p className="text-red pl-1">*</p>
                   </FormLabel>
@@ -397,7 +418,7 @@ const CategoryPage = () => {
                       onError={handleImageError}
                     />
                   </FormControl>
-                  <FormMessage className="text-xs font-semibold text-red-500" />
+                  <FormMessage className="text-xs font-semibold text-red" />
                 </FormItem>
               )}
             />

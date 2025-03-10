@@ -7,7 +7,7 @@ import {
   postNewProduct,
   updateProduct,
   deleteProduct,
-} from "@/lib/store/actions/productActionsFromApi";
+} from "@/lib/store/actions/productActions";
 import { fetchCategories } from "@/lib/store/actions/categoryActions";
 import { Plus, Edit, Trash2, Package } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";

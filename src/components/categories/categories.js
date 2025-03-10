@@ -8,15 +8,15 @@ import Products from "../products/products";
 import NotFound from "@/app/not-found";
 import Loading from "@/app/loading";
 import allLogo from "../../../assets/adv-aseets/icons/all-logo.png";
-import { fetchCategoriesWithProducts, setSelectedCategory } from "@/lib/store/actions/categoryActions";
+import { fetchCategories, fetchCategoriesWithProducts, setSelectedCategory } from "@/lib/store/actions/categoryActions";
 
 const Categories = () => {
   const dispatch = useAppDispatch();
-  const categories = useAppSelector((state)=>state.categoryAPI.categories);
+  const categories = useAppSelector((state)=>state.category.categories);
 
   useEffect(()=>{
     if (!categories || categories.length === 0) {
-      dispatch(fetchCategoriesWithProducts());
+      dispatch(fetchCategories());
     }
   },[dispatch, categories?.length])
 

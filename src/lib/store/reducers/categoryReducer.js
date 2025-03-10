@@ -1,40 +1,62 @@
-export const fetchStates = {
-    NOT_FETCHED: "NOT_FETCHED",
-    FETCHING: "FETCHING",
-    FETCHED: "FETCHED",
-    FAILED: "FAILED",
-  };
+import { fetchStates } from "../constants";
 
-const initialState = {
-  products: [],
-  categories: [],
-  fetchState: fetchStates.NOT_FETCHED,
-  selectedCategory: null,
-};
 export const categoryActions = {
-    setFetchState : "SET_FETCH_STATE",
-    setSelectedCategory : "SET_SELECTED_CATEGORY",
-    setCategories : "SET_CATEGORIES",
-    
-} 
-export const categoryReducer = (state = initialState, action) => {
+    SET_CATEGORIES: "SET_CATEGORIES",
+    SET_SINGLE_CATEGORY: "SET_SINGLE_CATEGORY",
+    ADD_CATEGORY: "ADD_CATEGORY",
+    UPDATE_CATEGORY: "UPDATE_CATEGORY",
+    DELETE_CATEGORY: "DELETE_CATEGORY",
+    SET_FETCH_STATE: "SET_CATEGORY_FETCH_STATE",
+    SET_ERROR: "SET_CATEGORY_ERROR"
+  };
+  
+  const categoryInitialState = {
+    categories: [],
+    currentCategory: null,
+    fetchState: fetchStates.NOT_FETCHED,
+    error: null
+  };
+  
+  export const categoryReducer = (state = categoryInitialState, action) => {
     switch (action.type) {
-        case categoryActions.setFetchState:
-            return {
-                ...state,
-                fetchState: action.payload,
-            };
-        case categoryActions.setSelectedCategory:
-            return {
-                ...state,
-                selectedCategory: action.payload,
-            };
-        case categoryActions.setCategories:
-            return {
-                ...state,
-                categories: action.payload,
-            };
-        default:
-            return state;
+      case categoryActions.SET_CATEGORIES:
+        return {
+          ...state,
+          categories: action.payload
+        };
+      case categoryActions.SET_SINGLE_CATEGORY:
+        return {
+          ...state,
+          currentCategory: action.payload
+        };
+      case categoryActions.ADD_CATEGORY:
+        return {
+          ...state,
+          categories: [...state.categories, action.payload]
+        };
+      case categoryActions.UPDATE_CATEGORY:
+        return {
+          ...state,
+          categories: state.categories.map(category => 
+            category.id === action.payload.id ? action.payload : category
+          )
+        };
+      case categoryActions.DELETE_CATEGORY:
+        return {
+          ...state,
+          categories: state.categories.filter(category => category.id !== action.payload)
+        };
+      case categoryActions.SET_FETCH_STATE:
+        return {
+          ...state,
+          fetchState: action.payload
+        };
+      case categoryActions.SET_ERROR:
+        return {
+          ...state,
+          error: action.payload
+        };
+      default:
+        return state;
     }
-};
+  };

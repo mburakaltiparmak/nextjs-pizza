@@ -1,27 +1,20 @@
 import { configureStore } from "@reduxjs/toolkit";
 import logger from "redux-logger";
-import { orderReducer } from "./reducers/orderReducer";
-import { productReducer } from "./reducers/productReducer";
-import { productReducersFromApi } from "./reducers/productReducersFromApi";
-import { categoryReducer } from "./reducers/categoryReducer";
-import globalReducer from "./reducers/globalReducer";
 import { userReducer } from "./reducers/userReducer";
+import { categoryReducer } from "./reducers/categoryReducer";
+import { productReducer } from "./reducers/productReducer";
+import { adminReducer } from "./reducers/adminReducer";
+import { orderReducer } from "./reducers/orderReducer";
+import { globalReducer } from "./reducers/globalReducer";
 
-export const API_BASE_URL = "http://localhost:9000/pizza/api";
-export const fetchStates = {
-  NOT_FETCHED: "NOT_FETCHED",
-  FETCHING: "FETCHING",
-  FETCHED: "FETCHED",
-  FAILED: "FAILED",
-};
 export const store = configureStore({
   reducer: {
-    order: orderReducer,
+    user: userReducer,
+    category: categoryReducer,
     product: productReducer,
-    productAPI : productReducersFromApi,
-    categoryAPI : categoryReducer,
-    global : globalReducer,
-    user: userReducer
+    admin: adminReducer,
+    order: orderReducer,
+    global: globalReducer
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger)
 });

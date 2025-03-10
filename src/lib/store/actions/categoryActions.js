@@ -1,222 +1,211 @@
+import { categoryActions } from "../reducers/categoryReducer";
+import { setError, setLoading, setSuccess } from "./globalActions";
 import { instance } from "@/lib/hooks";
-import {
-  fetchStates,
-  categoryActions,
-} from "../reducers/categoryReducer";
-import { toast } from "react-toastify";
-import CustomToastContent from "@/components/ui/customToastContent";
-import { fetchProducts } from "./productActionsFromApi";
-import { setError, setLoading, handleApiError } from "./globalActions";
+import { fetchStates } from "../constants";
 
-// GET REQUESTS
+export const setCategories = (categories) => ({
+  type: categoryActions.SET_CATEGORIES,
+  payload: categories
+});
 
-export const fetchCategoriesWithProducts = () => async (dispatch) => {
-  dispatch(setFetchState(fetchStates.FETCHING));
-  dispatch(setLoading(true));
-  dispatch(setError(null)); // Hata varsa temizle
+export const setSingleCategory = (category) => ({
+  type: categoryActions.SET_SINGLE_CATEGORY,
+  payload: category
+});
 
-  try {
-    const res = await instance.get("/category");
-    dispatch(setCategories(res.data));
-    dispatch(setFetchState(fetchStates.FETCHED));
-    dispatch(setLoading(false));
-    return res.data;
-  } catch (err) {
-    handleApiError(err, dispatch, "Categories", setFetchState, fetchStates);
-    return null;
-  }
-};
+export const addCategory = (category) => ({
+  type: categoryActions.ADD_CATEGORY,
+  payload: category
+});
 
+export const updateCategoryInState = (category) => ({
+  type: categoryActions.UPDATE_CATEGORY,
+  payload: category
+});
+
+export const deleteCategoryFromState = (categoryId) => ({
+  type: categoryActions.DELETE_CATEGORY,
+  payload: categoryId
+});
+
+export const setCategoryFetchState = (state) => ({
+  type: categoryActions.SET_FETCH_STATE,
+  payload: state
+});
+
+export const setCategoryError = (error) => ({
+  type: categoryActions.SET_ERROR,
+  payload: error
+});
+
+// Tüm kategorileri getir
 export const fetchCategories = () => async (dispatch) => {
-  dispatch(setFetchState(fetchStates.FETCHING));
-  dispatch(setLoading(true));
-  dispatch(setError(null)); // Hata varsa temizle
-
-  try {
-    const res = await instance.get("/category/simple");
-    dispatch(setCategories(res.data));
-    dispatch(setFetchState(fetchStates.FETCHED));
-    dispatch(setLoading(false));
-    console.log("categories : ",res.data);
-    return res.data;
-  } catch (err) {
-    handleApiError(err, dispatch, "Categories", setFetchState, fetchStates);
-    return null;
-  }
-};
-
-export const fetchCategoryById = (id) => async (dispatch) => {
-  if (!id) return null; // Geçersiz ID kontrolü ekleyelim
-
-  dispatch(setFetchState(fetchStates.FETCHING));
-  dispatch(setLoading(true));
-  dispatch(setError(null)); // Hata varsa temizle
-
-  try {
-    const res = await instance.get(`/category/${id}`);
-    // Burada isterseniz özel bir dispatch ekleyebilirsiniz
-    dispatch(setFetchState(fetchStates.FETCHED));
-    dispatch(setLoading(false));
-    return res.data; // Veriyi döndürelim
-  } catch (err) {
-    handleApiError(err, dispatch, "Categories", setFetchState, fetchStates);
-    return null;
-  }
-};
-
-//POST REQUEST
-
-export const postNewCategory = (formData) => async (dispatch) => {
-  const token = localStorage.getItem("token");
-  dispatch(setLoading(true));
-  dispatch(setError(null));
-  dispatch(setFetchState(fetchStates.FETCHING));
-
-  try {
-    // Form validasyonu
-    if (!formData.name) {
-      throw new Error("Kategori adı gereklidir");
-    }
-
-    if (!formData.image) {
-      console.warn("Resim seçilmedi! Yine de devam ediliyor...");
-    }
-
-    // FormData nesnesi oluştur
-    const formDataObj = new FormData();
-
-    // Form verilerini ekle
-    formDataObj.append("name", formData.name);
-
-    // Eğer resim varsa ekle
-    if (formData.image) {
-      formDataObj.append("image", formData.image);
-    }
-
-    // Axios isteğinin yapılandırması
-    const config = {
-      headers: {
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-    };
-    
-    const res = await instance.post("/category", formDataObj, config);
-    
-    // Başarılı işlem sonrası kategorileri yeniden yükle
-    dispatch(fetchCategoriesWithProducts());
-    
-    // İşlem tamamlandığında loading state'ini false yapın
-    dispatch(setFetchState(fetchStates.FETCHED));
-    dispatch(setLoading(false));
-    
-    // Başarılı işlem bildirimi
-    toast.success(
-      <CustomToastContent
-        title={`${res.data.name} başarıyla eklendi`}
-        image={formData.image instanceof File ? URL.createObjectURL(formData.image) : formData.preview} 
-      />
-    );
-    
-    return res.data;
-  } catch (err) {
-    handleApiError(err, dispatch, "Category Add", setFetchState, fetchStates);
-    return null;
-  }
-};
-
-// PUT REQUEST
-
-export const updateCategory = (formData, id) => async (dispatch) => {
-  const token = localStorage.getItem("token");
-  dispatch(setLoading(true));
-  dispatch(setError(null));
-  dispatch(setFetchState(fetchStates.FETCHING));
-
-  try {
-    // Form validasyonu
-    if (!formData.name) {
-      throw new Error("Kategori adı gereklidir");
-    }
-
-    // FormData nesnesi oluştur
-    const formDataObj = new FormData();
-
-    // Form verilerini ekle
-    formDataObj.append("name", formData.name);
-
-    // Eğer resim varsa ekle
-    if (formData.image) {
-      formDataObj.append("image", formData.image);
-    }
-
-    // Axios isteğinin yapılandırması
-    const config = {
-      headers: {
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-    };
-    
-    const res = await instance.put(`/category/${id}`, formDataObj, config);
-    
-    // Başarılı işlem sonrası kategorileri yeniden yükle
-    dispatch(fetchCategoriesWithProducts());
-    
-    // İşlem tamamlandığında loading state'ini false yapın
-    dispatch(setFetchState(fetchStates.FETCHED));
-    dispatch(setLoading(false));
-    
-    // Başarılı işlem bildirimi
-    toast.success(`"${formData.name}" başarıyla güncellendi`);
-    
-    return res.data;
-  } catch (err) {
-    handleApiError(err, dispatch, "Category Update", setFetchState, fetchStates);
-    return null;
-  }
-};
-
-// DELETE REQUEST
-
-export const deleteCategory = (id) => async (dispatch) => {
-  const token = localStorage.getItem("token");
-  dispatch(setLoading(true));
-  dispatch(setError(null));
-  dispatch(setFetchState(fetchStates.FETCHING));
+  dispatch(setCategoryFetchState(fetchStates.FETCHING));
   
   try {
-    const res = await instance.delete(`/category/${id}`, {
+    const response = await instance.get("/category");
+    
+    dispatch(setCategories(response.data));
+    dispatch(setCategoryFetchState(fetchStates.FETCHED));
+    
+    return response.data;
+  } catch (err) {
+    dispatch(setCategoryFetchState(fetchStates.FAILED));
+    
+    let errorMessage = "Kategoriler yüklenemedi";
+    if (err.response) {
+      errorMessage = err.response.data?.message || errorMessage;
+    }
+    
+    dispatch(setCategoryError(errorMessage));
+    return { error: errorMessage };
+  }
+};
+
+// Basit kategori listesini getir (ürünler dahil değil)
+export const fetchSimpleCategories = () => async (dispatch) => {
+  dispatch(setCategoryFetchState(fetchStates.FETCHING));
+  
+  try {
+    const response = await instance.get("/category/simple");
+    
+    dispatch(setCategories(response.data));
+    dispatch(setCategoryFetchState(fetchStates.FETCHED));
+    
+    return response.data;
+  } catch (err) {
+    dispatch(setCategoryFetchState(fetchStates.FAILED));
+    
+    let errorMessage = "Kategoriler yüklenemedi";
+    if (err.response) {
+      errorMessage = err.response.data?.message || errorMessage;
+    }
+    
+    dispatch(setCategoryError(errorMessage));
+    return { error: errorMessage };
+  }
+};
+
+// Belirli bir kategoriyi getir
+export const fetchCategoryById = (categoryId) => async (dispatch) => {
+  dispatch(setCategoryFetchState(fetchStates.FETCHING));
+  
+  try {
+    const response = await instance.get(`/category/${categoryId}`);
+    
+    dispatch(setSingleCategory(response.data));
+    dispatch(setCategoryFetchState(fetchStates.FETCHED));
+    
+    return response.data;
+  } catch (err) {
+    dispatch(setCategoryFetchState(fetchStates.FAILED));
+    
+    let errorMessage = "Kategori bilgileri yüklenemedi";
+    if (err.response) {
+      errorMessage = err.response.data?.message || errorMessage;
+    }
+    
+    dispatch(setCategoryError(errorMessage));
+    return { error: errorMessage };
+  }
+};
+
+// Yeni kategori ekle
+export const createCategory = (categoryData) => async (dispatch) => {
+  dispatch(setLoading(true));
+  
+  try {
+    const formData = new FormData();
+    formData.append('name', categoryData.name);
+    
+    if (categoryData.image) {
+      formData.append('image', categoryData.image);
+    }
+    
+    const response = await instance.post("/category", formData, {
       headers: {
-        Authorization: `Bearer ${token}`
+        'Content-Type': 'multipart/form-data'
       }
     });
     
-    // İşlemi tamamla
-    dispatch(setFetchState(fetchStates.FETCHED));
+    dispatch(addCategory(response.data));
+    dispatch(setLoading(false));
+    dispatch(setSuccess("Kategori başarıyla eklendi"));
+    
+    return response.data;
+  } catch (err) {
+    let errorMessage = "Kategori eklenemedi";
+    
+    if (err.response) {
+      errorMessage = err.response.data?.message || errorMessage;
+    }
+    
+    dispatch(setError(errorMessage));
     dispatch(setLoading(false));
     
-    // Diğer verileri güncelle
-    dispatch(fetchProducts());
-    dispatch(fetchCategoriesWithProducts());
-    
-    return res.data;
-  } catch (err) {
-    handleApiError(err, dispatch, "Category Delete", setFetchState, fetchStates);
-    return null;
+    return { error: errorMessage };
   }
 };
 
-// Action creators
-export const setCategories = (categories) => ({
-  type: categoryActions.setCategories,
-  payload: categories,
-});
+// Kategori güncelle
+export const updateCategory = (categoryId, categoryData) => async (dispatch) => {
+  dispatch(setLoading(true));
+  
+  try {
+    const formData = new FormData();
+    formData.append('name', categoryData.name);
+    
+    if (categoryData.image) {
+      formData.append('image', categoryData.image);
+    }
+    
+    const response = await instance.put(`/category/${categoryId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    
+    dispatch(updateCategoryInState(response.data));
+    dispatch(setLoading(false));
+    dispatch(setSuccess("Kategori başarıyla güncellendi"));
+    
+    return response.data;
+  } catch (err) {
+    let errorMessage = "Kategori güncellenemedi";
+    
+    if (err.response) {
+      errorMessage = err.response.data?.message || errorMessage;
+    }
+    
+    dispatch(setError(errorMessage));
+    dispatch(setLoading(false));
+    
+    return { error: errorMessage };
+  }
+};
 
-export const setFetchState = (fetchState) => ({
-  type: categoryActions.setFetchState,
-  payload: fetchState,
-});
-
-export const setSelectedCategory = (selectedCategory) => ({
-  type: categoryActions.setSelectedCategory,
-  payload: selectedCategory,
-});
+// Kategori sil
+export const deleteCategory = (categoryId) => async (dispatch) => {
+  dispatch(setLoading(true));
+  
+  try {
+    await instance.delete(`/category/${categoryId}`);
+    
+    dispatch(deleteCategoryFromState(categoryId));
+    dispatch(setLoading(false));
+    dispatch(setSuccess("Kategori başarıyla silindi"));
+    
+    return { success: true };
+  } catch (err) {
+    let errorMessage = "Kategori silinemedi";
+    
+    if (err.response) {
+      errorMessage = err.response.data?.message || errorMessage;
+    }
+    
+    dispatch(setError(errorMessage));
+    dispatch(setLoading(false));
+    
+    return { error: errorMessage };
+  }
+};
