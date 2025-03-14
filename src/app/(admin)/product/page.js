@@ -1,24 +1,23 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { useDispatch, useSelector } from "react-redux";
 import {
   fetchProducts,
-  postNewProduct,
+  createProduct,
   updateProduct,
   deleteProduct,
 } from "@/lib/store/actions/productActions";
 import { fetchCategories } from "@/lib/store/actions/categoryActions";
+import { fetchStates } from "@/lib/store/constants";
 import { Plus, Edit, Trash2, Package } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useToast } from "@/hooks/use-toast";
 
 // Components
-import {
-  ConfirmationModal,
-  Modal,
-} from "@/components/admin/modal";
+import { ConfirmationModal, Modal } from "@/components/admin/modal";
 import {
   SearchBar,
   CategoryFilter,
@@ -43,8 +42,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { toast } from "react-toastify";
-import CustomToastContent from "@/components/ui/customToastContent";
 import SecondaryLoading from "@/components/secondaryLoading";
 
 // Form validation schema
@@ -57,30 +54,31 @@ const formSchema = z.object({
     .number()
     .min(0, "En düşük puan 0 olabilir.")
     .max(5, "En yüksek puan 5 olabilir."),
-  image: z.any(),
-  preview: z.any(),
+  image: z.any().optional(),
+  preview: z.any().optional(),
 });
 
 const ProductPage = () => {
   const router = useRouter();
-  const dispatch = useAppDispatch();
-  const [searchTerm, setSearchTerm] = useState("");
+  const dispatch = useDispatch();
+  const { toast } = useToast();
 
+  const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [productToDelete, setProductToDelete] = useState(null);
-  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [dataFetchAttempted, setDataFetchAttempted] = useState(false);
 
   // Redux state
-  const products = useAppSelector((state) => state.productAPI.products || []);
-  const categories = useAppSelector(
-    (state) => state.categoryAPI.categories || []
-  );
-  const loading = useAppSelector((state) => state.global.loading);
-  const error = useAppSelector((state) => state.global.error);
-  const fetchState = useAppSelector((state) => state.productAPI.fetchState);
+  const products = useSelector((state) => state.product.products || []);
+  const categories = useSelector((state) => state.category.categories || []);
+  const loading = useSelector((state) => state.global.loading);
+  const error = useSelector((state) => state.global.error);
+  const success = useSelector((state) => state.global.success);
+  const productFetchState = useSelector((state) => state.product.fetchState);
+  const categoryFetchState = useSelector((state) => state.category.fetchState);
 
   // Initialize form
   const form = useForm({
@@ -98,21 +96,39 @@ const ProductPage = () => {
 
   // Load initial data
   useEffect(() => {
-    dispatch(fetchProducts());
-    dispatch(fetchCategories());
-  }, [dispatch]);
+    if (productFetchState === fetchStates.NOT_FETCHED && !dataFetchAttempted) {
+      setDataFetchAttempted(true);
+      dispatch(fetchProducts());
 
-  // Show error message when there's an error
+      if (categoryFetchState === fetchStates.NOT_FETCHED) {
+        dispatch(fetchCategories());
+      }
+    }
+  }, [dispatch, productFetchState, categoryFetchState, dataFetchAttempted]);
+
+  // Handle toast messages
+  /*
   useEffect(() => {
     if (error) {
-      toast.error(`Hata: ${error}`);
+      toast({
+        title: "Hata",
+        description: error,
+        variant: "destructive",
+      });
     }
-  }, [error]);
 
+    if (success) {
+      toast({
+        title: "Başarılı",
+        description: success,
+      });
+    }
+  }, [error, success, toast]);
+*/
   // Add openModal function to DOM element
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      const pageElement = document.getElementById('admin-page-component');
+    if (typeof document !== "undefined") {
+      const pageElement = document.getElementById("admin-page-component");
       if (pageElement) {
         pageElement.openModal = openModal;
       }
@@ -160,7 +176,11 @@ const ProductPage = () => {
   };
 
   const handleImageError = (errorMessage) => {
-    toast.error(errorMessage);
+    toast({
+      title: "Hata",
+      description: errorMessage,
+      variant: "destructive",
+    });
   };
 
   const openDeleteModal = (product) => {
@@ -174,15 +194,10 @@ const ProductPage = () => {
   };
 
   const onSubmit = async (data) => {
-    setFormSubmitting(true);
-    
     try {
-      // Form validasyonu yapılabilir
-      if (!data.name || !data.categoryId) {
-        throw new Error("Ürün adı ve kategori zorunludur");
-      }
-      
-      // Ürün verilerini hazırla
+      // Form validation is handled by zod resolver
+
+      // Prepare product data
       const productData = {
         name: data.name,
         rating: data.rating,
@@ -190,27 +205,25 @@ const ProductPage = () => {
         price: data.price,
         categoryId: data.categoryId,
         image: data.image,
-        preview: form.getValues("preview")
       };
 
       let result;
 
-      // Eğer düzenleme modundaysak
+      // If editing product
       if (editingProduct) {
-        productData.id = editingProduct.id;
-        result = await dispatch(updateProduct(productData, editingProduct.id));
-        if (result) {
+        result = await dispatch(updateProduct(editingProduct.id, productData));
+        if (!result.error) {
           closeModal();
         }
       } else {
-        // Yeni ürün ekleme
-        result = await dispatch(postNewProduct(productData));
-        if (result) {
+        // Creating new product
+        result = await dispatch(createProduct(productData));
+        if (!result.error) {
           closeModal();
         }
       }
-    } finally {
-      setFormSubmitting(false);
+    } catch (err) {
+      console.error("Ürün işlemi sırasında hata:", err);
     }
   };
 
@@ -218,17 +231,13 @@ const ProductPage = () => {
     if (!productToDelete) return;
 
     try {
-      setFormSubmitting(true);
-      
       const result = await dispatch(deleteProduct(productToDelete.id));
-      
-      if (result) {
-        // Başarılı silme durumunda toast gösterilir ve modal kapatılır
-        toast.success(`"${productToDelete.name}" başarıyla silindi`);
+
+      if (!result.error) {
         closeDeleteModal();
       }
-    } finally {
-      setFormSubmitting(false);
+    } catch (err) {
+      console.error("Ürün silme işlemi sırasında hata:", err);
     }
   };
 
@@ -237,6 +246,11 @@ const ProductPage = () => {
     if (!products || !Array.isArray(products)) return [];
 
     return products.filter((product) => {
+      // Ensure product has a name property and it's a string
+      if (!product || !product.name || typeof product.name !== "string") {
+        return false;
+      }
+
       const matchesSearch = product.name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
@@ -252,16 +266,18 @@ const ProductPage = () => {
   const getCategoryName = (categoryId) => {
     if (!categories || !Array.isArray(categories)) return "Bilinmeyen Kategori";
 
-    const category = categories.find((cat) => cat.id === categoryId);
+    // Her iki değeri de string'e dönüştürerek türleri aynı hale getiriyoruz
+    const categoryIdStr = categoryId.toString();
+
+    const category = categories.find(
+      (cat) => cat.id.toString() === categoryIdStr
+    );
     return category ? category.name : "Bilinmeyen Kategori";
   };
-  
-  // Expose openModal for external access
-  ProductPage.openModal = openModal;
 
   // Admin layout için props tanımlama
   ProductPage.props = {
-    title: "Ürünler", 
+    title: "Ürünler",
     activePage: "product",
     showAddButton: true,
     addButtonText: "Yeni Ürün",
@@ -269,14 +285,13 @@ const ProductPage = () => {
       if (window.openAdminModal) {
         window.openAdminModal();
       } else {
-        console.log("openAdminModal fonksiyonu bulunamadı");
         openModal(); // Fallback olarak kendi modalımızı açalım
       }
-    }
+    },
   };
-  
+
   // Show loading indicator
-  if (loading) {
+  if (productFetchState === fetchStates.FETCHING) {
     return <SecondaryLoading size="fullPage" />;
   }
 
@@ -304,37 +319,37 @@ const ProductPage = () => {
               <tr>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow"
                 >
                   Ürün
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow"
                 >
                   Kategori
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow"
                 >
                   Fiyat
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow"
                 >
                   Stok
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow"
                 >
                   Puan
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow"
                 >
                   İşlemler
                 </th>
@@ -359,24 +374,26 @@ const ProductPage = () => {
                         )}
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-darkgray font-Quattrocento_Sans">
                           {product.name}
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-gray font-Barlow">
                       {getCategoryName(product.categoryId)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm text-darkgray font-Barlow">
                       {product.price.toFixed(2)} ₺
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{product.stock}</div>
+                    <div className="text-sm text-darkgray font-Barlow">
+                      {product.stock}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <RatingStars rating={product.rating} />
@@ -401,18 +418,19 @@ const ProductPage = () => {
           </table>
         </div>
 
-        {filteredProducts.length === 0 && !loading && (
-          <div className="py-10 text-center">
-            <p className="text-gray-500">Ürün bulunamadı</p>
-            <button
-              onClick={() => openModal()}
-              className="mt-4 px-4 py-2 bg-red text-white rounded-lg hover:bg-red-700 transition-colors inline-flex items-center"
-            >
-              <Plus size={16} className="mr-2" />
-              <span>Yeni Ürün Ekle</span>
-            </button>
-          </div>
-        )}
+        {filteredProducts.length === 0 &&
+          productFetchState !== fetchStates.FETCHING && (
+            <div className="py-10 text-center">
+              <p className="text-gray font-Barlow">Ürün bulunamadı</p>
+              <button
+                onClick={() => openModal()}
+                className="mt-4 px-4 py-2 bg-red text-lightgray rounded-lg hover:bg-yellow hover:text-red transition-colors inline-flex items-center font-Barlow"
+              >
+                <Plus size={16} className="mr-2" />
+                <span>Yeni Ürün Ekle</span>
+              </button>
+            </div>
+          )}
       </div>
 
       {/* Add/Edit Product Modal */}
@@ -424,19 +442,19 @@ const ProductPage = () => {
           <div className="flex flex-row items-center justify-between space-x-2 p-4">
             <Button
               type="button"
-              className=""
+              className="border-gray text-darkgray hover:bg-gray hover:text-lightgray font-Barlow"
               onClick={closeModal}
-              disabled={formSubmitting}
+              disabled={loading}
             >
               İptal
             </Button>
             <Button
               type="submit"
-              className="bg-red text-white hover:text-red hover:bg-yellow"
-              disabled={formSubmitting}
+              className="bg-red text-lightgray hover:text-red hover:bg-yellow font-Barlow"
+              disabled={loading}
               onClick={form.handleSubmit(onSubmit)}
             >
-              {formSubmitting
+              {loading
                 ? "İşleniyor..."
                 : editingProduct
                 ? "Güncelle"
@@ -455,18 +473,18 @@ const ProductPage = () => {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex flex-row items-center">
+                  <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
                     <p className="text-darkgray">Ürün Adı</p>
                     <p className="text-red pl-1">*</p>
                   </FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red focus:border-transparent"
+                      className="w-full p-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-red focus:border-transparent font-Barlow"
                       placeholder="Ürün adını girin"
                     />
                   </FormControl>
-                  <FormMessage className="text-xs font-semibold text-red-500" />
+                  <FormMessage className="text-xs font-semibold text-red" />
                 </FormItem>
               )}
             />
@@ -476,7 +494,7 @@ const ProductPage = () => {
               name="categoryId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex flex-row items-center">
+                  <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
                     <p className="text-darkgray">Kategori</p>
                     <p className="text-red pl-1">*</p>
                   </FormLabel>
@@ -485,7 +503,7 @@ const ProductPage = () => {
                     defaultValue={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="font-Barlow">
                         <SelectValue placeholder="Kategori Seçin" />
                       </SelectTrigger>
                     </FormControl>
@@ -495,13 +513,14 @@ const ProductPage = () => {
                           <SelectItem
                             key={category.id}
                             value={category.id.toString()}
+                            className="font-Barlow"
                           >
                             {category.name}
                           </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage className="text-xs font-semibold text-red-500" />
+                  <FormMessage className="text-xs font-semibold text-red" />
                 </FormItem>
               )}
             />
@@ -512,7 +531,7 @@ const ProductPage = () => {
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex flex-row items-center">
+                    <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
                       <p className="text-darkgray">Fiyat (₺)</p>
                       <p className="text-red pl-1">*</p>
                     </FormLabel>
@@ -522,10 +541,10 @@ const ProductPage = () => {
                         step="0.01"
                         min="0"
                         {...field}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red focus:border-transparent"
+                        className="w-full p-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-red focus:border-transparent font-Barlow"
                       />
                     </FormControl>
-                    <FormMessage className="text-xs font-semibold text-red-500" />
+                    <FormMessage className="text-xs font-semibold text-red" />
                   </FormItem>
                 )}
               />
@@ -535,7 +554,7 @@ const ProductPage = () => {
                 name="stock"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex flex-row items-center">
+                    <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
                       <p className="text-darkgray">Stok</p>
                       <p className="text-red pl-1">*</p>
                     </FormLabel>
@@ -544,10 +563,10 @@ const ProductPage = () => {
                         type="number"
                         min="0"
                         {...field}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red focus:border-transparent"
+                        className="w-full p-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-red focus:border-transparent font-Barlow"
                       />
                     </FormControl>
-                    <FormMessage className="text-xs font-semibold text-red-500" />
+                    <FormMessage className="text-xs font-semibold text-red" />
                   </FormItem>
                 )}
               />
@@ -558,7 +577,7 @@ const ProductPage = () => {
               name="rating"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex flex-row items-center">
+                  <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
                     <p className="text-darkgray">Puan (0-5)</p>
                     <p className="text-red pl-1">*</p>
                   </FormLabel>
@@ -569,13 +588,13 @@ const ProductPage = () => {
                       min="0"
                       max="5"
                       {...field}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red focus:border-transparent"
+                      className="w-full p-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-red focus:border-transparent font-Barlow"
                     />
                   </FormControl>
                   <div className="py-2">
                     <RatingStars rating={field.value} />
                   </div>
-                  <FormMessage className="text-xs font-semibold text-red-500" />
+                  <FormMessage className="text-xs font-semibold text-red" />
                 </FormItem>
               )}
             />
@@ -585,7 +604,7 @@ const ProductPage = () => {
               name="image"
               render={({ field }) => (
                 <FormItem className="">
-                  <FormLabel className="flex flex-row items-center">
+                  <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
                     <p className="text-darkgray">Ürün Resmi</p>
                     <p className="text-red pl-1">*</p>
                   </FormLabel>
@@ -597,7 +616,7 @@ const ProductPage = () => {
                       label="Ürün Resmi"
                     />
                   </FormControl>
-                  <FormMessage className="text-xs font-semibold text-red-500" />
+                  <FormMessage className="text-xs font-semibold text-red" />
                 </FormItem>
               )}
             />

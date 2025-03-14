@@ -6,7 +6,7 @@ import {
   deleteCategory,
   fetchCategories,
   createCategory,
-  updateCategory
+  updateCategory,
 } from "@/lib/store/actions/categoryActions";
 import { setSuccess } from "@/lib/store/actions/globalActions";
 import { fetchStates } from "@/lib/store/constants";
@@ -17,10 +17,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 // Components
-import {
-  ConfirmationModal,
-  Modal,
-} from "@/components/admin/modal";
+import { ConfirmationModal, Modal } from "@/components/admin/modal";
 import { SearchBar } from "@/components/admin/searchAndFilter";
 import ImageUpload from "@/components/admin/imageUpload";
 import {
@@ -46,14 +43,14 @@ const CategoryPage = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const { toast } = useToast();
-  
+
   const [searchTerm, setSearchTerm] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [dataFetchAttempted, setDataFetchAttempted] = useState(false);
-  
+
   // Redux state
   const categories = useSelector((state) => state.category.categories);
   const categoryFetchState = useSelector((state) => state.category.fetchState);
@@ -80,6 +77,7 @@ const CategoryPage = () => {
   }, [dispatch, categoryFetchState, dataFetchAttempted]);
 
   // Toast mesajları için
+  /*
   useEffect(() => {
     if (error) {
       toast({
@@ -88,7 +86,7 @@ const CategoryPage = () => {
         variant: "destructive",
       });
     }
-    
+
     if (success) {
       toast({
         title: "Başarılı",
@@ -96,11 +94,12 @@ const CategoryPage = () => {
       });
     }
   }, [error, success, toast]);
+  */
 
   // Add openModal function to DOM element (for external access)
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      const pageElement = document.getElementById('admin-page-component');
+    if (typeof document !== "undefined") {
+      const pageElement = document.getElementById("admin-page-component");
       if (pageElement) {
         pageElement.openModal = openModal;
       }
@@ -165,23 +164,29 @@ const CategoryPage = () => {
     try {
       const categoryData = {
         name: data.name,
-        image: data.image
+        image: data.image,
       };
 
       let result;
 
       if (editingCategory) {
         // Kategori güncelleme
-        result = await dispatch(updateCategory(editingCategory.id, categoryData));
+        result = await dispatch(
+          updateCategory(editingCategory.id, categoryData)
+        );
         if (!result.error) {
-          dispatch(setSuccess(`"${data.name}" kategorisi başarıyla güncellendi`));
+          dispatch(
+            setSuccess(`"${data.name}" kategorisi başarıyla güncellendi`)
+          );
           closeModal();
         }
       } else {
         // Yeni kategori ekleme
         result = await dispatch(createCategory(categoryData));
         if (!result.error) {
-          dispatch(setSuccess(`"${data.name}" kategorisi başarıyla oluşturuldu`));
+          dispatch(
+            setSuccess(`"${data.name}" kategorisi başarıyla oluşturuldu`)
+          );
           closeModal();
         }
       }
@@ -192,19 +197,25 @@ const CategoryPage = () => {
 
   const handleDelete = async () => {
     if (!categoryToDelete) return;
-  
+
     try {
       // Check if category has products before deletion
       if (categoryToDelete.products && categoryToDelete.products.length > 0) {
-        if (!window.confirm(`Bu kategori ${categoryToDelete.products.length} ürün içeriyor. Silmek istediğinize emin misiniz?`)) {
+        if (
+          !window.confirm(
+            `Bu kategori ${categoryToDelete.products.length} ürün içeriyor. Silmek istediğinize emin misiniz?`
+          )
+        ) {
           return;
         }
       }
-      
+
       const result = await dispatch(deleteCategory(categoryToDelete.id));
-      
+
       if (!result.error) {
-        dispatch(setSuccess(`"${categoryToDelete.name}" kategorisi başarıyla silindi`));
+        dispatch(
+          setSuccess(`"${categoryToDelete.name}" kategorisi başarıyla silindi`)
+        );
         closeDeleteModal();
       }
     } catch (err) {
@@ -214,17 +225,17 @@ const CategoryPage = () => {
 
   // Kategorileri filtrele
   // Kategorileri filtrele
-const filteredCategories = useMemo(() => {
-  if (!categories || !Array.isArray(categories)) return [];
+  const filteredCategories = useMemo(() => {
+    if (!categories || !Array.isArray(categories)) return [];
 
-  return categories.filter((category) => {
-    // Kategori adı yoksa veya geçersizse filtreleme işleminden geçirme
-    if (!category || !category.name || typeof category.name !== 'string') {
-      return false;
-    }
-    return category.name.toLowerCase().includes(searchTerm.toLowerCase());
-  });
-}, [categories, searchTerm]);
+    return categories.filter((category) => {
+      // Kategori adı yoksa veya geçersizse filtreleme işleminden geçirme
+      if (!category || !category.name || typeof category.name !== "string") {
+        return false;
+      }
+      return category.name.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+  }, [categories, searchTerm]);
 
   // Admin layout için props tanımlama
   CategoryPage.props = {
@@ -238,7 +249,7 @@ const filteredCategories = useMemo(() => {
       } else {
         openModal(); // Fallback olarak kendi modalımızı açalım
       }
-    }
+    },
   };
 
   // Yükleniyor durumu
@@ -336,17 +347,20 @@ const filteredCategories = useMemo(() => {
           </div>
         ))}
 
-        {filteredCategories.length === 0 && categoryFetchState !== fetchStates.FETCHING && (
-          <div className="col-span-full text-center py-10">
-            <p className="text-gray font-Barlow">Herhangi bir kategori bulunamadı.</p>
-            <button
-              onClick={() => openModal()}
-              className="mt-4 px-4 py-2 bg-red text-lightgray rounded-lg hover:bg-yellow hover:text-red transition-colors font-Barlow"
-            >
-              Yeni Kategori Ekle
-            </button>
-          </div>
-        )}
+        {filteredCategories.length === 0 &&
+          categoryFetchState !== fetchStates.FETCHING && (
+            <div className="col-span-full text-center py-10">
+              <p className="text-gray font-Barlow">
+                Herhangi bir kategori bulunamadı.
+              </p>
+              <button
+                onClick={() => openModal()}
+                className="mt-4 px-4 py-2 bg-red text-lightgray rounded-lg hover:bg-yellow hover:text-red transition-colors font-Barlow"
+              >
+                Yeni Kategori Ekle
+              </button>
+            </div>
+          )}
       </div>
 
       {/* Kategori Ekleme/Düzenleme Modal */}
@@ -358,7 +372,7 @@ const filteredCategories = useMemo(() => {
           <div className="flex flex-row items-center justify-between space-x-2 p-4">
             <Button
               type="button"
-              className="border-gray text-darkgray hover:bg-gray hover:text-lightgray font-Barlow"
+              className="border-gray text-lightgray hover:bg-gray hover:text-lightgray font-Barlow"
               onClick={closeModal}
               disabled={loading}
             >
@@ -380,7 +394,10 @@ const filteredCategories = useMemo(() => {
         }
       >
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
             <FormField
               control={form.control}
               name="name"

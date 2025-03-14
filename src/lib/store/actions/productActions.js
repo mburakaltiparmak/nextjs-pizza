@@ -5,68 +5,68 @@ import { fetchStates } from "../constants";
 
 export const setProducts = (products) => ({
   type: productActions.SET_PRODUCTS,
-  payload: products
+  payload: products,
 });
 
 export const setProductDetail = (product) => ({
   type: productActions.SET_PRODUCT_DETAIL,
-  payload: product
+  payload: product,
 });
 
 export const setCategoryProducts = (products) => ({
   type: productActions.SET_CATEGORY_PRODUCTS,
-  payload: products
+  payload: products,
 });
 
 export const addProduct = (product) => ({
   type: productActions.ADD_PRODUCT,
-  payload: product
+  payload: product,
 });
 
 export const updateProductInState = (product) => ({
   type: productActions.UPDATE_PRODUCT,
-  payload: product
+  payload: product,
 });
 
 export const deleteProductFromState = (productId) => ({
   type: productActions.DELETE_PRODUCT,
-  payload: productId
+  payload: productId,
 });
 
 export const setSelectedCategory = (categoryId) => ({
   type: productActions.SET_SELECTED_CATEGORY,
-  payload: categoryId
+  payload: categoryId,
 });
 
 export const setProductFetchState = (state) => ({
   type: productActions.SET_FETCH_STATE,
-  payload: state
+  payload: state,
 });
 
 export const setProductError = (error) => ({
   type: productActions.SET_ERROR,
-  payload: error
+  payload: error,
 });
 
 // Tüm ürünleri getir
 export const fetchProducts = () => async (dispatch) => {
   dispatch(setProductFetchState(fetchStates.FETCHING));
-  
+
   try {
-    const response = await instance.get("api/product");
-    
+    const response = await instance.get("/product");
+
     dispatch(setProducts(response.data));
     dispatch(setProductFetchState(fetchStates.FETCHED));
-    
+
     return response.data;
   } catch (err) {
     dispatch(setProductFetchState(fetchStates.FAILED));
-    
+
     let errorMessage = "Ürünler yüklenemedi";
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
     }
-    
+
     dispatch(setProductError(errorMessage));
     return { error: errorMessage };
   }
@@ -75,22 +75,22 @@ export const fetchProducts = () => async (dispatch) => {
 // Belirli bir ürünü getir
 export const fetchProductById = (productId) => async (dispatch) => {
   dispatch(setProductFetchState(fetchStates.FETCHING));
-  
+
   try {
-    const response = await instance.get(`api/product/${productId}`);
-    
+    const response = await instance.get(`/product/${productId}`);
+
     dispatch(setProductDetail(response.data));
     dispatch(setProductFetchState(fetchStates.FETCHED));
-    
+
     return response.data;
   } catch (err) {
     dispatch(setProductFetchState(fetchStates.FAILED));
-    
+
     let errorMessage = "Ürün bilgileri yüklenemedi";
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
     }
-    
+
     dispatch(setProductError(errorMessage));
     return { error: errorMessage };
   }
@@ -99,23 +99,24 @@ export const fetchProductById = (productId) => async (dispatch) => {
 // Kategoriye göre ürünleri getir
 export const fetchProductsByCategory = (categoryId) => async (dispatch) => {
   dispatch(setProductFetchState(fetchStates.FETCHING));
-  dispatch(setSelectedCategory(categoryId));
-  
+
   try {
-    const response = await instance.get(`api/product/category/${categoryId}`);
-    
+    const response = await instance.get(`/product/category/${categoryId}`);
+
+    // Ürünleri hem categoryProducts hem de genel products state'ine ekle
     dispatch(setCategoryProducts(response.data));
+    dispatch(setProducts(response.data)); // Ana ürün listesini de güncelle
     dispatch(setProductFetchState(fetchStates.FETCHED));
-    
+
     return response.data;
   } catch (err) {
     dispatch(setProductFetchState(fetchStates.FAILED));
-    
+
     let errorMessage = "Kategori ürünleri yüklenemedi";
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
     }
-    
+
     dispatch(setProductError(errorMessage));
     return { error: errorMessage };
   }
@@ -124,40 +125,57 @@ export const fetchProductsByCategory = (categoryId) => async (dispatch) => {
 // Yeni ürün ekle
 export const createProduct = (productData) => async (dispatch) => {
   dispatch(setLoading(true));
-  
+
   try {
     const formData = new FormData();
-    formData.append('name', productData.name);
-    formData.append('description', productData.description || '');
-    formData.append('price', productData.price);
-    formData.append('stock', productData.stock || 0);
-    formData.append('categoryId', productData.categoryId);
-    
+    formData.append("name", productData.name);
+    formData.append("description", productData.description || "");
+    formData.append("price", productData.price);
+    formData.append("stock", productData.stock || 0);
+    formData.append("categoryId", productData.categoryId);
+    formData.append("rating", productData.rating || 0);
+
     if (productData.image) {
-      formData.append('image', productData.image);
+      formData.append("image", productData.image);
     }
-    
-    const response = await instance.post("api/product", formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+
+    // Authorization token'ını headers'a ekleyelim
+    const token = localStorage.getItem("token");
+    const headers = {
+      "Content-Type": "multipart/form-data",
+    };
+
+    // Token varsa ekleyelim
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await instance.post("/product", formData, {
+      headers: headers,
     });
-    
+
     dispatch(addProduct(response.data));
     dispatch(setLoading(false));
     dispatch(setSuccess("Ürün başarıyla eklendi"));
-    
+
     return response.data;
   } catch (err) {
     let errorMessage = "Ürün eklenemedi";
-    
+
     if (err.response) {
+      console.error("Sunucu yanıtı:", err.response);
       errorMessage = err.response.data?.message || errorMessage;
+    } else if (err.request) {
+      console.error("İstek gönderildi ama yanıt alınamadı:", err.request);
+      errorMessage = "Sunucudan yanıt alınamadı";
+    } else {
+      console.error("İstek oluşturulurken hata:", err.message);
+      errorMessage = err.message || errorMessage;
     }
-    
+
     dispatch(setError(errorMessage));
     dispatch(setLoading(false));
-    
+
     return { error: errorMessage };
   }
 };
@@ -165,40 +183,57 @@ export const createProduct = (productData) => async (dispatch) => {
 // Ürün güncelle
 export const updateProduct = (productId, productData) => async (dispatch) => {
   dispatch(setLoading(true));
-  
+
   try {
     const formData = new FormData();
-    formData.append('name', productData.name);
-    formData.append('description', productData.description || '');
-    formData.append('price', productData.price);
-    formData.append('stock', productData.stock || 0);
-    formData.append('categoryId', productData.categoryId);
-    
+    formData.append("name", productData.name);
+    formData.append("description", productData.description || "");
+    formData.append("price", productData.price);
+    formData.append("stock", productData.stock || 0);
+    formData.append("categoryId", productData.categoryId);
+    formData.append("rating", productData.rating || 0);
+
     if (productData.image) {
-      formData.append('image', productData.image);
+      formData.append("image", productData.image);
     }
-    
-    const response = await instance.put(`api/product/${productId}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+
+    // Authorization token'ını headers'a ekleyelim
+    const token = localStorage.getItem("token");
+    const headers = {
+      "Content-Type": "multipart/form-data",
+    };
+
+    // Token varsa ekleyelim
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await instance.put(`/product/${productId}`, formData, {
+      headers: headers,
     });
-    
+
     dispatch(updateProductInState(response.data));
     dispatch(setLoading(false));
     dispatch(setSuccess("Ürün başarıyla güncellendi"));
-    
+
     return response.data;
   } catch (err) {
     let errorMessage = "Ürün güncellenemedi";
-    
+
     if (err.response) {
+      console.error("Sunucu yanıtı:", err.response);
       errorMessage = err.response.data?.message || errorMessage;
+    } else if (err.request) {
+      console.error("İstek gönderildi ama yanıt alınamadı:", err.request);
+      errorMessage = "Sunucudan yanıt alınamadı";
+    } else {
+      console.error("İstek oluşturulurken hata:", err.message);
+      errorMessage = err.message || errorMessage;
     }
-    
+
     dispatch(setError(errorMessage));
     dispatch(setLoading(false));
-    
+
     return { error: errorMessage };
   }
 };
@@ -206,25 +241,43 @@ export const updateProduct = (productId, productData) => async (dispatch) => {
 // Ürün sil
 export const deleteProduct = (productId) => async (dispatch) => {
   dispatch(setLoading(true));
-  
+
   try {
-    await instance.delete(`api/product/${productId}`);
-    
+    // Authorization token'ını headers'a ekleyelim
+    const token = localStorage.getItem("token");
+    const headers = {};
+
+    // Token varsa ekleyelim
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    await instance.delete(`/product/${productId}`, {
+      headers: headers,
+    });
+
     dispatch(deleteProductFromState(productId));
     dispatch(setLoading(false));
     dispatch(setSuccess("Ürün başarıyla silindi"));
-    
+
     return { success: true };
   } catch (err) {
     let errorMessage = "Ürün silinemedi";
-    
+
     if (err.response) {
+      console.error("Sunucu yanıtı:", err.response);
       errorMessage = err.response.data?.message || errorMessage;
+    } else if (err.request) {
+      console.error("İstek gönderildi ama yanıt alınamadı:", err.request);
+      errorMessage = "Sunucudan yanıt alınamadı";
+    } else {
+      console.error("İstek oluşturulurken hata:", err.message);
+      errorMessage = err.message || errorMessage;
     }
-    
+
     dispatch(setError(errorMessage));
     dispatch(setLoading(false));
-    
+
     return { error: errorMessage };
   }
 };
