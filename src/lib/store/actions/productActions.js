@@ -137,7 +137,7 @@ export const createProduct = (productData) => async (dispatch) => {
       formData.append('image', productData.image);
     }
     
-    const response = await instance.post("api/product", formData, {
+    const response = await instance.post("/product", formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -178,7 +178,7 @@ export const updateProduct = (productId, productData) => async (dispatch) => {
       formData.append('image', productData.image);
     }
     
-    const response = await instance.put(`api/product/${productId}`, formData, {
+    const response = await instance.put(`/product/${productId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

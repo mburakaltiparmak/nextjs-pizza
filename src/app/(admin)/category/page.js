@@ -358,7 +358,7 @@ const filteredCategories = useMemo(() => {
           <div className="flex flex-row items-center justify-between space-x-2 p-4">
             <Button
               type="button"
-              className="border-gray text-darkgray hover:bg-gray hover:text-lightgray font-Barlow"
+              className="border-gray text-lightgray hover:bg-gray hover:text-lightgray font-Barlow"
               onClick={closeModal}
               disabled={loading}
             >

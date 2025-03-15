@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { addCart } from "@/lib/store/actions/orderActions";
+import {  addToCart } from "@/lib/store/actions/orderActions";
 import { useEffect, useMemo } from "react";
 import {
   Popover,
@@ -30,7 +30,7 @@ const Products = () => {
   }, [categories, selectedCategory]);
 
   const handleAddCart = (product) => {
-    dispatch(addCart(product));
+    dispatch(addToCart(product));
     toast.info(
       <div className="flex flex-row gap-4 items-center">
         <img

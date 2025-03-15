@@ -1,6 +1,6 @@
 import { categoryActions } from "../reducers/categoryReducer";
 import { setError, setLoading, setSuccess } from "./globalActions";
-import { instance } from "@/lib/hooks";
+import { instance, useAppSelector } from "@/lib/hooks";
 import { fetchStates } from "../constants";
 
 export const setCategories = (categories) => ({
@@ -114,17 +114,21 @@ export const fetchCategoryById = (categoryId) => async (dispatch) => {
 export const createCategory = (categoryData) => async (dispatch) => {
   dispatch(setLoading(true));
   
+  
   try {
     const formData = new FormData();
     formData.append('name', categoryData.name);
+    const token = useAppSelector((state)=>state.user.token);
     
     if (categoryData.image) {
       formData.append('image', categoryData.image);
     }
+    console.log("category form data",formData);
     
     const response = await instance.post("/category", formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
       }
     });
     
@@ -161,7 +165,8 @@ export const updateCategory = (categoryId, categoryData) => async (dispatch) => 
     
     const response = await instance.put(`/category/${categoryId}`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
       }
     });
     

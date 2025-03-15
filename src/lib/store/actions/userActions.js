@@ -2,6 +2,7 @@ import { instance } from "@/lib/hooks";
 import { userActions } from "../reducers/userReducer";
 import { setError, setLoading, setSuccess } from "./globalActions";
 import { fetchStates } from "../constants";
+import axios from "axios";
 
 export const setEmail = (email) => ({
   type: userActions.SET_EMAIL,
@@ -47,13 +48,14 @@ export const clearUserData = () => ({
   type: userActions.CLEAR_USER_DATA,
 });
 
+const userInstance = axios.create({baseURL : "http://localhost:9000/pizza/admin/users" });
 // Login işlemi
 export const login = (formData) => async (dispatch) => {
   dispatch(setLoading(true));
   dispatch(setError(null));
   
   try {
-    const res = await instance.post("api/auth/login", {
+    const res = await instance.post("/auth/login", {
       username: formData.username || formData.email,
       password: formData.password
     });
@@ -169,7 +171,7 @@ export const registerUser = (userData) => async (dispatch) => {
   dispatch(setError(null));
   
   try {
-    const response = await instance.post("api/auth/register", userData);
+    const response = await instance.post("/auth/register", userData);
     
     dispatch(setLoading(false));
     dispatch(setSuccess("Kayıt başarılı! Admin onayı bekleniyor."));
@@ -196,7 +198,7 @@ export const fetchUserProfile = () => async (dispatch) => {
   dispatch(setUserFetchState(fetchStates.FETCHING));
   
   try {
-    const response = await instance.get("api/user/profile");
+    const response = await userInstance.get();
     
     dispatch(setUserProfile(response.data));
     dispatch(setUserStatus(response.data.status));
@@ -228,7 +230,7 @@ export const updateUserProfile = (userData) => async (dispatch) => {
   dispatch(setError(null));
   
   try {
-    const response = await instance.put("api/user/profile", userData);
+    const response = await userInstance.put(`/role/${userData.id}`,userData);
     
     dispatch(setUserProfile(response.data));
     dispatch(setLoading(false));
@@ -258,7 +260,7 @@ export const changePassword = (passwordData) => async (dispatch) => {
   dispatch(setError(null));
   
   try {
-    await instance.put("api/user/password", passwordData);
+    await instance.put("/user/password", passwordData);
     
     dispatch(setLoading(false));
     dispatch(setSuccess("Şifreniz başarıyla değiştirildi"));

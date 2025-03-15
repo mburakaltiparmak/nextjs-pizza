@@ -8,7 +8,7 @@ import Products from "../products/products";
 import NotFound from "@/app/not-found";
 import Loading from "@/app/loading";
 import allLogo from "../../../assets/adv-aseets/icons/all-logo.png";
-import { fetchCategories, fetchCategoriesWithProducts, setSelectedCategory } from "@/lib/store/actions/categoryActions";
+import { fetchCategories, fetchCategoriesWithProducts } from "@/lib/store/actions/categoryActions";
 
 const Categories = () => {
   const dispatch = useAppDispatch();
@@ -22,11 +22,11 @@ const Categories = () => {
 
   const handleCategory = (id,e) => {
     e.preventDefault();
-    dispatch(setSelectedCategory(id));
+    //dispatch(setSelectedCategory(id));
   };
   const handleAllOfThem = (e) => {
     e.preventDefault();
-    dispatch(setSelectedCategory(null));
+    //dispatch(setSelectedCategory(null));
   }
 
   const [data, setData] = useState([]);
