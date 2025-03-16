@@ -1,6 +1,6 @@
 import { categoryActions } from "../reducers/categoryReducer";
 import { setError, setLoading, setSuccess } from "./globalActions";
-import { instance } from "@/lib/hooks";
+import { instance, useAppSelector } from "@/lib/hooks";
 import { fetchStates } from "../constants";
 
 export const setCategories = (categories) => ({
@@ -113,15 +113,27 @@ export const fetchCategoryById = (categoryId) => async (dispatch) => {
 // Yeni kategori ekle
 export const createCategory = (categoryData, token) => async (dispatch) => {
   dispatch(setLoading(true));
+<<<<<<< HEAD
 
+=======
+  
+  
+>>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
   try {
     // FormData nesnesi oluştur
     const formData = new FormData();
+<<<<<<< HEAD
     formData.append("name", categoryData.name);
 
+=======
+    formData.append('name', categoryData.name);
+    const token = useAppSelector((state)=>state.user.token);
+    
+>>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
     if (categoryData.image) {
       formData.append("image", categoryData.image);
     }
+<<<<<<< HEAD
     console.log("category form data", formData);
 
     const response = await instance.post("/category", formData, {
@@ -130,6 +142,15 @@ export const createCategory = (categoryData, token) => async (dispatch) => {
         Authorization: `Bearer ${token}`,
       },
       timeout: 10000, // 10 saniye timeout ekle
+=======
+    console.log("category form data",formData);
+    
+    const response = await instance.post("/category", formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
+      }
+>>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
     });
 
     dispatch(addCategory(response.data));
@@ -159,6 +180,7 @@ export const createCategory = (categoryData, token) => async (dispatch) => {
 };
 
 // Kategori güncelle
+<<<<<<< HEAD
 export const updateCategory =
   (categoryId, categoryData, token) => async (dispatch) => {
     dispatch(setLoading(true));
@@ -169,6 +191,23 @@ export const updateCategory =
 
       if (categoryData.image) {
         formData.append("image", categoryData.image);
+=======
+export const updateCategory = (categoryId, categoryData) => async (dispatch) => {
+  dispatch(setLoading(true));
+  
+  try {
+    const formData = new FormData();
+    formData.append('name', categoryData.name);
+    
+    if (categoryData.image) {
+      formData.append('image', categoryData.image);
+    }
+    
+    const response = await instance.put(`/category/${categoryId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
+>>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
       }
 
       const response = await instance.put(`/category/${categoryId}`, formData, {

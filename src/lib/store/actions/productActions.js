@@ -137,7 +137,11 @@ export const createProduct = (productData, token) => async (dispatch) => {
     if (productData.image) {
       formData.append("image", productData.image);
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
     const response = await instance.post("/product", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
@@ -173,6 +177,7 @@ export const createProduct = (productData, token) => async (dispatch) => {
 };
 
 // Ürün güncelle
+<<<<<<< HEAD
 export const updateProduct =
   (productId, productData, token) => async (dispatch) => {
     dispatch(setLoading(true));
@@ -187,6 +192,26 @@ export const updateProduct =
 
       if (productData.image) {
         formData.append("image", productData.image);
+=======
+export const updateProduct = (productId, productData) => async (dispatch) => {
+  dispatch(setLoading(true));
+  
+  try {
+    const formData = new FormData();
+    formData.append('name', productData.name);
+    formData.append('description', productData.description || '');
+    formData.append('price', productData.price);
+    formData.append('stock', productData.stock || 0);
+    formData.append('categoryId', productData.categoryId);
+    
+    if (productData.image) {
+      formData.append('image', productData.image);
+    }
+    
+    const response = await instance.put(`/product/${productId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+>>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
       }
 
       const response = await instance.put(`/product/${productId}`, formData, {

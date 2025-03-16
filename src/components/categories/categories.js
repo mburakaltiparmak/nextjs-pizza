@@ -7,12 +7,16 @@ import Products from "../products/products";
 import NotFound from "@/app/not-found";
 import Loading from "@/app/loading";
 import allLogo from "../../../assets/adv-aseets/icons/all-logo.png";
+<<<<<<< HEAD
 import {
   fetchCategories,
   fetchCategoriesWithProducts,
 } from "@/lib/store/actions/categoryActions";
 import { fetchStates } from "@/lib/store/constants";
 import SecondaryLoading from "../secondaryLoading";
+=======
+import { fetchCategories, fetchCategoriesWithProducts } from "@/lib/store/actions/categoryActions";
+>>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
 
 const Categories = () => {
   const dispatch = useDispatch();
@@ -48,7 +52,11 @@ const Categories = () => {
   const handleAllOfThem = (e) => {
     e.preventDefault();
     //dispatch(setSelectedCategory(null));
+<<<<<<< HEAD
   };
+=======
+  }
+>>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
 
   const [data, setData] = useState([]);
   /*
