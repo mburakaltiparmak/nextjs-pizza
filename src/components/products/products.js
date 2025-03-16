@@ -1,89 +1,126 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { addCart } from "@/lib/store/actions/orderActions";
-import { useToast } from "@/hooks/use-toast";
-import { fetchProductsById } from "@/lib/store/actions/productActions";
-import { useEffect } from "react";
+<<<<<<< HEAD
+import { addToCart } from "@/lib/store/actions/orderActions";
+=======
+import {  addToCart } from "@/lib/store/actions/orderActions";
+import { useEffect, useMemo } from "react";
+>>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-const Products = () => {
-  const { toast } = useToast();
-  const dispatch = useAppDispatch();
-  const products = useAppSelector((store) => store.product.products);
-  const selectedCategory = useAppSelector(
-    (store) => store.product.selectedCategory
-  );
-  useEffect(() => {
-    if (selectedCategory != null) {
-      dispatch(fetchProductsById(selectedCategory));
-    }
-  }, [selectedCategory, dispatch]);
+import { useToast } from "@/hooks/use-toast";
+import RatingStars from "../admin/ratingStars";
 
-  const handleAddCart = (product) => {
-    dispatch(addCart(product));
+const Products = () => {
+  const dispatch = useAppDispatch();
+  const { toast } = useToast();
+
+<<<<<<< HEAD
+  const products = useAppSelector((state) => state.products);
+  const filteredProducts = useAppSelector((state) => state.filteredProducts);
+
+  const handleAddToCart = (product) => {
+    dispatch(addToCart(product));
+
     toast({
-      title: (
-        <div className="flex flex-row gap-4 items-center py-4">
+      title: "Ürün sepete eklendi",
+      description: (
+        <div className="flex flex-row gap-4 items-center">
           <img
-            src={product.product_img}
-            alt={product.product_name}
+            src={product.img}
+            alt={product.name}
             className="w-[32px] h-fit object-cover"
           />
-          <p>{product.product_name} sepete başarıyla eklendi.</p>
+          <p>{product.name} sepete başarıyla eklendi.</p>
         </div>
       ),
     });
+=======
+  const handleAddCart = (product) => {
+    dispatch(addToCart(product));
+    toast.info(
+      <div className="flex flex-row gap-4 items-center">
+        <img
+          src={product.img}
+          alt={product.name}
+          className="w-[32px] h-fit object-cover"
+        />
+        <p>{product.name} sepete başarıyla eklendi.</p>
+      </div>,
+      {
+        // Ek ayarlar burada
+        position: "top-left", // Bildirimin konumu
+        autoClose: 3000, // 3 saniye sonra kapanacak
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true
+      }
+    );
+>>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
   };
+
+  if (!products || products.length === 0) {
+    return (
+      <div className="w-full text-center py-8">
+        <p className="text-gray font-Barlow text-xl">Ürün bulunamadı.</p>
+      </div>
+    );
+  }
+
   return (
     <div
       id="product-field"
-      className="grid grid-cols-3 place-items-center place-content-between  gap-8  max-md:flex max-md:flex-col max-md:py-4 "
+      className="grid grid-cols-3 place-items-center place-content-between gap-8 max-md:flex max-md:flex-col max-md:py-4"
     >
-      {products.length > 0 ? (
-        products.map((item, index) => (
+      {filteredProducts && filteredProducts.length > 0 ? (
+        filteredProducts.map((item) => (
           <label
-            htmlFor={item.product_name}
+            htmlFor={item.name}
             className="flex flex-col justify-between items-center text-center font-Barlow text-darkgray border border-lightgray shadow-darkgray shadow-md w-[250px] h-[350px] py-4"
-            key={index}
+            key={item.id}
           >
             <Popover>
               <PopoverTrigger asChild>
                 <span className="cursor-pointer">
                   <img
                     className="object-cover h-[125px]"
-                    src={item.product_img}
-                    alt={item.product_name}
+                    src={item.img}
+                    alt={item.name}
                   />
                 </span>
               </PopoverTrigger>
               <PopoverContent>
                 <img
                   className="object-cover h-[250px]"
-                  src={item.product_img}
-                  alt={item.product_name}
+                  src={item.img}
+                  alt={item.name}
                 />
               </PopoverContent>
             </Popover>
-            <p className="font-bold text-xl">{item.product_name}</p>
-            <span className="flex flex-row justify-between gap-4 text-lg">
-              <p>{item.rating}</p>
-              <p>({item.stock})</p>
-              <p className="font-semibold">{item.price} ₺</p>
+            <p className="font-bold text-xl font-Quattrocento_Sans">
+              {item.name}
+            </p>
+            <span className="flex flex-col justify-between gap-4 text-lg">
+              <RatingStars rating={item.rating} />
+              <p className="font-semibold text-darkgray">{item.price} ₺</p>
             </span>
             <button
-              onClick={() => handleAddCart(item)}
-              className="buttonStyle bg-yellow text-darkgray hover:bg-red hover:text-lightgray hover:border-yellow hover:border-2"
+              onClick={() => handleAddToCart(item)}
+              className="buttonStyle bg-yellow text-darkgray hover:bg-red hover:text-lightgray hover:border-yellow hover:border-2 font-Barlow"
             >
               SEPETE EKLE
             </button>
           </label>
         ))
       ) : (
-        <p className="text-black text-xl">Ürün bulunamadı.</p>
+        <p className="col-span-3 text-gray font-Barlow text-xl py-8">
+          Seçilen kategoride ürün bulunamadı.
+        </p>
       )}
     </div>
   );

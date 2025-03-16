@@ -1,83 +1,82 @@
-const initialState = {
-  cart: [],
-  userData: [],
-  paymentData: [],
-  orderData: null,
-};
+import { fetchStates } from "../constants";
 
 export const orderActions = {
-  addCart: "ADD_CART",
-  removeFromCart: "REMOVE_FROM_CART",
-  updateCart: "UPDATE_CART",
-  clearCart: "CLEAR_CART",
-  setUserData: "SET_USER_DATA",
-  setPaymentData: "SET_PAYMENT_DATA",
-  setOrderData: "SET_ORDER_DATA",
+  ADD_TO_CART: "ADD_TO_CART",
+  REMOVE_FROM_CART: "REMOVE_FROM_CART",
+  UPDATE_CART_ITEM: "UPDATE_CART_ITEM",
+  CLEAR_CART: "CLEAR_CART",
+  SET_USER_ORDERS: "SET_USER_ORDERS",
+  SET_ORDER_DETAIL: "SET_ORDER_DETAIL",
+  SET_FETCH_STATE: "SET_ORDER_FETCH_STATE",
+  SET_ERROR: "SET_ORDER_ERROR"
 };
 
-export const orderReducer = (state = initialState, action) => {
-  switch (action.type) {
-    case orderActions.addCart:
-      const existingItemIndex = state.cart.findIndex(
-        (item) => item.product.product_id === action.payload.product.product_id
-      );
+const orderInitialState = {
+  cart: [],
+  userOrders: [], // Kullanıcının geçmiş siparişleri
+  orderDetail: null, // Sipariş detayı
+  fetchState: fetchStates.NOT_FETCHED,
+  error: null
+};
 
-      if (existingItemIndex !== -1) {
+export const orderReducer = (state = orderInitialState, action) => {
+  switch (action.type) {
+    case orderActions.ADD_TO_CART:
+      // Eğer ürün zaten sepette varsa miktarını artır
+      const existingItem = state.cart.find(item => item.id === action.payload.id);
+      if (existingItem) {
         return {
           ...state,
-          cart: state.cart.map((item, index) =>
-            index === existingItemIndex
-              ? {
-                  ...item,
-                  count: item.count + 1,
-                  product: action.payload.product,
-                }
+          cart: state.cart.map(item => 
+            item.id === action.payload.id 
+              ? { ...item, quantity: item.quantity + action.payload.quantity } 
               : item
-          ),
-        };
-      } else {
-        return {
-          ...state,
-          cart: [...state.cart, { count: 1, product: action.payload.product }],
+          )
         };
       }
-    case orderActions.removeFromCart:
+      // Ürün sepette yoksa yeni ekle
       return {
         ...state,
-        cart: state.cart.filter(
-          (item) => item.product.product_id !== action.payload
-        ),
+        cart: [...state.cart, action.payload]
       };
-    case orderActions.updateCart: {
-      const updatedCart = state.cart.map((item) =>
-        item.product.product_id === action.payload.id
-          ? { ...item, count: action.payload.newCount }
-          : item
-      );
+    case orderActions.REMOVE_FROM_CART:
       return {
         ...state,
-        cart: updatedCart,
+        cart: state.cart.filter(item => item.id !== action.payload)
       };
-    }
-    case orderActions.clearCart:
+    case orderActions.UPDATE_CART_ITEM:
       return {
         ...state,
-        cart: [],
+        cart: state.cart.map(item => 
+          item.id === action.payload.id 
+            ? { ...item, quantity: action.payload.quantity } 
+            : item
+        )
       };
-    case orderActions.setUserData:
+    case orderActions.CLEAR_CART:
       return {
         ...state,
-        userData: action.payload,
+        cart: []
       };
-    case orderActions.setPaymentData:
+    case orderActions.SET_USER_ORDERS:
       return {
         ...state,
-        paymentData: action.payload,
+        userOrders: action.payload
       };
-    case orderActions.setOrderData:
+    case orderActions.SET_ORDER_DETAIL:
       return {
         ...state,
-        orderData: action.payload,
+        orderDetail: action.payload
+      };
+    case orderActions.SET_FETCH_STATE:
+      return {
+        ...state,
+        fetchState: action.payload
+      };
+    case orderActions.SET_ERROR:
+      return {
+        ...state,
+        error: action.payload
       };
     default:
       return state;

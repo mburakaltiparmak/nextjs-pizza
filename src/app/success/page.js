@@ -1,10 +1,11 @@
 "use client";
 import { Separator } from "@/components/ui/separator";
 import React, { useEffect, useState } from "react";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { clearCart } from "@/lib/store/actions/orderActions";
 import Loading from "../loading";
 import NotFound from "../not-found";
+import { setLoading } from "@/lib/store/actions/globalActions";
 
 async function getLatestOrder() {
   const res = await fetch(
@@ -35,7 +36,7 @@ const calculateCartTotal = (cart) => {
 export default function Page() {
   const dispatch = useAppDispatch();
   const [latestOrder, setLatestOrder] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const loading = useAppSelector((state)=>state.global.loading);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -47,14 +48,14 @@ export default function Page() {
       } catch (error) {
         console.error("Error fetching order:", error);
       } finally {
-        setIsLoading(false);
+        dispatch(setLoading(false));
       }
     };
 
     fetchOrder();
   }, [dispatch]);
 
-  if (isLoading) {
+  if (loading) {
     return <Loading />;
   }
 

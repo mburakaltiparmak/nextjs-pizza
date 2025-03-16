@@ -23,6 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Image from "next/image";
+import Footer from "@/components/footer";
 
 const Page = () => {
   const dispatch = useAppDispatch();
@@ -66,6 +67,7 @@ const Page = () => {
   };
 
   return (
+    <div>
     <div className="flex flex-col items-center gap-2 pb-4">
       <span>
         <Image
@@ -163,8 +165,12 @@ const Page = () => {
           </span>
         </CardFooter>
       </Card>
+      
+    </div>
+    <Footer />
     </div>
   );
+  
 };
 
 export default Page;

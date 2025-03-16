@@ -1,41 +1,63 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import { useEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import {
-  fetchProductsById,
-  setSelectedCategory,
-} from "@/lib/store/actions/productActions";
+import { useDispatch, useSelector } from "react-redux";
 import { HoverCard, HoverCardTrigger } from "../ui/hover-card";
-import useSWR from "swr";
 import Products from "../products/products";
 import NotFound from "@/app/not-found";
 import Loading from "@/app/loading";
-
-const fetcher = (...args) => fetch(...args).then((res) => res.json());
+import allLogo from "../../../assets/adv-aseets/icons/all-logo.png";
+<<<<<<< HEAD
+import {
+  fetchCategories,
+  fetchCategoriesWithProducts,
+} from "@/lib/store/actions/categoryActions";
+import { fetchStates } from "@/lib/store/constants";
+import SecondaryLoading from "../secondaryLoading";
+=======
+import { fetchCategories, fetchCategoriesWithProducts } from "@/lib/store/actions/categoryActions";
+>>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
 
 const Categories = () => {
-  const dispatch = useAppDispatch();
-  const categories = useAppSelector((store) => store.product.categories);
+  const dispatch = useDispatch();
 
-  const handleCategory = (id) => {
-    dispatch(setSelectedCategory(id));
-    // dispatch(fetchProductsById(id));
+  // Redux state
+  const categories = useSelector((state) => state.category.categories);
+  const categoryFetchState = useSelector((state) => state.category.fetchState);
+  const selectedCategory = useSelector(
+    (state) => state.product.selectedCategory
+  );
+  const productFetchState = useSelector((state) => state.product.fetchState);
+
+  // Veri yükleme state'i
+  const [dataFetchAttempted, setDataFetchAttempted] = useState(false);
+
+  // Kategorileri yükle
+  useEffect(() => {
+    if (categoryFetchState === fetchStates.NOT_FETCHED && !dataFetchAttempted) {
+      setDataFetchAttempted(true);
+      dispatch(fetchCategories()).catch((err) => {
+        console.error("Kategori yükleme hatası:", err);
+      });
+    }
+  }, [dispatch, categoryFetchState, dataFetchAttempted]);
+
+  // Kategoriyi seç ve ürünleri filtrele
+  const handleCategory = (id, e) => {
+    e.preventDefault();
+    //dispatch(setSelectedCategory(id));
   };
 
-  /*
-  const { data: firstApiData, error: firstApiError } = useSWR(
-    "https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products",
-    fetcher
-  );
+  // Tüm ürünleri göster
+  const handleAllOfThem = (e) => {
+    e.preventDefault();
+    //dispatch(setSelectedCategory(null));
+<<<<<<< HEAD
+  };
+=======
+  }
+>>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
 
-  const { data: secondApiData, error: secondApiError } = useSWR(
-    selectedCategory
-      ? `https://66c0ce8bba6f27ca9a57a405.mockapi.io/api/products/${selectedCategory}`
-      : null,
-    fetcher
-  );
-*/
   const [data, setData] = useState([]);
   /*
   useEffect(() => {
@@ -51,43 +73,64 @@ const Categories = () => {
   const handleCategory = (id) => {
     dispatch(setSelectedCategory(id));
   };
-
-  if (firstApiError || secondApiError) {
-    return <NotFound />;
-  }
-
-  if (!firstApiData) {
-    return <Loading />;
-  }
 */
+  // Yükleniyor durumu
+  if (
+    categoryFetchState === fetchStates.FETCHING &&
+    (!categories || categories.length === 0)
+  ) {
+    return <SecondaryLoading size="small" />;
+  }
+
   return (
     <div
       id="categories"
-      className="flex flex-col justify-between items-center gap-8 "
+      className="flex flex-col justify-between items-center gap-8"
     >
-      <div className="grid grid-cols-6 grid-flow-row mt-4 max-md:grid-cols-2 max-md:place-items-center max-md:gap-4">
-        {categories.length > 0 ? (
-          categories.map((item, index) => (
+      <div className="grid grid-cols-8 grid-flow-row mt-4 max-md:grid-cols-2 max-md:place-items-center max-md:gap-4">
+        <button
+          onClick={(e) => handleAllOfThem(e)}
+          className={`optionStyle rounded-full text-sm p-2 ${
+            selectedCategory === null ? "bg-yellow text-red font-bold" : ""
+          }`}
+        >
+          <img
+            className="w-[50px] h-fit object-cover"
+            src={allLogo.src}
+            alt="all"
+          />
+          <HoverCard>
+            <HoverCardTrigger>Hepsi</HoverCardTrigger>
+          </HoverCard>
+        </button>
+
+        {categories && categories.length > 0 ? (
+          categories.map((item) => (
             <button
-              key={index}
-              onClick={() => handleCategory(item.category_id)}
-              className="optionStyle rounded-full text-sm py-1"
+              key={item.id}
+              onClick={(e) => handleCategory(item.id, e)}
+              className={`optionStyle rounded-full text-sm p-2 ${
+                selectedCategory === item.id
+                  ? "bg-yellow text-red font-bold"
+                  : ""
+              }`}
             >
               <img
                 className="w-[50px] h-fit object-cover"
-                src={item.category_img}
-                alt={item.category_name}
+                src={item.img}
+                alt={item.name}
               />
               <HoverCard>
-                <HoverCardTrigger>{item.category_name}</HoverCardTrigger>
+                <HoverCardTrigger>{item.name}</HoverCardTrigger>
               </HoverCard>
             </button>
           ))
         ) : (
-          <p>Kategori bulunamadı.</p>
+          <p className="text-gray font-Barlow">Kategori bulunamadı.</p>
         )}
       </div>
-      {<Products />}
+
+      <Products />
     </div>
   );
 };

@@ -2,6 +2,7 @@
 const defaultTheme = require("tailwindcss/defaultTheme");
 
 module.exports = {
+  optimizeFonts: true,
   darkMode: ["class"],
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
@@ -18,6 +19,9 @@ module.exports = {
       padding: "2rem",
     },
     extend: {
+      zIndex: {
+        '100': '100',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

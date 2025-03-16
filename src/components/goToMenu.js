@@ -31,7 +31,7 @@ const GoToMenu = () => {
 //make a decision to show it or not show it on smaller screen
   return (
     showScrollButton && (
-      <div className="fixed lg:bottom-0 left-0 right-0 max-md:top-1/3  flex justify-center max-md:pb-4 pb-8 max-lg:hidden ">
+      <div className="absolute lg:bottom-0 left-0 right-0 max-md:top-1/3  flex justify-center max-md:pb-4 pb-8 max-lg:hidden ">
         <button
           onClick={scrollToCategories}
           className="bg-yellow text-darkgray font-Barlow px-6 py-3 rounded-full shadow-lg hover:bg-red hover:text-lightgray transition-colors duration-300 font-semibold

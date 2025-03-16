@@ -41,6 +41,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-regular-svg-icons";
 import { faRankingStar } from "@fortawesome/free-solid-svg-icons";
 import { useToast } from "@/hooks/use-toast";
+import Header from "@/components/header";
+import Footer from "@/components/footer";
 
 const formSchema = z.object({
   boyut: z.enum(["S", "M", "L"], {
@@ -163,6 +165,8 @@ const Page = () => {
     router.push("/");
   };
   return (
+    <div>
+      <Header />
     <div className="flex flex-col items-center justify-between gap-8 mb-8">
       <span>
         <Image
@@ -375,6 +379,8 @@ const Page = () => {
           </div>
         </form>
       </Form>
+    </div>
+    <Footer />
     </div>
   );
 };
