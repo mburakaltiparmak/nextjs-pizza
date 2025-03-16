@@ -111,8 +111,7 @@ export const fetchCategoryById = (categoryId) => async (dispatch) => {
 };
 
 // Yeni kategori ekle
-// Yeni kategori ekle
-export const createCategory = (categoryData) => async (dispatch) => {
+export const createCategory = (categoryData, token) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
@@ -120,25 +119,17 @@ export const createCategory = (categoryData) => async (dispatch) => {
     const formData = new FormData();
     formData.append("name", categoryData.name);
 
-    // Görsel varsa ekle
-    if (categoryData.image && categoryData.image instanceof File) {
+    if (categoryData.image) {
       formData.append("image", categoryData.image);
     }
+    console.log("category form data", formData);
 
-    // Authorization token'ını headers'a ekleyelim
-    const token = localStorage.getItem("token");
-    const headers = {
-      "Content-Type": "multipart/form-data",
-    };
-
-    // Token varsa ekleyelim
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    // İstek atarken headers'ı ekleyelim
     const response = await instance.post("/category", formData, {
-      headers: headers,
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`,
+      },
+      timeout: 10000, // 10 saniye timeout ekle
     });
 
     dispatch(addCategory(response.data));
@@ -169,33 +160,23 @@ export const createCategory = (categoryData) => async (dispatch) => {
 
 // Kategori güncelle
 export const updateCategory =
-  (categoryId, categoryData) => async (dispatch) => {
+  (categoryId, categoryData, token) => async (dispatch) => {
     dispatch(setLoading(true));
 
     try {
-      // FormData nesnesi oluştur
       const formData = new FormData();
       formData.append("name", categoryData.name);
 
-      // Görsel varsa ekle
-      if (categoryData.image && categoryData.image instanceof File) {
+      if (categoryData.image) {
         formData.append("image", categoryData.image);
       }
 
-      // Authorization token'ını headers'a ekleyelim
-      const token = localStorage.getItem("token");
-      const headers = {
-        "Content-Type": "multipart/form-data",
-      };
-
-      // Token varsa ekleyelim
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-
-      // İstek atarken headers'ı ekleyelim
       const response = await instance.put(`/category/${categoryId}`, formData, {
-        headers: headers,
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+        timeout: 10000, // 10 saniye timeout ekle
       });
 
       dispatch(updateCategoryInState(response.data));
@@ -207,14 +188,7 @@ export const updateCategory =
       let errorMessage = "Kategori güncellenemedi";
 
       if (err.response) {
-        console.error("Sunucu yanıtı:", err.response);
         errorMessage = err.response.data?.message || errorMessage;
-      } else if (err.request) {
-        console.error("İstek gönderildi ama yanıt alınamadı:", err.request);
-        errorMessage = "Sunucudan yanıt alınamadı";
-      } else {
-        console.error("İstek oluşturulurken hata:", err.message);
-        errorMessage = err.message || errorMessage;
       }
 
       dispatch(setError(errorMessage));
@@ -225,11 +199,16 @@ export const updateCategory =
   };
 
 // Kategori sil
-export const deleteCategory = (categoryId) => async (dispatch) => {
+export const deleteCategory = (categoryId, token) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
-    await instance.delete(`/category/${categoryId}`);
+    await instance.delete(`/category/${categoryId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      timeout: 10000, // 10 saniye timeout ekle
+    });
 
     dispatch(deleteCategoryFromState(categoryId));
     dispatch(setLoading(false));

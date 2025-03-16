@@ -101,7 +101,7 @@ export const fetchProductsByCategory = (categoryId) => async (dispatch) => {
   dispatch(setProductFetchState(fetchStates.FETCHING));
 
   try {
-    const response = await instance.get(`/product/category/${categoryId}`);
+    const response = await instance.get(`/category/${categoryId}/products`);
 
     // Ürünleri hem categoryProducts hem de genel products state'ine ekle
     dispatch(setCategoryProducts(response.data));
@@ -123,13 +123,12 @@ export const fetchProductsByCategory = (categoryId) => async (dispatch) => {
 };
 
 // Yeni ürün ekle
-export const createProduct = (productData) => async (dispatch) => {
+export const createProduct = (productData, token) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
     const formData = new FormData();
     formData.append("name", productData.name);
-    formData.append("description", productData.description || "");
     formData.append("price", productData.price);
     formData.append("stock", productData.stock || 0);
     formData.append("categoryId", productData.categoryId);
@@ -139,19 +138,12 @@ export const createProduct = (productData) => async (dispatch) => {
       formData.append("image", productData.image);
     }
 
-    // Authorization token'ını headers'a ekleyelim
-    const token = localStorage.getItem("token");
-    const headers = {
-      "Content-Type": "multipart/form-data",
-    };
-
-    // Token varsa ekleyelim
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
     const response = await instance.post("/product", formData, {
-      headers: headers,
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`,
+      },
+      timeout: 10000, // 10 saniye timeout ekle
     });
 
     dispatch(addProduct(response.data));
@@ -181,79 +173,66 @@ export const createProduct = (productData) => async (dispatch) => {
 };
 
 // Ürün güncelle
-export const updateProduct = (productId, productData) => async (dispatch) => {
-  dispatch(setLoading(true));
+export const updateProduct =
+  (productId, productData, token) => async (dispatch) => {
+    dispatch(setLoading(true));
 
-  try {
-    const formData = new FormData();
-    formData.append("name", productData.name);
-    formData.append("description", productData.description || "");
-    formData.append("price", productData.price);
-    formData.append("stock", productData.stock || 0);
-    formData.append("categoryId", productData.categoryId);
-    formData.append("rating", productData.rating || 0);
+    try {
+      const formData = new FormData();
+      formData.append("name", productData.name);
+      formData.append("price", productData.price);
+      formData.append("stock", productData.stock || 0);
+      formData.append("categoryId", productData.categoryId);
+      formData.append("rating", productData.rating || 0);
 
-    if (productData.image) {
-      formData.append("image", productData.image);
+      if (productData.image) {
+        formData.append("image", productData.image);
+      }
+
+      const response = await instance.put(`/product/${productId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+        timeout: 10000, // 10 saniye timeout ekle
+      });
+
+      dispatch(updateProductInState(response.data));
+      dispatch(setLoading(false));
+      dispatch(setSuccess("Ürün başarıyla güncellendi"));
+
+      return response.data;
+    } catch (err) {
+      let errorMessage = "Ürün güncellenemedi";
+
+      if (err.response) {
+        console.error("Sunucu yanıtı:", err.response);
+        errorMessage = err.response.data?.message || errorMessage;
+      } else if (err.request) {
+        console.error("İstek gönderildi ama yanıt alınamadı:", err.request);
+        errorMessage = "Sunucudan yanıt alınamadı";
+      } else {
+        console.error("İstek oluşturulurken hata:", err.message);
+        errorMessage = err.message || errorMessage;
+      }
+
+      dispatch(setError(errorMessage));
+      dispatch(setLoading(false));
+
+      return { error: errorMessage };
     }
-
-    // Authorization token'ını headers'a ekleyelim
-    const token = localStorage.getItem("token");
-    const headers = {
-      "Content-Type": "multipart/form-data",
-    };
-
-    // Token varsa ekleyelim
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    const response = await instance.put(`/product/${productId}`, formData, {
-      headers: headers,
-    });
-
-    dispatch(updateProductInState(response.data));
-    dispatch(setLoading(false));
-    dispatch(setSuccess("Ürün başarıyla güncellendi"));
-
-    return response.data;
-  } catch (err) {
-    let errorMessage = "Ürün güncellenemedi";
-
-    if (err.response) {
-      console.error("Sunucu yanıtı:", err.response);
-      errorMessage = err.response.data?.message || errorMessage;
-    } else if (err.request) {
-      console.error("İstek gönderildi ama yanıt alınamadı:", err.request);
-      errorMessage = "Sunucudan yanıt alınamadı";
-    } else {
-      console.error("İstek oluşturulurken hata:", err.message);
-      errorMessage = err.message || errorMessage;
-    }
-
-    dispatch(setError(errorMessage));
-    dispatch(setLoading(false));
-
-    return { error: errorMessage };
-  }
-};
+  };
 
 // Ürün sil
-export const deleteProduct = (productId) => async (dispatch) => {
+export const deleteProduct = (productId, token) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
-    // Authorization token'ını headers'a ekleyelim
-    const token = localStorage.getItem("token");
-    const headers = {};
-
-    // Token varsa ekleyelim
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
     await instance.delete(`/product/${productId}`, {
-      headers: headers,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      timeout: 10000, // 10 saniye timeout ekle
     });
 
     dispatch(deleteProductFromState(productId));

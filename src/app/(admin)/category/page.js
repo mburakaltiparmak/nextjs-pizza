@@ -57,6 +57,7 @@ const CategoryPage = () => {
   const loading = useSelector((state) => state.global.loading);
   const error = useSelector((state) => state.global.error);
   const success = useSelector((state) => state.global.success);
+  const token = useSelector((state) => state.user.token);
 
   // Initialize form
   const form = useForm({
@@ -172,7 +173,7 @@ const CategoryPage = () => {
       if (editingCategory) {
         // Kategori güncelleme
         result = await dispatch(
-          updateCategory(editingCategory.id, categoryData)
+          updateCategory(editingCategory.id, categoryData, token)
         );
         if (!result.error) {
           dispatch(
@@ -182,7 +183,7 @@ const CategoryPage = () => {
         }
       } else {
         // Yeni kategori ekleme
-        result = await dispatch(createCategory(categoryData));
+        result = await dispatch(createCategory(categoryData, token));
         if (!result.error) {
           dispatch(
             setSuccess(`"${data.name}" kategorisi başarıyla oluşturuldu`)

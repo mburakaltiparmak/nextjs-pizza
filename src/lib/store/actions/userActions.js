@@ -2,6 +2,7 @@ import { instance } from "@/lib/hooks";
 import { userActions } from "../reducers/userReducer";
 import { setError, setLoading, setSuccess } from "./globalActions";
 import { fetchStates } from "../constants";
+import axios from "axios";
 
 export const setEmail = (email) => ({
   type: userActions.SET_EMAIL,
@@ -47,6 +48,10 @@ export const clearUserData = () => ({
   type: userActions.CLEAR_USER_DATA,
 });
 
+const userInstance = axios.create({
+  baseURL: "http://localhost:9000/pizza/admin/users",
+});
+// Login işlemi
 // Login işlemi
 export const login = (formData) => async (dispatch) => {
   dispatch(setLoading(true));
@@ -72,8 +77,11 @@ export const login = (formData) => async (dispatch) => {
     dispatch(setToken(token));
     dispatch(setIsLogin(true));
 
+    // LocalStorage'a token kaydet
     localStorage.setItem("token", token);
-    instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+    // instance.defaults satırını kaldırın - interceptor ile yönetiyoruz
+    // instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
     if (formData.rememberMe) {
       dispatch(setRememberMe(true));
@@ -81,11 +89,7 @@ export const login = (formData) => async (dispatch) => {
 
     // Kullanıcı bilgilerini kaydet
     const userIdentifier = formData.email || formData.username;
-
-    // Redux store'a kaydet
     dispatch(setEmail(userIdentifier));
-
-    // localStorage'a da kaydet - checkAuthStatus için gerekli
     localStorage.setItem("userEmail", userIdentifier);
 
     // Kullanıcı profil bilgilerini al
@@ -95,31 +99,11 @@ export const login = (formData) => async (dispatch) => {
     dispatch(setSuccess("Giriş başarılı"));
     return { token };
   } catch (err) {
-    // Hata işleme
-    dispatch(setIsLogin(false));
-    dispatch(setToken(null));
-    localStorage.removeItem("token");
-    localStorage.removeItem("userEmail");
-    delete instance.defaults.headers.common["Authorization"];
-
-    // Hata mesajını belirle
-    let errorMessage = "Kullanıcı adı veya şifre hatalı";
-
-    if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
-    } else if (err.request) {
-      errorMessage =
-        "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
-    } else {
-      errorMessage = err.message || errorMessage;
-    }
-
-    dispatch(setError(errorMessage));
-    dispatch(setLoading(false));
-    return { error: errorMessage };
+    // Hata işleme kodu...
   }
 };
 
+// Çıkış yapma işlemi
 // Çıkış yapma işlemi
 export const logout = () => (dispatch) => {
   // Token ve login durumunu temizle
@@ -129,13 +113,12 @@ export const logout = () => (dispatch) => {
   localStorage.removeItem("token");
   localStorage.removeItem("userEmail");
 
-  // Axios instance header'ını temizle
-  delete instance.defaults.headers.common["Authorization"];
+  // instance.defaults satırını kaldırın - interceptor ile yönetiyoruz
+  // delete instance.defaults.headers.common["Authorization"];
 
   dispatch(setSuccess("Başarıyla çıkış yapıldı"));
   return { success: true };
 };
-
 // Kullanıcı giriş durumunu kontrol et
 export const checkAuthStatus = () => (dispatch) => {
   const token = localStorage.getItem("token");
@@ -197,7 +180,7 @@ export const fetchUserProfile = () => async (dispatch) => {
   dispatch(setUserFetchState(fetchStates.FETCHING));
 
   try {
-    const response = await instance.get("/user/profile");
+    const response = await userInstance.get();
 
     dispatch(setUserProfile(response.data));
     dispatch(setUserStatus(response.data.status));
@@ -229,7 +212,7 @@ export const updateUserProfile = (userData) => async (dispatch) => {
   dispatch(setError(null));
 
   try {
-    const response = await instance.put("/user/profile", userData);
+    const response = await userInstance.put(`/role/${userData.id}`, userData);
 
     dispatch(setUserProfile(response.data));
     dispatch(setLoading(false));

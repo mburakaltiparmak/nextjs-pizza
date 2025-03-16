@@ -83,12 +83,13 @@ const DashboardPage = () => {
     // Admin dashboard verilerini getir
     if (adminFetchState === fetchStates.NOT_FETCHED && !dataFetchAttempted) {
       setDataFetchAttempted(true);
-      dispatch(fetchDashboard()).catch(() => {
+      /*dispatch(fetchDashboard()).catch(() => {
         // Hata durumunda en azından kategorileri getir
         if (categoryFetchState === fetchStates.NOT_FETCHED) {
           dispatch(fetchCategories());
         }
       });
+      */
     } 
     // Eğer dashboard verileri alınamadıysa, kategorileri getir
     else if (adminFetchState === fetchStates.FAILED && categoryFetchState === fetchStates.NOT_FETCHED) {

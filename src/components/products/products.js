@@ -1,8 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { addToCart } from "@/lib/store/actions/orderActions";
-import { useEffect, useMemo } from "react";
 import {
   Popover,
   PopoverContent,
@@ -12,26 +11,11 @@ import { useToast } from "@/hooks/use-toast";
 import RatingStars from "../admin/ratingStars";
 
 const Products = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const { toast } = useToast();
 
-  // Redux state
-  const products = useSelector((state) => state.product.products);
-  const selectedCategory = useSelector(
-    (state) => state.product.selectedCategory
-  );
-  const productFetchState = useSelector((state) => state.product.fetchState);
-
-  // Kategori filtresi uygulanmış ürünler
-  const filteredProducts = useMemo(() => {
-    if (!selectedCategory || !Array.isArray(products)) {
-      return products;
-    }
-
-    return products.filter(
-      (product) => product.categoryId === selectedCategory
-    );
-  }, [products, selectedCategory]);
+  const products = useAppSelector((state) => state.products);
+  const filteredProducts = useAppSelector((state) => state.filteredProducts);
 
   const handleAddToCart = (product) => {
     dispatch(addToCart(product));
@@ -94,7 +78,6 @@ const Products = () => {
             </p>
             <span className="flex flex-col justify-between gap-4 text-lg">
               <RatingStars rating={item.rating} />
-
               <p className="font-semibold text-darkgray">{item.price} ₺</p>
             </span>
             <button

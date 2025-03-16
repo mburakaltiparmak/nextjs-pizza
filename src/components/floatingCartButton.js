@@ -4,8 +4,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   removeFromCart,
-  updateCartItem,
   clearCart,
+  updateCartItemAction,
 } from "@/lib/store/actions/orderActions";
 import { useToast } from "@/hooks/use-toast";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -121,7 +121,7 @@ const FloatingCartButton = () => {
         title: "Ürün sepetten kaldırıldı.",
       });
     } else {
-      dispatch(updateCartItem(item.id, item.quantity - 1));
+      dispatch(updateCartItemAction(item.product.product_id, item.count - 1));
       toast({
         title: "Ürün miktarı güncellendi",
       });
@@ -129,7 +129,7 @@ const FloatingCartButton = () => {
   };
 
   const handleIncrementCount = (item) => {
-    dispatch(updateCartItem(item.id, item.quantity + 1));
+    dispatch(updateCartItemAction(item.product.product_id, item.count + 1));
     toast({
       title: "Ürün miktarı güncellendi",
     });

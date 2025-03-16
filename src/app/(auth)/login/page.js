@@ -19,12 +19,13 @@ const Page = () => {
   const isLogin = useAppSelector((state) => state.user.isLogin);
 
   // Global hata durumunu yerel hata durumuna aktarma
+  /*
   useEffect(() => {
     if (globalError) {
       setErrorMessage(globalError);
     }
   }, [globalError]);
-
+*/
   // Kullanıcı zaten giriş yapmışsa dashboard'a yönlendir
   useEffect(() => {
     const isAuthenticated = dispatch(checkAuthStatus());

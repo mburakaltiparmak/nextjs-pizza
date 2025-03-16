@@ -73,12 +73,13 @@ const ProductPage = () => {
 
   // Redux state
   const products = useSelector((state) => state.product.products || []);
-  const categories = useSelector((state) => state.category.categories || []);
+  const category = useSelector((state) => state.category.categories || []);
   const loading = useSelector((state) => state.global.loading);
   const error = useSelector((state) => state.global.error);
   const success = useSelector((state) => state.global.success);
   const productFetchState = useSelector((state) => state.product.fetchState);
   const categoryFetchState = useSelector((state) => state.category.fetchState);
+  const token = useSelector((state) => state.user.token);
 
   // Initialize form
   const form = useForm({
@@ -143,7 +144,7 @@ const ProductPage = () => {
         price: product.price,
         stock: product.stock,
         rating: product.rating,
-        categoryId: product.categoryId.toString(),
+        categoryId: product.categoryId ? product.categoryId.toString() : "",
         image: null,
         preview: product.img,
       });
@@ -211,13 +212,15 @@ const ProductPage = () => {
 
       // If editing product
       if (editingProduct) {
-        result = await dispatch(updateProduct(editingProduct.id, productData));
+        result = await dispatch(
+          updateProduct(editingProduct.id, productData, token)
+        );
         if (!result.error) {
           closeModal();
         }
       } else {
         // Creating new product
-        result = await dispatch(createProduct(productData));
+        result = await dispatch(createProduct(productData, token));
         if (!result.error) {
           closeModal();
         }
@@ -231,7 +234,7 @@ const ProductPage = () => {
     if (!productToDelete) return;
 
     try {
-      const result = await dispatch(deleteProduct(productToDelete.id));
+      const result = await dispatch(deleteProduct(productToDelete.id, token)); // token ekleyin
 
       if (!result.error) {
         closeDeleteModal();
@@ -264,15 +267,17 @@ const ProductPage = () => {
 
   // Get category name
   const getCategoryName = (categoryId) => {
-    if (!categories || !Array.isArray(categories)) return "Bilinmeyen Kategori";
+    if (!category || !Array.isArray(category)) return "Bilinmeyen Kategori";
+    if (categoryId === null || categoryId === undefined)
+      return "Bilinmeyen Kategori";
 
     // Her iki değeri de string'e dönüştürerek türleri aynı hale getiriyoruz
     const categoryIdStr = categoryId.toString();
 
-    const category = categories.find(
-      (cat) => cat.id.toString() === categoryIdStr
+    const foundCategory = category.find(
+      (cat) => cat.id && cat.id.toString() === categoryIdStr
     );
-    return category ? category.name : "Bilinmeyen Kategori";
+    return foundCategory ? foundCategory.name : "Bilinmeyen Kategori";
   };
 
   // Admin layout için props tanımlama
@@ -305,7 +310,7 @@ const ProductPage = () => {
           placeholder="Ürün ara..."
         />
         <CategoryFilter
-          categories={categories}
+          category={category}
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
         />
@@ -508,8 +513,8 @@ const ProductPage = () => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {Array.isArray(categories) &&
-                        categories.map((category) => (
+                      {Array.isArray(category) &&
+                        category.map((category) => (
                           <SelectItem
                             key={category.id}
                             value={category.id.toString()}

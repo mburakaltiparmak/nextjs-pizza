@@ -1,6 +1,6 @@
 import { adminActions } from "../reducers/adminReducer";
 import { setError, setLoading, setSuccess } from "./globalActions";
-import { instance } from "@/lib/hooks";
+import { instance, useAppSelector } from "@/lib/hooks";
 import { fetchStates, userStatus } from "../constants";
 
 export const setAllUsers = (users) => ({
@@ -43,7 +43,12 @@ export const fetchAllUsers = () => async (dispatch) => {
   dispatch(setAdminFetchState(fetchStates.FETCHING));
   
   try {
-    const response = await instance.get("/admin/users");
+    const token = useAppSelector((state)=>state.user.token);
+    const response = await instance.get("/admin/users",{
+      headers : {
+        'Authorization' : `Bearer ${token}`
+      }
+    });
     
     dispatch(setAllUsers(response.data));
     dispatch(setAdminFetchState(fetchStates.FETCHED));
@@ -87,6 +92,7 @@ export const fetchPendingUsers = () => async (dispatch) => {
 };
 
 // Dashboard verilerini getir
+/*
 export const fetchDashboard = () => async (dispatch) => {
   dispatch(setAdminFetchState(fetchStates.FETCHING));
   
@@ -109,7 +115,7 @@ export const fetchDashboard = () => async (dispatch) => {
     return { error: errorMessage };
   }
 };
-
+*/
 // Kullanıcı onayla
 export const approveUser = (userId) => async (dispatch) => {
   dispatch(setLoading(true));

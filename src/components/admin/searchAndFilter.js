@@ -1,12 +1,8 @@
 "use client";
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter } from "lucide-react";
 
 // Arama bileşeni
-export const SearchBar = ({ 
-  value, 
-  onChange, 
-  placeholder = "Ara..." 
-}) => {
+export const SearchBar = ({ value, onChange, placeholder = "Ara..." }) => {
   return (
     <div className="relative flex-1 w-full">
       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -24,11 +20,11 @@ export const SearchBar = ({
 };
 
 // Kategori filtre bileşeni
-export const CategoryFilter = ({ 
-  categories, 
-  value, 
-  onChange, 
-  placeholder = "Tüm Kategoriler" 
+export const CategoryFilter = ({
+  category,
+  value,
+  onChange,
+  placeholder = "Tüm Kategoriler",
 }) => {
   return (
     <div className="relative w-full md:w-64">
@@ -41,11 +37,12 @@ export const CategoryFilter = ({
         onChange={onChange}
       >
         <option value="">{placeholder}</option>
-        {Array.isArray(categories) && categories.map(category => (
-          <option key={category.id} value={category.id.toString()}>
-            {category.name}
-          </option>
-        ))}
+        {Array.isArray(category) &&
+          category.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name}
+            </option>
+          ))}
       </select>
     </div>
   );

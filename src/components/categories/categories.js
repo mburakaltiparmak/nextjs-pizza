@@ -7,14 +7,12 @@ import Products from "../products/products";
 import NotFound from "@/app/not-found";
 import Loading from "@/app/loading";
 import allLogo from "../../../assets/adv-aseets/icons/all-logo.png";
-import { fetchCategories } from "@/lib/store/actions/categoryActions";
 import {
-  setSelectedCategory,
-  fetchProducts,
-  fetchProductsByCategory,
-} from "@/lib/store/actions/productActions";
+  fetchCategories,
+  fetchCategoriesWithProducts,
+} from "@/lib/store/actions/categoryActions";
 import { fetchStates } from "@/lib/store/constants";
-import SecondaryLoading from "@/components/secondaryLoading";
+import SecondaryLoading from "../secondaryLoading";
 
 const Categories = () => {
   const dispatch = useDispatch();
@@ -43,24 +41,31 @@ const Categories = () => {
   // Kategoriyi seç ve ürünleri filtrele
   const handleCategory = (id, e) => {
     e.preventDefault();
-
-    // Eğer zaten seçili olan kategoriye tıklandıysa, seçimi kaldır
-    if (selectedCategory === id) {
-      dispatch(setSelectedCategory(null));
-      dispatch(fetchProducts());
-    } else {
-      dispatch(setSelectedCategory(id));
-      dispatch(fetchProductsByCategory(id));
-    }
+    //dispatch(setSelectedCategory(id));
   };
 
   // Tüm ürünleri göster
   const handleAllOfThem = (e) => {
     e.preventDefault();
-    dispatch(setSelectedCategory(null));
-    dispatch(fetchProducts());
+    //dispatch(setSelectedCategory(null));
   };
 
+  const [data, setData] = useState([]);
+  /*
+  useEffect(() => {
+    if (selectedCategory && secondApiData) {
+      setData(secondApiData);
+      console.log("data by category : ", secondApiData);
+    } else if (!selectedCategory && firstApiData) {
+      setData(firstApiData);
+      console.log("full data : ", firstApiData);
+    }
+  }, [firstApiData, secondApiData, selectedCategory]);
+
+  const handleCategory = (id) => {
+    dispatch(setSelectedCategory(id));
+  };
+*/
   // Yükleniyor durumu
   if (
     categoryFetchState === fetchStates.FETCHING &&
