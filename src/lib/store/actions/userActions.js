@@ -48,14 +48,7 @@ export const clearUserData = () => ({
   type: userActions.CLEAR_USER_DATA,
 });
 
-<<<<<<< HEAD
-const userInstance = axios.create({
-  baseURL: "http://localhost:9000/pizza/admin/users",
-});
-// Login işlemi
-=======
 const userInstance = axios.create({baseURL : "http://localhost:9000/pizza/admin/users" });
->>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
 // Login işlemi
 export const login = (formData) => async (dispatch) => {
   dispatch(setLoading(true));
@@ -157,11 +150,7 @@ export const registerUser = (userData) => async (dispatch) => {
 
   try {
     const response = await instance.post("/auth/register", userData);
-<<<<<<< HEAD
-
-=======
     
->>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
     dispatch(setLoading(false));
     dispatch(setSuccess("Kayıt başarılı! Admin onayı bekleniyor."));
     return response.data;
@@ -189,11 +178,7 @@ export const fetchUserProfile = () => async (dispatch) => {
 
   try {
     const response = await userInstance.get();
-<<<<<<< HEAD
-
-=======
     
->>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
     dispatch(setUserProfile(response.data));
     dispatch(setUserStatus(response.data.status));
     dispatch(setUserRole(response.data.role));
@@ -224,13 +209,8 @@ export const updateUserProfile = (userData) => async (dispatch) => {
   dispatch(setError(null));
 
   try {
-<<<<<<< HEAD
-    const response = await userInstance.put(`/role/${userData.id}`, userData);
-
-=======
     const response = await userInstance.put(`/role/${userData.id}`,userData);
     
->>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
     dispatch(setUserProfile(response.data));
     dispatch(setLoading(false));
     dispatch(setSuccess("Profil başarıyla güncellendi"));
@@ -261,11 +241,7 @@ export const changePassword = (passwordData) => async (dispatch) => {
 
   try {
     await instance.put("/user/password", passwordData);
-<<<<<<< HEAD
-
-=======
     
->>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
     dispatch(setLoading(false));
     dispatch(setSuccess("Şifreniz başarıyla değiştirildi"));
 

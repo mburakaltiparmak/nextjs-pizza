@@ -1,12 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-<<<<<<< HEAD
-import { addToCart } from "@/lib/store/actions/orderActions";
-=======
 import {  addToCart } from "@/lib/store/actions/orderActions";
 import { useEffect, useMemo } from "react";
->>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
 import {
   Popover,
   PopoverContent,
@@ -18,28 +14,8 @@ import RatingStars from "../admin/ratingStars";
 const Products = () => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
+  const products = useAppSelector((state)=>state.product.products);
 
-<<<<<<< HEAD
-  const products = useAppSelector((state) => state.products);
-  const filteredProducts = useAppSelector((state) => state.filteredProducts);
-
-  const handleAddToCart = (product) => {
-    dispatch(addToCart(product));
-
-    toast({
-      title: "Ürün sepete eklendi",
-      description: (
-        <div className="flex flex-row gap-4 items-center">
-          <img
-            src={product.img}
-            alt={product.name}
-            className="w-[32px] h-fit object-cover"
-          />
-          <p>{product.name} sepete başarıyla eklendi.</p>
-        </div>
-      ),
-    });
-=======
   const handleAddCart = (product) => {
     dispatch(addToCart(product));
     toast.info(
@@ -61,7 +37,6 @@ const Products = () => {
         draggable: true
       }
     );
->>>>>>> d150fb8139200ce14344a30aee2634bddc3cb35d
   };
 
   if (!products || products.length === 0) {
