@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import {  addToCart } from "@/lib/store/actions/orderActions";
+import { addToCart } from "@/lib/store/actions/orderActions";
 import { useEffect, useMemo } from "react";
 import {
   Popover,
@@ -11,32 +11,45 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import RatingStars from "../admin/ratingStars";
 
-const Products = () => {
+const Products = ({ categoryFilter = "" }) => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
-  const products = useAppSelector((state)=>state.product.products);
+  const products = useAppSelector((state) => state.product.products);
+  
+  // filteredProducts'ı products üzerinden hesaplayalım
+  const filteredProducts = useMemo(() => {
+    if (!products || !Array.isArray(products)) {
+      return [];
+    }
 
-  const handleAddCart = (product) => {
+    // Kategori filtresi varsa uygula
+    if (categoryFilter) {
+      return products.filter(
+        (product) => product.categoryId && product.categoryId.toString() === categoryFilter
+      );
+    }
+
+    // Filtre yoksa tüm ürünleri döndür
+    return products;
+  }, [products, categoryFilter]);
+
+  const handleAddToCart = (product) => {
     dispatch(addToCart(product));
-    toast.info(
-      <div className="flex flex-row gap-4 items-center">
-        <img
-          src={product.img}
-          alt={product.name}
-          className="w-[32px] h-fit object-cover"
-        />
-        <p>{product.name} sepete başarıyla eklendi.</p>
-      </div>,
-      {
-        // Ek ayarlar burada
-        position: "top-left", // Bildirimin konumu
-        autoClose: 3000, // 3 saniye sonra kapanacak
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true
-      }
-    );
+    toast({
+      description: (
+        <div className="flex flex-row gap-4 items-center">
+          <img
+            src={product.img}
+            alt={product.name}
+            className="w-[32px] h-fit object-cover"
+          />
+          <p>{product.name} sepete başarıyla eklendi.</p>
+        </div>
+      ),
+      // Ek ayarlar burada
+      variant: "default",
+      duration: 3000
+    });
   };
 
   if (!products || products.length === 0) {
@@ -52,6 +65,8 @@ const Products = () => {
       id="product-field"
       className="grid grid-cols-3 place-items-center place-content-between gap-8 max-md:flex max-md:flex-col max-md:py-4"
     >
+      
+      
       {filteredProducts && filteredProducts.length > 0 ? (
         filteredProducts.map((item) => (
           <label

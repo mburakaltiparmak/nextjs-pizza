@@ -7,7 +7,7 @@ export const setCategories = (categories) => ({
   type: categoryActions.SET_CATEGORIES,
   payload: categories,
 });
-
+  
 export const setSingleCategory = (category) => ({
   type: categoryActions.SET_SINGLE_CATEGORY,
   payload: category,
@@ -111,7 +111,7 @@ export const fetchCategoryById = (categoryId) => async (dispatch) => {
 };
 
 // Yeni kategori ekle
-export const createCategory = (categoryData, token) => async (dispatch) => {
+export const createCategory = (categoryData) => async (dispatch) => {
   dispatch(setLoading(true));
   
   
@@ -119,7 +119,6 @@ export const createCategory = (categoryData, token) => async (dispatch) => {
     // FormData nesnesi oluştur
     const formData = new FormData();
     formData.append('name', categoryData.name);
-    const token = useAppSelector((state)=>state.user.token);
     
     if (categoryData.image) {
       formData.append("image", categoryData.image);
@@ -128,9 +127,7 @@ export const createCategory = (categoryData, token) => async (dispatch) => {
     
     const response = await instance.post("/category", formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
-        'Authorization': `Bearer ${token}`
-      }
+        'Content-Type': 'multipart/form-data'}
     });
 
     dispatch(addCategory(response.data));
@@ -174,7 +171,6 @@ export const updateCategory = (categoryId, categoryData) => async (dispatch) => 
     const response = await instance.put(`/category/${categoryId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
-        'Authorization': `Bearer ${token}`
       }});
 
       dispatch(updateCategoryInState(response.data));
@@ -197,16 +193,11 @@ export const updateCategory = (categoryId, categoryData) => async (dispatch) => 
   };
 
 // Kategori sil
-export const deleteCategory = (categoryId, token) => async (dispatch) => {
+export const deleteCategory = (categoryId) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
-    await instance.delete(`/category/${categoryId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      timeout: 10000, // 10 saniye timeout ekle
-    });
+    await instance.delete(`/category/${categoryId}`);
 
     dispatch(deleteCategoryFromState(categoryId));
     dispatch(setLoading(false));

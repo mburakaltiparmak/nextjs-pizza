@@ -1,4 +1,4 @@
-import { instance } from "@/lib/hooks";
+import { instance, userInstance } from "@/lib/hooks";
 import { userActions } from "../reducers/userReducer";
 import { setError, setLoading, setSuccess } from "./globalActions";
 import { fetchStates } from "../constants";
@@ -48,7 +48,6 @@ export const clearUserData = () => ({
   type: userActions.CLEAR_USER_DATA,
 });
 
-const userInstance = axios.create({baseURL : "http://localhost:9000/pizza/admin/users" });
 // Login işlemi
 export const login = (formData) => async (dispatch) => {
   dispatch(setLoading(true));
@@ -77,9 +76,6 @@ export const login = (formData) => async (dispatch) => {
     // LocalStorage'a token kaydet
     localStorage.setItem("token", token);
 
-    // instance.defaults satırını kaldırın - interceptor ile yönetiyoruz
-    // instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
     if (formData.rememberMe) {
       dispatch(setRememberMe(true));
     }
@@ -89,18 +85,27 @@ export const login = (formData) => async (dispatch) => {
     dispatch(setEmail(userIdentifier));
     localStorage.setItem("userEmail", userIdentifier);
 
-    // Kullanıcı profil bilgilerini al
-    dispatch(fetchUserProfile());
-
     dispatch(setLoading(false));
     dispatch(setSuccess("Giriş başarılı"));
     return { token };
   } catch (err) {
     // Hata işleme kodu...
+    let errorMessage = "Giriş başarısız oldu";
+
+    if (err.response) {
+      errorMessage = err.response.data?.message || errorMessage;
+    } else if (err.request) {
+      errorMessage = "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
+    } else {
+      errorMessage = err.message || errorMessage;
+    }
+
+    dispatch(setError(errorMessage));
+    dispatch(setLoading(false));
+    return { error: errorMessage };
   }
 };
 
-// Çıkış yapma işlemi
 // Çıkış yapma işlemi
 export const logout = () => (dispatch) => {
   // Token ve login durumunu temizle
@@ -110,12 +115,10 @@ export const logout = () => (dispatch) => {
   localStorage.removeItem("token");
   localStorage.removeItem("userEmail");
 
-  // instance.defaults satırını kaldırın - interceptor ile yönetiyoruz
-  // delete instance.defaults.headers.common["Authorization"];
-
   dispatch(setSuccess("Başarıyla çıkış yapıldı"));
   return { success: true };
 };
+
 // Kullanıcı giriş durumunu kontrol et
 export const checkAuthStatus = () => (dispatch) => {
   const token = localStorage.getItem("token");
@@ -134,9 +137,6 @@ export const checkAuthStatus = () => (dispatch) => {
       dispatch(setEmail(savedEmail));
     }
 
-    // Kullanıcı profil bilgilerini getir
-    dispatch(fetchUserProfile());
-
     return true;
   }
 
@@ -149,6 +149,23 @@ export const registerUser = (userData) => async (dispatch) => {
   dispatch(setError(null));
 
   try {
+    // Request verilerini konsolda göster (debug için)
+    console.log("Backend'e gönderilecek kayıt verisi:", userData);
+    
+    // Telefon numarası alanını kontrol et
+    if (!userData.phoneNumber || userData.phoneNumber.trim() === "") {
+      throw new Error("Telefon numarası boş olamaz");
+    }
+    
+    // Tüm gerekli alanların dolu olduğundan emin ol
+    const requiredFields = ['username', 'password', 'name', 'surname', 'email', 'phoneNumber'];
+    for (const field of requiredFields) {
+      if (!userData[field] || userData[field].trim() === "") {
+        throw new Error(`${field} alanı boş olamaz`);
+      }
+    }
+
+    // API isteğini yap
     const response = await instance.post("/auth/register", userData);
     
     dispatch(setLoading(false));
@@ -158,76 +175,21 @@ export const registerUser = (userData) => async (dispatch) => {
     let errorMessage = "Kayıt işlemi başarısız oldu";
 
     if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
+      // Backend'den gelen hata mesajı
+      errorMessage = err.response.data || errorMessage;
+      
+      // Eğer backend detaylı hata döndürdüyse
+      if (typeof err.response.data === 'object' && err.response.data.errors) {
+        const errors = err.response.data.errors;
+        errorMessage = Object.values(errors).join(', ');
+      }
     } else if (err.request) {
-      errorMessage =
-        "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
+      errorMessage = "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
     } else {
       errorMessage = err.message || errorMessage;
     }
 
-    dispatch(setError(errorMessage));
-    dispatch(setLoading(false));
-    return { error: errorMessage };
-  }
-};
-
-// Kullanıcı profil bilgilerini getir
-export const fetchUserProfile = () => async (dispatch) => {
-  dispatch(setUserFetchState(fetchStates.FETCHING));
-
-  try {
-    const response = await userInstance.get();
-    
-    dispatch(setUserProfile(response.data));
-    dispatch(setUserStatus(response.data.status));
-    dispatch(setUserRole(response.data.role));
-    dispatch(setUserFetchState(fetchStates.FETCHED));
-
-    return response.data;
-  } catch (err) {
-    dispatch(setUserFetchState(fetchStates.FAILED));
-
-    // Eğer 401 hatası alırsak, kullanıcı girişini sonlandır
-    if (err.response && err.response.status === 401) {
-      dispatch(logout());
-    }
-
-    let errorMessage = "Profil bilgileri alınamadı";
-    if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
-    }
-
-    dispatch(setError(errorMessage));
-    return { error: errorMessage };
-  }
-};
-
-// Kullanıcı profil bilgilerini güncelle
-export const updateUserProfile = (userData) => async (dispatch) => {
-  dispatch(setLoading(true));
-  dispatch(setError(null));
-
-  try {
-    const response = await userInstance.put(`/role/${userData.id}`,userData);
-    
-    dispatch(setUserProfile(response.data));
-    dispatch(setLoading(false));
-    dispatch(setSuccess("Profil başarıyla güncellendi"));
-
-    return response.data;
-  } catch (err) {
-    let errorMessage = "Profil güncellenemedi";
-
-    if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
-    } else if (err.request) {
-      errorMessage =
-        "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
-    } else {
-      errorMessage = err.message || errorMessage;
-    }
-
+    console.error("Kayıt hatası:", err);
     dispatch(setError(errorMessage));
     dispatch(setLoading(false));
     return { error: errorMessage };
@@ -252,8 +214,7 @@ export const changePassword = (passwordData) => async (dispatch) => {
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
     } else if (err.request) {
-      errorMessage =
-        "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
+      errorMessage = "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
     } else {
       errorMessage = err.message || errorMessage;
     }

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCategories } from "@/lib/store/actions/categoryActions";
-import { fetchDashboard } from "@/lib/store/actions/adminActions";
+import { fetchAllUsers, fetchDashboard } from "@/lib/store/actions/adminActions";
 import { fetchStates } from "@/lib/store/constants";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { ListOrdered, Package, TrendingUp, Users } from 'lucide-react';
@@ -21,12 +21,14 @@ const DashboardPage = () => {
   const categoryFetchState = useSelector((state) => state.category.fetchState);
   const dashboardData = useSelector((state) => state.admin.dashboardData);
   const adminFetchState = useSelector((state) => state.admin.fetchState);
+  const allUsers = useSelector((state) => state.admin.allUsers);
   const loading = useSelector((state) => state.global.loading);
   
   // Veri yükleme başarısız olduğunda tekrar denemek için state
-  const [dataFetchAttempted, setDataFetchAttempted] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   
-  // İstatistikler
+  // İstatistikler - allUsers değişkenini useMemo'ya bir bağımlılık olarak ekliyoruz
   const statistics = useMemo(() => {
     // Önce dashboard verilerini kullan, varsa
     if (dashboardData) {
@@ -34,14 +36,20 @@ const DashboardPage = () => {
         totalCategories: dashboardData.totalCategories || 0,
         totalProducts: dashboardData.totalProducts || 0,
         totalStock: dashboardData.totalStock || 0,
-        totalUsers: dashboardData.totalUsers || 0,
-        categoryData: dashboardData.categoryData || []
+        totalUsers: dashboardData.totalUsers || (allUsers?.length || 0),
+        categoryData: dashboardData.categoryData || [],
       };
     }
     
-    // Yoksa kategorilerden hesapla
+    // Yoksa kategorilerden ve kullanıcılardan hesapla
     if (!categories || !Array.isArray(categories)) {
-      return { totalCategories: 0, totalProducts: 0, totalStock: 0, totalUsers: 0, categoryData: [] };
+      return {
+        totalCategories: 0,
+        totalProducts: 0,
+        totalStock: 0,
+        totalUsers: allUsers?.length || 0,
+        categoryData: [],
+      };
     }
     
     let totalProducts = 0;
@@ -73,32 +81,44 @@ const DashboardPage = () => {
       totalCategories: categories.length,
       totalProducts,
       totalStock,
-      totalUsers: 0, // Backend'den gelmediği için varsayılan değer
+      totalUsers: allUsers?.length || 0,
       categoryData
     };
-  }, [categories, dashboardData]);
+  }, [categories, dashboardData, allUsers]);
 
   // Verileri yükle
   useEffect(() => {
-    // Admin dashboard verilerini getir
-    if (adminFetchState === fetchStates.NOT_FETCHED && !dataFetchAttempted) {
-      setDataFetchAttempted(true);
-      /*dispatch(fetchDashboard()).catch(() => {
-        // Hata durumunda en azından kategorileri getir
-        if (categoryFetchState === fetchStates.NOT_FETCHED) {
-          dispatch(fetchCategories());
+    if (initialLoad) {
+      const loadData = async () => {
+        try {
+          // Her durumda ayrı ayrı veri çekelim
+          await Promise.all([
+            dispatch(fetchCategories()),
+            dispatch(fetchAllUsers())
+          ]);
+          
+          setLoadError(false);
+        } catch (error) {
+          console.error("Veri yükleme hatası:", error);
+          setLoadError(true);
+        } finally {
+          setInitialLoad(false);
         }
-      });
-      */
-    } 
-    // Eğer dashboard verileri alınamadıysa, kategorileri getir
-    else if (adminFetchState === fetchStates.FAILED && categoryFetchState === fetchStates.NOT_FETCHED) {
-      dispatch(fetchCategories());
+      };
+      
+      loadData();
     }
-  }, [dispatch, adminFetchState, categoryFetchState, dataFetchAttempted]);
+  }, [dispatch, initialLoad]);
 
+  // Component props
+  DashboardPage.props = {
+    title: "Dashboard",
+    activePage: "dashboard",
+    showAddButton: false,
+  };
+  
   // Yükleniyor durumu
-  if ((adminFetchState === fetchStates.FETCHING || categoryFetchState === fetchStates.FETCHING) && !dashboardData && !categories.length) {
+  if (initialLoad) {
     return <SecondaryLoading size="fullPage" />;
   }
 
@@ -142,6 +162,12 @@ const DashboardPage = () => {
           textColor="text-red"
         />
       </div>
+
+      {loadError && (
+        <div className="bg-red-50 text-red-800 p-4 mb-6 rounded-lg">
+          <p className="font-Barlow">Veri yüklenirken bir hata oluştu. Lütfen sayfayı yenileyin veya daha sonra tekrar deneyin.</p>
+        </div>
+      )}
 
       {/* Grafik Bölümü */}
       {statistics.categoryData && statistics.categoryData.length > 0 ? (

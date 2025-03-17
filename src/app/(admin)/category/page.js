@@ -225,7 +225,6 @@ const CategoryPage = () => {
   };
 
   // Kategorileri filtrele
-  // Kategorileri filtrele
   const filteredCategories = useMemo(() => {
     if (!categories || !Array.isArray(categories)) return [];
 

@@ -7,9 +7,10 @@ import Products from "../products/products";
 import NotFound from "@/app/not-found";
 import Loading from "@/app/loading";
 import allLogo from "../../../assets/adv-aseets/icons/all-logo.png";
-import { fetchCategories, fetchCategoriesWithProducts } from "@/lib/store/actions/categoryActions";
+import { fetchCategories } from "@/lib/store/actions/categoryActions";
 import { fetchStates } from "@/lib/store/constants";
 import SecondaryLoading from "../secondaryLoading";
+import { fetchProducts } from "@/lib/store/actions/productActions";
 
 const Categories = () => {
   const dispatch = useDispatch();
@@ -17,57 +18,48 @@ const Categories = () => {
   // Redux state
   const categories = useSelector((state) => state.category.categories);
   const categoryFetchState = useSelector((state) => state.category.fetchState);
-  const selectedCategory = useSelector(
-    (state) => state.product.selectedCategory
-  );
   const productFetchState = useSelector((state) => state.product.fetchState);
 
-  // Veri yükleme state'i
+  // Local state
   const [dataFetchAttempted, setDataFetchAttempted] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
 
-  // Kategorileri yükle
+  // Kategorileri ve ürünleri yükle
   useEffect(() => {
-    if (categoryFetchState === fetchStates.NOT_FETCHED && !dataFetchAttempted) {
+    if ((categoryFetchState === fetchStates.NOT_FETCHED || 
+         productFetchState === fetchStates.NOT_FETCHED) && 
+        !dataFetchAttempted) {
       setDataFetchAttempted(true);
-      dispatch(fetchCategories()).catch((err) => {
-        console.error("Kategori yükleme hatası:", err);
-      });
+      
+      // İlk önce kategorileri yükle
+      dispatch(fetchCategories())
+        .then(() => {
+          // Sonra ürünleri yükle
+          return dispatch(fetchProducts());
+        })
+        .catch((err) => {
+          console.error("Veri yükleme hatası:", err);
+        });
     }
-  }, [dispatch, categoryFetchState, dataFetchAttempted]);
+  }, [dispatch, categoryFetchState, productFetchState, dataFetchAttempted]);
 
-  // Kategoriyi seç ve ürünleri filtrele
+  // Kategori seçme işlemi
   const handleCategory = (id, e) => {
     e.preventDefault();
-    //dispatch(setSelectedCategory(id));
+    setSelectedCategoryId(id);
   };
 
-  // Tüm ürünleri göster
+  // Tüm ürünleri gösterme işlemi
   const handleAllOfThem = (e) => {
     e.preventDefault();
-    //dispatch(setSelectedCategory(null));
-  }
-
-  const [data, setData] = useState([]);
-  /*
-  useEffect(() => {
-    if (selectedCategory && secondApiData) {
-      setData(secondApiData);
-      console.log("data by category : ", secondApiData);
-    } else if (!selectedCategory && firstApiData) {
-      setData(firstApiData);
-      console.log("full data : ", firstApiData);
-    }
-  }, [firstApiData, secondApiData, selectedCategory]);
-
-  const handleCategory = (id) => {
-    dispatch(setSelectedCategory(id));
+    setSelectedCategoryId(null);
   };
-*/
+
   // Yükleniyor durumu
-  if (
-    categoryFetchState === fetchStates.FETCHING &&
-    (!categories || categories.length === 0)
-  ) {
+  const isLoading = categoryFetchState === fetchStates.FETCHING || 
+                    productFetchState === fetchStates.FETCHING;
+
+  if (isLoading && (!categories || categories.length === 0)) {
     return <SecondaryLoading size="small" />;
   }
 
@@ -76,11 +68,12 @@ const Categories = () => {
       id="categories"
       className="flex flex-col justify-between items-center gap-8"
     >
-      <div className="grid grid-cols-8 grid-flow-row mt-4 max-md:grid-cols-2 max-md:place-items-center max-md:gap-4">
+      {"grid grid-cols-8 grid-flow-row"}
+      <div className="flex flex-row items-center gap-2 mt-4 max-md:grid-cols-2 max-md:place-items-center max-md:gap-4">
         <button
           onClick={(e) => handleAllOfThem(e)}
           className={`optionStyle rounded-full text-sm p-2 ${
-            selectedCategory === null ? "bg-yellow text-red font-bold" : ""
+            selectedCategoryId === null ? "bg-yellow text-red font-bold" : ""
           }`}
         >
           <img
@@ -99,7 +92,7 @@ const Categories = () => {
               key={item.id}
               onClick={(e) => handleCategory(item.id, e)}
               className={`optionStyle rounded-full text-sm p-2 ${
-                selectedCategory === item.id
+                selectedCategoryId === item.id
                   ? "bg-yellow text-red font-bold"
                   : ""
               }`}
@@ -119,7 +112,8 @@ const Categories = () => {
         )}
       </div>
 
-      <Products />
+      {/* Seçilen kategoriye göre ürünleri filtrele */}
+      <Products categoryFilter={selectedCategoryId ? selectedCategoryId.toString() : ""} />
     </div>
   );
 };

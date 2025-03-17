@@ -2,7 +2,11 @@
 
 import Navbar from "@/components/admin/navbar";
 import Sidebar from "@/components/admin/sidebar";
-import { ErrorMessage, LoadingSpinner, NotificationManager } from "@/components/admin/notify";
+import {
+  ErrorMessage,
+  LoadingSpinner,
+  NotificationManager,
+} from "@/components/admin/notify";
 import { useState, useEffect } from "react";
 import Loading from "../loading";
 import { usePathname } from "next/navigation";
@@ -12,27 +16,27 @@ const AdminLayoutClient = ({ children }) => {
   // Client-side mount kontrolü
   const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
-  
-  
+
   // URL yolundan aktif sayfayı belirle
   const getActivePageFromPath = (path) => {
-    if (path.includes('/dashboard')) return 'dashboard';
-    if (path.includes('/category')) return 'category';
-    if (path.includes('/product')) return 'product';
-    if (path.includes('/orders')) return 'orders';
-    return 'dashboard'; // varsayılan
+    if (path.includes("/dashboard")) return "dashboard";
+    if (path.includes("/category")) return "category";
+    if (path.includes("/product")) return "product";
+    if (path.includes("/orders")) return "orders";
+    if (path.includes("/users")) return "users";
+    return "dashboard"; // varsayılan
   };
-  
+
   const activePage = getActivePageFromPath(pathname);
 
   useEffect(() => {
     setIsMounted(true);
-    
+
     // Global bir işleyici oluşturarak butondan modal açma işlemini yapalım
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       window.openAdminModal = () => {
         // Sayfaya özel modal açma işlevlerini kontrol edelim
-        const pageComponent = document.getElementById('admin-page-component');
+        const pageComponent = document.getElementById("admin-page-component");
         if (pageComponent && pageComponent.openModal) {
           pageComponent.openModal();
         } else {
@@ -54,11 +58,21 @@ const AdminLayoutClient = ({ children }) => {
   } else if (children?.type?.props) {
     pageProps = children.type.props;
   }
+
+  // Sayfa başlığını belirle
+  const pageTitle = pageProps.title || "Admin Panel";
   
-  // console.log("Sidebar activePage:", activePage);
-  // console.log("Current pathname:", pathname);
-  
-  
+  // URL'ye ve sayfa başlığına göre buton gösterilip gösterilmeyeceğini belirle
+  const showAddButton = 
+    pathname.includes("/category") || 
+    pathname.includes("/product") || 
+    pageTitle === "Kategoriler" || 
+    pageTitle === "Ürünler" || 
+    pageProps.showAddButton === true;
+
+  console.log("Current pathname:", pathname);
+  console.log("showAddButton:", showAddButton);
+
   return (
     <div className="flex h-screen font-Quattrocento_Sans bg-lightgray">
       {/* Sidebar - URL'den tespit ettiğimiz aktif sayfayı geçiyoruz */}
@@ -68,9 +82,9 @@ const AdminLayoutClient = ({ children }) => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Navbar - Başlık ve düğme özelliklerini props'tan alıyoruz */}
         <Navbar
-          title={pageProps.title || "Admin Panel"} 
-          showAddButton={pageProps.showAddButton} 
-          addButtonText={pageProps.addButtonText || "Yeni Ekle"} 
+          title={pageTitle}
+          showAddButton={showAddButton}
+          addButtonText={pageProps.addButtonText || "Yeni Ekle"}
           onAddButtonClick={() => {
             if (window.openAdminModal) {
               window.openAdminModal();
@@ -83,8 +97,8 @@ const AdminLayoutClient = ({ children }) => {
           {/* Bildirimler */}
           {pageProps.notifications && pageProps.notifications.length > 0 && (
             <NotificationManager
-              notifications={pageProps.notifications} 
-              onClose={pageProps.onNotificationClose} 
+              notifications={pageProps.notifications}
+              onClose={pageProps.onNotificationClose}
             />
           )}
 
@@ -93,9 +107,7 @@ const AdminLayoutClient = ({ children }) => {
           ) : pageProps.error ? (
             <ErrorMessage error={pageProps.error} />
           ) : (
-            <div id="admin-page-component">
-              {children}
-            </div>
+            <div id="admin-page-component">{children}</div>
           )}
         </main>
       </div>
