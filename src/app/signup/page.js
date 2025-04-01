@@ -111,9 +111,7 @@ const SignupPage = () => {
         
         if (!result.error) {
           // Kayıt başarılı, login sayfasına yönlendir
-          setTimeout(() => {
-            router.push("/login");
-          }, 2000);
+          
         }
       } catch (err) {
         console.error("Kayıt işlemi sırasında hata:", err);

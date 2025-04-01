@@ -86,7 +86,7 @@ const Categories = () => {
           </HoverCard>
         </button>
 
-        {categories && categories.length > 0 ? (
+        {(
           categories.map((item) => (
             <button
               key={item.id}
@@ -107,9 +107,7 @@ const Categories = () => {
               </HoverCard>
             </button>
           ))
-        ) : (
-          <p className="text-gray font-Barlow">Kategori bulunamadı.</p>
-        )}
+        )} 
       </div>
 
       {/* Seçilen kategoriye göre ürünleri filtrele */}

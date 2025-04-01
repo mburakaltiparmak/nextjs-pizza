@@ -164,14 +164,14 @@ const DashboardPage = () => {
       </div>
 
       {loadError && (
-        <div className="bg-red-50 text-red-800 p-4 mb-6 rounded-lg">
+        <div className="bg-lightgray text-red p-4 mb-6 rounded-lg">
           <p className="font-Barlow">Veri yüklenirken bir hata oluştu. Lütfen sayfayı yenileyin veya daha sonra tekrar deneyin.</p>
         </div>
       )}
 
       {/* Grafik Bölümü */}
       {statistics.categoryData && statistics.categoryData.length > 0 ? (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-8">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray mb-8">
           <h3 className="text-lg font-semibold text-darkgray mb-4 font-Quattrocento_Sans">Kategori Analizi</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -184,42 +184,42 @@ const DashboardPage = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="ürünSayısı" fill="#CE2829" name="Ürün Sayısı" />
+                <Bar dataKey="ürünSayısı" fill="#EB000B" name="Ürün Sayısı" />
                 <Bar dataKey="stokMiktarı" fill="#FDC913" name="Stok Miktarı" />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-8 text-center text-gray">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-lightgray mb-8 text-center text-gray">
           <p className="py-4 font-Barlow">Henüz kategori ve ürün verisi bulunmamaktadır.</p>
         </div>
       )}
 
       {/* Kategori Listesi */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div className="bg-white rounded-xl shadow-sm border border-lightgray">
         <div className="p-6 border-b">
           <h3 className="text-lg font-semibold text-darkgray font-Quattrocento_Sans">Kategoriler</h3>
         </div>
         {statistics.categoryData && statistics.categoryData.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray">
+              <thead className="bg-lightgray">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray uppercase tracking-wider font-Barlow">
                     Kategori Adı
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray uppercase tracking-wider font-Barlow">
                     Ürün Sayısı
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray uppercase tracking-wider font-Barlow">
                     Toplam Stok
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray">
                 {statistics.categoryData.map((category, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
+                  <tr key={index} className="hover:bg-lightgray">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-darkgray font-Barlow">
                       {category.name}
                     </td>

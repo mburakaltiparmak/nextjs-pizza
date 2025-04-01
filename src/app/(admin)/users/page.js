@@ -76,6 +76,7 @@ const UsersPage = () => {
   }, [dispatch, initialLoad]);
 
   // Show success and error toasts
+  /*
   useEffect(() => {
     if (success) {
       toast({
@@ -92,6 +93,7 @@ const UsersPage = () => {
       });
     }
   }, [success, error, toast]);
+  */
 
   // Handle role change
   const handleRoleChange = (userId, role) => {

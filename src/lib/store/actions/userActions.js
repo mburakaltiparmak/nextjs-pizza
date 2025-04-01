@@ -120,7 +120,8 @@ export const logout = () => (dispatch) => {
 };
 
 // Kullanıcı giriş durumunu kontrol et
-export const checkAuthStatus = () => (dispatch) => {
+// Kullanıcı giriş durumunu kontrol et
+export const checkAuthStatus = () => async (dispatch) => {
   const token = localStorage.getItem("token");
 
   if (token) {
@@ -137,12 +138,39 @@ export const checkAuthStatus = () => (dispatch) => {
       dispatch(setEmail(savedEmail));
     }
 
+    try {
+      // Kullanıcı profil bilgilerini getir
+      const response = await instance.get("/user/profile");
+      
+      if (response && response.data) {
+        // Kullanıcı bilgilerini Redux store'a kaydet
+        dispatch(setUserProfile(response.data));
+        
+        // Kullanıcının rol ve durumunu da güncelle
+        if (response.data.role) {
+          dispatch(setUserRole(response.data.role));
+        }
+        
+        if (response.data.status) {
+          dispatch(setUserStatus(response.data.status));
+        }
+      }
+    } catch (error) {
+      console.error("Profil bilgisi çekilirken hata:", error);
+      
+      // Token geçersiz olabilir, kontrol et
+      if (error.response && error.response.status === 401) {
+        // Token geçersiz, çıkış yap
+        dispatch(logout());
+        return false;
+      }
+    }
+
     return true;
   }
 
   return false;
 };
-
 // Kullanıcı kaydı
 export const registerUser = (userData) => async (dispatch) => {
   dispatch(setLoading(true));
@@ -169,7 +197,7 @@ export const registerUser = (userData) => async (dispatch) => {
     const response = await instance.post("/auth/register", userData);
     
     dispatch(setLoading(false));
-    dispatch(setSuccess("Kayıt başarılı! Admin onayı bekleniyor."));
+    dispatch(setSuccess("Kayıt başarılı! Lütfen e-posta adresinize gönderilen doğrulama bağlantısına tıklayın."));
     return response.data;
   } catch (err) {
     let errorMessage = "Kayıt işlemi başarısız oldu";
@@ -202,7 +230,7 @@ export const changePassword = (passwordData) => async (dispatch) => {
   dispatch(setError(null));
 
   try {
-    await instance.put("/user/password", passwordData);
+    await instance.post("/user/password", passwordData);
     
     dispatch(setLoading(false));
     dispatch(setSuccess("Şifreniz başarıyla değiştirildi"));
@@ -213,6 +241,104 @@ export const changePassword = (passwordData) => async (dispatch) => {
 
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
+    } else if (err.request) {
+      errorMessage = "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
+    } else {
+      errorMessage = err.message || errorMessage;
+    }
+
+    dispatch(setError(errorMessage));
+    dispatch(setLoading(false));
+    return { error: errorMessage };
+  }
+};
+
+// Kullanıcı profil bilgilerini getir
+export const fetchUserProfile = () => async (dispatch) => {
+  dispatch(setUserFetchState(fetchStates.FETCHING));
+
+  try {
+    const response = await instance.get("/user/profile");
+    
+    if (!response || !response.data) {
+      throw new Error("Profil bilgileri alınamadı");
+    }
+    
+    const userData = response.data;
+    
+    // Kullanıcı bilgilerini Redux store'a kaydet
+    dispatch(setUserProfile(userData));
+    
+    // Kullanıcının rol ve durumunu da güncelle
+    if (userData.role) {
+      dispatch(setUserRole(userData.role));
+    }
+    
+    if (userData.status) {
+      dispatch(setUserStatus(userData.status));
+    }
+    
+    dispatch(setUserFetchState(fetchStates.FETCHED));
+    return userData;
+  } catch (err) {
+    let errorMessage = "Profil bilgileri yüklenemedi";
+
+    if (err.response) {
+      if (err.response.status === 401) {
+        // Token geçersiz, çıkış yap
+        dispatch(logout());
+        errorMessage = "Oturumunuz sona erdi, lütfen tekrar giriş yapın";
+      } else {
+        errorMessage = err.response.data?.message || errorMessage;
+      }
+    } else if (err.request) {
+      errorMessage = "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
+    } else {
+      errorMessage = err.message || errorMessage;
+    }
+
+    dispatch(setUserFetchState(fetchStates.FAILED));
+    dispatch(setError(errorMessage));
+    return { error: errorMessage };
+  }
+};
+
+// Kullanıcı profil bilgilerini güncelle
+export const updateUserProfile = (userData) => async (dispatch) => {
+  dispatch(setLoading(true));
+  dispatch(setError(null));
+
+  try {
+    const response = await instance.put("/user/profile", userData);
+    
+    if (!response || !response.data) {
+      throw new Error("Profil güncellenemedi");
+    }
+    
+    const updatedUserData = response.data;
+    
+    // Güncellenmiş kullanıcı bilgilerini Redux store'a kaydet
+    dispatch(setUserProfile(updatedUserData));
+    
+    if (updatedUserData.email) {
+      dispatch(setEmail(updatedUserData.email));
+      localStorage.setItem("userEmail", updatedUserData.email);
+    }
+    
+    dispatch(setLoading(false));
+    dispatch(setSuccess("Profiliniz başarıyla güncellendi"));
+    
+    return updatedUserData;
+  } catch (err) {
+    let errorMessage = "Profil güncellenemedi";
+
+    if (err.response) {
+      if (err.response.status === 401) {
+        dispatch(logout());
+        errorMessage = "Oturumunuz sona erdi, lütfen tekrar giriş yapın";
+      } else {
+        errorMessage = err.response.data?.message || errorMessage;
+      }
     } else if (err.request) {
       errorMessage = "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
     } else {

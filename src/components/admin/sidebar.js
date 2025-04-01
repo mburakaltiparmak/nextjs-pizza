@@ -101,9 +101,11 @@ const Sidebar = ({ activePage = "dashboard" }) => {
     >
       <div className="p-4 flex justify-between items-center border-b border-red-700">
         {!collapsed && (
-          <span className="text-xl font-bold font-Barlow text-white">
+          <button
+          onClick={()=>router.push("/")}
+          className="text-xl font-bold font-Barlow text-white">
             Pizza Admin
-          </span>
+          </button>
         )}
         <button
           onClick={toggleSidebar}

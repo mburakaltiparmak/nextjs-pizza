@@ -14,25 +14,40 @@ const Page = () => {
   const [errorMessage, setErrorMessage] = useState(""); // Yerel hata durumu
   const router = useRouter();
   const dispatch = useAppDispatch();
+  
+  // Redux state
   const loading = useAppSelector((state) => state.global.loading);
   const globalError = useAppSelector((state) => state.global.error);
   const isLogin = useAppSelector((state) => state.user.isLogin);
+  const userRole = useAppSelector((state) => state.user.role);
 
-  // Global hata durumunu yerel hata durumuna aktarma
-  /*
+  // Kullanıcının rolüne göre yönlendirilecek sayfa
+  const getRedirectPath = (role) => {
+    // Admin veya Personel ise dashboard'a, değilse ana sayfaya yönlendir
+    return role === "ADMIN" || role === "PERSONAL" ? "/dashboard" : "/";
+  };
+
+  // Kullanıcı zaten giriş yapmışsa uygun sayfaya yönlendir
   useEffect(() => {
-    if (globalError) {
-      setErrorMessage(globalError);
-    }
-  }, [globalError]);
-*/
-  // Kullanıcı zaten giriş yapmışsa dashboard'a yönlendir
+    const checkAuth = async () => {
+      const isAuthenticated = dispatch(checkAuthStatus());
+      
+      if (isAuthenticated || isLogin) {
+        const redirectPath = getRedirectPath(userRole);
+        router.push(redirectPath);
+      }
+    };
+    
+    checkAuth();
+  }, [dispatch, router, isLogin, userRole]);
+
+  // Login sonrası yönlendirme için userRole değişikliklerini izle
   useEffect(() => {
-    const isAuthenticated = dispatch(checkAuthStatus());
-    if (isAuthenticated || isLogin) {
-      router.push("/dashboard");
+    if (isLogin && userRole) {
+      const redirectPath = getRedirectPath(userRole);
+      router.push(redirectPath);
     }
-  }, [dispatch, router, isLogin]);
+  }, [userRole, isLogin, router]);
 
   const validateForm = () => {
     // Form doğrulama
@@ -68,11 +83,9 @@ const Page = () => {
     try {
       const result = await dispatch(login(formData));
       
-      // Login başarılıysa ve token varsa dashboard'a yönlendir
-      if (result && result.token) {
-        router.push("/dashboard");
-      } else if (result && result.error) {
-        // Yine de güvenli bir hata mesajı kullan
+      // Login başarılıysa ve token varsa, userRole useEffect tarafından izlenerek yönlendirme yapılacak
+      if (result && result.error) {
+        // Güvenli bir hata mesajı kullan
         setErrorMessage(AUTH_ERRORS.INVALID_CREDENTIALS);
       }
     } catch (err) {

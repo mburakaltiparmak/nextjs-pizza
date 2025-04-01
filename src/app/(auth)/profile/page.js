@@ -69,13 +69,27 @@ const ProfilePage = () => {
 
   // Kullanıcının giriş durumunu kontrol et
   useEffect(() => {
-    const authStatus = dispatch(checkAuthStatus());
-    if (!authStatus && !isLogin) {
-      router.push("/login");
-    } else if (userFetchState === fetchStates.NOT_FETCHED) {
-      dispatch(fetchUserProfile());
-    }
-  }, [dispatch, isLogin, userFetchState, router]);
+    const authCheck = async () => {
+      const authStatus = dispatch(checkAuthStatus());
+      
+      if (!authStatus && !isLogin) {
+        router.push("/login");
+        return;
+      } 
+      
+      // Profil bilgileri henüz yüklenmemişse
+      if (userFetchState === fetchStates.NOT_FETCHED || !userProfile) {
+        try {
+          // Profil bilgilerini getir
+          await dispatch(fetchUserProfile());
+        } catch (error) {
+          console.error("Profil bilgileri alınamadı:", error);
+        }
+      }
+    };
+    
+    authCheck();
+  }, [dispatch, isLogin, userFetchState, router, userProfile]);
 
   // Bileşen yüklendiğinde formData'yı mevcut kullanıcı verileriyle doldur
   useEffect(() => {
@@ -204,7 +218,16 @@ const ProfilePage = () => {
       return;
     }
     
-    const result = await dispatch(updateUserProfile(formData));
+    // Backend'e gönderilecek kullanıcı verilerini hazırla
+    // Mevcut kullanıcı profili ile yeni form verilerini birleştir
+    const updatedUserData = {
+      ...userProfile, // Mevcut profil bilgilerini koru
+      name: formData.name,
+      surname: formData.surname,
+      email: formData.email,
+    };
+    
+    const result = await dispatch(updateUserProfile(updatedUserData));
     
     if (!result.error) {
       setEditMode(false);

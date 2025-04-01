@@ -3,26 +3,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { login, logout, checkAuthStatus } from "@/lib/store/actions/userActions";
-import { setError } from "@/lib/store/actions/globalActions";
 import { useToast } from "@/hooks/use-toast";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faSignOutAlt, faUserPlus, faUserEdit, faShoppingBag } from "@fortawesome/free-solid-svg-icons";
+import { faUser, faSignOutAlt, faUserPlus, faUserEdit, faShoppingBag, faUserTie } from "@fortawesome/free-solid-svg-icons";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
+import SecondaryLoading from "@/components/secondaryLoading";
 import {
     AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
     AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Checkbox } from "./ui/checkbox";
+import { AUTH_ERRORS } from "@/lib/authErrorMessages"; // güvenli hata mesajları için
 
 const FloatingUserButton = () => {
   const dispatch = useDispatch();
@@ -33,17 +27,20 @@ const FloatingUserButton = () => {
   const isLogin = useSelector((state) => state.user.isLogin);
   const email = useSelector((state) => state.user.email);
   const loading = useSelector((state) => state.global.loading);
-  const error = useSelector((state) => state.global.error);
+  const role = useSelector((state) => state.user.role);
+  console.log("user role:", role);
   
   // Local state
   const [loginOpen, setLoginOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    rememberMe: false
-  });
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMeState] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // Kullanıcının admin veya personel olup olmadığını kontrol et
+  const isAdminOrPersonal = role === "ADMIN" || role === "PERSONAL";
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -64,42 +61,64 @@ const FloatingUserButton = () => {
     dispatch(checkAuthStatus());
   }, [dispatch]);
 
-  // Show error toast when error changes
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Hata",
-        description: error,
-        variant: "destructive",
-      });
+  const handleInputChange = () => {
+    if (errorMessage) {
+      setErrorMessage("");
     }
-  }, [error, toast]);
+  };
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value
-    });
+  const validateForm = () => {
+    // Form doğrulama
+    if (!username.trim()) {
+      setErrorMessage("Kullanıcı adı gereklidir");
+      return false;
+    }
+    
+    if (!password.trim()) {
+      setErrorMessage("Şifre gereklidir");
+      return false;
+    }
+    
+    // Hata mesajını temizle
+    setErrorMessage("");
+    return true;
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     
-    const result = await dispatch(login(formData));
-    
-    if (!result || !result.error) {
-      toast({
-        title: "Giriş başarılı!",
-        description: "Hoş geldiniz.",
-      });
+    // Form alanlarını doğrula
+    if (!validateForm()) {
+      return;
+    }
+
+    const formData = {
+      email: username,
+      password: password,
+      rememberMe: rememberMe
+    };
+
+    try {
+      const result = await dispatch(login(formData));
       
-      setLoginOpen(false);
-      setFormData({
-        email: "",
-        password: "",
-        rememberMe: false
-      });
+      if (result && result.error) {
+        // Güvenli bir hata mesajı kullan
+        setErrorMessage(AUTH_ERRORS.INVALID_CREDENTIALS);
+      } else {
+        toast({
+          title: "Giriş başarılı!",
+          description: "Hoş geldiniz.",
+        });
+        
+        setLoginOpen(false);
+        setUsername("");
+        setPassword("");
+        setRememberMeState(false);
+      }
+    } catch (err) {
+      // Asla ham hataları gösterme, her zaman güvenli bir mesaj kullan
+      console.error("Login error:", err);
+      setErrorMessage(AUTH_ERRORS.LOGIN_FAILED);
     }
   };
 
@@ -117,19 +136,19 @@ const FloatingUserButton = () => {
   };
 
   return (
-    <div className="ml-auto flex items-center">
+    <div className="flex items-center">
       {isLogin ? (
         <div className="relative" ref={dropdownRef}>
           <div 
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="bg-lightgray text-darkgray border-2 border-darkgray px-3 py-2 rounded-md hover:bg-yellow hover:text-red hover:border-2 hover:border-darkgray transition-colors duration-200 cursor-pointer flex items-center gap-2 text-base font-normal"
+            className="bg-lightgray z-50 p-3 text-darkgray border-2 border-darkgray 2 rounded-full hover:bg-yellow hover:text-red hover:border-2 hover:border-darkgray transition-colors duration-200 cursor-pointer flex items-center gap-2 text-base font-normal"
           >
             <FontAwesomeIcon icon={faUser} />
             <span className="hidden sm:inline">{email}</span>
           </div>
           
           {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg overflow-hidden z-20">
+            <div className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg overflow-hidden z-20">
               <div className="py-2 border-b border-red">
                 <div className="px-4 py-2">
                   <div className="font-bold truncate text-red">{email}</div>
@@ -139,7 +158,7 @@ const FloatingUserButton = () => {
               
               <div className="py-1">
                 <div 
-                  className="px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-darkgray  text-sm"
+                  className="px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-darkgray text-sm"
                   onClick={() => {
                     router.push("/profile");
                     setDropdownOpen(false);
@@ -149,16 +168,29 @@ const FloatingUserButton = () => {
                   <span>Profil Bilgilerim</span>
                 </div>
                 
-                <div 
-                  className="px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-darkgray text-sm"
-                  onClick={() => {
-                    router.push("/orders");
-                    setDropdownOpen(false);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faShoppingBag} className="mr-2" />
-                  <span>Siparişlerim</span>
-                </div>
+                {isAdminOrPersonal ? (
+                  <div 
+                    className="px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-darkgray text-sm"
+                    onClick={() => {
+                      router.push("/dashboard");
+                      setDropdownOpen(false);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faUserTie} className="mr-2" />
+                    <span>Admin Panel</span>
+                  </div>
+                ) : (
+                  <div 
+                    className="px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-darkgray text-sm"
+                    onClick={() => {
+                      router.push("/orders");
+                      setDropdownOpen(false);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faShoppingBag} className="mr-2" />
+                    <span>Siparişlerim</span>
+                  </div>
+                )}
               </div>
               
               <div className="py-1 border-t border-red">
@@ -182,77 +214,113 @@ const FloatingUserButton = () => {
                 <span>Giriş</span>
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="sm:max-w-[425px]">
-              <form onSubmit={handleLogin}>
+            <AlertDialogContent className="bg-white p-0 border-0 rounded-md max-w-md">
+              <div className="w-full max-w-md space-y-4 border-transparent rounded-md p-16">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Giriş Yap</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Hesabınıza giriş yaparak siparişlerinizi yönetin ve özel tekliflerden yararlanın.
-                  </AlertDialogDescription>
+                  <AlertDialogTitle className="mt-6 text-center text-3xl font-bold tracking-tight font-Barlow text-red">
+                    Giriş Yap
+                  </AlertDialogTitle>
                 </AlertDialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="email" className="text-right">
-                      E-posta
-                    </Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="col-span-3"
-                      required
-                    />
+
+                {errorMessage && (
+                  <div className="font-Barlow rounded-md bg-red p-4">
+                    <div className="text-sm text-lightgray">{errorMessage}</div>
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="password" className="text-right">
-                      Şifre
-                    </Label>
-                    <Input
-                      id="password"
-                      name="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      className="col-span-3"
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <div className="col-span-4 flex items-center space-x-2">
-                      <Checkbox 
-                        id="rememberMe" 
-                        name="rememberMe"
-                        checked={formData.rememberMe}
-                        onCheckedChange={(checked) => 
-                          setFormData({...formData, rememberMe: checked})}
+                )}
+
+                <form className="mt-8 space-y-6 font-Quattrocento_Sans" onSubmit={handleLogin}>
+                  <div className="-space-y-px rounded-md shadow-sm">
+                    <div>
+                      <label htmlFor="username" className="sr-only">
+                        Kullanıcı Adı
+                      </label>
+                      <input
+                        id="username"
+                        name="username"
+                        type="string"
+                        required
+                        disabled={loading}
+                        className="relative block w-full rounded-t-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-red sm:text-sm sm:leading-6"
+                        placeholder="Kullanıcı adı"
+                        value={username}
+                        onChange={(e) => {
+                          setUsername(e.target.value);
+                          handleInputChange();
+                        }}
                       />
-                      <label
-                        htmlFor="rememberMe"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Beni hatırla
+                    </div>
+                    <div>
+                      <label htmlFor="password" className="sr-only">
+                        Şifre
+                      </label>
+                      <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        required
+                        disabled={loading}
+                        className="relative block w-full rounded-b-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-red sm:text-sm sm:leading-6"
+                        placeholder="Şifre"
+                        value={password}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          handleInputChange();
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <input
+                        id="remember-me"
+                        name="remember-me"
+                        type="checkbox"
+                        disabled={loading}
+                        className="h-4 w-4 rounded border-gray-300 text-red focus:ring-red"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMeState(e.target.checked)}
+                      />
+                      <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                        Beni Hatırla
                       </label>
                     </div>
                   </div>
-                </div>
-                <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setLoginOpen(false);
-                      router.push("/signup");
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
-                    Üye Ol
-                  </Button>
-                  <Button type="submit" disabled={loading}>
-                    {loading ? "Giriş Yapılıyor..." : "Giriş Yap"}
-                  </Button>
-                </AlertDialogFooter>
-              </form>
+
+                  <div className="flex flex-col space-y-2">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className={`group relative flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red ${
+                        loading 
+                          ? 'bg-red-400 cursor-not-allowed' 
+                          : 'bg-red hover:bg-red-700'
+                      }`}
+                    >
+                      {loading ? (
+                        <div className="flex items-center justify-center">
+                          <SecondaryLoading size="small" />
+                          <span className="ml-2">Giriş Yapılıyor...</span>
+                        </div>
+                      ) : (
+                        'Giriş Yap'
+                      )}
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLoginOpen(false);
+                        router.push("/signup");
+                      }}
+                      className="group relative flex w-full justify-center rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+                    >
+                      <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
+                      Üye Ol
+                    </button>
+                  </div>
+                </form>
+              </div>
             </AlertDialogContent>
           </AlertDialog>
           

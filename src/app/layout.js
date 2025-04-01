@@ -4,6 +4,7 @@ import { Barlow, Londrina_Solid, Quattrocento, Satisfy } from 'next/font/google'
 import Providers from "./Providers";
 import FloatingCartButton from "@/components/floatingCartButton";
 import FloatingUserButton from "@/components/floatingUserButton";
+import ClientComponentWrapper from "./ClientComponentWrapper";
 
 // Font tanımlamaları
 const barlow = Barlow({
@@ -47,6 +48,7 @@ export default function RootLayout({ children }) {
       <body>
         <Providers>
           {children}
+          <ClientComponentWrapper />
         </Providers>
       </body>
     </html>

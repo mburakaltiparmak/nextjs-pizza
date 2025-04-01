@@ -9,14 +9,39 @@ import {
 } from "@/components/admin/notify";
 import { useState, useEffect } from "react";
 import Loading from "../loading";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { userRoles } from "@/lib/store/constants"; // userRoles sabitini import ediyoruz
 
 // Client-side Admin Layout bileşeni
 const AdminLayoutClient = ({ children }) => {
   // Client-side mount kontrolü
   const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
-
+  const router = useRouter();
+  const { isLogin, role, status } = useSelector(state => state.user);
+  
+  useEffect(() => {
+    // Kullanıcı giriş yapmamışsa
+    if (!isLogin) {
+      router.push('/login');
+      return;
+    }
+    
+    // Kullanıcı rolü ADMIN veya PERSONAL değilse
+    const allowedRoles = [userRoles.ADMIN, userRoles.PERSONAL];
+    if (!allowedRoles.includes(role)) {
+      // Yetkisiz erişim, ana sayfaya yönlendir
+      router.push('/');
+      return;
+    }
+  }, [isLogin, role, router]);
+  
+  // Giriş yapmamışsa veya rol ADMIN ya da PERSONAL değilse yükleme göster
+  if (!isLogin || ![userRoles.ADMIN, userRoles.PERSONAL].includes(role)) {
+    return <Loading />;
+  }
+  
   // URL yolundan aktif sayfayı belirle
   const getActivePageFromPath = (path) => {
     if (path.includes("/dashboard")) return "dashboard";

@@ -37,6 +37,7 @@ instance.interceptors.request.use(
 );  
 
 // Hata ayıklama için response interceptor 
+/*
 instance.interceptors.response.use(   
   (response) => response,   
   (error) => {     
@@ -65,7 +66,7 @@ instance.interceptors.response.use(
     return Promise.reject(error);   
   } 
 );  
-
+*/
 // Token'ı otomatik eklemek için interceptor 
 userInstance.interceptors.request.use(   
   (config) => {     

@@ -160,7 +160,7 @@ const FloatingCartButton = () => {
 
   return (
     <div
-      className="fixed top-14 right-4 z-50 transition-none"
+      className="fixed top-2 right-4 z-50 transition-none"
       ref={cartButtonRef}
     >
       <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
