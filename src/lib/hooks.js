@@ -49,6 +49,39 @@ instance.interceptors.response.use(
       
       // Token süresi doldu veya geçersiz ise (401)
       if (error.response.status === 401) {
+        // Redux store'a erişim için bir mekanizma
+        const store = require('@/lib/store/store').store;
+        
+        // logOut action'ını dispatch et
+        store.dispatch(require('@/lib/store/actions/userActions').logout());
+        
+        // Kullanıcıyı login sayfasına yönlendir
+        if (typeof window !== "undefined") {
+          window.location.href = "/login?expired=true";
+        }
+      }
+    } else if (error.request) {       
+      console.error("Yanıt alınamadı:", error.request);     
+    } else {       
+      console.error("İstek hatası:", error.message);     
+    }     
+    return Promise.reject(error);   
+  } 
+);
+*/
+// Hata ayıklama için response interceptor 
+/*
+instance.interceptors.response.use(   
+  (response) => response,   
+  (error) => {     
+    if (error.response) {       
+      console.error(         
+        `API Hatası [${error.response.status}]:`,         
+        error.response.data || {}       
+      );
+      
+      // Token süresi doldu veya geçersiz ise (401)
+      if (error.response.status === 401) {
         // Token'ı temizle
         localStorage.removeItem("token");
         localStorage.removeItem("userEmail");

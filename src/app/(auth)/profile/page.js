@@ -68,28 +68,37 @@ const ProfilePage = () => {
   const [passwordErrors, setPasswordErrors] = useState({});
 
   // Kullanıcının giriş durumunu kontrol et
-  useEffect(() => {
-    const authCheck = async () => {
-      const authStatus = dispatch(checkAuthStatus());
+useEffect(() => {
+  const authCheck = async () => {
+    // İlk başta bir loading kontrolü yap
+    if (userFetchState === fetchStates.FETCHING) {
+      return; // Zaten yükleniyor, işlemi sonlandır
+    }
+    
+    // Kullanıcı girişi kontrolü
+    if (!isLogin) {
+      const authStatus = await dispatch(checkAuthStatus());
       
-      if (!authStatus && !isLogin) {
+      if (!authStatus) {
         router.push("/login");
         return;
-      } 
-      
-      // Profil bilgileri henüz yüklenmemişse
-      if (userFetchState === fetchStates.NOT_FETCHED || !userProfile) {
-        try {
-          // Profil bilgilerini getir
-          await dispatch(fetchUserProfile());
-        } catch (error) {
-          console.error("Profil bilgileri alınamadı:", error);
-        }
       }
-    };
+    }
     
-    authCheck();
-  }, [dispatch, isLogin, userFetchState, router, userProfile]);
+    // Profil bilgileri henüz yüklenmemişse ve yükleme durumu başlamamışsa
+    if ((userFetchState === fetchStates.NOT_FETCHED || !userProfile) && 
+        userFetchState !== fetchStates.FETCHING) {
+      try {
+        // Profil bilgilerini getir
+        await dispatch(fetchUserProfile());
+      } catch (error) {
+        console.error("Profil bilgileri alınamadı:", error);
+      }
+    }
+  };
+  
+  authCheck();
+}, [dispatch, isLogin, userFetchState, router, userProfile]);
 
   // Bileşen yüklendiğinde formData'yı mevcut kullanıcı verileriyle doldur
   useEffect(() => {

@@ -83,7 +83,7 @@ const Footer = () => {
           </span>
         </div>
         
-        <div className="flex flex-col items-start justify-start gap-8 max-lg:gap-2">
+        <div className="flex flex-col items-start justify-start gap-8 max-lg:gap-2 font-Barlow">
           <span className="w-64 h-20 flex items-center">
             <p className="text-xl font-bold">Sıcacık Menüler</p>
           </span>

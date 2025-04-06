@@ -48,6 +48,11 @@ export const clearUserData = () => ({
   type: userActions.CLEAR_USER_DATA,
 });
 
+export const setAuthProvider = (provider) => ({
+  type: userActions.SET_AUTH_PROVIDER,
+  payload: provider,
+});
+
 // Login işlemi
 export const login = (formData) => async (dispatch) => {
   dispatch(setLoading(true));
@@ -72,6 +77,7 @@ export const login = (formData) => async (dispatch) => {
 
     dispatch(setToken(token));
     dispatch(setIsLogin(true));
+    dispatch(setAuthProvider("email"));
 
     // LocalStorage'a token kaydet
     localStorage.setItem("token", token);
@@ -106,6 +112,55 @@ export const login = (formData) => async (dispatch) => {
   }
 };
 
+export const initiateGoogleLogin = () => () => {
+  // Mevcut URL'i kaydet (geri dönüş için)
+  const returnUrl = window.location.pathname;
+  localStorage.setItem('authReturnUrl', returnUrl);
+  
+  // Google OAuth sayfasına yönlendir - use absolute URL
+  window.location.href = 'http://localhost:9000/pizza/api/auth/oauth2/authorize/google';
+};
+
+// OAuth login sürecini tamamla (callback sayfasında kullanılır)
+export const handleOAuthCallback = (token) => async (dispatch) => {
+  if (!token) return { error: "Token bulunamadı" };
+
+  try {
+    dispatch(setLoading(true));
+    
+    // Token'ı locale kaydet
+    localStorage.setItem("token", token);
+    
+    // Redux store'u güncelle
+    dispatch(setToken(token));
+    dispatch(setIsLogin(true));
+    dispatch(setAuthProvider("google"));
+    
+    try {
+      // Profil bilgilerini getir
+      const userData = await dispatch(fetchUserProfile());
+      
+      // Email bilgisini kaydet
+      if (userData && userData.email) {
+        localStorage.setItem("userEmail", userData.email);
+        dispatch(setEmail(userData.email));
+      }
+    } catch (profileError) {
+      console.error("Profil bilgileri alınamadı:", profileError);
+      // Profil bilgileri alınamazsa bile temel giriş başarılı sayalım
+    }
+    
+    dispatch(setLoading(false));
+    dispatch(setSuccess("Google ile giriş başarılı"));
+    
+    return { success: true };
+  } catch (error) {
+    dispatch(setError("OAuth ile giriş yapılamadı"));
+    dispatch(setLoading(false));
+    console.error("OAuth callback error:", error);
+    return { error: "OAuth callback failed" };
+  }
+};
 // Çıkış yapma işlemi
 export const logout = () => (dispatch) => {
   // Token ve login durumunu temizle
@@ -120,57 +175,66 @@ export const logout = () => (dispatch) => {
 };
 
 // Kullanıcı giriş durumunu kontrol et
-// Kullanıcı giriş durumunu kontrol et
 export const checkAuthStatus = () => async (dispatch) => {
   const token = localStorage.getItem("token");
 
-  if (token) {
-    // Token varsa, kullanıcıyı giriş yapmış olarak işaretle
-    dispatch(setToken(token));
-    dispatch(setIsLogin(true));
-
-    // Axios instance'ına token ekle
-    instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-    // Kullanıcı email bilgisini de al
-    const savedEmail = localStorage.getItem("userEmail");
-    if (savedEmail) {
-      dispatch(setEmail(savedEmail));
-    }
-
-    try {
-      // Kullanıcı profil bilgilerini getir
-      const response = await instance.get("/user/profile");
-      
-      if (response && response.data) {
-        // Kullanıcı bilgilerini Redux store'a kaydet
-        dispatch(setUserProfile(response.data));
-        
-        // Kullanıcının rol ve durumunu da güncelle
-        if (response.data.role) {
-          dispatch(setUserRole(response.data.role));
-        }
-        
-        if (response.data.status) {
-          dispatch(setUserStatus(response.data.status));
-        }
-      }
-    } catch (error) {
-      console.error("Profil bilgisi çekilirken hata:", error);
-      
-      // Token geçersiz olabilir, kontrol et
-      if (error.response && error.response.status === 401) {
-        // Token geçersiz, çıkış yap
-        dispatch(logout());
-        return false;
-      }
-    }
-
-    return true;
+  if (!token) {
+    return false;
   }
 
-  return false;
+  // Token varsa, kullanıcıyı giriş yapmış olarak işaretle
+  dispatch(setToken(token));
+  dispatch(setIsLogin(true));
+
+  // Axios instance'ına token ekle
+  instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+  // Kullanıcı email bilgisini de al
+  const savedEmail = localStorage.getItem("userEmail");
+  if (savedEmail) {
+    dispatch(setEmail(savedEmail));
+  }
+
+  try {
+    // Kullanıcı profil bilgilerini getir - doğrudan güvenli bir URL çağrılıyor
+    const response = await instance.get("/user/profile");
+    
+    if (response && response.data) {
+      // Kullanıcı bilgilerini Redux store'a kaydet
+      dispatch(setUserProfile(response.data));
+      
+      // Kullanıcının rol ve durumunu da güncelle
+      if (response.data.role) {
+        dispatch(setUserRole(response.data.role));
+      }
+      
+      if (response.data.status) {
+        dispatch(setUserStatus(response.data.status));
+      }
+      
+      // OAuth provider bilgisini kontrol et
+      if (response.data.oauthProvider) {
+        dispatch(setAuthProvider(response.data.oauthProvider));
+      } else {
+        dispatch(setAuthProvider("email"));
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error("Profil bilgisi çekilirken hata:", error);
+    
+    // Token geçersiz olabilir, kontrol et
+    if (error.response && error.response.status === 401) {
+      // Token geçersiz, çıkış yap
+      dispatch(logout());
+      return false;
+    }
+    // Hataya rağmen, giriş durumunu koru (kullanıcı giriş yapmış sayılır)
+    return true;
+  }
 };
+
+
 // Kullanıcı kaydı
 export const registerUser = (userData) => async (dispatch) => {
   dispatch(setLoading(true));
@@ -257,50 +321,75 @@ export const changePassword = (passwordData) => async (dispatch) => {
 export const fetchUserProfile = () => async (dispatch) => {
   dispatch(setUserFetchState(fetchStates.FETCHING));
 
-  try {
-    const response = await instance.get("/user/profile");
+  const response = await instance.get("/user/profile").catch(err => {
+    // API isteği başarısız oldu
+    console.error("Profil bilgisi alınamadı:", err);
     
-    if (!response || !response.data) {
-      throw new Error("Profil bilgileri alınamadı");
-    }
-    
-    const userData = response.data;
-    
-    // Kullanıcı bilgilerini Redux store'a kaydet
-    dispatch(setUserProfile(userData));
-    
-    // Kullanıcının rol ve durumunu da güncelle
-    if (userData.role) {
-      dispatch(setUserRole(userData.role));
-    }
-    
-    if (userData.status) {
-      dispatch(setUserStatus(userData.status));
-    }
-    
-    dispatch(setUserFetchState(fetchStates.FETCHED));
-    return userData;
-  } catch (err) {
-    let errorMessage = "Profil bilgileri yüklenemedi";
-
+    // HTTP durum koduna göre işlem yap
     if (err.response) {
-      if (err.response.status === 401) {
-        // Token geçersiz, çıkış yap
+      const statusCode = err.response.status;
+      
+      // 401 Unauthorized - Token geçersiz veya süresi dolmuş
+      if (statusCode === 401) {
+        // Kullanıcıyı çıkış yaptır
         dispatch(logout());
-        errorMessage = "Oturumunuz sona erdi, lütfen tekrar giriş yapın";
-      } else {
-        errorMessage = err.response.data?.message || errorMessage;
+        
+        // Kullanıcıyı login sayfasına yönlendir
+        if (typeof window !== "undefined") {
+          window.location.href = "/login?expired=true";
+        }
+        
+        dispatch(setUserFetchState(fetchStates.FAILED));
+        dispatch(setError("Oturumunuz sona erdi, lütfen tekrar giriş yapın."));
+        return { error: "auth/expired" };
       }
-    } else if (err.request) {
-      errorMessage = "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
-    } else {
-      errorMessage = err.message || errorMessage;
+      
+      // Diğer API hataları
+      const errorMsg = err.response.data?.message || "Profil bilgileri alınamadı";
+      dispatch(setUserFetchState(fetchStates.FAILED));
+      dispatch(setError(errorMsg));
+      return { error: errorMsg };
     }
-
+    
+    // Network hatası veya diğer hatalar
     dispatch(setUserFetchState(fetchStates.FAILED));
-    dispatch(setError(errorMessage));
-    return { error: errorMessage };
+    dispatch(setError("Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin."));
+    return { error: "network_error" };
+  });
+  
+  // API isteği başarılı olmadıysa (yukarıdaki catch'te yakalanmış demektir)
+  if (!response || !response.data) {
+    return { error: "Profil bilgileri alınamadı" };
   }
+  
+  // Başarılı yanıt durumunda veriyi işle
+  const userData = response.data;
+  
+  // Kullanıcı bilgilerini Redux store'a kaydet
+  dispatch(setUserProfile(userData));
+  
+  // Kullanıcının rol ve durumunu da güncelle
+  if (userData.role) {
+    dispatch(setUserRole(userData.role));
+  }
+  
+  if (userData.status) {
+    dispatch(setUserStatus(userData.status));
+  }
+  
+  // Email bilgisini güncelle ve localStorage'a kaydet
+  if (userData.email) {
+    dispatch(setEmail(userData.email));
+    localStorage.setItem("userEmail", userData.email);
+  }
+  
+  // OAuth provider bilgisini kontrol et
+  if (userData.oauthProvider) {
+    dispatch(setAuthProvider(userData.oauthProvider));
+  }
+  
+  dispatch(setUserFetchState(fetchStates.FETCHED));
+  return userData;
 };
 
 // Kullanıcı profil bilgilerini güncelle

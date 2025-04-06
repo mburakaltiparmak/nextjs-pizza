@@ -30,10 +30,11 @@ const satisfy = Satisfy({
 
 const londrina = Londrina_Solid({
   subsets: ['latin'],
-  weight: ['100', '300', '400',  '900'],
-  variable: '--font-londrina_solid',
+  weight: ['100', '300', '400', '900'],
+  variable: '--font-londrina-solid',
   display: 'swap',
 });
+
 // Font sınıflarını global olarak tanımlama
 export const fontClasses = `${barlow.variable} ${quattrocento.variable} ${satisfy.variable} ${londrina.variable}`;
 

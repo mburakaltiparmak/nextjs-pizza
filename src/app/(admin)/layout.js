@@ -95,9 +95,6 @@ const AdminLayoutClient = ({ children }) => {
     pageTitle === "Ürünler" || 
     pageProps.showAddButton === true;
 
-  console.log("Current pathname:", pathname);
-  console.log("showAddButton:", showAddButton);
-
   return (
     <div className="flex h-screen font-Quattrocento_Sans bg-lightgray">
       {/* Sidebar - URL'den tespit ettiğimiz aktif sayfayı geçiyoruz */}
