@@ -57,10 +57,14 @@ module.exports = {
           foreground: "hsl(var(--card-foreground))",
         },
         yellow: "#FDC913",
+        lightyellow: "#FDE613",
         gray: "#5F5F5F",
         darkgray: "#292929",
-        red: "#CE2829",
         lightgray: "#FAF7F2",
+        lightgray2: "#dbd3c5",
+        red: "#CE2829",
+        darkred: "#E40A16;"
+
       },
       fontFamily: {
         sans: ["var(--font-sans)", ...defaultTheme.fontFamily.sans],

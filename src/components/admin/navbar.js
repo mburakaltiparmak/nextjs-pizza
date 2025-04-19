@@ -9,7 +9,7 @@ const Navbar = ({
   onAddButtonClick 
 }) => {
   // Redux store'dan email bilgisini al
-  const email = useSelector((state) => state.user.email);
+  const name = useSelector((state) => state.user.profile?.name);
   
   // Şu anki sayfanın başlığına göre add button gösterilmeli mi?
   const shouldShowButton = showAddButton || 
@@ -42,7 +42,7 @@ const Navbar = ({
             </button>
           )}
           <div className="text-sm text-gray-600 font-Barlow">
-            <span className="font-medium">{email}</span>
+            <span className="font-medium">{name}</span>
           </div>
         </div>
       </div>

@@ -1,261 +1,111 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
-import React, { useState, useEffect, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  removeFromCart,
-  clearCart,
-  updateCartItemAction,
-} from "@/lib/store/actions/orderActions";
-import { useToast } from "@/hooks/use-toast";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faShoppingCart, faTrash } from "@fortawesome/free-solid-svg-icons";
+import React from 'react';
+import { ShoppingCart } from 'lucide-react';
+import { useAppSelector } from '@/lib/hooks';
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { useRouter } from "next/navigation";
-import { Button } from "./ui/button";
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 const FloatingCartButton = () => {
-  const dispatch = useDispatch();
-  const { toast } = useToast();
+  const cart = useAppSelector((state) => state.order.cart);
   const router = useRouter();
-  const cart = useSelector((state) => state.order.cart);
-  const cartButtonRef = useRef(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [localCart, setLocalCart] = useState(cart);
+  console.log("cart :",cart);
+  
+  const totalItems = cart.reduce((sum, item) => sum + item.count, 0);
+  const totalAmount = cart.reduce((sum, item) => sum + (item.product.price * item.count), 0);
 
-  // Hesaplanmış değerleri saklayacak ref
-  const calculatedRightRef = useRef(null);
-
-  // Buton pozisyonunu hesapla ve sakla
-  useEffect(() => {
-    // Scrollbar genişliğini hesapla
-    const getScrollbarWidth = () => {
-      return window.innerWidth - document.documentElement.clientWidth;
-    };
-
-    const handleBeforeOpen = () => {
-      if (cartButtonRef.current) {
-        // Dialog açılmadan önce butonun orijinal konumunu kaydedelim
-        calculatedRightRef.current = getScrollbarWidth();
-
-        // Butonun son konumunu ayarlayalım - scrollbar gözönüne alınarak
-        cartButtonRef.current.style.right = `16px`;
-      }
-    };
-
-    const handleAfterOpen = () => {
-      if (cartButtonRef.current && calculatedRightRef.current !== null) {
-        // Dialog açıldıktan sonra scrollbar kaybolduğunda butonun
-        // konumunu aynı yerde tutmak için hesaplanan genişliği uygula
-        cartButtonRef.current.style.right = `${
-          16 + calculatedRightRef.current
-        }px`;
-      }
-    };
-
-    // Dialog açılıp kapandığında olayları dinle
-    const handleOpen = (event) => {
-      if (event.target.getAttribute("data-state") === "open") {
-        setIsOpen(true);
-        handleAfterOpen();
-      } else {
-        setIsOpen(false);
-        handleBeforeOpen();
-      }
-    };
-
-    // İlk yüklemede pozisyonu hesapla
-    handleBeforeOpen();
-
-    // Event dinleyicileri ekle
-    document.addEventListener("dialog-state-change", handleOpen);
-
-    return () => {
-      document.removeEventListener("dialog-state-change", handleOpen);
-    };
-  }, []);
-
-  // Dialog state'ini izleyen fonksiyon
-  const onOpenChange = (open) => {
-    // Dialog açılmadan önce
-    if (open && !isOpen) {
-      // Özel event fırlatarak butonun konumunu güncelleyelim
-      const event = new CustomEvent("dialog-state-change", {
-        detail: { state: "opening" },
-        bubbles: true,
-      });
-      cartButtonRef.current.dispatchEvent(event);
-    }
-
-    // Dialog kapandıktan sonra
-    if (!open && isOpen) {
-      // Özel event fırlatarak butonun konumunu güncelleyelim
-      const event = new CustomEvent("dialog-state-change", {
-        detail: { state: "closed" },
-        bubbles: true,
-      });
-      cartButtonRef.current.dispatchEvent(event);
-    }
-
-    setIsOpen(open);
+  const handleCheckout = () => {
+    router.push('/create-order');
   };
-
-  useEffect(() => {
-    setLocalCart(cart);
-  }, [cart]);
-
-  const handleDecrementCount = (item) => {
-    if (item.quantity <= 1) {
-      dispatch(removeFromCart(item.id));
-      toast({
-        title: "Ürün sepetten kaldırıldı.",
-      });
-    } else {
-      dispatch(updateCartItemAction(item.product.product_id, item.count - 1));
-      toast({
-        title: "Ürün miktarı güncellendi",
-      });
-    }
-  };
-
-  const handleIncrementCount = (item) => {
-    dispatch(updateCartItemAction(item.product.product_id, item.count + 1));
-    toast({
-      title: "Ürün miktarı güncellendi",
-    });
-  };
-
-  const handleRemoveFromCart = (item) => {
-    dispatch(removeFromCart(item.id));
-    toast({
-      title: "Ürün sepetten çıkarıldı.",
-    });
-  };
-
-  const handleClearCart = () => {
-    dispatch(clearCart());
-    toast({
-      title: "Sepet başarıyla temizlendi",
-    });
-  };
-
-  // Toplam sepet miktarını hesapla
-  const totalCartItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  // Toplam sepet tutarını hesapla
-  const totalCartPrice = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
 
   return (
-    <div
-      className="fixed top-2 right-4 z-50 transition-none"
-      ref={cartButtonRef}
-    >
-      <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
+    <div className="fixed top-2 right-4 z-50 ">
+      <AlertDialog>
         <AlertDialogTrigger asChild>
-          <div className="bg-yellow text-red p-3 rounded-full shadow-lg hover:bg-red hover:text-yellow hover:border-2 hover:border-lightgray transition-colors duration-200 cursor-pointer max-md:w-auto font-Quattrocento_Sans flex justify-center items-center">
-            <FontAwesomeIcon icon={faShoppingCart} />
-            <span className="ml-2">{totalCartItems}</span>
-          </div>
+          <button className="bg-yellow text-red p-4 rounded-full shadow-lg flex items-center justify-center hover:bg-red hover:text-yellow transition-colors duration-200">
+            <ShoppingCart size={24} />
+            {totalItems > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
+                {totalItems}
+              </span>
+            )}
+          </button>
         </AlertDialogTrigger>
-        <AlertDialogContent className="max-w-3xl w-full max-md:fixed max-md:bottom-0 max-md:top-1/3 max-md:h-fit max-md:rounded-none max-md:flex max-md:flex-col max-md:justify-center border-gray">
+        
+        <AlertDialogContent className="bg-white font-Barlow">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-darkgray font-Quattrocento_Sans">
-              Sepetiniz
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              <span className="block max-h-[60vh] overflow-y-auto">
-                {cart.length === 0 ? (
-                  <span className="font-Barlow text-gray">Sepetiniz boş.</span>
-                ) : (
-                  <span className="block space-y-4">
-                    {cart.map((item) => (
-                      <span
-                        key={item.id}
-                        className="flex flex-col justify-between items-start gap-4 max-md:gap-2 border-b border-lightgray py-4"
-                      >
-                        <span className="flex flex-row justify-between items-center gap-4 max-md:gap-2 w-full max-md:w-auto">
-                          <img
-                            src={item.img}
-                            alt={item.name}
-                            className="w-16 h-16 object-cover max-md:w-12 max-md:h-12"
-                          />
-                          <span className="flex flex-col justify-between items-start gap-2 flex-grow">
-                            <span className="font-bold text-darkgray font-Quattrocento_Sans">
-                              {item.name}
-                            </span>
-                            <span className="text-gray font-Barlow">
-                              {item.price} ₺
-                            </span>
-                          </span>
-                        </span>
-                        <span className="flex flex-row justify-between items-center gap-4 max-md:gap-2 w-full max-md:w-auto">
-                          <span className="flex flex-row items-center border border-red rounded-md bg-red text-lightgray font-Barlow">
-                            <span
-                              onClick={() => handleDecrementCount(item)}
-                              className="w-[32px] h-[32px] max-md:w-[24px] max-md:h-[24px] bg-red border-red rounded-md hover:bg-lightgray hover:text-red flex items-center justify-center cursor-pointer"
-                            >
-                              <span>-</span>
-                            </span>
-                            <span className="mx-3">{item.quantity}</span>
-                            <span
-                              onClick={() => handleIncrementCount(item)}
-                              className="w-[32px] h-[32px] max-md:w-[24px] max-md:h-[24px] bg-red border-red rounded-md hover:bg-lightgray hover:text-red flex items-center justify-center cursor-pointer"
-                            >
-                              <span>+</span>
-                            </span>
-                          </span>
-                          <Button
-                            onClick={() => handleRemoveFromCart(item)}
-                            className="text-red bg-transparent hover:bg-red hover:text-lightgray"
-                          >
-                            <span>
-                              <FontAwesomeIcon icon={faTrash} />
-                            </span>
-                          </Button>
-                        </span>
-                      </span>
-                    ))}
-                  </span>
-                )}
-              </span>
-              <span className="flex flex-col max-md:flex-row justify-between items-center pt-4 gap-4 max-md:gap-0">
-                <span className="font-bold text-darkgray font-Quattrocento_Sans">
-                  Toplam: {totalCartPrice.toFixed(2)} ₺
-                </span>
-                <Button
-                  onClick={handleClearCart}
-                  className="bg-red text-lightgray px-4 py-2 border border-transparent rounded hover:bg-lightgray hover:text-red hover:border-red transition-colors duration-200 w-full max-md:w-auto font-Barlow"
-                >
-                  <span>Sepeti Temizle</span>
-                </Button>
-              </span>
-            </AlertDialogDescription>
+            <AlertDialogTitle className="text-xl font-semibold text-gray-800">Sepetiniz</AlertDialogTitle>
+            {cart.length > 0 ? (
+              <AlertDialogDescription>
+                Sepetinizde {totalItems} ürün bulunmaktadır.
+              </AlertDialogDescription>
+            ) : (
+              <AlertDialogDescription>
+                Sepetiniz boş.
+              </AlertDialogDescription>
+            )}
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex flex-col max-md:flex-row items-center max-md:justify-between gap-2 max-md:gap-0">
-            <AlertDialogCancel className="border-2 border-darkgray bg-darkgray text-lightgray hover:bg-lightgray hover:text-darkgray w-full max-md:w-auto font-Barlow">
+          
+          {/* Cart Items */}
+          <div className="max-h-64 overflow-y-auto py-2">
+            {cart.length === 0 ? (
+              <p className="text-center text-gray-500 py-4">Sepetinizde ürün bulunmuyor</p>
+            ) : (
+              <div className="space-y-3">
+                {cart.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between border-b border-gray-100 pb-2">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100">
+                        <img 
+                          src={item.product.img} 
+                          alt={item.product.name} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">{item.product.name}</p>
+                        <p className="text-sm text-gray-500">{item.count} adet</p>
+                      </div>
+                    </div>
+                    <p className="font-medium text-gray-800">{(item.product.price * item.count).toFixed(2)} ₺</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Total Amount */}
+          {cart.length > 0 && (
+            <div className="py-3 border-t border-gray-200">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-gray-800">Toplam:</span>
+                <span className="font-bold text-red">{totalAmount.toFixed(2)} ₺</span>
+              </div>
+            </div>
+          )}
+          
+          <AlertDialogFooter className="flex gap-2">
+            <AlertDialogCancel className="bg-gray-100 text-gray-800 hover:bg-gray-200">
               Kapat
             </AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <span
-                className="rounded-md border-2 border-transparent bg-red text-lightgray hover:bg-yellow hover:text-red hover:border-red cursor-pointer w-full max-md:w-auto text-center font-Barlow"
-                onClick={() => router.push("/create-order")}
+            {cart.length > 0 && (
+              <AlertDialogAction 
+                onClick={handleCheckout}
+                className="bg-yellow text-red hover:bg-red hover:text-yellow transition-colors"
               >
-                <span>Siparişi Tamamla</span>
-              </span>
-            </AlertDialogAction>
+                Siparişi Tamamla
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

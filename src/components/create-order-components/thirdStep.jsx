@@ -1,63 +1,369 @@
 "use client";
-import React, { useEffect } from "react";
-import useSWRMutation from "swr/mutation";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from "../ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "../ui/select";
-import { Separator } from "../ui/separator";
-import { useToast } from "@/hooks/use-toast";
+import React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import {
-  clearCart,
-  setOrderData,
-  setPaymentData,
-} from "@/lib/store/actions/orderActions";
-import axios from "axios";
+import { createOrder } from "@/lib/store/actions/orderActions";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, CreditCard } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
-const formSchema = z.object({
-  cardNumber: z
-    .string()
-    .min(16, { message: "Kredi Kartı numarası 16 haneli olmalıdır." }),
-  nameOnCard: z.string().min(1, { message: "İsminiz gereklidir." }),
-  expirationMonth: z
-    .string()
-    .min(2, { message: "Son kullanma tarihi gereklidir." }),
-  expirationYear: z
-    .string()
-    .min(2, { message: "Son kullanma tarihi gereklidir." }),
-  cvc: z.string().min(3, { message: "CVC 3 haneli olmalıdır." }),
-});
+// Online Kredi Kartı component'i - Kart bilgileri formu
+const OnlineCardPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control }) => {
+  return (
+    <form onSubmit={onSubmit} className="bg-white rounded-lg shadow-md overflow-hidden font-Barlow">
+      <div className="p-6">
+        <h2 className="text-xl font-semibold mb-2 text-gray-800">Online Ödeme Bilgileri</h2>
+        <p className="text-gray-500 text-sm mb-6">
+          Siparişinizi tamamlamak için kart bilgilerinize ihtiyacımız var.
+        </p>
+        
+        <div className="space-y-6">
+          <Controller
+            name="cardNumber"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <label htmlFor="card-number" className="block text-sm font-medium text-gray-700 mb-1">
+                  Kart Numarası
+                </label>
+                <div className="relative">
+                  <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    {...field}
+                    id="card-number"
+                    placeholder="1234 5678 9012 3456"
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red focus:border-red"
+                  />
+                </div>
+                {errors.cardNumber && (
+                  <p className="mt-1 text-sm text-red">{errors.cardNumber.message}</p>
+                )}
+              </div>
+            )}
+          />
+          
+          <Controller
+            name="nameOnCard"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <label htmlFor="card-name" className="block text-sm font-medium text-gray-700 mb-1">
+                  Kart Üzerindeki İsim
+                </label>
+                <input
+                  {...field}
+                  id="card-name"
+                  placeholder="John Doe"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red focus:border-red"
+                />
+                {errors.nameOnCard && (
+                  <p className="mt-1 text-sm text-red">{errors.nameOnCard.message}</p>
+                )}
+              </div>
+            )}
+          />
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="expiration-date" className="block text-sm font-medium text-gray-700 mb-1">
+                Son Kullanma Tarihi
+              </label>
+              <div className="flex gap-2">
+                <Controller
+                  name="expirationMonth"
+                  control={control}
+                  render={({ field }) => (
+                    <select
+                      {...field}
+                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red focus:border-red"
+                    >
+                      <option value="">Ay</option>
+                      {Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, "0")).map((month) => (
+                        <option key={month} value={month}>
+                          {month}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                />
+                
+                <Controller
+                  name="expirationYear"
+                  control={control}
+                  render={({ field }) => (
+                    <select
+                      {...field}
+                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red focus:border-red"
+                    >
+                      <option value="">Yıl</option>
+                      {Array.from({ length: 10 }, (_, i) => (i + new Date().getFullYear()).toString().slice(2)).map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                />
+              </div>
+              {(errors.expirationMonth || errors.expirationYear) && (
+                <p className="mt-1 text-sm text-red">
+                  Son kullanma tarihi gereklidir.
+                </p>
+              )}
+            </div>
+            
+            <Controller
+              name="cvc"
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <label htmlFor="cvc" className="block text-sm font-medium text-gray-700 mb-1">
+                    CVC
+                  </label>
+                  <input
+                    {...field}
+                    id="cvc"
+                    placeholder="123"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red focus:border-red"
+                  />
+                  {errors.cvc && (
+                    <p className="mt-1 text-sm text-red">{errors.cvc.message}</p>
+                  )}
+                </div>
+              )}
+            />
+          </div>
+
+          {/* Sipariş Notu Alanı */}
+          <Controller
+            name="notes"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+                  Sipariş Notu
+                </Label>
+                <Textarea
+                  {...field}
+                  id="notes"
+                  placeholder="Siparişinizle ilgili eklemek istediğiniz not var mı? (Tercihen kapı kodu, adres tarifi, vb.)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red focus:border-red"
+                  rows={3}
+                />
+              </div>
+            )}
+          />
+        </div>
+      </div>
+      
+      <div className="px-6 py-4 bg-gray-50 flex justify-between">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+        >
+          <ChevronLeft className="w-5 h-5" />
+          GERİ
+        </button>
+        
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md bg-yellow text-red hover:bg-red hover:text-yellow border border-transparent hover:border-yellow"
+        >
+          {isSubmitting ? "İşleniyor..." : "SİPARİŞİ TAMAMLA"}
+        </button>
+      </div>
+    </form>
+  );
+};
+// Diğer ödeme yöntemleri için component - Sadece not alanı
+const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, paymentMethod }) => {
+  // Ödeme yöntemine göre başlık ve açıklama
+  const getPaymentTitle = () => {
+    switch(paymentMethod) {
+      case "CREDIT_CARD": return "Kapıda Kredi Kartı";
+      case "CASH": return "Kapıda Nakit Ödeme";
+      case "GIFT_CARD": return "Hediye Kartı ile Ödeme";
+      default: return "Ödeme Bilgileri";
+    }
+  };
+  
+  const getPaymentDescription = () => {
+    switch(paymentMethod) {
+      case "CREDIT_CARD": 
+        return "Siparişiniz teslim edilirken kredi kartı ile ödeme yapabilirsiniz.";
+      case "CASH": 
+        return "Siparişiniz teslim edilirken nakit ödeme yapabilirsiniz.";
+      case "GIFT_CARD": 
+        return "Siparişiniz teslim edilirken hediye kartı ile ödeme yapabilirsiniz.";
+      default: 
+        return "Siparişiniz teslim edilirken ödeme yapabilirsiniz.";
+    }
+  };
+
+  // Kullanıcı verileri ve teslimat bilgileri
+  const userData = useAppSelector((state) => state.order.userData);
+  const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
+  console.log("userData",userData);
+
+  // Teslimat bilgilerini görüntüle
+  const renderDeliveryInfo = () => {
+    // Kullanıcı giriş yapmış ve seçilmiş kullanıcı adresi varsa
+    if (isAuthenticated && userData?.userAddress) {
+      const address = userData.userAddress;
+      return (
+        <div className="mt-6 p-4 bg-gray-50 rounded-md">
+          <h3 className="font-medium text-gray-800 mb-2">Teslimat Bilgileri</h3>
+          <div className="space-y-2 text-sm">
+            <p><span className="font-medium">Adres Başlığı:</span> {address.addressTitle || `Adres ${address.id}`}</p>
+            <p><span className="font-medium">Alıcı:</span> {address.recipientName}</p>
+            <p><span className="font-medium">Adres:</span> {address.fullAddress}</p>
+            <p><span className="font-medium">Konum:</span> {address.district}, {address.city}</p>
+          </div>
+        </div>
+      );
+    }
+    
+    // Kullanıcı giriş yapmış ve sadece addressId varsa
+    if (isAuthenticated && userData?.addressId) {
+      return (
+        <div className="mt-6 p-4 bg-gray-50 rounded-md">
+          <h3 className="font-medium text-gray-800 mb-2">Teslimat Bilgileri</h3>
+          <div className="space-y-2 text-sm">
+            <p><span className="font-medium">Adres ID:</span> {userData.addressId}</p>
+            <p className="text-gray-500 italic">Seçili kayıtlı adres kullanılacak</p>
+          </div>
+        </div>
+      );
+    }
+    
+    // Yeni adres girilmiş (hem kullanıcı hem misafir)
+    if (userData?.newAddress) {
+      const address = userData.newAddress;
+      return (
+        <div className="mt-6 p-4 bg-gray-50 rounded-md">
+          <h3 className="font-medium text-gray-800 mb-2">Teslimat Bilgileri</h3>
+          <div className="space-y-2 text-sm">
+            <p><span className="font-medium">Alıcı:</span> {address.recipientName}</p>
+            <p><span className="font-medium">Adres:</span> {address.fullAddress}</p>
+            <p><span className="font-medium">Konum:</span> {address.district}, {address.city}</p>
+            {address.phoneNumber && (
+              <p><span className="font-medium">Telefon:</span> {address.phoneNumber}</p>
+            )}
+          </div>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
+  return (
+    <form onSubmit={onSubmit} className="bg-white rounded-lg shadow-md overflow-hidden font-Barlow">
+      <div className="p-6">
+        <h2 className="text-xl font-semibold mb-2 text-gray-800">{getPaymentTitle()}</h2>
+        <p className="text-gray-500 text-sm mb-6">
+          {getPaymentDescription()}
+        </p>
+        
+        <div className="space-y-6">
+          {/* Sipariş Notu Alanı */}
+          <Controller
+            name="notes"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+                  Sipariş Notu
+                </Label>
+                <Textarea
+                  {...field}
+                  id="notes"
+                  placeholder="Siparişinizle ilgili eklemek istediğiniz not var mı? (Tercihen kapı kodu, adres tarifi, vb.)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red focus:border-red"
+                  rows={3}
+                />
+              </div>
+            )}
+          />
+          
+          {/* Teslimat Bilgileri Özeti */}
+          {renderDeliveryInfo()}
+          
+          {/* Misafir Siparişi Bilgileri */}
+          {!isAuthenticated && userData?.guestEmail && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-md">
+              <h3 className="font-medium text-gray-800 mb-2">Müşteri Bilgileri</h3>
+              <div className="space-y-2 text-sm">
+                <p><span className="font-medium">E-posta:</span> {userData.guestEmail}</p>
+                <p><span className="font-medium">Telefon:</span> {userData.guestPhone}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="px-6 py-4 bg-gray-50 flex justify-between">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+        >
+          <ChevronLeft className="w-5 h-5" />
+          GERİ
+        </button>
+        
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md bg-yellow text-red hover:bg-red hover:text-yellow border border-transparent hover:border-yellow"
+        >
+          {isSubmitting ? "İşleniyor..." : "SİPARİŞİ TAMAMLA"}
+        </button>
+      </div>
+    </form>
+  );
+};
 
 const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
   const router = useRouter();
-  const baseURL = "https://66c0ce8bba6f27ca9a57a405.mockapi.io/api";
-  const instance = axios.create({ baseURL });
+
+  // Redux state'inden ödeme yöntemini ve diğer bilgileri al
+  const userData = useAppSelector((state) => state.order.userData);
+  const selectedAddress = useAppSelector((state)=>state.order.selectedAddress);
+  const cartData = useAppSelector((state) => state.order.cart);
+  const paymentMethod = useAppSelector((state) => state.order.paymentMethod);
+  const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
+  
+  // Online kart ödemesi için validation schema
+  const onlineCardSchema = z.object({
+    cardNumber: z.string().min(16, { message: "Kredi Kartı numarası 16 haneli olmalıdır." }),
+    nameOnCard: z.string().min(1, { message: "İsminiz gereklidir." }),
+    expirationMonth: z.string().min(1, { message: "Son kullanma tarihi gereklidir." }),
+    expirationYear: z.string().min(1, { message: "Son kullanma tarihi gereklidir." }),
+    cvc: z.string().min(3, { message: "CVC 3 haneli olmalıdır." }),
+    notes: z.string().optional()
+  });
+  
+  // Diğer ödeme yöntemleri için basit schema
+  const otherPaymentSchema = z.object({
+    notes: z.string().optional()
+  });
+  
+  // Ödeme yöntemine göre schema seç
+  const formSchema = paymentMethod === "ONLINE_CREDIT_CARD" ? onlineCardSchema : otherPaymentSchema;
 
   const {
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -66,180 +372,143 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
       expirationMonth: "",
       expirationYear: "",
       cvc: "",
+      notes: ""
     },
   });
 
-  const userData = useAppSelector((state) => state.order.userData);
-  const cartData = useAppSelector((state) => state.order.cart);
-
-  const createOrder = async (paymentData) => {
-    const orderData = {
-      userData,
-      paymentData,
-      cartData,
-    };
+  const submitOrder = async (formData) => {
     try {
+      // Debug: Form verilerini ve kullanıcı verilerini kontrol et
+      console.log("Form verileri:", formData);
+      console.log("Adres bilgileri:", selectedAddress);
+      console.log("Sepet içeriği:", cartData);
+      console.log("Kullanıcı bilgileri:",userData);
+      
+      // Step3'ü başarılı olarak işaretle
+      setStep3(true);
+      
       toast({
         title: "Siparişiniz alınıyor...",
       });
-      setStep3(true);
-      const response = await instance.post("/order", orderData);
-      console.log("response", response.data);
-      dispatch(setOrderData(orderData));
-      //dispatch(clearCart());
+      
+      // Adres bilgilerini kontrol et
+      if (!selectedAddress.id && !selectedAddress.userAddress && !selectedAddress.newAddress) {
+        throw new Error("Lütfen bir teslimat adresi seçin veya ekleyin.");
+      }
+      
+      // Sipariş verisini hazırla
+      const orderRequest = {
+        // Sepet öğeleri
+        items: cartData.map(item => ({
+          productId: item.product.id,
+          quantity: item.count
+        })),
+        
+        // Ödeme bilgileri
+        paymentMethod: paymentMethod,
+        notes: formData.notes || ""
+      };
+      
+      // Kullanıcı giriş yapmış ve kayıtlı adresi seçilmiş
+      if (isAuthenticated && userData.addressId) {
+        orderRequest.addressId = userData.addressId;
+        console.log("Kayıtlı adres kullanılıyor, ID:", userData.addressId);
+      }
+      // Kullanıcı giriş yapmış ve kullanıcı adresi seçilmiş
+      else if (isAuthenticated && userData.userAddress) {
+        orderRequest.addressId = userData.userAddress.id;
+        console.log("Kullanıcı adresi kullanılıyor, ID:", userData.userAddress.id);
+      }
+      // Yeni adres girilmiş
+      else if (userData.newAddress) {
+        // Backend'in beklediği formatta yeni adres bilgilerini gönder
+        orderRequest.newAddress = {
+          fullAddress: userData.newAddress.fullAddress,
+          city: userData.newAddress.city,
+          district: userData.newAddress.district,
+          postalCode: userData.newAddress.postalCode || "",
+          addressTitle: userData.newAddress.addressTitle || "Yeni Adres",
+          phoneNumber: userData.newAddress.phoneNumber || "",
+          recipientName: userData.newAddress.recipientName || userData.fullname || "",
+          saveAddress: userData.newAddress.saveAddress === true,
+          isDefault: userData.newAddress.isDefault === true
+        };
+        console.log("Yeni adres kullanılıyor:", orderRequest.newAddress);
+      }
+      
+      // Misafir bilgilerini ekle (kullanıcı giriş yapmamışsa)
+      if (!isAuthenticated) {
+        orderRequest.guestEmail = userData.guestEmail;
+        orderRequest.guestPhone = userData.guestPhone;
+        console.log("Misafir bilgileri:", userData.guestEmail, userData.guestPhone);
+      }
+      
+      // Ödeme bilgileri (sadece online kart ödemesi için)
+      const paymentData = paymentMethod === "ONLINE_CREDIT_CARD" ? {
+        cardNumber: formData.cardNumber,
+        nameOnCard: formData.nameOnCard,
+        expirationMonth: formData.expirationMonth,
+        expirationYear: formData.expirationYear,
+        cvc: formData.cvc
+      } : null;
+      
+      console.log("Backend'e gönderilecek sipariş verisi:", JSON.stringify(orderRequest, null, 2));
+      
+      // Sipariş oluşturma işlemini çağır
+      const result = await dispatch(createOrder({
+        orderData: orderRequest,
+        paymentData: paymentData,
+        isGuest: !isAuthenticated
+      }));
+      
+      // Hata durumunu kontrol et
+      if (result.error) {
+        console.error("Sipariş oluşturma hatası:", result.error);
+        toast({
+          title: "Sipariş oluşturulurken bir hata oluştu.",
+          description: result.error,
+          variant: "destructive",
+        });
+        setStep3(false);
+        return;
+      }
+      
+      // Başarılı ise yönlendir
       router.push("/success");
     } catch (error) {
-      console.error("Sipariş oluşturulurken bir hata oluştu.", error);
+      console.error("Sipariş oluşturma işlemi sırasında beklenmeyen bir hata oluştu:", error);
       toast({
         title: "Sipariş oluşturulurken bir hata oluştu.",
         description: error.message,
         variant: "destructive",
       });
+      setStep3(false);
     }
   };
-  const onSubmit = (data) => {
-    dispatch(setPaymentData(data));
-    console.log("payment data : ", data);
-    createOrder(data);
-  };
-
+  
   const handleBack = () => {
     setCurrentStep(2);
     setStep3(false);
   };
 
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2 ">
-      <Card className="flex flex-col bg-lightgray">
-        <CardHeader>
-          <CardTitle>Ödeme Bilgileri</CardTitle>
-          <CardDescription>
-            Siparişinizi tamamlamak için ödeme bilgilerinize ihtiyacımız var.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4 flex flex-col gap-4">
-          <div className="space-y-2 flex flex-col gap-4">
-            <Controller
-              name="cardNumber"
-              control={control}
-              render={({ field }) => (
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="card-number">Kart numarası</Label>
-                  <Input {...field} placeholder="1234 1234 1234 1234" />
-                  {errors.cardNumber && (
-                    <span className="text-red-500">
-                      {errors.cardNumber.message}
-                    </span>
-                  )}
-                </div>
-              )}
-            />
-            <Controller
-              name="nameOnCard"
-              control={control}
-              render={({ field }) => (
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="card-name">Kart üzerindeki isim</Label>
-                  <Input {...field} placeholder="John Doe" />
-                  {errors.nameOnCard && (
-                    <span className="text-red-500">
-                      {errors.nameOnCard.message}
-                    </span>
-                  )}
-                </div>
-              )}
-            />
-          </div>
-          <div className="grid grid-cols-2 place-content-center gap-4 max-md:flex max-md:flex-col ">
-            <div className="space-y-2 flex flex-col gap-2">
-              <Label className="" htmlFor="expiration-date">
-                Son Kullanma Tarihi
-              </Label>
-              <div className="flex gap-2 ">
-                <Controller
-                  name="expirationMonth"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <SelectTrigger className="bg-white" aria-label="Month">
-                        <SelectValue placeholder="MM" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: 12 }, (_, i) =>
-                          (i + 1).toString().padStart(2, "0")
-                        ).map((month) => (
-                          <SelectItem key={month} value={month}>
-                            {month}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <Controller
-                  name="expirationYear"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <SelectTrigger className="bg-white" aria-label="Year">
-                        <SelectValue placeholder="YY" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: 10 }, (_, i) =>
-                          (i + 2024).toString().slice(2)
-                        ).map((year) => (
-                          <SelectItem key={year} value={year}>
-                            {year}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-              {(errors.expirationMonth || errors.expirationYear) && (
-                <span className="text-red-500">
-                  Son kullanma tarihi gereklidir.
-                </span>
-              )}
-            </div>
-            <Controller
-              name="cvc"
-              control={control}
-              render={({ field }) => (
-                <div className="space-y-2 flex flex-col gap-2">
-                  <Label htmlFor="cvc">CVC</Label>
-                  <Input {...field} placeholder="123" />
-                  {errors.cvc && (
-                    <span className="text-red-500">{errors.cvc.message}</span>
-                  )}
-                </div>
-              )}
-            />
-          </div>
-        </CardContent>
-      </Card>
-      <span className="flex flex-row justify-between max-md:px-4">
-        <Button
-          className="buttonStyle bg-yellow text-darkgray hover:bg-red hover:text-lightgray"
-          onClick={handleBack}
-        >
-          GERİ
-        </Button>
-        <Button
-          type="submit"
-          className="buttonStyle bg-yellow text-darkgray hover:bg-red hover:text-lightgray"
-        >
-          SİPARİŞİ TAMAMLA
-        </Button>
-      </span>
-    </form>
+  // Ödeme yöntemine göre farklı component göster
+  return paymentMethod === "ONLINE_CREDIT_CARD" ? (
+    <OnlineCardPaymentForm 
+      onSubmit={handleSubmit(submitOrder)}
+      onBack={handleBack}
+      isSubmitting={isSubmitting}
+      errors={errors}
+      control={control}
+    />
+  ) : (
+    <OtherPaymentForm 
+      onSubmit={handleSubmit(submitOrder)}
+      onBack={handleBack}
+      isSubmitting={isSubmitting}
+      errors={errors}
+      control={control}
+      paymentMethod={paymentMethod}
+    />
   );
 };
 

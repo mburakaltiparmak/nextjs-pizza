@@ -1,117 +1,138 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
-import { Button } from "@/components/ui/button";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import Image from "next/image";
-import headImg from "../../../assets/adv-aseets/adv-form-banner.png";
-import { faUser } from "@fortawesome/free-regular-svg-icons";
-import { useState } from "react";
-import {
-  faCartShopping,
-  faCashRegister,
-  faCheck,
-} from "@fortawesome/free-solid-svg-icons";
-import { useToast } from "@/hooks/use-toast";
-import FirstStep from "@/components/create-order-components/firstStep";
-import SecondStep from "@/components/create-order-components/secondStep";
-import ThirdStep from "@/components/create-order-components/thirdStep";
-import { useAppSelector } from "@/lib/hooks";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
+import { useAppSelector } from "@/lib/hooks";
+import { useToast } from "@/hooks/use-toast";
+import { Check, User, ShoppingCart, CreditCard, ChevronLeft, ChevronRight } from "lucide-react";
+import Header from "@/components/header.js";
+import Footer from "@/components/footer.js";
+import FirstStep from "@/components/create-order-components/firstStep.jsx";
+import SecondStep from "@/components/create-order-components/secondStep.jsx";
+import ThirdStep from "@/components/create-order-components/thirdStep.jsx";
 
 const Page = () => {
   const { toast } = useToast();
   const router = useRouter();
   const cart = useAppSelector((store) => store.order.cart);
-  if (cart.length <= 0) {
-    toast({
-      title: "Sepetiniz boş.",
-      description: "Anasayfaya yönlendiriliyorsunuz.",
-    });
-    router.push("/");
-  }
-
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [step1, setStep1] = useState(false);
   const [step2, setStep2] = useState(false);
   const [step3, setStep3] = useState(false);
+  
+  // Boş sepet kontrolünü useEffect içinde yap
+  useEffect(() => {
+    if (cart.length <= 0) {
+      toast({
+        title: "Sepetiniz boş.",
+        description: "Anasayfaya yönlendiriliyorsunuz.",
+      });
+      router.push("/");
+    }
+  }, [cart, router, toast]);
 
+  // Define steps
   const steps = [
-    {
-      title: "Kişisel Bilgiler",
-      icon: faUser,
-      success: faCheck,
-      disabled: !cart,
+    { 
+      id: 1, 
+      title: "Kişisel Bilgiler", 
+      icon: <User className="w-5 h-5" />,
+      completed: step1,
+      disabled: !cart || cart.length <= 0
     },
-    {
-      title: "Sipariş Özeti",
-      icon: faCartShopping,
-      success: faCheck,
-      disabled: !step1,
+    { 
+      id: 2, 
+      title: "Sipariş Özeti", 
+      icon: <ShoppingCart className="w-5 h-5" />,
+      completed: step2,
+      disabled: !step1
     },
-    {
-      title: "Ödeme",
-      icon: faCashRegister,
-      success: faCheck,
-      disabled: !step1 || !step2,
-    },
+    { 
+      id: 3, 
+      title: "Ödeme", 
+      icon: <CreditCard className="w-5 h-5" />,
+      completed: step3,
+      disabled: !step1 || !step2
+    }
   ];
+  
+  const totalSteps = steps.length;
 
+  // Render current step component
   const displaySteps = () => {
     switch (currentStep) {
       case 1:
-        return (
-          <FirstStep setCurrentStep={setCurrentStep} setStep1={setStep1} />
-        );
+        return <FirstStep setCurrentStep={setCurrentStep} setStep1={setStep1} />;
       case 2:
-        return (
-          <SecondStep setCurrentStep={setCurrentStep} setStep2={setStep2} />
-        );
+        return <SecondStep setCurrentStep={setCurrentStep} setStep2={setStep2} />;
       case 3:
-        return (
-          <ThirdStep setCurrentStep={setCurrentStep} setStep3={setStep3} />
-        );
+        return <ThirdStep setCurrentStep={setCurrentStep} setStep3={setStep3} />;
       default:
         return null;
     }
   };
 
-  return (
-    <div>
-      <Header />
-    <div className="flex flex-col items-center gap-4 mb-8">
-      <span>
-        <Image
-          src={headImg.src}
-          alt="Pizza"
-          className="object-cover"
-          width={300}
-          height={100}
-        />
-      </span>
-      <div className="flex flex-col items-center gap-4 ">
-        <span className="grid grid-cols-3 place-content-between max-w-[50vh] max-md:gap-2 gap-4 max-md:px-4 ">
-          {steps.map((item, index) => (
-            <Button
-              disabled={item.disabled}
-              key={index}
-              className="flex flex-col gap-2 items-center bg-primary/90 border-2 border-transparent rounded-md text-lightgray py-8 hover:bg-lightgray hover:text-primary/90 hover:border-primary/90 disabled:bg-red disabled:text-lightgray disabled:border-transparent w-full"
-            >
-              <FontAwesomeIcon
-                className="text-2xl max-md:text-xl"
-                icon={item.icon}
-              />
-              <p>{item.title}</p>
-            </Button>
-          ))}
-        </span>
-        <span className="max-w-[50vh] w-full max-md:px-4">
-          {displaySteps()}
-        </span>
+  // Sepet boşsa ve yönlendirme bekleniyorsa yükleme göster
+  if (cart.length <= 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Yükleniyor...</p>
       </div>
-    </div>
-    <Footer />
+    );
+  }
+
+  return (
+    <div className="min-h-screen">
+      <Header />
+      
+      <div className="container mx-auto max-w-3xl px-4 py-8">
+        {/* Modern Stepper */}
+        <div className="mb-8">
+          <div className="relative">
+            {/* Progress bar */}
+            <div className="absolute bottom-10 left-2 h-1 bg-yellow w-full -translate-y-1/2" />
+            <div 
+              className="absolute bottom-10 left-2 h-1 bg-red transition-all duration-300 -translate-y-1/2" 
+              style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
+            />
+            
+            {/* Steps */}
+            <div className="relative flex justify-between font-Barlow">
+              {steps.map((step) => (
+                <div key={step.id} className="flex flex-col items-center">
+                  <div 
+                    className={`flex items-center justify-center w-10 h-10 rounded-full z-10 transition-all ${
+                      step.completed 
+                        ? 'bg-red text-white' 
+                        : step.id === currentStep 
+                          ? 'bg-white border-2 border-red text-red' 
+                          : 'bg-white border-2 border-gray-300 text-gray-400'
+                    }`}
+                  >
+                    {step.completed ? <Check className="w-5 h-5" /> : step.icon}
+                  </div>
+                  <span 
+                    className={`mt-2 text-sm font-medium ${
+                      step.id <= currentStep ? 'text-red' : 'text-black'
+                    }`}
+                  >
+                    {step.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        
+        {/* Content */}
+        <div className="mb-8">
+          {displaySteps()}
+        </div>
+        
+        {/* Navigation buttons are handled by individual step components */}
+      </div>
+      
+      <Footer />
     </div>
   );
 };

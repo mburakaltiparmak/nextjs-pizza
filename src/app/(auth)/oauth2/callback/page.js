@@ -2,8 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
-import { setToken, setIsLogin, setAuthProvider, fetchUserProfile } from '@/lib/store/actions/userActions';
-import SecondaryLoading from '@/components/secondaryLoading';
+import { fetchUserProfile, setIsLogin, setToken, setAuthProvider, setEmail, setRememberMe } from '@/lib/store/actions/userActions';
 import { setSuccess, setError } from '@/lib/store/actions/globalActions';
 
 export default function OAuthCallbackPage() {
@@ -21,6 +20,7 @@ export default function OAuthCallbackPage() {
         if (errorMsg) {
           setStatus('error');
           setMessage(decodeURIComponent(errorMsg));
+          dispatch(setError(decodeURIComponent(errorMsg)));
           return;
         }
         
@@ -29,20 +29,40 @@ export default function OAuthCallbackPage() {
         if (!token) {
           setStatus('error');
           setMessage('Kimlik doğrulama bilgisi alınamadı.');
+          dispatch(setError('Kimlik doğrulama bilgisi alınamadı.'));
           return;
         }
         
-        // Token'ı kaydet
-        localStorage.setItem('token', token);
+        // "Beni hatırla" tercihini al
+        const rememberMe = localStorage.getItem('tempRememberMe') === 'true';
+        
+        // Token'ı uygun storage'a kaydet
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem('token', token);
+        
+        // "Beni hatırla" durumunu localStorage'a kaydet
+        localStorage.setItem('rememberMe', rememberMe ? 'true' : 'false');
+        
+        // Redux store'u güncelle
         dispatch(setToken(token));
         dispatch(setIsLogin(true));
         dispatch(setAuthProvider('google'));
+        dispatch(setRememberMe(rememberMe));
         
         // Kullanıcı bilgilerini getir
-        await dispatch(fetchUserProfile());
+        const userData = await dispatch(fetchUserProfile());
+        
+        // Kullanıcı email bilgisini kaydet
+        if (userData && userData.email) {
+          storage.setItem('userEmail', userData.email);
+          dispatch(setEmail(userData.email));
+        }
         
         // Başarı mesajı
         dispatch(setSuccess('Google ile giriş başarılı'));
+        
+        // Geçici "Beni hatırla" verisini temizle
+        localStorage.removeItem('tempRememberMe');
         
         setStatus('success');
         setMessage('Giriş başarılı! Yönlendiriliyorsunuz...');
@@ -60,6 +80,7 @@ export default function OAuthCallbackPage() {
         console.error('OAuth işleme hatası:', error);
         setStatus('error');
         setMessage('Giriş işlemi sırasında bir hata oluştu.');
+        dispatch(setError('Giriş işlemi sırasında bir hata oluştu.'));
       }
     };
     

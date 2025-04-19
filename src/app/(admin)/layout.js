@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import Loading from "../loading";
 import { usePathname, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
-import { userRoles } from "@/lib/store/constants"; // userRoles sabitini import ediyoruz
+import { userRoles } from "@/lib/store/constants";
 
 // Client-side Admin Layout bileşeni
 const AdminLayoutClient = ({ children }) => {
@@ -21,7 +21,23 @@ const AdminLayoutClient = ({ children }) => {
   const router = useRouter();
   const { isLogin, role, status } = useSelector(state => state.user);
   
+  // URL yolundan aktif sayfayı belirle
+  const getActivePageFromPath = (path) => {
+    if (path.includes("/dashboard")) return "dashboard";
+    if (path.includes("/category")) return "category";
+    if (path.includes("/product")) return "product";
+    if (path.includes("/orders")) return "orders";
+    if (path.includes("/users")) return "users";
+    return "dashboard"; // varsayılan
+  };
+
+  const activePage = getActivePageFromPath(pathname);
+  
+  // Auth kontrolü ve modal açıcı useEffect
   useEffect(() => {
+    // Client-side mount olduğunu işaretle
+    setIsMounted(true);
+    
     // Kullanıcı giriş yapmamışsa
     if (!isLogin) {
       router.push('/login');
@@ -35,27 +51,6 @@ const AdminLayoutClient = ({ children }) => {
       router.push('/');
       return;
     }
-  }, [isLogin, role, router]);
-  
-  // Giriş yapmamışsa veya rol ADMIN ya da PERSONAL değilse yükleme göster
-  if (!isLogin || ![userRoles.ADMIN, userRoles.PERSONAL].includes(role)) {
-    return <Loading />;
-  }
-  
-  // URL yolundan aktif sayfayı belirle
-  const getActivePageFromPath = (path) => {
-    if (path.includes("/dashboard")) return "dashboard";
-    if (path.includes("/category")) return "category";
-    if (path.includes("/product")) return "product";
-    if (path.includes("/orders")) return "orders";
-    if (path.includes("/users")) return "users";
-    return "dashboard"; // varsayılan
-  };
-
-  const activePage = getActivePageFromPath(pathname);
-
-  useEffect(() => {
-    setIsMounted(true);
 
     // Global bir işleyici oluşturarak butondan modal açma işlemini yapalım
     if (typeof window !== "undefined") {
@@ -69,11 +64,18 @@ const AdminLayoutClient = ({ children }) => {
         }
       };
     }
-  }, []);
+    
+    // Temizleme işlevi
+    return () => {
+      if (typeof window !== "undefined" && window.openAdminModal) {
+        window.openAdminModal = undefined;
+      }
+    };
+  }, [isLogin, role, router]);
 
-  // Client-side mount tamamlanana kadar boş bir div göster
-  if (!isMounted) {
-    return <div className="flex h-screen bg-lightgray"></div>;
+  // Giriş yapmamışsa veya rol uygun değilse veya client-side mount tamamlanmadıysa yükleme göster
+  if (!isMounted || !isLogin || ![userRoles.ADMIN, userRoles.PERSONAL].includes(role)) {
+    return <Loading />;
   }
 
   // Sayfa özelliklerini almak için children'ı kontrol edelim
@@ -108,7 +110,7 @@ const AdminLayoutClient = ({ children }) => {
           showAddButton={showAddButton}
           addButtonText={pageProps.addButtonText || "Yeni Ekle"}
           onAddButtonClick={() => {
-            if (window.openAdminModal) {
+            if (typeof window !== "undefined" && window.openAdminModal) {
               window.openAdminModal();
             }
           }}

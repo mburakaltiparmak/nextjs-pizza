@@ -35,7 +35,7 @@ import Image from "next/image";
 import headImg from "../../../assets/adv-aseets/adv-form-banner.png";
 import { items } from "../data";
 import { useRouter } from "next/navigation";
-import { addCart } from "@/lib/store/actions/orderActions";
+import { addCart, addToCart } from "@/lib/store/actions/orderActions";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-regular-svg-icons";
@@ -134,40 +134,53 @@ const Page = () => {
   };
   let id = idCreator();
 
-  const onSubmit = (data) => {
-    const customPizza = {
-      product_name: "Custom Pizza",
-      category_id: 2,
-      rating: 4.9,
+  // onSubmit fonksiyonunu şu şekilde değiştirin
+const onSubmit = (data) => {
+  const customPizzaId = idCreator();
+  
+  // Sepet yapısına uygun şekilde düzenlenmiş custom pizza objesi
+  const customPizzaCart = { 
+    id: customPizzaId,
+    product: {
+      id: customPizzaId,
+      name: "Custom Pizza",
+      rating: 4.9, 
       stock: 1,
       price: toplam,
-      product_img:
-        "https://res.cloudinary.com/dqjqkgpt3/image/upload/v1724010330/food-2_zwrtrh.png",
-      product_id: id,
+      img: "https://res.cloudinary.com/dqjqkgpt3/image/upload/v1724010330/food-2_zwrtrh.png",
+      categoryId: 2,
+      // Custom pizza'ya özel ek alanlar
+      isCustom: true,
       items: data.items,
       size: data.boyut,
       dough: data.hamur,
-      siparisNotu: data.siparisNotu,
-    };
-    dispatch(addCart(customPizza));
-    toast({
-      title: (
-        <div className="flex flex-row gap-4 items-center py-4">
-          <img
-            src={customPizza?.product_img}
-            alt={customPizza.product_name}
-            className="object-cover w-[32px]"
-          />
-          <p>{customPizza.product_name} sepete başarıyla eklendi.</p>
-        </div>
-      ),
-    });
-    router.push("/");
+      siparisNotu: data.siparisNotu
+    },
+    count: 1
   };
+
+  // Sepete ekle
+  dispatch(addToCart(customPizzaCart));
+  
+  toast({
+    title: (
+      <div className="flex flex-row gap-4 items-center py-4">
+        <img
+          src={customPizzaCart.product.img}
+          alt={customPizzaCart.product.name}
+          className="object-cover w-[32px]"
+        />
+        <p>{customPizzaCart.product.name} sepete başarıyla eklendi.</p>
+      </div>
+    ),
+  });
+  
+  router.push("/");
+};
   return (
     <div>
       <Header />
-    <div className="flex flex-col items-center justify-between gap-8 mb-8">
+    <div className="flex flex-col items-center justify-between gap-8 mb-8 font-Barlow">
       <span>
         <Image
           src={headImg.src}

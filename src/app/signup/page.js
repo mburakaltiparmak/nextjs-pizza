@@ -1,367 +1,338 @@
 "use client";
-import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { registerUser } from "@/lib/store/actions/userActions";
 import Link from "next/link";
+import SecondaryLoading from "@/components/secondaryLoading";
+import Footer from "@/components/footer";
+import Header from "@/components/header";
 
-const SignupPage = () => {
-  const router = useRouter();
-  const dispatch = useDispatch();
-  
-  // Redux state
-  const loading = useSelector((state) => state.global.loading);
-  const error = useSelector((state) => state.global.error);
-  const success = useSelector((state) => state.global.success);
-  
-  // Form state
+export default function RegisterPage() {
   const [formData, setFormData] = useState({
     name: "",
     surname: "",
     email: "",
-    username: "",
+    phoneNumber: "",
     password: "",
     confirmPassword: "",
-    phoneNumber: "",
   });
+  const [localError, setLocalError] = useState("");
+  const [touched, setTouched] = useState({
+    name: false,
+    surname: false,
+    email: false,
+    phoneNumber: false,
+    password: false,
+    confirmPassword: false,
+  });
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+
+  const loading = useAppSelector((state) => state.global.loading);
+  const globalError = useAppSelector((state) => state.global.error);
+  const isSuccess = useAppSelector((state) => state.global.success);
+
   
-  // Form validation state
-  const [formErrors, setFormErrors] = useState({});
+
+  // Validate each field
+  const fieldValidations = useMemo(() => {
+    const { name, surname, email, phoneNumber, password, confirmPassword } = formData;
   
-  // Handle input change
+    return {
+      name: name.trim() !== "",
+      surname: surname.trim() !== "",
+      email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+      phoneNumber: /^\d{1,11}$/.test(phoneNumber), // sadece sayılar ve en fazla 11 hane
+      password: password.length >= 6,
+      confirmPassword: password === confirmPassword && password.length >= 6
+    };
+  }, [formData]);
+  
+
+  // Check if the entire form is valid
+  const isFormValid = useMemo(() => {
+    return Object.values(fieldValidations).every(validation => validation);
+  }, [fieldValidations]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
     
-    // Clear error when user types
-    if (formErrors[name]) {
-      setFormErrors({
-        ...formErrors,
-        [name]: "",
-      });
+    // Mark the field as touched
+    setTouched((prev) => ({
+      ...prev,
+      [name]: true
+    }));
+    
+    // Clear any previous error
+    if (localError) {
+      setLocalError("");
     }
   };
-  
-  // Validate form
-  const validateForm = () => {
-    const errors = {};
-    
-    if (!formData.name.trim()) {
-      errors.name = "Ad alanı zorunludur";
-    }
-    
-    if (!formData.surname.trim()) {
-      errors.surname = "Soyad alanı zorunludur";
-    }
-    
-    if (!formData.email.trim()) {
-      errors.email = "E-posta alanı zorunludur";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = "Geçerli bir e-posta adresi giriniz";
-    }
-    
-    if (!formData.username.trim()) {
-      errors.username = "Kullanıcı adı zorunludur";
-    } else if (formData.username.length < 4) {
-      errors.username = "Kullanıcı adı en az 4 karakter olmalıdır";
-    }
-    
-    if (!formData.password) {
-      errors.password = "Şifre alanı zorunludur";
-    } else if (formData.password.length < 6) {
-      errors.password = "Şifre en az 6 karakter olmalıdır";
-    }
-    
-    if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = "Şifreler eşleşmiyor";
-    }
-    
-    if (!formData.phoneNumber.trim()) {
-      errors.phoneNumber = "Telefon numarası zorunludur";
-    }
-    
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched((prev) => ({
+      ...prev,
+      [name]: true
+    }));
   };
-  
-  // Handle form submission
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (validateForm()) {
-      // Prepare registration data - Backend'in beklediği alan adlarıyla
-      const userData = {
-        username: formData.username,
-        password: formData.password,
-        name: formData.name,
-        surname: formData.surname,
-        email: formData.email,
-        phoneNumber: formData.phoneNumber,
-      };
-      
-      try {
-        // İstek gönderilmeden önce veriyi konsola yazdır (Debug)
-        console.log("Gönderilecek kayıt verisi:", userData);
-        
-        // Dispatch register action
-        const result = await dispatch(registerUser(userData));
-        
-        if (!result.error) {
-          // Kayıt başarılı, login sayfasına yönlendir
-          
-        }
-      } catch (err) {
-        console.error("Kayıt işlemi sırasında hata:", err);
+    // Final validation before submission
+    const isValid = Object.entries(fieldValidations).every(([field, isValid]) => {
+      if (!isValid) {
+        setTouched((prev) => ({
+          ...prev,
+          [field]: true
+        }));
       }
+      return isValid;
+    });
+
+    if (!isValid) {
+      return;
+    }
+    
+    // Şifre tekrarını formdan çıkar
+    const { confirmPassword, ...registerData } = formData;
+    
+    try {
+      // Kayıt işlemini gerçekleştir
+      const result = await dispatch(registerUser(registerData));
+      
+      // Eğer sonuç bir hata içeriyorsa
+      if (result && result.error) {
+        // Özel hata mesajları
+        const errorMap = {
+          "Bu email zaten kullanılıyor": "Bu e-posta adresi zaten kayıtlı. Farklı bir e-posta adresi kullanın veya giriş yapın.",
+          "default": "Kayıt işlemi sırasında bir hata oluştu"
+        };
+
+        setLocalError(errorMap[result.error] || errorMap.default);
+      }
+      else {
+        router.push("/signup/success");
+      }
+    } catch (error) {
+      console.error("Kayıt sırasında beklenmeyen bir hata oluştu:", error);
+      setLocalError("Kayıt işlemi sırasında beklenmeyen bir hata oluştu");
     }
   };
-  
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-red py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-4 bg-lightgray p-10 rounded-xl shadow-md">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-darkgray font-Londrina_Solid">
-            Yeni Hesap Oluştur
-          </h2>
-          <p className="mt-2 text-center text-sm text-darkgray font-Barlow ">
-            Zaten bir hesabınız var mı?{" "}
-            <Link
-              href="/login"
-              className="font-semibold leading-4 text-yellow hover:text-red"
-            >
-              Giriş Yap
-            </Link>
-          </p>
-        </div>
-        
-        {error && (
-          <div
-            className="bg-red border border-red text-lightgray px-4 py-3 rounded relative"
-            role="alert"
-          >
-            <span className="block sm:inline">{error}</span>
+    <div>
+     <Header /> 
+    <div className="flex flex-col min-h-screen bg-red items-center justify-center font-Barlow">
+      <div className="bg-yellow shadow-md rounded-lg max-w-md mx-auto p-8 w-full">
+        <h2 className="mt-2 text-center text-3xl font-bold tracking-tight text-red ">
+          Hesap Oluştur
+        </h2>
+        <p className="mt-2 text-center text-sm text-gray-800 font-Quattrocento_Sans">
+          Zaten üye misiniz?{' '}
+          <Link href="/login" className="font-semibold text-red hover:text-red-700">
+            Giriş yapın
+          </Link>
+        </p>
+
+        {(localError || globalError) && (
+          <div className="bg-red p-3 rounded-md mt-4 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <p className="text-white text-sm">
+              {localError || (typeof globalError === 'string' ? globalError : 'Bir hata oluştu')}
+            </p>
           </div>
         )}
-        
-        {success && (
-          <div
-            className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative"
-            role="alert"
-          >
-            <span className="block sm:inline">{success}</span>
-          </div>
-        )}
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="flex flex-col gap-4 rounded-md shadow-sm -space-y-px">
-            <div className="grid grid-cols-2 gap-4">
-              {/* Ad */}
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-darkgray font-Barlow"
-                >
-                  Ad
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${
-                    formErrors.name ? "border-red" : "border-gray"
-                  } placeholder-gray-500 text-darkgray focus:outline-none focus:ring-red focus:border-red focus:z-10 sm:text-sm font-Barlow`}
-                  placeholder="Adınız"
-                />
-                {formErrors.name && (
-                  <p className="mt-1 text-xs text-red font-Barlow">
-                    {formErrors.name}
-                  </p>
-                )}
-              </div>
-              
-              {/* Soyad */}
-              <div>
-                <label
-                  htmlFor="surname"
-                  className="block text-sm font-medium text-darkgray font-Barlow"
-                >
-                  Soyad
-                </label>
-                <input
-                  id="surname"
-                  name="surname"
-                  type="text"
-                  value={formData.surname}
-                  onChange={handleChange}
-                  className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${
-                    formErrors.surname ? "border-red" : "border-gray-300"
-                  } placeholder-gray-500 text-darkgray focus:outline-none focus:ring-red focus:border-red focus:z-10 sm:text-sm font-Barlow`}
-                  placeholder="Soyadınız"
-                />
-                {formErrors.surname && (
-                  <p className="mt-1 text-xs text-red font-Barlow">
-                    {formErrors.surname}
-                  </p>
-                )}
-              </div>
-            </div>
-            
-            {/* E-posta */}
-            <div className="mb-4">
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-darkgray font-Barlow"
-              >
-                E-posta Adresi
+
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                İsim
               </label>
               <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${
-                  formErrors.email ? "border-red" : "border-gray-300"
-                } placeholder-gray-500 text-darkgray focus:outline-none focus:ring-red focus:border-red focus:z-10 sm:text-sm font-Barlow`}
-                placeholder="E-posta adresiniz"
-              />
-              {formErrors.email && (
-                <p className="mt-1 text-xs text-red font-Barlow">
-                  {formErrors.email}
-                </p>
-              )}
-            </div>
-            
-            {/* Kullanıcı Adı */}
-            <div className="mb-4">
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-darkgray font-Barlow"
-              >
-                Kullanıcı Adı
-              </label>
-              <input
-                id="username"
-                name="username"
+                id="name"
+                name="name"
                 type="text"
-                autoComplete="username"
-                value={formData.username}
+                autoComplete="given-name"
+                required
+                placeholder="John"
+                className={`mt-1 block w-full rounded-md border px-3 py-2 focus:outline-none sm:text-sm ${
+                  touched.name && !fieldValidations.name 
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                    : 'border-gray-300 focus:border-red focus:ring-red'
+                }`}
+                value={formData.name}
                 onChange={handleChange}
-                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${
-                  formErrors.username ? "border-red" : "border-gray-300"
-                } placeholder-gray-500 text-darkgray focus:outline-none focus:ring-red focus:border-red focus:z-10 sm:text-sm font-Barlow`}
-                placeholder="Kullanıcı adınız"
+                onBlur={handleBlur}
+                disabled={loading}
               />
-              {formErrors.username && (
-                <p className="mt-1 text-xs text-red font-Barlow">
-                  {formErrors.username}
-                </p>
+              {touched.name && !fieldValidations.name && (
+                <p className="text-red-500 text-xs mt-1">İsim zorunludur</p>
               )}
             </div>
-            
-            {/* Telefon Numarası */}
-            <div className="mb-4">
-              <label
-                htmlFor="phoneNumber"
-                className="block text-sm font-medium text-darkgray font-Barlow"
-              >
-                Telefon Numarası
+            <div>
+              <label htmlFor="surname" className="block text-sm font-medium text-gray-700">
+                Soyisim
               </label>
               <input
-                id="phoneNumber"
-                name="phoneNumber"
-                type="tel"
-                autoComplete="tel"
-                value={formData.phoneNumber}
+                id="surname"
+                name="surname"
+                type="text"
+                autoComplete="family-name"
+                placeholder="Doe"
+                required
+                className={`mt-1 block w-full rounded-md border px-3 py-2 focus:outline-none sm:text-sm ${
+                  touched.surname && !fieldValidations.surname 
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                    : 'border-gray-300 focus:border-red focus:ring-red'
+                }`}
+                value={formData.surname}
                 onChange={handleChange}
-                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${
-                  formErrors.phoneNumber ? "border-red" : "border-gray-300"
-                } placeholder-gray-500 text-darkgray focus:outline-none focus:ring-red focus:border-red focus:z-10 sm:text-sm font-Barlow`}
-                placeholder="Telefon numaranız"
+                onBlur={handleBlur}
+                disabled={loading}
               />
-              {formErrors.phoneNumber && (
-                <p className="mt-1 text-xs text-red font-Barlow">
-                  {formErrors.phoneNumber}
-                </p>
-              )}
-            </div>
-            
-            {/* Şifre */}
-            <div className="mb-4">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-darkgray font-Barlow"
-              >
-                Şifre
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                value={formData.password}
-                onChange={handleChange}
-                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${
-                  formErrors.password ? "border-red" : "border-gray-300"
-                } placeholder-gray-500 text-darkgray focus:outline-none focus:ring-red focus:border-red focus:z-10 sm:text-sm font-Barlow`}
-                placeholder="Şifreniz"
-              />
-              {formErrors.password && (
-                <p className="mt-1 text-xs text-red font-Barlow">
-                  {formErrors.password}
-                </p>
-              )}
-            </div>
-            
-            {/* Şifre Onayı */}
-            <div className="mb-4">
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-darkgray font-Barlow"
-              >
-                Şifre Onayı
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${
-                  formErrors.confirmPassword ? "border-red" : "border-gray-300"
-                } placeholder-gray-500 text-darkgray focus:outline-none focus:ring-red focus:border-red focus:z-10 sm:text-sm font-Barlow`}
-                placeholder="Şifrenizi tekrar girin"
-              />
-              {formErrors.confirmPassword && (
-                <p className="mt-1 text-xs text-red font-Barlow">
-                  {formErrors.confirmPassword}
-                </p>
+              {touched.surname && !fieldValidations.surname && (
+                <p className="text-red-500 text-xs mt-1">Soyisim zorunludur</p>
               )}
             </div>
           </div>
-          
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              E-posta Adresi
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              placeholder="example@example.com"
+              required
+              className={`mt-1 block w-full rounded-md border px-3 py-2 focus:outline-none sm:text-sm ${
+                touched.email && !fieldValidations.email 
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                  : 'border-gray-300 focus:border-red focus:ring-red'
+              }`}
+              value={formData.email}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              disabled={loading}
+            />
+            {touched.email && !fieldValidations.email && (
+              <p className="text-red-500 text-xs mt-1">Geçerli bir e-posta adresi girin</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
+              Telefon Numarası
+            </label>
+            <input
+              id="phoneNumber"
+              name="phoneNumber"
+              type="tel"
+              autoComplete="tel"
+              placeholder="05*********"
+              required
+              className={`mt-1 block w-full rounded-md border px-3 py-2 focus:outline-none sm:text-sm ${
+                touched.phoneNumber && !fieldValidations.phoneNumber 
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                  : 'border-gray-300 focus:border-red focus:ring-red'
+              }`}
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              disabled={loading}
+            />
+            {touched.phoneNumber && !fieldValidations.phoneNumber && (
+              <p className="text-red-500 text-xs mt-1">Geçerli bir telefon numarası giriniz.</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Şifre
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="En az 8 karakter olacak şekilde şifrenizi giriniz."
+              autoComplete="new-password"
+              required
+              className={`mt-1 block w-full rounded-md border px-3 py-2 focus:outline-none sm:text-sm ${
+                touched.password && !fieldValidations.password 
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                  : 'border-gray-300 focus:border-red focus:ring-red'
+              }`}
+              value={formData.password}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              disabled={loading}
+            />
+            {touched.password && !fieldValidations.password && (
+              <p className="text-red-500 text-xs mt-1">Şifre en az 8 karakter olmalıdır</p>
+            )}
+          </div>
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              Şifre Tekrar
+            </label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              placeholder="Şifrenizi tekrar giriniz."
+              className={`mt-1 block w-full rounded-md border px-3 py-2 focus:outline-none sm:text-sm ${
+                touched.confirmPassword && !fieldValidations.confirmPassword 
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                  : 'border-gray-300 focus:border-red focus:ring-red'
+              }`}
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              disabled={loading}
+            />
+            {touched.confirmPassword && !fieldValidations.confirmPassword && (
+              <p className="text-red-500 text-xs mt-1">Şifreler eşleşmiyor</p>
+            )}
+          </div>
+
           <div>
             <button
               type="submit"
-              disabled={loading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-lightgray bg-red hover:bg-yellow hover:text-red focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red font-Barlow ${
-                loading ? "opacity-70 cursor-not-allowed" : ""
+              className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                (!isFormValid || loading) 
+                  ? 'bg-red cursor-not-allowed hover:ring-2 hover:ring-offset-2 hover:ring-red' 
+                  : 'bg-green-800 hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red'
               }`}
+              disabled={!isFormValid || loading}
             >
-              {loading ? "Kayıt Yapılıyor..." : "Kayıt Ol"}
+              {loading ? (
+                <div className="flex items-center">
+                  <SecondaryLoading size="small" />
+                  <span className="ml-2">İşleniyor...</span>
+                </div>
+              ) : (
+                'Kaydol'
+              )}
             </button>
           </div>
         </form>
       </div>
     </div>
+    <Footer />
+    </div>
   );
-};
-
-export default SignupPage;
+}

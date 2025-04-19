@@ -1,80 +1,129 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { instance } from "@/lib/hooks";
-import Link from "next/link";
 
-const VerifyEmailPage = () => {
-  const searchParams = useSearchParams();
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { verifyEmail } from "@/lib/store/actions/userActions";
+import { faCheckCircle, faSpinner, faTimesCircle } from "@fortawesome/free-solid-svg-icons";
+import { useAppDispatch } from "@/lib/hooks"; // useAppDispatch hook'unu import ettik
+
+export default function VerifyEmailPage() {
+  const [verificationStatus, setVerificationStatus] = useState("pending");
+  const [message, setMessage] = useState("Email adresiniz doğrulanıyor...");
   const router = useRouter();
-  const [status, setStatus] = useState("verifying"); // "verifying", "success", "error"
-  const [message, setMessage] = useState("");
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+  const dispatch = useAppDispatch(); // Redux dispatch fonksiyonunu aldık
 
   useEffect(() => {
-    const token = searchParams.get("token");
-    
-    if (!token) {
-      setStatus("error");
-      setMessage("Doğrulama bağlantısı geçersiz.");
-      return;
-    }
+    // Debug bilgisi
+    console.log("VerifyEmailPage yükleniyor, token:", token);
 
-    const verifyEmail = async () => {
+    const verifyUserEmail = async () => {
+      if (!token) {
+        console.log("Token bulunamadı!");
+        setVerificationStatus("error");
+        setMessage("Doğrulama bağlantısı geçersiz. Token bulunamadı.");
+        return;
+      }
+
       try {
-        const response = await instance.get(`/auth/verify-email?token=${token}`);
-        setStatus("success");
-        setMessage("E-posta adresiniz başarıyla doğrulandı. Artık giriş yapabilirsiniz.");
+        console.log("verifyEmail action'ı dispatch ediliyor...");
+        const result = await dispatch(verifyEmail(token));
+        console.log("verifyEmail sonucu:", result);
+
+        if (result && result.success) {
+          console.log("Doğrulama başarılı!");
+          setVerificationStatus("success");
+          setMessage("Email adresiniz başarıyla doğrulandı.");
+          
+          // 3 saniye sonra giriş sayfasına yönlendir
+          setTimeout(() => {
+            router.push("/login");
+          }, 3000);
+        } else {
+          console.log("Doğrulama başarısız:", result?.error);
+          setVerificationStatus("error");
+          setMessage(
+            result && result.error 
+              ? result.error 
+              : "Doğrulama başarısız oldu. Token geçersiz veya süresi dolmuş olabilir."
+          );
+        }
       } catch (error) {
-        setStatus("error");
-        setMessage(
-          error.response?.data || 
-          "Doğrulama işlemi başarısız oldu. Bağlantınız geçersiz veya süresi dolmuş olabilir."
-        );
+        console.error("Doğrulama işlemi hata:", error);
+        setVerificationStatus("error");
+        setMessage("Doğrulama sırasında bir hata oluştu. Lütfen daha sonra tekrar deneyin.");
       }
     };
 
-    verifyEmail();
-  }, [searchParams]);
+    verifyUserEmail();
+  }, [token, router, dispatch]);
 
+  // Renderer bileşeni aynı (değişiklik yok)
   return (
-    <div className="min-h-screen flex items-center justify-center bg-red py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-4 bg-lightgray p-10 rounded-xl shadow-md">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-darkgray font-Londrina_Solid">
-            E-posta Doğrulama
-          </h2>
-        </div>
-
-        {status === "verifying" && (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red mx-auto"></div>
-            <p className="mt-4 text-darkgray font-Barlow">Doğrulama işlemi yapılıyor...</p>
+    <div className="flex flex-col min-h-screen bg-red items-center justify-center">
+      <div className="bg-yellow shadow-md rounded-lg max-w-md mx-auto p-8 w-full text-center">
+        {verificationStatus === "pending" && (
+          <div className="flex flex-col items-center space-y-4">
+            <FontAwesomeIcon icon={faSpinner} className="text-red text-4xl animate-spin" />
+            <h2 className="text-2xl font-bold tracking-tight text-red font-Barlow">
+              Email Doğrulanıyor
+            </h2>
+            <p className="text-gray-800 font-Quattrocento_Sans">
+              Lütfen bekleyin, email adresiniz doğrulanıyor...
+            </p>
           </div>
         )}
 
-        {status === "success" && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
-            <span className="block sm:inline">{message}</span>
-            <div className="mt-6 text-center">
-              <Link
-                href="/login"
-                className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-lightgray bg-red hover:bg-yellow hover:text-red focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red"
+        {verificationStatus === "success" && (
+          <div className="flex flex-col items-center space-y-4">
+            <FontAwesomeIcon icon={faCheckCircle} className="text-green-600 text-6xl" />
+            <h2 className="text-3xl font-bold tracking-tight text-red font-Barlow">
+              Email Doğrulandı!
+            </h2>
+            <p className="text-gray-800 font-Quattrocento_Sans">
+              {message}
+            </p>
+            <p className="text-sm text-gray-600">
+              3 saniye içinde giriş sayfasına yönlendirileceksiniz.
+            </p>
+            <Link 
+              href="/login" 
+              className="inline-block px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red"
+            >
+              Giriş Yap
+            </Link>
+          </div>
+        )}
+
+        {verificationStatus === "error" && (
+          <div className="flex flex-col items-center space-y-4">
+            <FontAwesomeIcon icon={faTimesCircle} className="text-red-600 text-6xl" />
+            <h2 className="text-3xl font-bold tracking-tight text-red font-Barlow">
+              Doğrulama Başarısız
+            </h2>
+            <p className="text-gray-800 font-Quattrocento_Sans">
+              {message}
+            </p>
+            <div className="bg-white p-4 rounded-md mb-2 border border-gray-200">
+              <p className="text-sm text-gray-700">
+                <strong>Yardım:</strong> Doğrulama bağlantısının süresi 24 saat sonra dolar. Eğer süre dolduysa, yeni bir doğrulama bağlantısı talep edebilirsiniz.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link 
+                href="/login" 
+                className="inline-block px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red"
               >
                 Giriş Yap
               </Link>
-            </div>
-          </div>
-        )}
-
-        {status === "error" && (
-          <div className="bg-red border border-red text-lightgray px-4 py-3 rounded relative">
-            <span className="block sm:inline">{message}</span>
-            <div className="mt-6 text-center">
-              <Link
-                href="/signup"
-                className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-red bg-lightgray hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red"
+              <Link 
+                href="/" 
+                className="inline-block px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red"
               >
-                Yeniden Kayıt Ol
+                Ana Sayfaya Dön
               </Link>
             </div>
           </div>
@@ -82,6 +131,4 @@ const VerifyEmailPage = () => {
       </div>
     </div>
   );
-};
-
-export default VerifyEmailPage;
+}

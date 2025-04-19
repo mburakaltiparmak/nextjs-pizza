@@ -1,8 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
-import { logout } from "@/lib/store/actions/userActions";
+import { useAppDispatch } from "@/lib/hooks";
 import {
   ChevronRight,
   ChevronLeft,
@@ -13,76 +13,112 @@ import {
   ShoppingCart,
   User,
 } from "lucide-react";
-import { icon } from "@fortawesome/fontawesome-svg-core";
 
+// LogoutHandler ayrı bir bileşene taşındı
+const LogoutButton = ({ collapsed, onLogoutStart }) => {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+
+  const handleLogout = useCallback(async () => {
+    // Eğer zaten çıkış yapılıyorsa işlemi tekrarlama
+    if (isLoggingOut) return;
+
+    try {
+      // Logout durumunu işaretle
+      setIsLoggingOut(true);
+      
+      // Parent bileşene bildir
+      if (onLogoutStart) {
+        onLogoutStart();
+      }
+      
+      // Dynamic import kullanarak logout fonksiyonunu yükle
+      const userActionsModule = await import('@/lib/store/actions/userActions');
+      
+      // Logout action'ını çağır
+      await dispatch(userActionsModule.logout());
+      
+      // Çıkış başarılı - localStorage'ı temizle
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userEmail');
+      }
+      
+      // Kullanıcıyı login sayfasına yönlendir
+      setTimeout(() => {
+        router.push('/login');
+      }, 100);
+      
+    } catch (error) {
+      console.error("Çıkış yapma hatası:", error);
+      setIsLoggingOut(false);
+    }
+  }, [isLoggingOut, dispatch, router, onLogoutStart]);
+
+  return (
+    <button
+      onClick={handleLogout}
+      disabled={isLoggingOut}
+      className={`flex items-center w-full p-3 rounded-lg text-white hover:bg-yellow hover:text-black border border-red font-medium ${
+        isLoggingOut ? 'opacity-70 cursor-not-allowed' : ''
+      }`}
+    >
+      <LogOut
+        className={`${collapsed ? "mx-auto" : "mr-3"}`}
+        size={20}
+      />
+      {!collapsed && <span>{isLoggingOut ? 'Çıkış Yapılıyor...' : 'Çıkış Yap'}</span>}
+    </button>
+  );
+};
+
+// Ana Sidebar bileşeni
 const Sidebar = ({ activePage = "dashboard" }) => {
   const router = useRouter();
-  const dispatch = useDispatch();
   const [collapsed, setCollapsed] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      // Redux logout action'ını dispatch et
-      const result = await dispatch(logout());
-
-      // Çıkış başarılı ise login sayfasına yönlendir
-      if (result && result.success) {
-        router.push("/login");
-      }
-    } catch (error) {
-      console.error("Çıkış yapılırken hata oluştu:", error);
-    }
-  };
-
+  // Sidebar durumunu değiştir
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
   };
 
-  const navigateTo = (path) => {
+  // Sayfa yönlendirmesi
+  const navigateTo = useCallback((path) => {
+    setIsNavigating(false);
     router.push(path);
-  };
+  }, [router]);
 
-  // Menü öğelerini tanımlayalım
+  // Çıkış işlemi başladığında çağrılacak
+  const handleLogoutStart = useCallback(() => {
+    setIsNavigating(true);
+  }, []);
+
+  // Menü öğeleri
   const menuItems = [
     {
       path: "/dashboard",
       name: "Dashboard",
-      icon: (
-        <LayoutDashboard
-          className={`${collapsed ? "mx-auto" : "mr-3"}`}
-          size={20}
-        />
-      ),
+      icon: <LayoutDashboard className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />,
       id: "dashboard",
     },
     {
       path: "/category",
       name: "Kategoriler",
-      icon: (
-        <ListOrdered
-          className={`${collapsed ? "mx-auto" : "mr-3"}`}
-          size={20}
-        />
-      ),
+      icon: <ListOrdered className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />,
       id: "category",
     },
     {
       path: "/product",
       name: "Ürünler",
-      icon: (
-        <Package className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />
-      ),
+      icon: <Package className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />,
       id: "product",
     },
     {
       path: "/orders",
       name: "Siparişler",
-      icon: (
-        <ShoppingCart
-          className={`${collapsed ? "mx-auto" : "mr-3"}`}
-          size={20}
-        />
-      ),
+      icon: <ShoppingCart className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />,
       id: "orders",
     },
     {
@@ -102,8 +138,10 @@ const Sidebar = ({ activePage = "dashboard" }) => {
       <div className="p-4 flex justify-between items-center border-b border-red-700">
         {!collapsed && (
           <button
-          onClick={()=>router.push("/")}
-          className="text-xl font-bold font-Barlow text-white">
+            onClick={() => navigateTo("/")}
+            disabled={isNavigating}
+            className="text-xl font-bold font-Barlow text-white"
+          >
             Pizza Admin
           </button>
         )}
@@ -121,11 +159,12 @@ const Sidebar = ({ activePage = "dashboard" }) => {
             <li key={item.id}>
               <button
                 onClick={() => navigateTo(item.path)}
+                disabled={isNavigating}
                 className={`flex items-center w-full p-3 rounded-lg ${
                   activePage === item.id
                     ? "bg-yellow text-black"
                     : "text-white hover:bg-yellow hover:text-black"
-                } border border-red font-medium`}
+                } border border-red font-medium ${isNavigating ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
                 {item.icon}
                 {!collapsed && <span>{item.name}</span>}
@@ -135,16 +174,7 @@ const Sidebar = ({ activePage = "dashboard" }) => {
           ))}
 
           <li className="mt-6">
-            <button
-              onClick={handleLogout}
-              className="flex items-center w-full p-3 rounded-lg text-white hover:bg-yellow hover:text-black border border-red font-medium"
-            >
-              <LogOut
-                className={`${collapsed ? "mx-auto" : "mr-3"}`}
-                size={20}
-              />
-              {!collapsed && <span>Çıkış Yap</span>}
-            </button>
+            <LogoutButton collapsed={collapsed} onLogoutStart={handleLogoutStart} />
           </li>
         </ul>
       </div>
