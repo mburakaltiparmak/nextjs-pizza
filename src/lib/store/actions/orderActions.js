@@ -176,7 +176,7 @@ export const fetchGuestOrderDetail = (orderId, email) => async (dispatch) => {
   dispatch(setOrderFetchState(fetchStates.FETCHING));
   
   try {
-    const response = await instance.get(`/orders/guest/${orderId}`, {
+    const response = await instance.get(`/orders/${orderId}`, {
       params: { email }
     });
     
@@ -238,20 +238,36 @@ export const createOrder = ({ orderData, paymentData, isGuest = false }) => asyn
       console.log("Yeni adres kullanılıyor:", requestData.newAddress);
     }
     
-    // Misafir siparişi ise e-posta ve telefon ekle
+    // Misafir siparişi ise gerekli bilgileri ekle
     if (isGuest) {
+      // isGuestOrder flag'ini ayarla
+      requestData.isGuestOrder = true;
+      
+      // Misafir bilgilerini kontrol et
+      if (!orderData.guestName || !orderData.guestSurname) {
+        throw new Error("Misafir siparişi için ad ve soyad gereklidir.");
+      }
+      
       if (!orderData.guestEmail || !orderData.guestPhone) {
         throw new Error("Misafir siparişi için e-posta ve telefon gereklidir.");
       }
+      
+      // Tüm misafir bilgilerini ekle
+      requestData.guestName = orderData.guestName;
+      requestData.guestSurname = orderData.guestSurname;
       requestData.guestEmail = orderData.guestEmail;
       requestData.guestPhone = orderData.guestPhone;
-      console.log("Misafir siparişi oluşturuluyor:", requestData.guestEmail);
+      
+      console.log("Misafir siparişi oluşturuluyor:", 
+        requestData.guestName, 
+        requestData.guestSurname, 
+        requestData.guestEmail);
     }
     
     console.log("Backend'e gönderilen sipariş verisi:", JSON.stringify(requestData, null, 2));
     
-    // Doğru endpoint'i seç ve isteği gönder
-    const endpoint = isGuest ? "/orders/guest" : "/orders";
+    // İsteği gönder - api prefix'ini doğru şekilde kullan
+    const endpoint = "/orders";
     const response = await instance.post(endpoint, requestData);
     
     if (!response.data || !response.data.id) {
@@ -264,10 +280,8 @@ export const createOrder = ({ orderData, paymentData, isGuest = false }) => asyn
     // Ödeme işlemini yap
     try {
       if (orderData.paymentMethod === "ONLINE_CREDIT_CARD" && paymentData) {
-        // Online kredi kartı ödemesi
-        const paymentEndpoint = isGuest
-          ? `/orders/guest/${orderId}/pay/card`
-          : `/orders/${orderId}/pay/card`;
+        // Online kredi kartı ödemesi - api prefix'ini doğru şekilde kullan
+        const paymentEndpoint = `/api/orders/${orderId}/pay/card`;
         
         const paymentRequest = {
           cardNumber: paymentData.cardNumber,
@@ -281,10 +295,8 @@ export const createOrder = ({ orderData, paymentData, isGuest = false }) => asyn
         await instance.post(paymentEndpoint, paymentRequest);
       } 
       else if (orderData.paymentMethod === "CASH") {
-        // Nakit ödeme
-        const paymentEndpoint = isGuest
-          ? `/orders/guest/${orderId}/pay/cash`
-          : `/orders/${orderId}/pay/cash`;
+        // Nakit ödeme - api prefix'ini doğru şekilde kullan
+        const paymentEndpoint = `/api/orders/${orderId}/pay/cash`;
         
         console.log(`Nakit ödeme işaretleniyor: ${paymentEndpoint}`);
         await instance.post(paymentEndpoint);
@@ -311,7 +323,7 @@ export const createOrder = ({ orderData, paymentData, isGuest = false }) => asyn
     
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
-      console.error("Backend hata detayı:", err.response.data);
+      console.error("Backend hata detayı:", err.response);
     } else if (err.message) {
       errorMessage = err.message;
     }
@@ -355,7 +367,7 @@ export const cancelGuestOrder = (orderId, email) => async (dispatch) => {
   dispatch(setLoading(true));
   
   try {
-    const response = await instance.post(`/orders/guest/${orderId}/cancel`, { email });
+    const response = await instance.post(`/orders/${orderId}/cancel`, { email });
     
     dispatch(setLoading(false));
     dispatch(setSuccess("Siparişiniz iptal edildi"));

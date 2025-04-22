@@ -32,7 +32,6 @@ const FloatingUserButton = () => {
   const role = useSelector((state) => state.user.role);
   const authProvider = useSelector((state) => state.user.authProvider);
   const storedRememberMe = useSelector((state) => state.user.rememberMe);
-  console.log("user role:", role);
   
   // Local state
   const [loginOpen, setLoginOpen] = useState(false);

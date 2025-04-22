@@ -38,6 +38,7 @@ export const userReducer = (state = initialState, action) => {
       return {
         ...state,
         email: action.payload
+        
       };
     case userActions.SET_REMEMBER_ME:
       return {

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { createOrder } from "@/lib/store/actions/orderActions";
+import { clearGuestData } from "@/lib/store/actions/guestActions"; // Import clearGuestData action
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, CreditCard } from "lucide-react";
@@ -208,22 +209,33 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
 
   // Kullanıcı verileri ve teslimat bilgileri
   const userData = useAppSelector((state) => state.order.userData);
+  const selectedAddress = useAppSelector((state) => state.order.selectedAddress);
   const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
-  console.log("userData",userData);
+  const role = useAppSelector((state) => state.user.role);
+  const isGuest = role === "GUEST";
+  const guestData = useAppSelector((state) => state.guest);
+  
+  console.log("userData", userData);
+  console.log("selectedAddress", selectedAddress);
+  console.log("guestData", guestData);
 
   // Teslimat bilgilerini görüntüle
   const renderDeliveryInfo = () => {
-    // Kullanıcı giriş yapmış ve seçilmiş kullanıcı adresi varsa
-    if (isAuthenticated && userData?.userAddress) {
-      const address = userData.userAddress;
+    // Seçilen adres varsa göster
+    if (selectedAddress) {
       return (
         <div className="mt-6 p-4 bg-gray-50 rounded-md">
           <h3 className="font-medium text-gray-800 mb-2">Teslimat Bilgileri</h3>
           <div className="space-y-2 text-sm">
-            <p><span className="font-medium">Adres Başlığı:</span> {address.addressTitle || `Adres ${address.id}`}</p>
-            <p><span className="font-medium">Alıcı:</span> {address.recipientName}</p>
-            <p><span className="font-medium">Adres:</span> {address.fullAddress}</p>
-            <p><span className="font-medium">Konum:</span> {address.district}, {address.city}</p>
+            {selectedAddress.addressTitle && (
+              <p><span className="font-medium">Adres Başlığı:</span> {selectedAddress.addressTitle}</p>
+            )}
+            <p><span className="font-medium">Alıcı:</span> {selectedAddress.recipientName}</p>
+            <p><span className="font-medium">Adres:</span> {selectedAddress.fullAddress}</p>
+            <p><span className="font-medium">Konum:</span> {selectedAddress.district}, {selectedAddress.city}</p>
+            {selectedAddress.phoneNumber && (
+              <p><span className="font-medium">Telefon:</span> {selectedAddress.phoneNumber}</p>
+            )}
           </div>
         </div>
       );
@@ -242,24 +254,23 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
       );
     }
     
-    // Yeni adres girilmiş (hem kullanıcı hem misafir)
-    if (userData?.newAddress) {
-      const address = userData.newAddress;
+    return null;
+  };
+
+  // Misafir bilgilerini görüntüle
+  const renderGuestInfo = () => {
+    if (isGuest && guestData) {
       return (
         <div className="mt-6 p-4 bg-gray-50 rounded-md">
-          <h3 className="font-medium text-gray-800 mb-2">Teslimat Bilgileri</h3>
+          <h3 className="font-medium text-gray-800 mb-2">Müşteri Bilgileri</h3>
           <div className="space-y-2 text-sm">
-            <p><span className="font-medium">Alıcı:</span> {address.recipientName}</p>
-            <p><span className="font-medium">Adres:</span> {address.fullAddress}</p>
-            <p><span className="font-medium">Konum:</span> {address.district}, {address.city}</p>
-            {address.phoneNumber && (
-              <p><span className="font-medium">Telefon:</span> {address.phoneNumber}</p>
-            )}
+            <p><span className="font-medium">İsim Soyisim:</span> {guestData.name} {guestData.surname}</p>
+            <p><span className="font-medium">E-posta:</span> {guestData.email}</p>
+            <p><span className="font-medium">Telefon:</span> {guestData.phoneNumber}</p>
           </div>
         </div>
       );
     }
-    
     return null;
   };
 
@@ -295,16 +306,8 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
           {/* Teslimat Bilgileri Özeti */}
           {renderDeliveryInfo()}
           
-          {/* Misafir Siparişi Bilgileri */}
-          {!isAuthenticated && userData?.guestEmail && (
-            <div className="mt-6 p-4 bg-gray-50 rounded-md">
-              <h3 className="font-medium text-gray-800 mb-2">Müşteri Bilgileri</h3>
-              <div className="space-y-2 text-sm">
-                <p><span className="font-medium">E-posta:</span> {userData.guestEmail}</p>
-                <p><span className="font-medium">Telefon:</span> {userData.guestPhone}</p>
-              </div>
-            </div>
-          )}
+          {/* Misafir Bilgileri Özeti */}
+          {renderGuestInfo()}
         </div>
       </div>
       
@@ -337,10 +340,15 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
 
   // Redux state'inden ödeme yöntemini ve diğer bilgileri al
   const userData = useAppSelector((state) => state.order.userData);
-  const selectedAddress = useAppSelector((state)=>state.order.selectedAddress);
+  const selectedAddress = useAppSelector((state) => state.order.selectedAddress);
   const cartData = useAppSelector((state) => state.order.cart);
   const paymentMethod = useAppSelector((state) => state.order.paymentMethod);
   const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
+  const role = useAppSelector((state) => state.user.role);
+  const isGuest = role === "GUEST";
+  
+  // Misafir bilgilerini al
+  const guestData = useAppSelector((state) => state.guest);
   
   // Online kart ödemesi için validation schema
   const onlineCardSchema = z.object({
@@ -382,7 +390,8 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
       console.log("Form verileri:", formData);
       console.log("Adres bilgileri:", selectedAddress);
       console.log("Sepet içeriği:", cartData);
-      console.log("Kullanıcı bilgileri:",userData);
+      console.log("Kullanıcı bilgileri:", userData);
+      console.log("Misafir bilgileri:", guestData);
       
       // Step3'ü başarılı olarak işaretle
       setStep3(true);
@@ -392,7 +401,7 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
       });
       
       // Adres bilgilerini kontrol et
-      if (!selectedAddress.id && !selectedAddress.userAddress && !selectedAddress.newAddress) {
+      if (!selectedAddress) {
         throw new Error("Lütfen bir teslimat adresi seçin veya ekleyin.");
       }
       
@@ -409,38 +418,49 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
         notes: formData.notes || ""
       };
       
-      // Kullanıcı giriş yapmış ve kayıtlı adresi seçilmiş
-      if (isAuthenticated && userData.addressId) {
-        orderRequest.addressId = userData.addressId;
-        console.log("Kayıtlı adres kullanılıyor, ID:", userData.addressId);
-      }
-      // Kullanıcı giriş yapmış ve kullanıcı adresi seçilmiş
-      else if (isAuthenticated && userData.userAddress) {
-        orderRequest.addressId = userData.userAddress.id;
-        console.log("Kullanıcı adresi kullanılıyor, ID:", userData.userAddress.id);
-      }
-      // Yeni adres girilmiş
-      else if (userData.newAddress) {
-        // Backend'in beklediği formatta yeni adres bilgilerini gönder
+      // Misafir siparişi mi?
+      if (isGuest) {
+        // Misafir sipariş flag'i
+        orderRequest.isGuestOrder = true;
+        
+        // Misafir bilgilerini ekle
+        orderRequest.guestName = guestData.name;
+        orderRequest.guestSurname = guestData.surname;
+        orderRequest.guestEmail = guestData.email;
+        orderRequest.guestPhone = guestData.phoneNumber;
+        
+        // Misafir adres bilgileri
         orderRequest.newAddress = {
-          fullAddress: userData.newAddress.fullAddress,
-          city: userData.newAddress.city,
-          district: userData.newAddress.district,
-          postalCode: userData.newAddress.postalCode || "",
-          addressTitle: userData.newAddress.addressTitle || "Yeni Adres",
-          phoneNumber: userData.newAddress.phoneNumber || "",
-          recipientName: userData.newAddress.recipientName || userData.fullname || "",
-          saveAddress: userData.newAddress.saveAddress === true,
-          isDefault: userData.newAddress.isDefault === true
+          fullAddress: selectedAddress.fullAddress,
+          city: selectedAddress.city,
+          district: selectedAddress.district,
+          postalCode: selectedAddress.postalCode || "",
+          phoneNumber: selectedAddress.phoneNumber || "",
+          recipientName: selectedAddress.recipientName || `${guestData.name} ${guestData.surname}`,
+          saveAddress: false // Misafir kullanıcı adresi kaydedemez
         };
-        console.log("Yeni adres kullanılıyor:", orderRequest.newAddress);
-      }
-      
-      // Misafir bilgilerini ekle (kullanıcı giriş yapmamışsa)
-      if (!isAuthenticated) {
-        orderRequest.guestEmail = userData.guestEmail;
-        orderRequest.guestPhone = userData.guestPhone;
-        console.log("Misafir bilgileri:", userData.guestEmail, userData.guestPhone);
+      } 
+      // Normal kullanıcı siparişi
+      else {
+        // Kullanıcı giriş yapmış ve kayıtlı adresi seçilmiş
+        if (isAuthenticated && selectedAddress.id) {
+          orderRequest.addressId = selectedAddress.id;
+        }
+        // Yeni adres girilmiş
+        else {
+          // Backend'in beklediği formatta yeni adres bilgilerini gönder
+          orderRequest.newAddress = {
+            fullAddress: selectedAddress.fullAddress,
+            city: selectedAddress.city,
+            district: selectedAddress.district,
+            postalCode: selectedAddress.postalCode || "",
+            addressTitle: selectedAddress.addressTitle || "Yeni Adres",
+            phoneNumber: selectedAddress.phoneNumber || "",
+            recipientName: selectedAddress.recipientName || userData.fullname || "",
+            saveAddress: selectedAddress.saveAddress === true,
+            isDefault: selectedAddress.isDefault === true
+          };
+        }
       }
       
       // Ödeme bilgileri (sadece online kart ödemesi için)
@@ -458,7 +478,7 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
       const result = await dispatch(createOrder({
         orderData: orderRequest,
         paymentData: paymentData,
-        isGuest: !isAuthenticated
+        isGuest: isGuest
       }));
       
       // Hata durumunu kontrol et
@@ -471,6 +491,11 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
         });
         setStep3(false);
         return;
+      }
+      
+      // Misafir bilgilerini temizle (sipariş tamamlandığında)
+      if (isGuest) {
+        dispatch(clearGuestData());
       }
       
       // Başarılı ise yönlendir

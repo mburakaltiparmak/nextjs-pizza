@@ -33,6 +33,8 @@ const AddressForm = ({
   const { toast } = useToast();
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
+  const role = useAppSelector((state) => state.user.role);
+  const isGuestUser = role === "GUEST" || isGuest;
   const [isSaving, setIsSaving] = useState(false);
 
   const {
@@ -60,6 +62,23 @@ const AddressForm = ({
 
   const onFormSubmit = async (data) => {
     try {
+      // Eğer misafir kullanıcı ise, adresi doğrudan parent komponente ilet, API çağrısı yapma
+      if (isGuestUser) {
+        // Misafir kullanıcılar için API çağrısı yapmadan direk adresi kullan
+        onSubmit({
+          ...data,
+          id: null, // Misafir kullanıcılar için ID null olmalı
+          saveAddress: false // Misafir kullanıcılar adresi kaydedemez
+        });
+        
+        toast({
+          title: "Adres bilgileri alındı",
+          description: "Siparişiniz için kullanılacak."
+        });
+        
+        return;
+      }
+      
       // Eğer kullanıcı giriş yapmışsa ve "Adresi Kaydet" seçeneğini işaretlediyse
       if (isAuthenticated && data.saveAddress) {
         setIsSaving(true);
@@ -281,7 +300,8 @@ const AddressForm = ({
         )}
       </div>
 
-      {isAuthenticated && !isGuest && (
+      {/* Adres kaydetme seçeneğini sadece giriş yapmış ve misafir olmayan kullanıcılara göster */}
+      {isAuthenticated && !isGuestUser && (
         <div className="flex flex-col space-y-2">
           <div className="flex items-center space-x-2">
             <Controller
@@ -320,7 +340,8 @@ const AddressForm = ({
           )}
         </div>
       )}
-<div>
+
+      <div>
         <button
           type="submit"
           disabled={isSubmitting || isSaving}

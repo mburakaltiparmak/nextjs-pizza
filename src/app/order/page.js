@@ -121,56 +121,55 @@ const Page = () => {
   useEffect(() => {
     setToplam(malzemeFiyat + boyutFiyat + hamurFiyat);
   }, [malzemeFiyat, boyutFiyat, hamurFiyat]);
-  const idCreator = () => {
-    const numberCreator = (max) => {
-      let number = Math.round(Math.random() * max);
-      return number;
-    };
-    let number = numberCreator(100);
-    while (number <= 18) {
-      number = numberCreator(100);
-    }
-    return number;
+  // idCreator fonksiyonunu güncelleyelim - Custom pizza için çok daha büyük ID'ler oluşturalım
+// Custom pizza için sepet yapısına uygun obje oluşturan fonksiyon
+// Custom pizza için sepet yapısına uygun obje oluşturan fonksiyon
+const createCustomPizzaCartItem = (data, toplam) => {
+  // ID oluştur - Frontend için yerel bir ID olacak
+  const customId = Date.now(); // Timestamp kullanarak benzersiz bir ID oluştur
+  
+  // Custom pizza detaylarını JSON olarak sakla
+  const customDetails = {
+    isCustom: true,
+    items: data.items,
+    size: data.boyut,
+    dough: data.hamur,
+    orderNote: data.siparisNotu || ""
   };
-  let id = idCreator();
+  
+  // ÖNEMLİ: Burada addToCart'ın beklediği yapıya uygun
+  // bir nesne oluşturuyoruz
+  return {
+    id: customId, 
+    name: "Custom Pizza",
+    rating: 4.9,
+    stock: 1,
+    price: toplam,
+    img: "https://res.cloudinary.com/dqjqkgpt3/image/upload/v1724010330/food-2_zwrtrh.png",
+    categoryId: 2,
+    description: JSON.stringify(customDetails),
+    count: 1  // Count'u baştan ekliyoruz
+  };
+};
 
-  // onSubmit fonksiyonunu şu şekilde değiştirin
+// onSubmit fonksiyonu
 const onSubmit = (data) => {
-  const customPizzaId = idCreator();
+  // Custom pizza oluştur
+  const customPizza = createCustomPizzaCartItem(data, toplam);
   
-  // Sepet yapısına uygun şekilde düzenlenmiş custom pizza objesi
-  const customPizzaCart = { 
-    id: customPizzaId,
-    product: {
-      id: customPizzaId,
-      name: "Custom Pizza",
-      rating: 4.9, 
-      stock: 1,
-      price: toplam,
-      img: "https://res.cloudinary.com/dqjqkgpt3/image/upload/v1724010330/food-2_zwrtrh.png",
-      categoryId: 2,
-      // Custom pizza'ya özel ek alanlar
-      isCustom: true,
-      items: data.items,
-      size: data.boyut,
-      dough: data.hamur,
-      siparisNotu: data.siparisNotu
-    },
-    count: 1
-  };
-
   // Sepete ekle
-  dispatch(addToCart(customPizzaCart));
+  dispatch(addToCart(customPizza));
   
+  // Bildirim göster
   toast({
     title: (
       <div className="flex flex-row gap-4 items-center py-4">
         <img
-          src={customPizzaCart.product.img}
-          alt={customPizzaCart.product.name}
+          src={customPizza.img}
+          alt={customPizza.name}
           className="object-cover w-[32px]"
         />
-        <p>{customPizzaCart.product.name} sepete başarıyla eklendi.</p>
+        <p>{customPizza.name} sepete başarıyla eklendi.</p>
       </div>
     ),
   });
