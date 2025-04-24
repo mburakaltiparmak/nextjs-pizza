@@ -416,32 +416,7 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
         // Ödeme bilgileri
         paymentMethod: paymentMethod,
         notes: formData.notes || ""
-      };
-      
-      // Misafir siparişi mi?
-      if (isGuest) {
-        // Misafir sipariş flag'i
-        orderRequest.isGuestOrder = true;
-        
-        // Misafir bilgilerini ekle
-        orderRequest.guestName = guestData.name;
-        orderRequest.guestSurname = guestData.surname;
-        orderRequest.guestEmail = guestData.email;
-        orderRequest.guestPhone = guestData.phoneNumber;
-        
-        // Misafir adres bilgileri
-        orderRequest.newAddress = {
-          fullAddress: selectedAddress.fullAddress,
-          city: selectedAddress.city,
-          district: selectedAddress.district,
-          postalCode: selectedAddress.postalCode || "",
-          phoneNumber: selectedAddress.phoneNumber || "",
-          recipientName: selectedAddress.recipientName || `${guestData.name} ${guestData.surname}`,
-          saveAddress: false // Misafir kullanıcı adresi kaydedemez
-        };
-      } 
-      // Normal kullanıcı siparişi
-      else {
+      }; 
         // Kullanıcı giriş yapmış ve kayıtlı adresi seçilmiş
         if (isAuthenticated && selectedAddress.id) {
           orderRequest.addressId = selectedAddress.id;
@@ -460,7 +435,7 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
             saveAddress: selectedAddress.saveAddress === true,
             isDefault: selectedAddress.isDefault === true
           };
-        }
+        
       }
       
       // Ödeme bilgileri (sadece online kart ödemesi için)
@@ -478,7 +453,6 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
       const result = await dispatch(createOrder({
         orderData: orderRequest,
         paymentData: paymentData,
-        isGuest: isGuest
       }));
       
       // Hata durumunu kontrol et
@@ -492,12 +466,6 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
         setStep3(false);
         return;
       }
-      
-      // Misafir bilgilerini temizle (sipariş tamamlandığında)
-      if (isGuest) {
-        dispatch(clearGuestData());
-      }
-      
       // Başarılı ise yönlendir
       router.push("/success");
     } catch (error) {

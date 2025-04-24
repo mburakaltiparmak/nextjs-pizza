@@ -197,7 +197,7 @@ export const fetchGuestOrderDetail = (orderId, email) => async (dispatch) => {
   }
 };
 // createOrder fonksiyonu - Hem normal kullanıcı hem misafir siparişleri için
-export const createOrder = ({ orderData, paymentData, isGuest = false }) => async (dispatch) => {
+export const createOrder = ({ orderData, paymentData }) => async (dispatch) => {
   dispatch(setLoading(true));
   
   try {
@@ -239,36 +239,12 @@ export const createOrder = ({ orderData, paymentData, isGuest = false }) => asyn
     }
     
     // Misafir siparişi ise gerekli bilgileri ekle
-    if (isGuest) {
-      // isGuestOrder flag'ini ayarla
-      requestData.isGuestOrder = true;
-      
-      // Misafir bilgilerini kontrol et
-      if (!orderData.guestName || !orderData.guestSurname) {
-        throw new Error("Misafir siparişi için ad ve soyad gereklidir.");
-      }
-      
-      if (!orderData.guestEmail || !orderData.guestPhone) {
-        throw new Error("Misafir siparişi için e-posta ve telefon gereklidir.");
-      }
-      
-      // Tüm misafir bilgilerini ekle
-      requestData.guestName = orderData.guestName;
-      requestData.guestSurname = orderData.guestSurname;
-      requestData.guestEmail = orderData.guestEmail;
-      requestData.guestPhone = orderData.guestPhone;
-      
-      console.log("Misafir siparişi oluşturuluyor:", 
-        requestData.guestName, 
-        requestData.guestSurname, 
-        requestData.guestEmail);
-    }
+   
     
     console.log("Backend'e gönderilen sipariş verisi:", JSON.stringify(requestData, null, 2));
     
     // İsteği gönder - api prefix'ini doğru şekilde kullan
-    const endpoint = "/orders";
-    const response = await instance.post(endpoint, requestData);
+    const response = await instance.post("/orders", requestData);
     
     if (!response.data || !response.data.id) {
       throw new Error("Sipariş oluşturuldu fakat ID alınamadı.");
@@ -281,7 +257,7 @@ export const createOrder = ({ orderData, paymentData, isGuest = false }) => asyn
     try {
       if (orderData.paymentMethod === "ONLINE_CREDIT_CARD" && paymentData) {
         // Online kredi kartı ödemesi - api prefix'ini doğru şekilde kullan
-        const paymentEndpoint = `/api/orders/${orderId}/pay/card`;
+        const paymentEndpoint = `/orders/${orderId}/pay/card`;
         
         const paymentRequest = {
           cardNumber: paymentData.cardNumber,
@@ -296,7 +272,7 @@ export const createOrder = ({ orderData, paymentData, isGuest = false }) => asyn
       } 
       else if (orderData.paymentMethod === "CASH") {
         // Nakit ödeme - api prefix'ini doğru şekilde kullan
-        const paymentEndpoint = `/api/orders/${orderId}/pay/cash`;
+        const paymentEndpoint = `/orders/${orderId}/pay/cash`;
         
         console.log(`Nakit ödeme işaretleniyor: ${paymentEndpoint}`);
         await instance.post(paymentEndpoint);
