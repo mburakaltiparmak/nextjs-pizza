@@ -196,24 +196,47 @@ export const fetchGuestOrderDetail = (orderId, email) => async (dispatch) => {
     return { error: errorMessage };
   }
 };
-// createOrder fonksiyonu - Hem normal kullanıcı hem misafir siparişleri için
+const createCustomPizzaProduct = async (pizzaData) => {
+  try {
+    const response = await instance.post('/product/custom-pizza', {
+      totalPrice: pizzaData.price,
+      customDetails: pizzaData.description
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Custom pizza oluşturulamadı:', error);
+    throw error;
+  }
+};
+
 export const createOrder = ({ orderData, paymentData }) => async (dispatch) => {
   dispatch(setLoading(true));
-  
+  const customPizzaTemplateId = 9999;
   try {
-    // Sipariş öğelerini kontrol et
-    if (!orderData.items || orderData.items.length === 0) {
-      throw new Error("Sepetinizde ürün bulunmuyor.");
+    // Sipariş öğelerini kontrol et ve custom pizza varsa önce onu oluştur
+    const processedItems = [];
+    
+    
+    for (const item of orderData.items) {
+      if (item.productId === customPizzaTemplateId) {
+        // Custom pizza ise önce backend'de oluştur
+        const createdPizza = await createCustomPizzaProduct(item.product);
+        processedItems.push({
+          productId: createdPizza.id,
+          quantity: item.quantity
+        });
+      } else {
+        // Normal ürün ise direkt ekle
+        processedItems.push({
+          productId: item.productId,
+          quantity: item.quantity
+        });
+      }
     }
     
-    // Adres bilgilerini kontrol et
-    if (!orderData.addressId && !orderData.newAddress) {
-      throw new Error("Teslimat adresi bilgisi eksik.");
-    }
-    
-    // Backend'e gönderilecek isteği oluştur
+    // Backend'e gönderilecek isteği güncelle
     const requestData = {
-      items: orderData.items,
+      items: processedItems,
       paymentMethod: orderData.paymentMethod,
       notes: orderData.notes || ""
     };

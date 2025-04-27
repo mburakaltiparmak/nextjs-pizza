@@ -5,7 +5,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { createOrder } from "@/lib/store/actions/orderActions";
-import { clearGuestData } from "@/lib/store/actions/guestActions"; // Import clearGuestData action
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, CreditCard } from "lucide-react";
@@ -212,12 +211,10 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
   const selectedAddress = useAppSelector((state) => state.order.selectedAddress);
   const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
   const role = useAppSelector((state) => state.user.role);
-  const isGuest = role === "GUEST";
-  const guestData = useAppSelector((state) => state.guest);
+
   
   console.log("userData", userData);
   console.log("selectedAddress", selectedAddress);
-  console.log("guestData", guestData);
 
   // Teslimat bilgilerini görüntüle
   const renderDeliveryInfo = () => {
@@ -258,21 +255,7 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
   };
 
   // Misafir bilgilerini görüntüle
-  const renderGuestInfo = () => {
-    if (isGuest && guestData) {
-      return (
-        <div className="mt-6 p-4 bg-gray-50 rounded-md">
-          <h3 className="font-medium text-gray-800 mb-2">Müşteri Bilgileri</h3>
-          <div className="space-y-2 text-sm">
-            <p><span className="font-medium">İsim Soyisim:</span> {guestData.name} {guestData.surname}</p>
-            <p><span className="font-medium">E-posta:</span> {guestData.email}</p>
-            <p><span className="font-medium">Telefon:</span> {guestData.phoneNumber}</p>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
+  
 
   return (
     <form onSubmit={onSubmit} className="bg-white rounded-lg shadow-md overflow-hidden font-Barlow">
@@ -307,7 +290,6 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
           {renderDeliveryInfo()}
           
           {/* Misafir Bilgileri Özeti */}
-          {renderGuestInfo()}
         </div>
       </div>
       
@@ -345,10 +327,8 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   const paymentMethod = useAppSelector((state) => state.order.paymentMethod);
   const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
   const role = useAppSelector((state) => state.user.role);
-  const isGuest = role === "GUEST";
   
   // Misafir bilgilerini al
-  const guestData = useAppSelector((state) => state.guest);
   
   // Online kart ödemesi için validation schema
   const onlineCardSchema = z.object({
@@ -385,17 +365,15 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   });
 
   const submitOrder = async (formData) => {
+
+    console.log("Form verileri:", formData);
+    console.log("Adres bilgileri:", selectedAddress);
+    console.log("Sepet içeriği:", cartData);
+    console.log("Kullanıcı bilgileri:", userData);
+
     try {
-      // Debug: Form verilerini ve kullanıcı verilerini kontrol et
-      console.log("Form verileri:", formData);
-      console.log("Adres bilgileri:", selectedAddress);
-      console.log("Sepet içeriği:", cartData);
-      console.log("Kullanıcı bilgileri:", userData);
-      console.log("Misafir bilgileri:", guestData);
-      
-      // Step3'ü başarılı olarak işaretle
       setStep3(true);
-      
+    
       toast({
         title: "Siparişiniz alınıyor...",
       });
@@ -409,14 +387,16 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
       const orderRequest = {
         // Sepet öğeleri
         items: cartData.map(item => ({
-          productId: item.product.id,
-          quantity: item.count
+          productId: item.id,
+          quantity: item.count,
+          product: item.product,
+          unitPrice: item.product.price // Product objesini gönder
         })),
         
         // Ödeme bilgileri
         paymentMethod: paymentMethod,
         notes: formData.notes || ""
-      }; 
+      };
         // Kullanıcı giriş yapmış ve kayıtlı adresi seçilmiş
         if (isAuthenticated && selectedAddress.id) {
           orderRequest.addressId = selectedAddress.id;

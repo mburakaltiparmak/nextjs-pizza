@@ -1,7 +1,8 @@
 "use client";
 import React from 'react';
-import { ShoppingCart } from 'lucide-react';
-import { useAppSelector } from '@/lib/hooks';
+import { ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
+import { useAppSelector, useAppDispatch } from '@/lib/hooks';
+import { removeFromCart, updateCartItem } from '@/lib/store/actions/orderActions';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -19,13 +20,25 @@ import { useRouter } from 'next/navigation';
 const FloatingCartButton = () => {
   const cart = useAppSelector((state) => state.order.cart);
   const router = useRouter();
-  console.log("cart :",cart);
+  const dispatch = useAppDispatch();
   
   const totalItems = cart.reduce((sum, item) => sum + item.count, 0);
   const totalAmount = cart.reduce((sum, item) => sum + (item.product.price * item.count), 0);
 
   const handleCheckout = () => {
     router.push('/create-order');
+  };
+
+  const handleUpdateQuantity = (itemId, currentCount, operation) => {
+    if (operation === 'increase') {
+      dispatch(updateCartItem(itemId, currentCount + 1));
+    } else if (operation === 'decrease' && currentCount > 1) {
+      dispatch(updateCartItem(itemId, currentCount - 1));
+    }
+  };
+
+  const handleRemoveItem = (itemId) => {
+    dispatch(removeFromCart(itemId));
   };
 
   return (
@@ -74,10 +87,33 @@ const FloatingCartButton = () => {
                       </div>
                       <div>
                         <p className="font-medium text-gray-800">{item.product.name}</p>
-                        <p className="text-sm text-gray-500">{item.count} adet</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <button 
+                            onClick={() => handleUpdateQuantity(item.id, item.count, 'decrease')}
+                            className="text-gray-500 hover:text-red disabled:text-gray-300"
+                            disabled={item.count <= 1}
+                          >
+                            <Minus size={16} />
+                          </button>
+                          <span className="text-sm">{item.count}</span>
+                          <button 
+                            onClick={() => handleUpdateQuantity(item.id, item.count, 'increase')}
+                            className="text-gray-500 hover:text-red"
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    <p className="font-medium text-gray-800">{(item.product.price * item.count).toFixed(2)} ₺</p>
+                    <div className="flex items-center space-x-3">
+                      <p className="font-medium text-gray-800">{(item.product.price * item.count).toFixed(2)} ₺</p>
+                      <button 
+                        onClick={() => handleRemoveItem(item.id)}
+                        className="text-gray-500 hover:text-red"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

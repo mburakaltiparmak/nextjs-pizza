@@ -9,35 +9,32 @@ import { useToast } from "@/hooks/use-toast";
 const SecondStep = ({ setCurrentStep, setStep2 }) => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
+  
+  // Redux'tan gerekli verileri al
   const paymentMethod = useAppSelector((state) => state.order.paymentMethod || "CASH");
+  const cart = useAppSelector((state) => state.order.cart);
   const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
   const role = useAppSelector((state) => state.user.role);
   const isGuest = role === "GUEST";
-  
-  // Guest bilgilerini Redux'tan al
   const guestData = useAppSelector((state) => state.guest);
-  
-  // Adres bilgilerini Redux'tan al
   const userData = useAppSelector((state) => state.order.userData);
   const selectedAddress = useAppSelector((state) => state.order.selectedAddress);
   
   const [selectedTab, setSelectedTab] = useState("default");
 
-  // Kullanıcı durumuna göre tab'ı güncelle
+  // Toplam tutarları hesapla
+  const totalItems = cart.reduce((sum, item) => sum + item.count, 0);
+  const totalAmount = cart.reduce((sum, item) => sum + (item.product.price * item.count), 0);
+
   useEffect(() => {
-    // Artık sadece default tab kullanılacak çünkü guest bilgileri
-    // birinci adımda dolduruldu
     setSelectedTab("default");
   }, [isAuthenticated, isGuest]);
 
-  // Ödeme yöntemi seçimi
   const handlePaymentMethodSelect = (method) => {
     dispatch(setPaymentMethod(method));
   };
 
-  // Devam et butonuna basıldığında
   const handleContinue = () => {
-    // Ödeme yöntemi kontrolü
     if (!paymentMethod) {
       toast({
         title: "Ödeme yöntemi seçilmedi",
@@ -47,32 +44,28 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
       return;
     }
     
-    // Misafir kullanıcı bilgilerinin kontrolü
     if (isGuest) {
-      // Tüm gerekli misafir bilgilerinin dolu olduğunu kontrol et
       if (!guestData.name || !guestData.surname || !guestData.email || !guestData.phoneNumber) {
         toast({
           title: "Eksik bilgi",
           description: "Lütfen önceki adımda tüm kişisel bilgilerinizi doldurun.",
           variant: "destructive"
         });
-        setCurrentStep(1); // Kişisel bilgilerin olduğu adıma geri dön
+        setCurrentStep(1);
         return;
       }
     }
     
-    // Adres bilgilerinin kontrolü
     if (!selectedAddress) {
       toast({
         title: "Adres bilgisi eksik",
         description: "Lütfen önceki adımda bir teslimat adresi belirtin.",
         variant: "destructive"
       });
-      setCurrentStep(1); // Adres seçiminin olduğu adıma geri dön
+      setCurrentStep(1);
       return;
     }
 
-    // Her şey tamamsa, bir sonraki adıma geç
     setStep2(true);
     setCurrentStep(3);
     
@@ -82,7 +75,6 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
     });
   };
 
-  // Kullanıcı bilgilerini gösterme
   const renderUserInfo = () => {
     if (isGuest && guestData) {
       return (
@@ -103,7 +95,6 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
     return null;
   };
 
-  // Adres bilgilerini gösterme
   const renderAddressInfo = () => {
     if (selectedAddress) {
       return (
@@ -127,18 +118,61 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
     return null;
   };
 
+  // Sipariş özetini gösterme
+  const renderOrderSummary = () => {
+    if (cart.length === 0) return null;
+
+    return (
+      <div className="mb-6 p-4 border rounded-md bg-gray-50">
+        <h3 className="text-md font-semibold mb-3">Sipariş Özeti</h3>
+        
+        {/* Ürün listesi */}
+        <div className="space-y-2 mb-3">
+          {cart.map((item) => (
+            <div key={item.id} className="flex items-center justify-between text-sm">
+              <div className="flex items-center space-x-2">
+                <span className="font-medium">{item.count}x</span>
+                <span>{item.product.name}</span>
+              </div>
+              <span>{(item.product.price * item.count).toFixed(2)} ₺</span>
+            </div>
+          ))}
+        </div>
+        
+        {/* Özet bilgiler */}
+        <div className="border-t pt-3 mt-3">
+          <div className="flex justify-between text-sm mb-1">
+            <span>Toplam Ürün:</span>
+            <span>{totalItems}</span>
+          </div>
+          <div className="flex justify-between text-sm font-semibold">
+            <span>Toplam Tutar:</span>
+            <span className="text-red">{totalAmount.toFixed(2)} ₺</span>
+          </div>
+        </div>
+        
+        <button
+          onClick={() => setCurrentStep(1)}
+          className="mt-3 text-xs text-red underline"
+        >
+          Sepeti Düzenle
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden font-Barlow">
-      {/* Başlık ve Açıklama */}
       <div className="p-6">
         <h2 className="text-xl font-semibold mb-2 text-gray-800">
           Ödeme Bilgileri
         </h2>
         <p className="text-gray-500 text-sm mb-6">
-          Lütfen bir ödeme yöntemi seçin.
+          Sipariş özetinizi kontrol edin ve bir ödeme yöntemi seçin.
         </p>
 
-        {/* Kullanıcı ve Adres Bilgileri Özeti */}
+        {/* Tüm özet bilgiler */}
+        {renderOrderSummary()}
         {isGuest && renderUserInfo()}
         {renderAddressInfo()}
 
@@ -203,7 +237,6 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
         </div>
       </div>
       
-      {/* Alt Butonlar */}
       <div className="px-6 py-4 bg-gray-50 flex justify-between">
         <button
           type="button"

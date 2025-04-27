@@ -121,14 +121,10 @@ const Page = () => {
   useEffect(() => {
     setToplam(malzemeFiyat + boyutFiyat + hamurFiyat);
   }, [malzemeFiyat, boyutFiyat, hamurFiyat]);
-  // idCreator fonksiyonunu güncelleyelim - Custom pizza için çok daha büyük ID'ler oluşturalım
-// Custom pizza için sepet yapısına uygun obje oluşturan fonksiyon
-// Custom pizza için sepet yapısına uygun obje oluşturan fonksiyon
-const createCustomPizzaCartItem = (data, toplam) => {
-  // ID oluştur - Frontend için yerel bir ID olacak
-  const customId = Date.now(); // Timestamp kullanarak benzersiz bir ID oluştur
+ 
   
-  // Custom pizza detaylarını JSON olarak sakla
+  const createCustomPizzaCartItem = (data, toplam) => {
+  const customPizzaTemplateId = 9999;
   const customDetails = {
     isCustom: true,
     items: data.items,
@@ -137,18 +133,16 @@ const createCustomPizzaCartItem = (data, toplam) => {
     orderNote: data.siparisNotu || ""
   };
   
-  // ÖNEMLİ: Burada addToCart'ın beklediği yapıya uygun
-  // bir nesne oluşturuyoruz
   return {
-    id: customId, 
+    id: customPizzaTemplateId, // Backend'de olmayan özel ID
     name: "Custom Pizza",
     rating: 4.9,
     stock: 1,
     price: toplam,
     img: "https://res.cloudinary.com/dqjqkgpt3/image/upload/v1724010330/food-2_zwrtrh.png",
-    categoryId: 2,
+    categoryId: 1, // CUSTOM_BASE kategori ID'si
     description: JSON.stringify(customDetails),
-    count: 1  // Count'u baştan ekliyoruz
+    count: 1
   };
 };
 
