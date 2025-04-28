@@ -2,20 +2,32 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { login, checkAuthStatus, initiateGoogleLogin } from "@/lib/store/actions/userActions";
+import {
+  login,
+  checkAuthStatus,
+  initiateGoogleLogin,
+} from "@/lib/store/actions/userActions";
 import { useToast } from "@/hooks/use-toast";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faSignOutAlt, faUserPlus, faUserEdit, faShoppingBag, faUserTie, faGoogle } from "@fortawesome/free-solid-svg-icons";
+import {
+  faUser,
+  faSignOutAlt,
+  faUserPlus,
+  faUserEdit,
+  faShoppingBag,
+  faUserTie,
+  faGoogle,
+} from "@fortawesome/free-solid-svg-icons";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import SecondaryLoading from "@/components/secondaryLoading";
 import {
-    AlertDialog,
-    AlertDialogContent,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-    AlertDialogDescription,
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 import { AUTH_ERRORS } from "@/lib/authErrorMessages"; // güvenli hata mesajları için
 
@@ -23,21 +35,21 @@ const FloatingUserButton = () => {
   const dispatch = useDispatch();
   const { toast } = useToast();
   const router = useRouter();
-  
+
   // Redux state
   const isLogin = useSelector((state) => state.user.isLogin);
   const userEmail = useSelector((state) => state.user.email);
-  const name = useSelector((state)=>state.user.profile?.name);
+  const name = useSelector((state) => state.user.profile?.name);
   const loading = useSelector((state) => state.global.loading);
   const role = useSelector((state) => state.user.role);
   const authProvider = useSelector((state) => state.user.authProvider);
   const storedRememberMe = useSelector((state) => state.user.rememberMe);
-  
+
   // Local state
   const [loginOpen, setLoginOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const [email,setEmail]=useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMeState] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -59,7 +71,7 @@ const FloatingUserButton = () => {
         setDropdownOpen(false);
       }
     }
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -83,12 +95,12 @@ const FloatingUserButton = () => {
       setErrorMessage("Email gereklidir");
       return false;
     }
-    
+
     if (!password.trim()) {
       setErrorMessage("Şifre gereklidir");
       return false;
     }
-    
+
     // Hata mesajını temizle
     setErrorMessage("");
     return true;
@@ -96,7 +108,7 @@ const FloatingUserButton = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
+
     // Form alanlarını doğrula
     if (!validateForm()) {
       return;
@@ -105,12 +117,12 @@ const FloatingUserButton = () => {
     const formData = {
       username: email,
       password: password,
-      rememberMe: rememberMe
+      rememberMe: rememberMe,
     };
 
     try {
       const result = await dispatch(login(formData));
-      
+
       if (result && result.error) {
         // Güvenli bir hata mesajı kullan
         setErrorMessage(AUTH_ERRORS.INVALID_CREDENTIALS);
@@ -119,11 +131,11 @@ const FloatingUserButton = () => {
           title: "Giriş başarılı!",
           description: "Hoş geldiniz.",
         });
-        
+
         setLoginOpen(false);
         setEmail("");
         setPassword("");
-        
+
         // rememberMe durumunu sıfırlama - kullanıcının tercihini koru
         // setRememberMeState(false);
       }
@@ -146,33 +158,33 @@ const FloatingUserButton = () => {
     try {
       // Çıkış yapılıyor durumunu ayarla
       setIsLoggingOut(true);
-      
+
       // Redux action'ını import etmek yerine dynamically import et
-      const userActions = await import('@/lib/store/actions/userActions');
-      
+      const userActions = await import("@/lib/store/actions/userActions");
+
       // Dispatch logout action
       await dispatch(userActions.logout());
-      
+
       setDropdownOpen(false);
-      
+
       toast({
         title: "Çıkış yapıldı",
         description: "Başarıyla çıkış yaptınız.",
       });
-      
+
       // Yönlendirmeyi geciktir
       setTimeout(() => {
-        router.push('/');
+        router.push("/");
       }, 100);
     } catch (error) {
       console.error("Çıkış yapma hatası:", error);
-      
+
       toast({
         title: "Hata",
         description: "Çıkış yapılırken bir sorun oluştu.",
         variant: "destructive",
       });
-      
+
       setIsLoggingOut(false);
     }
   };
@@ -181,32 +193,26 @@ const FloatingUserButton = () => {
     <div className="flex items-center">
       {isLogin ? (
         <div className="relative" ref={dropdownRef}>
-          <div 
+          <div
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="bg-lightgray z-50 p-3 text-darkgray border-2 border-darkgray 2 rounded-full hover:bg-yellow hover:text-red hover:border-2 hover:border-darkgray transition-colors duration-200 cursor-pointer flex items-center gap-2 text-base font-normal"
+            className="bg-yellow z-50 p-3 font-Londrina_Solid text-red ring-2 ring-inset ring-white rounded-full shadow-lg hover:bg-red hover:text-yellow  transition-all duration-200 cursor-pointer flex items-center gap-2 text-base font-normal"
           >
             <FontAwesomeIcon icon={faUser} />
-            <span><p>{name}</p></span>
+            <span>{name}</span>
           </div>
-          
+
           {dropdownOpen && (
-            <div className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg overflow-hidden z-20">
+            <div className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg overflow-hidden z-20 font-Barlow">
               <div className="py-2 border-b border-red">
                 <div className="px-4 py-2">
-                  <div className="font-bold truncate text-red">{name}</div>
-                  <div className="text-sm text-gray">
-                    Hesabım
-                    {authProvider === "google" && (
-                      <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                        Google
-                      </span>
-                    )}
+                  <div className="font-bold truncate font-Londrina_Solid text-red">
+                    {name}
                   </div>
                 </div>
               </div>
-              
+
               <div className="py-1">
-                <div 
+                <div
                   className="px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-darkgray text-sm"
                   onClick={() => {
                     router.push("/profile");
@@ -216,9 +222,9 @@ const FloatingUserButton = () => {
                   <FontAwesomeIcon icon={faUserEdit} className="mr-2" />
                   <span>Profil Bilgilerim</span>
                 </div>
-                
+
                 {isAdminOrPersonal ? (
-                  <div 
+                  <div
                     className="px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-darkgray text-sm"
                     onClick={() => {
                       router.push("/dashboard");
@@ -229,7 +235,7 @@ const FloatingUserButton = () => {
                     <span>Admin Panel</span>
                   </div>
                 ) : (
-                  <div 
+                  <div
                     className="px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-darkgray text-sm"
                     onClick={() => {
                       router.push("/orders");
@@ -241,16 +247,18 @@ const FloatingUserButton = () => {
                   </div>
                 )}
               </div>
-              
+
               <div className="py-1 border-t border-red">
-                <div 
+                <div
                   className={`px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-red text-sm ${
-                    isLoggingOut ? 'opacity-70 cursor-not-allowed' : ''
+                    isLoggingOut ? "opacity-70 cursor-not-allowed" : ""
                   }`}
                   onClick={!isLoggingOut ? handleLogout : undefined}
                 >
                   <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
-                  <span>{isLoggingOut ? 'Çıkış Yapılıyor...' : 'Çıkış Yap'}</span>
+                  <span>
+                    {isLoggingOut ? "Çıkış Yapılıyor..." : "Çıkış Yap"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -260,7 +268,7 @@ const FloatingUserButton = () => {
         <div className="flex gap-2 items-center">
           <AlertDialog open={loginOpen} onOpenChange={setLoginOpen}>
             <AlertDialogTrigger asChild>
-              <Button className="bg-blue-950 text-lightgray hover:bg-lightgray hover:text-blue-950 hover:border-blue-950 text-sm py-1 h-auto">
+              <Button className="bg-yellow text-red hover:bg-red hover:text-yellow ring-2 ring-inset ring-white rounded-full font-Barlow font-bold text-sm ">
                 <FontAwesomeIcon icon={faUser} className="mr-2" />
                 <span>Giriş</span>
               </Button>
@@ -283,7 +291,10 @@ const FloatingUserButton = () => {
                   </div>
                 )}
 
-                <form className="mt-8 space-y-6 font-Quattrocento_Sans" onSubmit={handleLogin}>
+                <form
+                  className="mt-8 space-y-6 font-Quattrocento_Sans"
+                  onSubmit={handleLogin}
+                >
                   <div className="-space-y-px rounded-md shadow-sm">
                     <div>
                       <label htmlFor="email" className="sr-only">
@@ -336,7 +347,10 @@ const FloatingUserButton = () => {
                         checked={rememberMe}
                         onChange={(e) => setRememberMeState(e.target.checked)}
                       />
-                      <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                      <label
+                        htmlFor="remember-me"
+                        className="ml-2 block text-sm text-gray-900"
+                      >
                         Beni Hatırla
                       </label>
                     </div>
@@ -347,9 +361,9 @@ const FloatingUserButton = () => {
                       type="submit"
                       disabled={loading}
                       className={`group relative flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red ${
-                        loading 
-                          ? 'bg-red cursor-not-allowed' 
-                          : 'bg-green-800 hover:bg-green-600'
+                        loading
+                          ? "bg-red cursor-not-allowed"
+                          : "bg-green-800 hover:bg-green-600"
                       }`}
                     >
                       {loading ? (
@@ -358,10 +372,10 @@ const FloatingUserButton = () => {
                           <span className="ml-2">Giriş Yapılıyor...</span>
                         </div>
                       ) : (
-                        'Giriş Yap'
+                        "Giriş Yap"
                       )}
                     </button>
-                    
+
                     {/* Google ile giriş butonu */}
                     <button
                       type="button"
@@ -390,7 +404,7 @@ const FloatingUserButton = () => {
                       </svg>
                       Google ile Giriş Yap
                     </button>
-                    
+
                     <button
                       type="button"
                       onClick={() => {
@@ -407,9 +421,9 @@ const FloatingUserButton = () => {
               </div>
             </AlertDialogContent>
           </AlertDialog>
-          
+
           <Button
-            className="bg-green-600 text-lightgray hover:bg-lightgray hover:text-green-600 hover:border-green-600 text-sm py-1 h-auto"
+            className="bg-lightgray text-red hover:bg-red hover:text-lightgray ring-2 ring-inset ring-lightgray rounded-full font-Barlow font-bold text-sm "
             onClick={() => router.push("/signup")}
           >
             <FontAwesomeIcon icon={faUserPlus} className="mr-2" />

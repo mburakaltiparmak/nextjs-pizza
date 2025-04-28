@@ -76,6 +76,16 @@
 .optionStyle {
   @apply flex flex-row justify-center max-md:w-[150px] items-center gap-2 text-darkgray font-semibold font-Barlow border border-transparent hover:cursor-pointer hover:text-lightgray hover:bg-darkgray;
 }
+.btn-primary {
+  @apply bg-yellow text-darkgray hover:bg-red hover:text-yellow hover:z-50 ring-2 ring-inset ring-lightgray py-4 px-8 rounded-full font-semibold text-lg transition-all duration-300 font-Barlow;
+}
+.btn-secondary {
+  @apply flex flex-row items-center gap-2 bg-yellow text-red hover:bg-red hover:text-yellow shadow-md hover:shadow-xl ring-2 ring-inset ring-red hover:ring-yellow py-2 px-4 rounded-full font-semibold text-base transition-all duration-300 font-Barlow;
+}
+.btn-third {
+  @apply flex flex-row items-center gap-2 bg-yellow text-red hover:text-yellow hover:bg-red ring-2 ring-inset ring-lightgray hover:ring-black p-2 rounded-full font-semibold text-base transition-all duration-300 font-Barlow;
+}
+
 /* ScrollLock için stil */
 body:has([data-state="open"]) {
   overflow: hidden;

@@ -26,11 +26,13 @@ const Categories = () => {
 
   // Kategorileri ve ürünleri yükle
   useEffect(() => {
-    if ((categoryFetchState === fetchStates.NOT_FETCHED || 
-         productFetchState === fetchStates.NOT_FETCHED) && 
-        !dataFetchAttempted) {
+    if (
+      (categoryFetchState === fetchStates.NOT_FETCHED ||
+        productFetchState === fetchStates.NOT_FETCHED) &&
+      !dataFetchAttempted
+    ) {
       setDataFetchAttempted(true);
-      
+
       // İlk önce kategorileri yükle
       dispatch(fetchCategories())
         .then(() => {
@@ -56,8 +58,9 @@ const Categories = () => {
   };
 
   // Yükleniyor durumu
-  const isLoading = categoryFetchState === fetchStates.FETCHING || 
-                    productFetchState === fetchStates.FETCHING;
+  const isLoading =
+    categoryFetchState === fetchStates.FETCHING ||
+    productFetchState === fetchStates.FETCHING;
 
   if (isLoading && (!categories || categories.length === 0)) {
     return <SecondaryLoading size="small" />;
@@ -66,18 +69,18 @@ const Categories = () => {
   return (
     <div
       id="categories"
-      className="flex flex-col justify-between items-center gap-8"
+      className="flex flex-col justify-between items-center gap-8 text-black"
     >
       {"grid grid-cols-8 grid-flow-row"}
       <div className="flex flex-row items-center gap-2 mt-4 max-md:grid-cols-2 max-md:place-items-center max-md:gap-4">
         <button
           onClick={(e) => handleAllOfThem(e)}
-          className={`optionStyle rounded-full text-sm p-2 ${
+          className={`btn-secondary ${
             selectedCategoryId === null ? "bg-yellow text-red font-bold" : ""
           }`}
         >
           <img
-            className="w-[50px] h-fit object-cover"
+            className="h-[35px] w-fit object-cover"
             src={allLogo.src}
             alt="all"
           />
@@ -86,32 +89,32 @@ const Categories = () => {
           </HoverCard>
         </button>
 
-        {(
-          categories.map((item) => (
-            <button
-              key={item.id}
-              onClick={(e) => handleCategory(item.id, e)}
-              className={`optionStyle rounded-full text-sm p-2 ${
-                selectedCategoryId === item.id
-                  ? "bg-yellow text-red font-bold"
-                  : ""
-              }`}
-            >
-              <img
-                className="w-[50px] h-fit object-cover"
-                src={item.img}
-                alt={item.name}
-              />
-              <HoverCard>
-                <HoverCardTrigger>{item.name}</HoverCardTrigger>
-              </HoverCard>
-            </button>
-          ))
-        )} 
+        {categories.map((item) => (
+          <button
+            key={item.id}
+            onClick={(e) => handleCategory(item.id, e)}
+            className={`btn-secondary ${
+              selectedCategoryId === item.id
+                ? "bg-yellow text-red font-bold"
+                : ""
+            }`}
+          >
+            <img
+              className="h-[35px] w-fit object-cover"
+              src={item.img}
+              alt={item.name}
+            />
+            <HoverCard>
+              <HoverCardTrigger>{item.name}</HoverCardTrigger>
+            </HoverCard>
+          </button>
+        ))}
       </div>
 
       {/* Seçilen kategoriye göre ürünleri filtrele */}
-      <Products categoryFilter={selectedCategoryId ? selectedCategoryId.toString() : ""} />
+      <Products
+        categoryFilter={selectedCategoryId ? selectedCategoryId.toString() : ""}
+      />
     </div>
   );
 };
