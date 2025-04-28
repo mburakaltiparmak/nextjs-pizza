@@ -164,7 +164,7 @@ const OnlineCardPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+          className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md border border-darkgray bg-white text-darkgray shadow-md hover:shadow-lg"
         >
           <ChevronLeft className="w-5 h-5" />
           GERİ
@@ -297,7 +297,7 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+          className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md border border-darkgray bg-white text-darkgray shadow-md hover:shadow-lg"
         >
           <ChevronLeft className="w-5 h-5" />
           GERİ

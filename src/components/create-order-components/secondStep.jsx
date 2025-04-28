@@ -241,7 +241,7 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
         <button
           type="button"
           onClick={() => setCurrentStep(1)}
-          className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+          className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md border border-darkgray bg-white text-darkgray shadow-md hover:shadow-lg "
         >
           <ChevronLeft className="w-5 h-5" />
           GERİ

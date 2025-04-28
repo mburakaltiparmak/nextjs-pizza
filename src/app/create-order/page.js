@@ -197,12 +197,12 @@ const Page = () => {
               {steps.map((step) => (
                 <div key={step.id} className="flex flex-col items-center">
                   <div 
-                    className={`flex items-center justify-center w-10 h-10 rounded-full z-10 transition-all ${
+                    className={`flex items-center justify-center w-10 h-10 rounded-full z-10 transition-all duration-300 ${
                       step.completed 
-                        ? 'bg-red text-white' 
+                        ? 'bg-yellow text-red border-2 border-white ring-2 ring-darkred' 
                         : step.id === currentStep 
-                          ? 'bg-white border-2 border-red text-red' 
-                          : 'bg-white border-2 border-gray-300 text-gray-400'
+                          ? 'bg-red border-2 border-yellow text-yellow ring-2 ring-red' 
+                          : 'bg-gray border-2 border-white text-darkgray ring-2 ring-darkgray'
                     }`}
                   >
                     {step.completed ? <Check className="w-5 h-5" /> : step.icon}

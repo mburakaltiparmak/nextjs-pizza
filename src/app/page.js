@@ -71,7 +71,7 @@ const Page = () => {
                 </p>
                 <button
                   onClick={buttonNotifyHandler}
-                  className="buttonStyle bg-lightgray text-red hover:bg-yellow hover:text-darkgray hover:border-lightgray hover:border-2"
+                  className="btn-primary"
                 >
                   {homeCards[0].buttonText}
                 </button>
@@ -90,7 +90,7 @@ const Page = () => {
                   </p>
                   <button
                     onClick={buttonNotifyHandler}
-                    className="buttonStyle bg-lightgray text-red hover:bg-yellow hover:text-darkgray hover:border-lightgray hover:border-2"
+                    className="btn-third"
                   >
                     {homeCards[1].buttonText}
                   </button>
@@ -108,7 +108,7 @@ const Page = () => {
                   </p>
                   <button
                     onClick={buttonNotifyHandler}
-                    className="buttonStyle bg-lightgray text-red hover:bg-yellow hover:text-darkgray hover:border-red hover:border-2"
+                    className="btn-fourth"
                   >
                     {homeCards[2].buttonText}
                   </button>

@@ -35,12 +35,11 @@ const Products = ({ categoryFilter = "" }) => {
     toast({
       description: (
         <div className="flex flex-row gap-4 items-center">
-          <Image
-            src={product.img.src}
+          <img
+            src={product.img}
             alt={product.name}
-            width={32}
-            height={32}
-            className="object-cover rounded"
+            
+            className="object-contain w-8 h-8 "
           />
           <p>{product.name} sepete eklendi</p>
         </div>

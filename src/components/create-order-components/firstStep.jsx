@@ -183,14 +183,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
       if (selectedAddressId) {
         addressData = addresses.find(addr => addr.id === selectedAddressId);
         
-        if (!addressData) {
-          toast({
-            title: "Hata",
-            description: "Seçilen adres bulunamadı.",
-            variant: "destructive"
-          });
-          return;
-        }
+        
       } else if (newAddress) {
         addressData = newAddress;
       }
@@ -369,11 +362,11 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
         <button
           type="button"
           onClick={handleSubmit(onSubmit)}
-          disabled={!isStep1Valid || (isGuest && !isGuestDataValid)}
+          disabled={!isStep1Valid}
           className={`flex items-center font-semibold gap-2 px-6 py-2 rounded-md transition-colors ${
-            isStep1Valid && (!isGuest || isGuestDataValid)
+            isStep1Valid 
               ? "bg-yellow text-red hover:bg-red hover:text-yellow border border-transparent hover:border-yellow" 
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-red text-lightgray opacity-80 cursor-not-allowed"
           }`}
         >
           İLERLE

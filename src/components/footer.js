@@ -15,123 +15,166 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { faCopyright } from "@fortawesome/free-regular-svg-icons";
+import Link from "next/link";
 
 const InstagramPhoto = ({ img }) => (
   <Popover>
     <PopoverTrigger asChild>
-      <div className="cursor-pointer">
-        <Image
+      <div className="relative overflow-hidden rounded cursor-pointer">
+        <img
           alt="fast-food"
           src={img.src}
-          width={96}
-          height={96}
-          className="object-cover w-24 h-24"
+          width={85}
+          height={85}
+          className="object-cover w-full h-full transition-transform duration-300 hover:scale-110"
         />
+        <div className="absolute inset-0 bg-red/30 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+          <span className="text-lightgray text-xs font-medium">Görüntüle</span>
+        </div>
       </div>
     </PopoverTrigger>
-    <PopoverContent className="w-auto p-0">
-      <Image
+    <PopoverContent className="w-auto p-0 border-none shadow-lg">
+      <img
         alt="fast-food"
         src={img.src}
-        width={192}
-        height={192}
-        className="object-cover w-48 h-48"
+        width={320}
+        height={320}
+        className="object-cover"
       />
     </PopoverContent>
   </Popover>
 );
 
 const IconWithText = ({ src, alt, text }) => (
-  <span className="flex flex-row items-center gap-2 font-Barlow font-semibold text-xs">
-    <Image 
-      width={24} 
-      height={24} 
-      alt={alt} 
-      src={src}
-      className="w-6 h-6 object-contain"
-      style={{ width: 'auto', height: 'auto' }}
-    />
-    <p>{text}</p>
-  </span>
+  <div className="flex items-center gap-4">
+    <div className="bg-red rounded-full p-2 flex items-center justify-center min-w-10 min-h-10">
+      <Image 
+        width={20} 
+        height={20} 
+        alt={alt} 
+        src={src}
+        className="object-contain"
+      />
+    </div>
+    <p className="font-Barlow text-sm">{text}</p>
+  </div>
 );
 
 const Footer = () => {
   return (
-    <footer className="flex flex-col items-center gap-4 py-2 bg-darkgray text-lightgray">
-      <div className="flex flex-row justify-around max-md:flex-col max-md:items-center">
-        <div className="flex flex-col items-start justify-start gap-8 max-lg:gap-2">
-          <span className="flex flex-col font-Londrina_Solid text-3xl w-64 h-20">
-            <h5>Teknolojik</h5>
-            <h5>Yemekler</h5>
-          </span>
-          <span className="flex flex-col justify-between gap-8">
-            <IconWithText 
-              src={locationLogo} 
-              alt="location" 
-              text="341 Londonberry Road, İstanbul Türkiye" 
-            />
-            <IconWithText 
-              src={mailLogo} 
-              alt="mail" 
-              text="aciktim@teknolojikyemekler.com" 
-            />
-            <IconWithText 
-              src={phoneLogo} 
-              alt="phone" 
-              text="+90 216 123 45 67" 
-            />
-          </span>
+    <footer className="bg-darkgray text-lightgray font-Barlow">
+      <div className="container mx-auto px-16 py-12">
+        {/* Top Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Company Info Column */}
+          <div>
+            <h3 className="font-Londrina_Solid text-3xl mb-6 text-yellow">
+              Teknolojik
+              <br />
+              Yemekler
+            </h3>
+            
+            <div className="space-y-4 mb-6">
+              <IconWithText 
+                src={locationLogo} 
+                alt="location" 
+                text="341 Londonberry Road, İstanbul Türkiye" 
+              />
+              <IconWithText 
+                src={mailLogo} 
+                alt="mail" 
+                text="aciktim@teknolojikyemekler.com" 
+              />
+              <IconWithText 
+                src={phoneLogo} 
+                alt="phone" 
+                text="+90 216 123 45 67" 
+              />
+            </div>
+            
+            <div className="flex space-x-3">
+              <a href="https://twitter.com" className="text-lightgray hover:text-yellow transition-colors">
+                <FontAwesomeIcon icon={faTwitterSquare} className="w-6 h-6" />
+              </a>
+              <a href="https://facebook.com" className="text-lightgray hover:text-yellow transition-colors">
+                <FontAwesomeIcon icon={faFacebookSquare} className="w-6 h-6" />
+              </a>
+              <a href="https://instagram.com" className="text-lightgray hover:text-yellow transition-colors">
+                <FontAwesomeIcon icon={faInstagramSquare} className="w-6 h-6" />
+              </a>
+            </div>
+          </div>
+          
+          {/* Menu Column */}
+          <div>
+            <h3 className="font-Barlow font-bold text-yellow text-xl mb-6 pb-2 border-b border-red">
+              Sıcacık Menüler
+            </h3>
+            
+            <ul className="space-y-3 font-Barlow">
+              <li className="hover:text-yellow transition-colors">
+                <Link href="#">Terminal Pizza</Link>
+              </li>
+              <li className="hover:text-yellow transition-colors">
+                <Link href="#">5 Kişilik Hackathon Pizza</Link>
+              </li>
+              <li className="hover:text-yellow transition-colors">
+                <Link href="#">useEffect Tavuklu Pizza</Link>
+              </li>
+              <li className="hover:text-yellow transition-colors">
+                <Link href="#">Beyaz Console Frosty</Link>
+              </li>
+              <li className="hover:text-yellow transition-colors">
+                <Link href="#">Testler Geçti Mutlu Burger</Link>
+              </li>
+              <li className="hover:text-yellow transition-colors">
+                <Link href="#">Position Absolute Acı Burger</Link>
+              </li>
+            </ul>
+          </div>
+          
+          {/* Instagram Column */}
+          <div>
+            <h3 className="font-Barlow font-bold text-yellow text-xl mb-6 pb-2 border-b border-red">
+              Instagram
+            </h3>
+            
+            <div className="grid grid-cols-3 gap-2">
+              {footerInstaPhoto.map((item, index) => (
+                <InstagramPhoto key={index} img={item.img} />
+              ))}
+            </div>
+            
+            <div className="mt-4">
+              <Link href="https://instagram.com" className="text-yellow hover:underline text-sm">
+                @teknolojikyemekler
+              </Link>
+            </div>
+          </div>
         </div>
         
-        <div className="flex flex-col items-start justify-start gap-8 max-lg:gap-2 font-Barlow">
-          <span className="w-64 h-20 flex items-center">
-            <p className="text-xl font-bold">Sıcacık Menüler</p>
-          </span>
-          <span className="flex flex-col gap-4 font-Barlow text-sm font-normal">
-            <p>Terminal Pizza</p>
-            <p>5 Kişilik Hackathon Pizza</p>
-            <p>useEffect Tavuklu Pizza</p>
-            <p>Beyaz Console Frosty</p>
-            <p>Testler Geçti Mutlu Burger</p>
-            <p>Position Absolute Acı Burger</p>
-          </span>
+        {/* Divider */}
+        <hr className="my-8 border-gray" />
+        
+        {/* Bottom Section */}
+        <div className="flex flex-col md:flex-row justify-between items-center text-sm">
+          <div className="mb-4 md:mb-0 flex items-center">
+            <FontAwesomeIcon icon={faCopyright} className="w-3 h-3 mr-2" />
+            <span>2024 Teknolojik Yemekler. Tüm hakları saklıdır.</span>
+          </div>
+          
+          <div className="flex items-center space-x-6">
+            <Link href="#" className="hover:text-yellow transition-colors">
+              Gizlilik Politikası
+            </Link>
+            <Link href="#" className="hover:text-yellow transition-colors">
+              Kullanım Koşulları
+            </Link>
+            <a href="https://burakaltiparmak.site" className="text-yellow hover:underline">
+              made by Burak Altıparmak
+            </a>
+          </div>
         </div>
-
-        <div className="flex flex-col gap-8 text-lg font-bold font-Barlow max-lg:gap-2">
-          <span className="w-64 h-20 flex items-center">
-            <p className="text-xl font-bold">Instagram</p>
-          </span>
-          <span className="grid grid-cols-3 gap-1">
-            {footerInstaPhoto.map((item, index) => (
-              <InstagramPhoto key={index} img={item.img} />
-            ))}
-          </span>
-        </div>
-      </div>
-
-      <hr className="w-full" />
-
-      <div className="flex flex-row justify-around items-center gap-8 text-lightgray py-2 max-md:py-0 w-full">
-        <span className="flex flex-col gap-2">
-          <p className="flex flex-row items-center gap-1 text-xs">
-            <FontAwesomeIcon className="w-3" icon={faCopyright} />
-            2024 Teknolojik Yemekler
-          </p>
-          <a href="https://burakaltiparmak.site" className="text-xs underline">
-            made by Burak Altıparmak
-          </a>
-        </span>
-        <span className="flex flex-row items-center gap-2">
-          <a href="https://twitter.com">
-            <FontAwesomeIcon className="w-4 h-auto" icon={faTwitterSquare} />
-          </a>
-          <a href="https://facebook.com">
-            <FontAwesomeIcon className="w-4 h-auto" icon={faFacebookSquare} />
-          </a>
-          <a href="https://instagram.com">
-            <FontAwesomeIcon className="w-4 h-auto" icon={faInstagramSquare} />
-          </a>
-        </span>
       </div>
     </footer>
   );

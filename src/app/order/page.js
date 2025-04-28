@@ -342,6 +342,7 @@ const onSubmit = (data) => {
           />
 
           <div className="flex flex-row justify-between gap-8 items-start w-full   max-md:flex-col max-md:items-center max-md:px-8">
+            {/*
             <span className="w-full border border-gray bg-lightgray rounded-lg p-4">
               <FormField
                 control={form.control}
@@ -362,6 +363,7 @@ const onSubmit = (data) => {
                 )}
               />
             </span>
+            */}
 
             <span className="flex flex-col items-start justify-between bg-lightgray border border-gray w-full gap-2 rounded-lg">
               <span className="flex flex-col justify-between  items-stretch gap-4 p-4 w-full">
