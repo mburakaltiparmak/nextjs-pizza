@@ -264,7 +264,12 @@ export const logout = () => async (dispatch) => {
 };
 
 // Kullanıcı giriş durumunu kontrol et
+// Geliştirilmiş checkAuthStatus fonksiyonu
 export const checkAuthStatus = () => async (dispatch) => {
+  // İlk olarak, isLogin durumunu false olarak ayarla ve token'ı temizle
+  dispatch(setIsLogin(false));
+  dispatch(setToken(null));
+
   // Önce localStorage'da token ara, yoksa sessionStorage'a bak
   let token = localStorage.getItem("token");
   let storage = localStorage;
@@ -275,6 +280,7 @@ export const checkAuthStatus = () => async (dispatch) => {
     storage = sessionStorage;
   }
 
+  // Token yoksa erken çık
   if (!token) {
     return false;
   }
@@ -283,28 +289,26 @@ export const checkAuthStatus = () => async (dispatch) => {
   const rememberMe = localStorage.getItem("rememberMe") === "true";
   dispatch(setRememberMe(rememberMe));
 
-  // Token varsa, kullanıcıyı giriş yapmış olarak işaretle
+  // Token varsa, Axios başlığına ekle ve giriş yapmış olarak işaretle
+  instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   dispatch(setToken(token));
   dispatch(setIsLogin(true));
 
-  // Axios instance'ına token ekle
-  instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-  // Kullanıcı email bilgisini de al
+  // Kullanıcı email bilgisini al
   const savedEmail = storage.getItem("userEmail");
   if (savedEmail) {
     dispatch(setEmail(savedEmail));
   }
 
   try {
-    // Kullanıcı profil bilgilerini getir - doğrudan güvenli bir URL çağrılıyor
+    // Kullanıcı profil bilgilerini getir
     const response = await instance.get("/user/profile");
 
     if (response && response.data) {
       // Kullanıcı bilgilerini Redux store'a kaydet
       dispatch(setUserProfile(response.data));
 
-      // Kullanıcının rol ve durumunu da güncelle
+      // Kullanıcının rol ve durumunu güncelle
       if (response.data.role) {
         dispatch(setUserRole(response.data.role));
       }
@@ -322,10 +326,13 @@ export const checkAuthStatus = () => async (dispatch) => {
 
       // Adres bilgilerini yükle
       try {
-        dispatch(fetchUserAddresses());
+        await dispatch(fetchUserAddresses());
       } catch (addressError) {
         console.error("Adres bilgileri yüklenirken hata:", addressError);
+        // Adres hatası kritik değilse devam et
       }
+      
+      return true;
     }
     return true;
   } catch (error) {
@@ -333,12 +340,19 @@ export const checkAuthStatus = () => async (dispatch) => {
 
     // Token geçersiz olabilir, kontrol et
     if (error.response && error.response.status === 401) {
-      // Token geçersiz, çıkış yap
-      dispatch(logout());
+      // Token geçersiz, çıkış yap ve kullanıcıyı yönlendir
+      await dispatch(logout());
+      
+      // Kullanıcıyı login sayfasına yönlendir (client-side ise)
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login?expired=true';
+      }
+      
       return false;
     }
-    // Hataya rağmen, giriş durumunu koru (kullanıcı giriş yapmış sayılır)
-    return true;
+    
+    // Diğer hatalar için giriş durumunu koru
+    return isLogin;
   }
 };
 // Kullanıcı kaydı
