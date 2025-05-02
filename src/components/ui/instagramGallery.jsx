@@ -41,9 +41,9 @@ export const InstagramGallery = ({ photos }) => {
             onClick={() => openPhoto(photo)}
           >
             <img
-              src={photo.img.src}
+              src={photo.img}
               alt={`Instagram fotoğrafı ${index + 1}`}
-              className="object-cover w-full h-full transition-transform duration-300 hover:scale-110"
+              className="object-cover w-full h-fit transition-transform duration-300 hover:scale-110"
             />
             <div className="absolute inset-0 bg-red/30 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
               <span className="text-white text-xs font-medium">Görüntüle</span>
@@ -80,39 +80,39 @@ export const InstagramGallery = ({ photos }) => {
           onKeyDown={handleKeyDown}
           tabIndex={0}
         >
-          <div className="relative max-w-4xl w-full bg-darkgray rounded-lg overflow-hidden">
+          <div className="relative bg-darkgray rounded-lg overflow-hidden">
             <button
               onClick={closePhoto}
-              className="absolute top-4 right-4 z-10 bg-red/80 text-white p-2 rounded-full hover:bg-red transition-colors"
+              className="absolute top-4 right-4 max-md:right-2 z-10 bg-red/80 text-white p-2 rounded-full hover:bg-red transition-colors"
               aria-label="Kapat"
             >
               <X size={20} />
             </button>
 
-            <div className="flex flex-col md:flex-row">
+            <div className="flex flex-row justify-center gap-4 max-md:gap-1 py-4 max-w-[600px] md:max-w-[500px] items-center max-md:mt-2 md:flex-row">
               {/* Fotoğraf */}
-              <div className="md:w-2/3">
+              <div>
                 <img
-                  src={selectedPhoto.img.src}
+                  src={selectedPhoto.img}
                   alt="Instagram fotoğrafı"
-                  className="w-full h-auto"
+                  className="max-h-[400px] max-md:max-w-[200px] max-w-[400px] rounded-lg object-center border-2 border-lightgray"
                 />
               </div>
 
               {/* Açıklama */}
-              <div className="p-6 md:w-1/3 bg-darkgray text-lightgray">
-                <h3 className="text-yellow text-lg font-bold mb-4">
+              <div className="p-2 bg-darkgray text-lightgray ">
+                <h3 className="text-yellow text-lg max-md:text-base font-bold mb-4">
                   Teknolojik Yemekler
                 </h3>
-                <p className="mb-4">
+                <p className="mb-4 max-md:text-sm">
                   {selectedPhoto.description ||
                     "Lezzetli menülerimizden bir seçki. Teknolojik bir lezzet deneyimi için sizi restoranımıza bekliyoruz."}
                 </p>
 
-                <div className="mt-6">
+                <div className="mt-6 max-md:mt-4">
                   <a
                     href="https://instagram.com"
-                    className="bg-yellow text-darkgray font-medium py-2 px-4 rounded inline-flex items-center hover:bg-yellow/90 transition-colors"
+                    className="bg-yellow text-darkgray font-medium py-2 px-4 max-md:px-2 max-md:text-sm rounded inline-flex items-center hover:bg-yellow/90 transition-colors"
                     target="_blank"
                     rel="noopener noreferrer"
                   >

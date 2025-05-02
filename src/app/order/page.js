@@ -203,24 +203,11 @@ const onSubmit = (data) => {
             {toplam ? `${toplam} ₺` : "Seçimlerine göre fiyat belirlenir."}
           </p>
           <span className="flex flex-row justify-between items-center gap-16 max-md:gap-2 text-gray">
-            <p className="text-yellow font-semibold">
-              <FontAwesomeIcon icon={faRankingStar} /> 4.9
-            </p>
-            <p className="text-red font-semibold">(564)</p>
+            
           </span>
         </span>
         <p className="text-sm text-gray ">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed maximus
-          consequat turpis quis imperdiet. Mauris feugiat tempor pulvinar.
-          Pellentesque sed purus pretium, ultricies diam eget, laoreet odio.
-          Pellentesque mattis elit et massa iaculis, nec tempor lectus accumsan.
-          Mauris id metus velit. Nulla facilisi. Sed vel dui mattis est
-          ullamcorper tempor non non tortor. In auctor mauris risus, et pulvinar
-          neque sollicitudin sit amet. Pellentesque rutrum cursus dignissim.
-          Integer euismod mauris sed metus rutrum iaculis. Nullam cursus massa
-          ac augue tristique, sit amet malesuada nisi lacinia. Fusce varius nisl
-          et risus commodo, varius interdum massa feugiat. Morbi ex lacus,
-          venenatis a velit et, imperdiet volutpat odio.
+        Kendi pizzanı kendin tasarla! Boyutunu seç, hamur kalınlığını belirle, en sevdiğin malzemeleri ekle ve sadece sana özel bir lezzet yarat. Kodları biz yazar gibi, pizzanı da sen oluştur — seçimler senin, tarif özgür!
         </p>
       </div>
       <Form {...form}>
@@ -228,7 +215,7 @@ const onSubmit = (data) => {
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex flex-col items-center justify-between gap-8 w-[50%] max-md:w-full max-md:px-8"
         >
-          <div className="flex flex-row justify-between items-center w-full  max-md:px-8">
+          <div className="flex flex-row justify-between items-center w-full">
             <FormField
               control={form.control}
               name="boyut"
@@ -285,7 +272,7 @@ const onSubmit = (data) => {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="-- Hamur Kalınlığı Seç --" />
+                        <SelectValue placeholder="Hamur Kalınlığı Seç" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -341,7 +328,7 @@ const onSubmit = (data) => {
             )}
           />
 
-          <div className="flex flex-row justify-between gap-8 items-start w-full   max-md:flex-col max-md:items-center max-md:px-8">
+          <div className="flex flex-row justify-between gap-8 items-start w-full   max-md:flex-col max-md:items-center">
             {/*
             <span className="w-full border border-gray bg-lightgray rounded-lg p-4">
               <FormField

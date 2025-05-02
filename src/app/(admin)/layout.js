@@ -1,3 +1,4 @@
+// AdminLayoutClient.jsx
 "use client";
 
 import Navbar from "@/components/admin/navbar";
@@ -13,10 +14,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { userRoles } from "@/lib/store/constants";
 
-// Client-side Admin Layout bileşeni
 const AdminLayoutClient = ({ children }) => {
-  // Client-side mount kontrolü
   const [isMounted, setIsMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { isLogin, role, status } = useSelector(state => state.user);
@@ -31,9 +31,26 @@ const AdminLayoutClient = ({ children }) => {
     return "dashboard"; // varsayılan
   };
 
+  // Aktif sayfayı burada belirleyelim
   const activePage = getActivePageFromPath(pathname);
   
-  // Auth kontrolü ve modal açıcı useEffect
+  // Mobil cihaz kontrolü
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // İlk kontrol
+    checkMobile();
+    
+    // Resize olayını dinle
+    window.addEventListener('resize', checkMobile);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  // Auth kontrolü ve diğer useEffect'ler aynı...
   useEffect(() => {
     // Client-side mount olduğunu işaretle
     setIsMounted(true);
@@ -72,8 +89,8 @@ const AdminLayoutClient = ({ children }) => {
       }
     };
   }, [isLogin, role, router]);
-
-  // Giriş yapmamışsa veya rol uygun değilse veya client-side mount tamamlanmadıysa yükleme göster
+  
+  // Diğer kontroller...
   if (!isMounted || !isLogin || ![userRoles.ADMIN, userRoles.PERSONAL].includes(role)) {
     return <Loading />;
   }
@@ -98,13 +115,13 @@ const AdminLayoutClient = ({ children }) => {
     pageProps.showAddButton === true;
 
   return (
-    <div className="flex h-screen font-Quattrocento_Sans bg-lightgray">
-      {/* Sidebar - URL'den tespit ettiğimiz aktif sayfayı geçiyoruz */}
+    <div className="flex flex-col md:flex-row h-screen font-Quattrocento_Sans bg-lightgray">
+      {/* Sidebar - artık activePage tanımlı olduğundan hata vermeyecek */}
       <Sidebar activePage={activePage} />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Navbar - Başlık ve düğme özelliklerini props'tan alıyoruz */}
+      <div className="flex-1 flex flex-col overflow-hidden w-full">
+        {/* Navbar - isMobile durumunu iletiyoruz */}
         <Navbar
           title={pageTitle}
           showAddButton={showAddButton}
@@ -114,10 +131,11 @@ const AdminLayoutClient = ({ children }) => {
               window.openAdminModal();
             }
           }}
+          isMobile={isMobile}
         />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-3 md:p-6">
           {/* Bildirimler */}
           {pageProps.notifications && pageProps.notifications.length > 0 && (
             <NotificationManager
@@ -131,7 +149,7 @@ const AdminLayoutClient = ({ children }) => {
           ) : pageProps.error ? (
             <ErrorMessage error={pageProps.error} />
           ) : (
-            <div id="admin-page-component">{children}</div>
+            <div id="admin-page-component" className="mt-4 md:mt-0">{children}</div>
           )}
         </main>
       </div>

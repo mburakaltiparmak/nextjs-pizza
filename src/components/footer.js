@@ -31,12 +31,12 @@ const IconWithText = ({ src, alt, text }) => (
 // Fotoğraflar için açıklama içeren gelişmiş veri yapısı
 const instaPhotosWithDescriptions = footerInstaPhoto.map((item, index) => {
   const descriptions = [
-    "Terminal Pizza - JavaScript komutlarıyla hazırlanan özel tarifimiz.",
-    "5 Kişilik Hackathon Pizza - Ekip çalışmasının lezzeti!",
-    "useEffect Tavuklu Pizza - Her lokmada yeni bir etki.",
-    "Beyaz Console Frosty - Hata ayıklamak için tatlı bir mola.",
-    "Testler Geçti Mutlu Burger - Başarıyı kutlamak için ideal.",
-    "Position Absolute Acı Burger - Yerinden oynatamayacağınız lezzet.",
+    "Terminal Pizza - JavaScript komutlarıyla hazırlanan özel tarifimiz.", // Değişmedi
+    "Pizza Kolajı - Kod satırları gibi bir araya gelen lezzet dilimleri.",
+    "SideEffect Patates Tabağı - Her daldırmada ayrı bir fonksiyon: ketçap ve mayonez.",
+    "Abbey Road Burger Edition - Yaya geçidinde yürüyen burger komponentleri.",
+    "ChilledProps Ice Tea - Serinletici iki prop, yaz günlerine refresh atıyor.",
+    "DoubleStack Burger - İkili modülde, maksimum performans ve lezzet.",
     "CSS Grid Makarna - Kusursuz düzende, mükemmel lezzet.",
     "React Hook Fish - useState ile durumu değişen balık tabağı.",
     "Git Commit Tatlısı - Değişikliklerinizi tatlıya bağlayın.",
@@ -151,7 +151,7 @@ const Footer = () => {
             <span>2024 Teknolojik Yemekler. Tüm hakları saklıdır.</span>
           </div>
 
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-6 max-md:justify-center max-md:space-x-0 max-md:text-xs max-md:gap-2">
             <Link href="#" className="hover:text-yellow transition-colors">
               Gizlilik Politikası
             </Link>

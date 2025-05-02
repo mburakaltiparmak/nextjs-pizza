@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch } from "@/lib/hooks";
 import {
@@ -12,9 +12,12 @@ import {
   LogOut,
   ShoppingCart,
   User,
+  Menu,
+  X
 } from "lucide-react";
+import { Separator } from "../ui/separator";
 
-// LogoutHandler ayrı bir bileşene taşındı
+// LogoutHandler bileşeni aynı
 const LogoutButton = ({ collapsed, onLogoutStart }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
@@ -78,22 +81,71 @@ const Sidebar = ({ activePage = "dashboard" }) => {
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Ekran boyutunu kontrol et
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      
+      // Mobil cihazda sidebar'ı daralt
+      if (mobile && !collapsed) {
+        setCollapsed(true);
+      }
+    };
+    
+    // İlk kontrol
+    checkMobile();
+    
+    // Resize olayını dinle
+    window.addEventListener('resize', checkMobile);
+    
+    // Temizleme
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [collapsed]);
 
   // Sidebar durumunu değiştir
   const toggleSidebar = () => {
-    setCollapsed(!collapsed);
+    if (isMobile) {
+      setMobileOpen(!mobileOpen);
+    } else {
+      setCollapsed(!collapsed);
+    }
   };
 
   // Sayfa yönlendirmesi
   const navigateTo = useCallback((path) => {
-    setIsNavigating(false);
+    setIsNavigating(true);
+    if (isMobile) {
+      setMobileOpen(false);
+    }
     router.push(path);
-  }, [router]);
+    setTimeout(() => {
+      setIsNavigating(false);
+    }, 300);
+  }, [router, isMobile]);
 
   // Çıkış işlemi başladığında çağrılacak
   const handleLogoutStart = useCallback(() => {
     setIsNavigating(true);
   }, []);
+
+  // Mobil görünümde dışarıya tıklandığında sidebar'ı kapat
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const sidebar = document.getElementById("sidebar-container");
+      if (isMobile && mobileOpen && sidebar && !sidebar.contains(event.target)) {
+        setMobileOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMobile, mobileOpen]);
 
   // Menü öğeleri
   const menuItems = [
@@ -130,55 +182,85 @@ const Sidebar = ({ activePage = "dashboard" }) => {
   ];
 
   return (
-    <div
-      className={`bg-red text-white border-r shadow-sm transition-all duration-300 ease-in-out ${
-        collapsed ? "w-20" : "w-64"
-      }`}
-    >
-      <div className="p-4 flex justify-between items-center border-b border-red-700">
-        {!collapsed && (
-          <button
-            onClick={() => navigateTo("/")}
-            disabled={isNavigating}
-            className="text-xl font-bold font-Barlow text-white"
-          >
-            Pizza Admin
-          </button>
-        )}
+    <>
+      {/* Mobil menü butonu */}
+      {isMobile && (
         <button
           onClick={toggleSidebar}
-          className="p-2 rounded-full hover:bg-red-700 text-white"
+          className="fixed top-3 left-4 bg-red text-yellow z-50 p-2 ring-2 ring-inset ring-black text-darkred shadow-lg md:hidden"
+          aria-label="Menüyü aç/kapat"
         >
-          {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
-      </div>
+      )}
+      
+      {/* Sidebar */}
+      <div
+        id="sidebar-container"
+        className={`bg-red text-white transition-all duration-300 ease-in-out 
+          ${isMobile 
+            ? `fixed inset-y-0 left-0 z-40 w-48 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`
+            : collapsed ? 'w-20' : 'w-48'
+          }`}
+      >
+        <div className="p-4 flex justify-between items-center border-b border-red-700">
+          {(!collapsed || (isMobile && mobileOpen)) && (
+            <button
+              onClick={() => navigateTo("/")}
+              disabled={isNavigating}
+              className="text-xl font-bold font-Barlow text-white"
+            >
+              Pizza Admin
+            </button>
+          )}
+          {!isMobile && (
+            <button
+              onClick={toggleSidebar}
+              className="p-2 rounded-full hover:bg-red-700 text-white"
+            >
+              {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+            </button>
+          )}
+        </div>
 
-      <div className="p-3">
-        <ul className="space-y-2 font-Barlow">
-          {menuItems.map((item) => (
-            <li key={item.id}>
-              <button
-                onClick={() => navigateTo(item.path)}
-                disabled={isNavigating}
-                className={`flex items-center w-full p-3 rounded-lg ${
-                  activePage === item.id
-                    ? "bg-yellow text-black"
-                    : "text-white hover:bg-yellow hover:text-black"
-                } border border-red font-medium ${isNavigating ? 'opacity-70 cursor-not-allowed' : ''}`}
-              >
-                {item.icon}
-                {!collapsed && <span>{item.name}</span>}
-              </button>
-              <hr className="border-red-700" />
+        <div className="py-3 w-full px-2">
+          <ul className="flex flex-col items-start gap-1 font-Barlow w-full">
+            {menuItems.map((item) => (
+              <li className="space-y-1 w-full " key={item.id}>
+                <button
+                  onClick={() => navigateTo(item.path)}
+                  disabled={isNavigating}
+                  className={`flex flex-row gap-1 items-center justify-start rounded-xl p-3  w-full ${
+                    activePage === item.id
+                      ? "bg-yellow text-black"
+                      : "text-white hover:bg-yellow hover:text-black"
+                  } border border-red font-medium ${isNavigating ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                 <span>{item.icon}</span> 
+                  {(!collapsed || (isMobile && mobileOpen)) && <span>{item.name}</span>}
+                </button>
+                <Separator orientation="horizontal" />
+              </li>
+            ))}
+
+            <li className="w-full">
+              <LogoutButton 
+                collapsed={collapsed && !isMobile} 
+                onLogoutStart={handleLogoutStart} 
+              />
             </li>
-          ))}
-
-          <li className="mt-6">
-            <LogoutButton collapsed={collapsed} onLogoutStart={handleLogoutStart} />
-          </li>
-        </ul>
+          </ul>
+        </div>
       </div>
-    </div>
+      
+      {/* Mobil overlay - sidebar açıldığında arkaplanı karartır */}
+      {isMobile && mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-30" 
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+    </>
   );
 };
 

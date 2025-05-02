@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/lib/hooks";
 import {
@@ -24,6 +24,23 @@ const FloatingCartButton = () => {
   const cart = useAppSelector((state) => state.order.cart);
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const [isMobile,setIsMobile]=useState(false);
+
+  useEffect(() => {
+      const checkMobile = () => {
+        setIsMobile(window.innerWidth < 768);
+      };
+      
+      // Initial check
+      checkMobile();
+      
+      // Add event listener for resize
+      window.addEventListener('resize', checkMobile);
+      
+      // Cleanup
+      return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+  
 
   const totalItems = cart.reduce((sum, item) => sum + item.count, 0);
   const totalAmount = cart.reduce(
@@ -51,8 +68,8 @@ const FloatingCartButton = () => {
     <div className="fixed top-2 right-4 z-50 ">
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <button className="bg-yellow text-red p-4 rounded-full shadow-lg flex items-center justify-center hover:bg-red hover:text-yellow ring-2 ring-inset ring-lightgray transition-colors duration-200">
-            <ShoppingCart size={24} />
+          <button className="bg-yellow max-md:text-xs text-red p-4 max-md:p-2 rounded-full shadow-lg flex items-center justify-center hover:bg-red hover:text-yellow ring-2 ring-inset ring-black transition-colors duration-200">
+            <ShoppingCart size={isMobile ? 18 : 24} />
             {totalItems > 0 && (
               <span className="absolute -top-2 -right-2 bg-red text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
                 {totalItems}

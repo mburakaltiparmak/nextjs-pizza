@@ -77,16 +77,16 @@
   @apply flex flex-row justify-center max-md:w-[150px] items-center gap-2 text-darkgray font-semibold font-Barlow border border-transparent hover:cursor-pointer hover:text-lightgray hover:bg-darkgray;
 }
 .btn-primary {
-  @apply bg-yellow text-darkgray hover:bg-red hover:text-yellow hover:z-50 ring-2 ring-inset ring-lightgray py-3 px-9 rounded-full font-semibold text-base transition-all duration-300 font-Barlow shadow-md hover:shadow-lg;
+  @apply bg-yellow text-darkgray hover:bg-red hover:text-yellow hover:z-50 ring-2 ring-inset ring-lightgray py-3 px-9 max-md:px-6 max-md:text-sm rounded-full font-semibold text-base transition-all duration-300 font-Barlow shadow-md hover:shadow-lg;
 }
 .btn-secondary {
   @apply flex flex-row items-center gap-2 bg-yellow text-red hover:bg-red hover:text-yellow shadow-md hover:shadow-xl ring-2 ring-inset ring-red hover:ring-yellow py-2 px-4 rounded-full font-semibold text-base transition-all duration-300 font-Barlow ;
 }
 .btn-third {
-  @apply flex flex-row items-center gap-2 bg-yellow text-red hover:text-yellow hover:bg-red ring-2 ring-inset ring-lightgray hover:ring-black p-2 rounded-full font-semibold text-sm transition-all duration-300 font-Barlow z-50 shadow-md hover:shadow-lg;
+  @apply flex flex-row items-center gap-2 bg-yellow text-red hover:text-yellow hover:bg-red ring-2 ring-inset ring-lightgray hover:ring-black p-2 max-md:py-3 max-md:px-6 rounded-full font-semibold text-sm transition-all duration-300 font-Barlow z-50 shadow-md hover:shadow-lg;
 }
 .btn-fourth {
-  @apply bg-lightgray text-red hover:bg-red hover:text-lightgray ring-2 ring-inset ring-red hover:ring-yellow font-Barlow text-sm font-semibold rounded-full p-2 transition-all duration-300 z-50 shadow-md hover:shadow-lg;
+  @apply bg-lightgray text-red hover:bg-red hover:text-lightgray ring-2 ring-inset ring-red hover:ring-yellow font-Barlow text-sm font-semibold rounded-full p-2 max-md:py-3 max-md:px-6 transition-all duration-300 z-50 shadow-md hover:shadow-lg;
 }
 
 /* ScrollLock için stil */

@@ -54,11 +54,27 @@ const FloatingUserButton = () => {
   const [rememberMe, setRememberMeState] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isMobile,setIsMobile]=useState(false);
 
   // "Beni hatırla" durumunu localStorage'dan al (ilk yükleme sırasında)
   useEffect(() => {
     const savedRememberMe = localStorage.getItem("rememberMe") === "true";
     setRememberMeState(savedRememberMe);
+  }, []);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Initial check
+    checkMobile();
+    
+    // Add event listener for resize
+    window.addEventListener('resize', checkMobile);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   // Kullanıcının admin veya personel olup olmadığını kontrol et
@@ -195,17 +211,17 @@ const FloatingUserButton = () => {
         <div className="relative" ref={dropdownRef}>
           <div
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="bg-yellow z-50 p-3 font-Londrina_Solid text-red ring-2 ring-inset ring-white rounded-full shadow-lg hover:bg-red hover:text-yellow  transition-all duration-200 cursor-pointer flex items-center gap-2 text-base font-normal"
+            className="bg-yellow z-50 p-3 max-md:fixed max-md:top-2 max-md:text-xs max-md:gap-1 font-Londrina_Solid text-red ring-2 ring-inset ring-white rounded-full shadow-lg hover:bg-red hover:text-yellow  transition-all duration-200 cursor-pointer flex items-center gap-2 text-base font-normal"
           >
             <FontAwesomeIcon icon={faUser} />
-            <span>{name}</span>
+            <span className="">{name}</span>
           </div>
 
           {dropdownOpen && (
-            <div className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg overflow-hidden z-20 font-Barlow">
+            <div className="absolute left-0 mt-2 max-md:mt-8 max-md:text-sm w-56 bg-white rounded-md shadow-lg overflow-hidden z-20 font-Barlow">
               <div className="py-2 border-b border-red">
                 <div className="px-4 py-2">
-                  <div className="font-bold truncate font-Londrina_Solid text-red">
+                  <div className="font-bold truncate font-Londrina_Solid text-red max-md:text-lg">
                     {name}
                   </div>
                 </div>
@@ -213,7 +229,7 @@ const FloatingUserButton = () => {
 
               <div className="py-1">
                 <div
-                  className="px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-darkgray text-sm"
+                  className="px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-darkgray text-sm max-md:text-xs "
                   onClick={() => {
                     router.push("/profile");
                     setDropdownOpen(false);
@@ -225,7 +241,7 @@ const FloatingUserButton = () => {
 
                 {isAdminOrPersonal ? (
                   <div
-                    className="px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-darkgray text-sm"
+                    className="px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-darkgray text-sm max-md:text-xs"
                     onClick={() => {
                       router.push("/dashboard");
                       setDropdownOpen(false);
@@ -236,7 +252,7 @@ const FloatingUserButton = () => {
                   </div>
                 ) : (
                   <div
-                    className="px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-darkgray text-sm"
+                    className="px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-darkgray text-sm max-md:text-xs"
                     onClick={() => {
                       router.push("/orders");
                       setDropdownOpen(false);
@@ -250,7 +266,7 @@ const FloatingUserButton = () => {
 
               <div className="py-1 border-t border-red">
                 <div
-                  className={`px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-red text-sm ${
+                  className={`px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-red text-sm max-md:text-xs ${
                     isLoggingOut ? "opacity-70 cursor-not-allowed" : ""
                   }`}
                   onClick={!isLoggingOut ? handleLogout : undefined}
@@ -265,13 +281,13 @@ const FloatingUserButton = () => {
           )}
         </div>
       ) : (
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center max-md:items-start max-md:flex-col max-md:fixed max-md:top-2">
           <AlertDialog open={loginOpen} onOpenChange={setLoginOpen}>
             <AlertDialogTrigger asChild>
-              <Button className="bg-yellow text-red hover:bg-red hover:text-yellow ring-2 ring-inset ring-white rounded-full font-Barlow font-bold text-sm ">
-                <FontAwesomeIcon icon={faUser} className="mr-2" />
-                <span>Giriş</span>
-              </Button>
+              <button className="h-10 max-md:h-8 max-md:w-16 max-md:text-xs max-md:gap-1 px-4 py-2 bg-yellow text-red hover:bg-red hover:text-yellow ring-2 ring-inset ring-white rounded-full font-Barlow font-bold text-sm inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:bg-opacity-50 disabled:cursor-not-allowed ">
+                <FontAwesomeIcon icon={faUser} className="mr-2 max-md:mr-0" />
+                <span className="">Giriş</span>
+              </button>
             </AlertDialogTrigger>
             <AlertDialogContent className="bg-white p-0 border-0 rounded-md max-w-md">
               <div className="w-full max-w-md space-y-4 border-transparent rounded-md p-16">
@@ -414,7 +430,7 @@ const FloatingUserButton = () => {
                       className="group relative flex w-full justify-center rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-darkred bg-yellow hover:bg-lightyellow"
                     >
                       <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
-                      Üye Ol
+                       Üye Ol
                     </button>
                   </div>
                 </form>
@@ -422,13 +438,13 @@ const FloatingUserButton = () => {
             </AlertDialogContent>
           </AlertDialog>
 
-          <Button
-            className="bg-lightgray text-red hover:bg-red hover:text-lightgray ring-2 ring-inset ring-lightgray rounded-full font-Barlow font-bold text-sm "
+          
+              <button className="h-10 max-md:w-16 max-md:text-xs max-md:h-8 px-4 py-2 bg-white gap-1 text-red hover:bg-red hover:text-yellow ring-2 ring-inset ring-yellow rounded-full font-Barlow font-bold text-sm inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:bg-opacity-50 disabled:cursor-not-allowed "
             onClick={() => router.push("/signup")}
           >
-            <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
-            <span>Üye Ol</span>
-          </Button>
+            <FontAwesomeIcon icon={faUserPlus} className="mr-2 max-md:mr-0" />
+            <span className="">Üye Ol</span>
+          </button>
         </div>
       )}
     </div>

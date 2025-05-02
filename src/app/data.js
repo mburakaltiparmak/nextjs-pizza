@@ -98,27 +98,27 @@ export const homeMenuLink = [
 export const footerInstaPhoto = [
   {
     name: "photo1",
-    img: instaImg1,
+    img: "https://res.cloudinary.com/dqjqkgpt3/image/upload/v1746187940/salami_pizza_zypgtz.jpg",
   },
   {
     name: "photo2",
-    img: instaImg2,
+    img: "https://res.cloudinary.com/dqjqkgpt3/image/upload/v1746187940/pizza_2_hy8gin.jpg",
   },
   {
     name: "photo3",
-    img: instaImg3,
+    img: "https://res.cloudinary.com/dqjqkgpt3/image/upload/v1746187940/55592bd2-27ea-4a14-b129-1e66cb96761f_dtdd8j.jpg",
   },
   {
     name: "photo4",
-    img: instaImg4,
+    img: "https://res.cloudinary.com/dqjqkgpt3/image/upload/v1746187939/7c8b366c-6e40-4f88-974a-347d222817bd_ljvcrb.jpg",
   },
   {
     name: "photo5",
-    img: instaImg5,
+    img: "https://res.cloudinary.com/dqjqkgpt3/image/upload/v1746187939/Classic_Sweet_Tea_kwk5mi.jpg",
   },
   {
     name: "photo6",
-    img: instaImg6,
+    img: "https://res.cloudinary.com/dqjqkgpt3/image/upload/v1746187939/7dd3251b-bf5f-4853-a167-5a34050fa386_gyjbg3.jpg",
   },
 ];
 export const items = [
