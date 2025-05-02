@@ -263,9 +263,8 @@ export const logout = () => async (dispatch) => {
   }
 };
 
-// Kullanıcı giriş durumunu kontrol et
 // Geliştirilmiş checkAuthStatus fonksiyonu
-export const checkAuthStatus = () => async (dispatch) => {
+export const checkAuthStatus = () => async (dispatch, getState) => {
   // İlk olarak, isLogin durumunu false olarak ayarla ve token'ı temizle
   dispatch(setIsLogin(false));
   dispatch(setToken(null));
@@ -351,8 +350,9 @@ export const checkAuthStatus = () => async (dispatch) => {
       return false;
     }
     
-    // Diğer hatalar için giriş durumunu koru
-    return isLogin;
+    // Diğer hatalar için mevcut giriş durumunu al ve döndür
+    const state = getState();
+    return state.user.isLogin;
   }
 };
 // Kullanıcı kaydı
