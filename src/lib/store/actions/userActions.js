@@ -227,132 +227,179 @@ export const handleOAuthCallback =
     }
   };
 
+// Geliştirilmiş logout fonksiyonu
 export const logout = () => async (dispatch) => {
   try {
-    // 1. Loading durumunu başlat
-    dispatch(setLoading(true));
-
-    // 2. Hem localStorage hem de sessionStorage'den ilgili verileri temizle
+    // 1. Tüm storage'dan kimlik bilgilerini temizle
     if (typeof window !== "undefined") {
+      // localStorage'dan temizle
       localStorage.removeItem("token");
       localStorage.removeItem("userEmail");
+
+      // sessionStorage'dan temizle
       sessionStorage.removeItem("token");
       sessionStorage.removeItem("userEmail");
-      localStorage.removeItem("rememberMe");
+
+      // "Beni hatırla" tercihini koru ama default olarak false yap
+      localStorage.setItem("rememberMe", "false");
     }
 
-    // 3. Store temizliği
+    // 2. Axios header'larını temizle
+    if (
+      typeof instance !== "undefined" &&
+      instance.defaults &&
+      instance.defaults.headers
+    ) {
+      delete instance.defaults.headers.common["Authorization"];
+    }
+
+    // 3. Redux store temizliği
     dispatch(clearUserData());
 
-    // 4. Loading durumunu bitir
-    dispatch(setLoading(false));
-
-    // 5. Başarı mesajı
-    dispatch(setSuccess("Başarıyla çıkış yapıldı"));
-
-    // 6. Başarıyı belirt
     return { success: true };
   } catch (error) {
     console.error("Logout hatası:", error);
 
-    // Hata durumunda loading'i kapat
-    dispatch(setLoading(false));
-    dispatch(setError("Çıkış yapılırken bir hata oluştu"));
+    // Hata durumunda yine de temizlik yapmaya çalış
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userEmail");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("userEmail");
+      }
+      dispatch(clearUserData());
+    } catch (cleanupError) {
+      console.error("Logout temizleme hatası:", cleanupError);
+    }
 
     return { error: "Çıkış yapılamadı", success: false };
   }
 };
 
-// Geliştirilmiş checkAuthStatus fonksiyonu
-export const checkAuthStatus = () => async (dispatch, getState) => {
-  // İlk olarak, isLogin durumunu false olarak ayarla ve token'ı temizle
-  dispatch(setIsLogin(false));
-  dispatch(setToken(null));
-
-  // Önce localStorage'da token ara, yoksa sessionStorage'a bak
-  let token = localStorage.getItem("token");
-  let storage = localStorage;
-
-  // localStorage'da token yoksa, sessionStorage'a bak
-  if (!token) {
-    token = sessionStorage.getItem("token");
-    storage = sessionStorage;
-  }
-
-  // Token yoksa erken çık
-  if (!token) {
-    return false;
-  }
-
-  // "Beni hatırla" durumunu kontrol et
-  const rememberMe = localStorage.getItem("rememberMe") === "true";
-  dispatch(setRememberMe(rememberMe));
-
-  // Token varsa, Axios başlığına ekle ve giriş yapmış olarak işaretle
-  instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  dispatch(setToken(token));
-  dispatch(setIsLogin(true));
-
-  // Kullanıcı email bilgisini al
-  const savedEmail = storage.getItem("userEmail");
-  if (savedEmail) {
-    dispatch(setEmail(savedEmail));
-  }
+// checkAuthStatus fonksiyonu - Network hataları için geliştirilmiş
+export const checkAuthStatus = () => async (dispatch) => {
+  // Ağ hatalarına karşı bir zaman aşımı ayarla
+  const AUTH_TIMEOUT = 5000; // 5 saniye
 
   try {
-    // Kullanıcı profil bilgilerini getir
-    const response = await instance.get("/user/profile");
+    // Önce localStorage'da token ara, yoksa sessionStorage'a bak
+    let token = localStorage.getItem("token");
+    let storage = localStorage;
 
-    if (response && response.data) {
-      // Kullanıcı bilgilerini Redux store'a kaydet
-      dispatch(setUserProfile(response.data));
-
-      // Kullanıcının rol ve durumunu güncelle
-      if (response.data.role) {
-        dispatch(setUserRole(response.data.role));
-      }
-
-      if (response.data.status) {
-        dispatch(setUserStatus(response.data.status));
-      }
-
-      // OAuth provider bilgisini kontrol et
-      if (response.data.oauthProvider) {
-        dispatch(setAuthProvider(response.data.oauthProvider));
-      } else {
-        dispatch(setAuthProvider("email"));
-      }
-
-      // Adres bilgilerini yükle
-      try {
-        await dispatch(fetchUserAddresses());
-      } catch (addressError) {
-        console.error("Adres bilgileri yüklenirken hata:", addressError);
-        // Adres hatası kritik değilse devam et
-      }
-      
-      return true;
+    // localStorage'da token yoksa, sessionStorage'a bak
+    if (!token) {
+      token = sessionStorage.getItem("token");
+      storage = sessionStorage;
     }
-    return true;
-  } catch (error) {
-    console.error("Profil bilgisi çekilirken hata:", error);
 
-    // Token geçersiz olabilir, kontrol et
-    if (error.response && error.response.status === 401) {
-      // Token geçersiz, çıkış yap ve kullanıcıyı yönlendir
-      await dispatch(logout());
-      
-      // Kullanıcıyı login sayfasına yönlendir (client-side ise)
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login?expired=true';
-      }
-      
+    // Token yoksa, sessiz bir şekilde çık
+    if (!token) {
+      // Store'u temizle
+      dispatch(clearUserData());
       return false;
     }
-    
-    // Diğer hatalar için mevcut giriş durumunu al ve döndür
-    const state = getState();
-    return state.user.isLogin;
+
+    // "Beni hatırla" durumunu kontrol et
+    const rememberMe = localStorage.getItem("rememberMe") === "true";
+    dispatch(setRememberMe(rememberMe));
+
+    // Token varsa, Axios başlığına ekle ve giriş yapmış olarak işaretle
+    instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    dispatch(setToken(token));
+    dispatch(setIsLogin(true));
+
+    // Kullanıcı email bilgisini al
+    const savedEmail = storage.getItem("userEmail");
+    if (savedEmail) {
+      dispatch(setEmail(savedEmail));
+    }
+
+    try {
+      // Timeout ile API çağrısı - ağ hatalarında takılıp kalmaması için
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error("Profil bilgileri zaman aşımına uğradı")),
+          AUTH_TIMEOUT
+        )
+      );
+
+      // Profil bilgilerini çekmeyi dene
+      const profilePromise = instance.get("/user/profile");
+
+      // Hangisi önce tamamlanırsa
+      const response = await Promise.race([profilePromise, timeoutPromise]);
+
+      if (response && response.data) {
+        // Kullanıcı bilgilerini Redux store'a kaydet
+        dispatch(setUserProfile(response.data));
+
+        // Kullanıcının rol ve durumunu güncelle
+        if (response.data.role) {
+          dispatch(setUserRole(response.data.role));
+        }
+
+        if (response.data.status) {
+          dispatch(setUserStatus(response.data.status));
+        }
+
+        // OAuth provider bilgisini kontrol et
+        if (response.data.oauthProvider) {
+          dispatch(setAuthProvider(response.data.oauthProvider));
+        } else {
+          dispatch(setAuthProvider("email"));
+        }
+
+        // Adres bilgilerini yüklemeyi dene, ama bir sorun çıkarsa devam et
+        try {
+          const addressTimeout = new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error("Adres bilgileri zaman aşımına uğradı")),
+              AUTH_TIMEOUT
+            )
+          );
+
+          await Promise.race([dispatch(fetchUserAddresses()), addressTimeout]);
+        } catch (addressError) {
+          console.error("Adres bilgileri yüklenirken hata:", addressError);
+          // Adres hatası kritik değil, devam et
+        }
+
+        return true;
+      }
+
+      // Profil bilgileri alınamadı ama token var, kullanıcıyı giriş yapmış kabul et
+      return true;
+    } catch (error) {
+      console.error("Profil bilgisi çekilirken hata:", error);
+
+      // Network hatası olup olmadığını kontrol et
+      if (
+        error.message === "Network Error" ||
+        error.message.includes("zaman aşımı")
+      ) {
+        console.warn("Ağ hatası oluştu ama kullanıcı girişi kabul ediliyor");
+        // Ağ hatası durumunda bile kullanıcıyı giriş yapmış olarak kabul et
+        // Böylece ürünleri ve kategorileri görüntüleyebilir
+        return true;
+      }
+
+      // Token geçersiz olabilir, kontrol et
+      if (error.response && error.response.status === 401) {
+        // Token geçersiz, temizle ve çıkış yap
+        await dispatch(logout());
+        return false;
+      }
+
+      // Diğer hata durumlarında kullanıcının giriş yapmış sayılmasını sağla
+      return true;
+    }
+  } catch (error) {
+    console.error("Kimlik doğrulama kontrolü hatası:", error);
+
+    // Herhangi bir hata durumunda oturum bilgilerini sil ve çık
+    await dispatch(logout());
+    return false;
   }
 };
 // Kullanıcı kaydı

@@ -9,7 +9,7 @@ const Header = () => {
         <Link href="/" className="hover:opacity-90 transition-opacity">
           Teknolojik Yemekler
         </Link>
-        <div className="absolute left-4 top-1/2 max-md:top-0 transform -translate-y-1/2">
+        <div className="absolute top-2 left-4">
           <FloatingUserButton />
         </div>
       </div>

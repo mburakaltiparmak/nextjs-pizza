@@ -24,23 +24,23 @@ const FloatingCartButton = () => {
   const cart = useAppSelector((state) => state.order.cart);
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const [isMobile,setIsMobile]=useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  console.log("cart", cart);
 
   useEffect(() => {
-      const checkMobile = () => {
-        setIsMobile(window.innerWidth < 768);
-      };
-      
-      // Initial check
-      checkMobile();
-      
-      // Add event listener for resize
-      window.addEventListener('resize', checkMobile);
-      
-      // Cleanup
-      return () => window.removeEventListener('resize', checkMobile);
-    }, []);
-  
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // Initial check
+    checkMobile();
+
+    // Add event listener for resize
+    window.addEventListener("resize", checkMobile);
+
+    // Cleanup
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const totalItems = cart.reduce((sum, item) => sum + item.count, 0);
   const totalAmount = cart.reduce(
@@ -69,7 +69,7 @@ const FloatingCartButton = () => {
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <button className="bg-yellow max-md:text-xs text-red p-4 max-md:p-2 rounded-full shadow-lg flex items-center justify-center hover:bg-red hover:text-yellow ring-2 ring-inset ring-black transition-colors duration-200">
-            <ShoppingCart size={isMobile ? 18 : 24} />
+            <ShoppingCart size={24} />
             {totalItems > 0 && (
               <span className="absolute -top-2 -right-2 bg-red text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
                 {totalItems}
@@ -80,7 +80,7 @@ const FloatingCartButton = () => {
 
         <AlertDialogContent className="bg-white font-Barlow">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-semibold text-gray-800">
+            <AlertDialogTitle className="text-xl font-semibold text-darkgray">
               Sepetiniz
             </AlertDialogTitle>
             {cart.length > 0 ? (
@@ -100,9 +100,9 @@ const FloatingCartButton = () => {
               </p>
             ) : (
               <div className="space-y-3">
-                {cart.map((item) => (
+                {cart.map((item, index) => (
                   <div
-                    key={item.id}
+                    key={index}
                     className="flex items-center justify-between border-b border-gray-100 pb-2"
                   >
                     <div className="flex items-center space-x-3">

@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import SecondaryLoading from "@/components/secondaryLoading";
+import Image from "next/image";
 
 // Form validation schema
 const formSchema = z.object({
@@ -82,8 +83,9 @@ const ProductPage = () => {
   const token = useSelector((state) => state.user.token);
 
   // İki yükleme durumunu tek bir değişkende birleştir
-  const isLoading = productFetchState === fetchStates.FETCHING || 
-                   categoryFetchState === fetchStates.FETCHING;
+  const isLoading =
+    productFetchState === fetchStates.FETCHING ||
+    categoryFetchState === fetchStates.FETCHING;
 
   // Initialize form
   const form = useForm({
@@ -101,12 +103,16 @@ const ProductPage = () => {
 
   // Load initial data
   useEffect(() => {
-    if ((productFetchState === fetchStates.NOT_FETCHED || !products || products.length === 0) && !dataFetchAttempted) {
+    if (
+      (productFetchState === fetchStates.NOT_FETCHED ||
+        !products ||
+        products.length === 0) &&
+      !dataFetchAttempted
+    ) {
       setDataFetchAttempted(true);
-      
-     dispatch(fetchCategories());
-     dispatch(fetchProducts());
-      
+
+      dispatch(fetchCategories());
+      dispatch(fetchProducts());
     }
   }, [dispatch, productFetchState, products, dataFetchAttempted]);
 
@@ -240,7 +246,7 @@ const ProductPage = () => {
   // Filter products
   const filteredProducts = useMemo(() => {
     console.log("filteredProducts çağrıldı, products:", products);
-    
+
     if (!products || !Array.isArray(products)) {
       console.log("products array değil veya boş");
       return [];
@@ -256,12 +262,14 @@ const ProductPage = () => {
       const matchesSearch = product.name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
-      
+
       let matchesCategory = true;
-      
+
       // categoryId kontrolü güvenli hale getirildi
       if (filterCategory !== "") {
-        matchesCategory = product.categoryId && product.categoryId.toString() === filterCategory;
+        matchesCategory =
+          product.categoryId &&
+          product.categoryId.toString() === filterCategory;
       }
 
       return matchesSearch && matchesCategory;
@@ -271,10 +279,10 @@ const ProductPage = () => {
   // Get category name
   const getCategoryName = (categoryId) => {
     if (!categoryId) return "Bilinmeyen Kategori";
-    
+
     // String'e dönüştürelim
     const categoryIdStr = categoryId.toString();
-    
+
     // Kategoriler yüklendi mi kontrol edelim
     if (!category || !Array.isArray(category) || category.length === 0) {
       return "Kategoriler yükleniyor...";
@@ -321,8 +329,6 @@ const ProductPage = () => {
               onChange={(e) => setFilterCategory(e.target.value)}
             />
           </SearchFilterContainer>
-
-          
 
           {/* Products Table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -376,14 +382,19 @@ const ProductPage = () => {
                           <div className="flex items-center">
                             <div className="h-10 w-10 flex-shrink-0">
                               {product.img ? (
-                                <img
+                                <Image
                                   className="h-10 w-10 rounded-full object-cover"
                                   src={product.img}
                                   alt={product.name}
+                                  width={40}
+                                  height={40}
                                 />
                               ) : (
                                 <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                  <Package size={16} className="text-gray-500" />
+                                  <Package
+                                    size={16}
+                                    className="text-gray-500"
+                                  />
                                 </div>
                               )}
                             </div>
@@ -430,8 +441,13 @@ const ProductPage = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="6" className="px-6 py-4 text-center text-gray">
-                        {productFetchState === fetchStates.FETCHED ? "Ürün bulunamadı" : "Ürünler yükleniyor..."}
+                      <td
+                        colSpan="6"
+                        className="px-6 py-4 text-center text-gray"
+                      >
+                        {productFetchState === fetchStates.FETCHED
+                          ? "Ürün bulunamadı"
+                          : "Ürünler yükleniyor..."}
                       </td>
                     </tr>
                   )}

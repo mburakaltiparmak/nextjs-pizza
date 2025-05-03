@@ -10,16 +10,12 @@ export const Modal = ({ isOpen, onClose, title, children, footer }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center font-Barlow">
-      <div className="flex flex-col justify-between bg-white rounded-lg shadow-lg h-fit w-[500px] mx-4">
+      <div className="flex flex-col justify-between bg-white rounded-lg shadow-lg h-fit w-[500px] max-md:w-[350px] mx-4">
         <div className="p-4 border-b">
           <h3 className="text-xl font-semibold text-gray">{title}</h3>
         </div>
         <div className="p-4">{children}</div>
-        {footer && (
-          <div className="border-t flex space-x-3">
-            {footer}
-          </div>
-        )}
+        {footer && <div className="border-t flex space-x-3">{footer}</div>}
       </div>
     </div>
   );
@@ -36,11 +32,10 @@ export const ConfirmationModal = ({
   confirmButtonText = "Evet",
   cancelButtonText = "İptal",
   icon = <Trash2 className="h-6 w-6 text-red" />,
-  
 }) => {
   const dispatch = useAppDispatch();
   const loading = useAppSelector((state) => state.global.loading);
-  
+
   // Render sırasında değil, bileşen mount edildiğinde loading'i false yapıyoruz
   useEffect(() => {
     if (isOpen) {
@@ -50,7 +45,6 @@ export const ConfirmationModal = ({
 
   if (!isOpen) return null;
 
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 font-Barlow">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 ">
@@ -59,10 +53,8 @@ export const ConfirmationModal = ({
             {icon}
           </div>
           <span className="flex flex-col gap-2">
-          <h3 className="text-lg leading-6 font-medium text-gray">
-            {title}
-          </h3>
-          <p className="text-sm text-gray">{message}</p>
+            <h3 className="text-lg leading-6 font-medium text-gray">{title}</h3>
+            <p className="text-sm text-gray">{message}</p>
           </span>
           {warning && (
             <div className="p-4 bg-lightgray border-y border-red text-red  text-sm">

@@ -18,7 +18,7 @@ const IconWithText = ({ src, alt, text }) => (
     <div className="bg-red rounded-full p-2 flex items-center justify-center min-w-10 min-h-10">
       <Image
         width={20}
-        height={20}
+        height="auto"
         alt={alt}
         src={src}
         className="object-contain"

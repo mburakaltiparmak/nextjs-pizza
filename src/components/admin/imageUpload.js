@@ -4,13 +4,10 @@ import { setError, setLoading } from "@/lib/store/actions/globalActions";
 import { useState, useEffect } from "react";
 import SecondaryLoading from "../secondaryLoading";
 
-const ImageUpload = ({
-  preview,
-  onChange,
-}) => {
+const ImageUpload = ({ preview, onChange }) => {
   // State for tracking loading and errors
-  const loading = useAppSelector((state)=>state.global.loading);
-  const error = useAppSelector((state)=>state.global.error);
+  const loading = useAppSelector((state) => state.global.loading);
+  const error = useAppSelector((state) => state.global.error);
   const dispatch = useAppDispatch();
   //const [error, setError] = useState(null);
   const [localPreview, setLocalPreview] = useState(preview);
@@ -25,7 +22,7 @@ const ImageUpload = ({
 
     // Reset states
     dispatch(setError(null));
-    dispatch(setLoading(true))
+    dispatch(setLoading(true));
 
     // Validate file exists
     if (!file) {
@@ -40,7 +37,7 @@ const ImageUpload = ({
       file.size,
       "bytes"
     );
-/*
+    /*
     // Validate file size
     if (file.size > maxSize) {
       const errorMsg = `Dosya boyutu ${(maxSize / (1024 * 1024)).toFixed(
@@ -77,7 +74,6 @@ const ImageUpload = ({
 
   return (
     <div className="">
-      
       <div className="mt-1 flex flex-col items-center">
         <label className="flex flex-col items-center p-4 bg-white rounded-lg border border-gray-300 border-dashed cursor-pointer hover:bg-gray-50">
           {loading ? (
@@ -87,7 +83,7 @@ const ImageUpload = ({
               <img
                 src={localPreview}
                 alt="Preview"
-                className="h-[150px] mx-auto object-cover"
+                className="h-[150px] max-md:h-[100px] mx-auto object-cover"
               />
               <button
                 type="button"

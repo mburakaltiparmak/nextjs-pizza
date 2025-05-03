@@ -1,49 +1,46 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { HoverCard, HoverCardTrigger } from "../ui/hover-card";
 import Products from "../products/products";
-import NotFound from "@/app/not-found";
-import Loading from "@/app/loading";
 import allLogo from "../../../assets/adv-aseets/icons/all-logo.png";
 import { fetchCategories } from "@/lib/store/actions/categoryActions";
-import { fetchStates } from "@/lib/store/constants";
-import SecondaryLoading from "../secondaryLoading";
 import { fetchProducts } from "@/lib/store/actions/productActions";
+import SecondaryLoading from "../secondaryLoading";
 
 const Categories = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   // Redux state
-  const categories = useSelector((state) => state.category.categories);
-  const categoryFetchState = useSelector((state) => state.category.fetchState);
-  const productFetchState = useSelector((state) => state.product.fetchState);
+  const categories = useAppSelector((state) => state.category.categories);
+  const products = useAppSelector((state) => state.product.products);
+  const globalLoading = useAppSelector((state) => state.global.loading);
 
   // Local state
-  const [dataFetchAttempted, setDataFetchAttempted] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [contentLoading, setContentLoading] = useState(false);
 
-  // Kategorileri ve ürünleri yükle
+  // Kategori seçme işlemi - veri yeniden yükleme
   useEffect(() => {
-    if (
-      (categoryFetchState === fetchStates.NOT_FETCHED ||
-        productFetchState === fetchStates.NOT_FETCHED) &&
-      !dataFetchAttempted
-    ) {
-      setDataFetchAttempted(true);
+    if (selectedCategoryId !== null) {
+      const loadCategoryData = async () => {
+        setContentLoading(true);
+        try {
+          // Seçili kategoriye göre ürünleri filtrele ve yükle
+          // Burada aslında backend'e kategori ID ile filtreleme yapacak API isteği atılabilir
+          // await dispatch(fetchProductsByCategory(selectedCategoryId));
+          // Şu an için client tarafında filtreliyoruz
+          setContentLoading(false);
+        } catch (error) {
+          console.error("Kategori ürünleri yüklenirken hata:", error);
+          setContentLoading(false);
+        }
+      };
 
-      // İlk önce kategorileri yükle
-      dispatch(fetchCategories())
-        .then(() => {
-          // Sonra ürünleri yükle
-          return dispatch(fetchProducts());
-        })
-        .catch((err) => {
-          console.error("Veri yükleme hatası:", err);
-        });
+      loadCategoryData();
     }
-  }, [dispatch, categoryFetchState, productFetchState, dataFetchAttempted]);
+  }, [dispatch, selectedCategoryId]);
 
   // Kategori seçme işlemi
   const handleCategory = (id, e) => {
@@ -57,12 +54,10 @@ const Categories = () => {
     setSelectedCategoryId(null);
   };
 
-  // Yükleniyor durumu
-  const isLoading =
-    categoryFetchState === fetchStates.FETCHING ||
-    productFetchState === fetchStates.FETCHING;
+  const isLoading = globalLoading || contentLoading;
 
-  if (isLoading && (!categories || categories.length === 0)) {
+  // Veriler yüklenene kadar loading göster
+  if (isLoading || !categories || categories.length === 0) {
     return <SecondaryLoading size="small" />;
   }
 
@@ -71,8 +66,7 @@ const Categories = () => {
       id="categories"
       className="flex flex-col justify-between items-center gap-8 text-black"
     >
-      {"grid grid-cols-8 grid-flow-row"}
-      <div className="flex flex-row items-center gap-2 mt-4 max-md:grid-cols-2 max-md:place-items-center max-md:gap-4">
+      <div className="flex flex-row items-center gap-2 mt-4 max-md:grid max-md:grid-cols-2 max-md:place-items-center max-md:gap-4 flex-wrap">
         <button
           onClick={(e) => handleAllOfThem(e)}
           className={`btn-secondary ${

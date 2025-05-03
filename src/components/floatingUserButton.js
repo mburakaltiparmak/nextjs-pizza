@@ -54,27 +54,27 @@ const FloatingUserButton = () => {
   const [rememberMe, setRememberMeState] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [isMobile,setIsMobile]=useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // "Beni hatırla" durumunu localStorage'dan al (ilk yükleme sırasında)
   useEffect(() => {
     const savedRememberMe = localStorage.getItem("rememberMe") === "true";
     setRememberMeState(savedRememberMe);
   }, []);
-  
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     // Initial check
     checkMobile();
-    
+
     // Add event listener for resize
-    window.addEventListener('resize', checkMobile);
-    
+    window.addEventListener("resize", checkMobile);
+
     // Cleanup
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Kullanıcının admin veya personel olup olmadığını kontrol et
@@ -211,7 +211,7 @@ const FloatingUserButton = () => {
         <div className="relative" ref={dropdownRef}>
           <div
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="bg-yellow z-50 p-3 max-md:fixed max-md:top-2 max-md:text-xs max-md:gap-1 font-Londrina_Solid text-red ring-2 ring-inset ring-white rounded-full shadow-lg hover:bg-red hover:text-yellow  transition-all duration-200 cursor-pointer flex items-center gap-2 text-base font-normal"
+            className="bg-yellow z-50 p-3 max-md:fixed max-md:top-2 max-md:text-xs max-md:gap-1 font-Londrina_Solid text-red ring-2 ring-inset ring-black rounded-full shadow-lg hover:bg-red hover:text-yellow  transition-all duration-200 cursor-pointer flex items-center gap-2 text-base font-normal"
           >
             <FontAwesomeIcon icon={faUser} />
             <span className="">{name}</span>
@@ -430,7 +430,7 @@ const FloatingUserButton = () => {
                       className="group relative flex w-full justify-center rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-darkred bg-yellow hover:bg-lightyellow"
                     >
                       <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
-                       Üye Ol
+                      Üye Ol
                     </button>
                   </div>
                 </form>
@@ -438,8 +438,8 @@ const FloatingUserButton = () => {
             </AlertDialogContent>
           </AlertDialog>
 
-          
-              <button className="h-10 max-md:w-16 max-md:text-xs max-md:h-8 px-4 py-2 bg-white gap-1 text-red hover:bg-red hover:text-yellow ring-2 ring-inset ring-yellow rounded-full font-Barlow font-bold text-sm inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:bg-opacity-50 disabled:cursor-not-allowed "
+          <button
+            className="h-10 max-md:w-16 max-md:text-xs max-md:h-8 px-4 py-2 bg-white gap-1 text-red hover:bg-red hover:text-yellow ring-2 ring-inset ring-yellow rounded-full font-Barlow font-bold text-sm inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:bg-opacity-50 disabled:cursor-not-allowed "
             onClick={() => router.push("/signup")}
           >
             <FontAwesomeIcon icon={faUserPlus} className="mr-2 max-md:mr-0" />

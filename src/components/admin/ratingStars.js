@@ -2,9 +2,16 @@
 import { Star } from "lucide-react";
 
 // Yıldız puanlama bileşeni
-const RatingStars = ({ rating, showValue = true, size = 16 }) => {
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
+const RatingStars = ({ rating = 0, showValue = true, size = 16 }) => {
+  // Null, undefined veya NaN kontrolü
+  const validRating = typeof rating === "number" && !isNaN(rating) ? rating : 0;
+
+  // Yıldız hesaplamaları
+  const fullStars = Math.floor(validRating);
+  const hasHalfStar = validRating % 1 >= 0.5;
+
+  // Rating değerini formatla (string'e çevir ve 1 ondalık basamak göster)
+  const formattedRating = validRating ? validRating.toFixed(1) : "0.0";
 
   return (
     <div className="flex items-center gap-1">
@@ -33,7 +40,7 @@ const RatingStars = ({ rating, showValue = true, size = 16 }) => {
       ))}
       {showValue && (
         <span className="text-xs font-semibold font-Barlow text-darkgray ml-1">
-          {rating.toFixed(1)}
+          {formattedRating}
         </span>
       )}
     </div>
