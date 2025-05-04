@@ -20,7 +20,7 @@ module.exports = {
     },
     extend: {
       zIndex: {
-        '100': '100',
+        100: "100",
       },
       colors: {
         border: "hsl(var(--border))",
@@ -63,8 +63,7 @@ module.exports = {
         lightgray: "#FAF7F2",
         lightgray2: "#dbd3c5",
         red: "#CE2829",
-        darkred: "#E40A16;"
-
+        darkred: "#E40A16",
       },
       fontFamily: {
         sans: ["var(--font-sans)", ...defaultTheme.fontFamily.sans],

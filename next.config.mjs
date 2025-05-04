@@ -1,4 +1,4 @@
-// next.config.js
+// next.config.mjs dosyanızı şu şekilde güncelleyin
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
@@ -6,7 +6,20 @@ const nextConfig = {
   },
   reactStrictMode: false,
   images: {
-    domains: ["res.cloudinary.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
+    ],
+  },
+  webpack: (config) => {
+    // CSS minimizer'ı devre dışı bırak
+    config.optimization.minimizer = config.optimization.minimizer.filter(
+      (minimizer) => !minimizer.constructor.name.includes("CssMinimizerPlugin")
+    );
+    return config;
   },
   async rewrites() {
     return [
