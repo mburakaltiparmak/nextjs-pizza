@@ -1,27 +1,38 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { instance } from "@/lib/hooks";
 import { useRouter } from "next/navigation";
 import useAuthRoute from "@/hooks/useAuthRole";
-import { 
-  Calendar, 
-  Clock, 
-  DollarSign, 
-  Package, 
-  Search, 
+import {
+  Calendar,
+  Clock,
+  DollarSign,
+  Package,
+  Search,
   ShoppingBag,
   User,
   MapPin,
   Eye,
   RefreshCcw,
-  Badge
+  Badge,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Select, SelectItem, SelectTrigger, SelectValue,SelectContent } from "@/components/ui/select";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const OrdersPage = () => {
   // Yetkilendirme kontrolü
@@ -38,8 +49,7 @@ const OrdersPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  // Siparişleri yükle
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
       const response = await instance.get("/orders");
@@ -55,60 +65,99 @@ const OrdersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  // Siparişleri durum filtresine göre filtrele
-  const filterOrders = (status = filter, searchValue = searchTerm) => {
-    let result = orders;
+  // filterOrders fonksiyonunu useCallback ile sarmalayın
+  const filterOrders = useCallback(
+    (status = filter, searchValue = searchTerm) => {
+      let result = orders;
 
-    // Duruma göre filtrele
-    if (status !== "ALL") {
-      result = result.filter((order) => order.orderStatus === status);
+      // Duruma göre filtrele
+      if (status !== "ALL") {
+        result = result.filter((order) => order.orderStatus === status);
+      }
+
+      // Arama terimine göre filtrele
+      if (searchValue) {
+        result = result.filter((order) => {
+          // Sipariş ID'sinde arama
+          if (order.id && order.id.toString().includes(searchValue))
+            return true;
+
+          // Müşteri bilgilerinde arama
+          if (
+            order.user &&
+            ((order.user.name &&
+              order.user.name
+                .toLowerCase()
+                .includes(searchValue.toLowerCase())) ||
+              (order.user.surname &&
+                order.user.surname
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase())) ||
+              (order.user.email &&
+                order.user.email
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase())) ||
+              (order.user.phoneNumber &&
+                order.user.phoneNumber.includes(searchValue)))
+          )
+            return true;
+
+          // Teslimat adresinde arama
+          if (
+            order.deliveryAddress &&
+            ((order.deliveryAddress.fullAddress &&
+              order.deliveryAddress.fullAddress
+                .toLowerCase()
+                .includes(searchValue.toLowerCase())) ||
+              (order.deliveryAddress.city &&
+                order.deliveryAddress.city
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase())) ||
+              (order.deliveryAddress.district &&
+                order.deliveryAddress.district
+                  .toLowerCase()
+                  .includes(searchValue.toLowerCase())))
+          )
+            return true;
+
+          return false;
+        });
+      }
+
+      setFilteredOrders(result);
+    },
+    [orders, filter, searchTerm]
+  );
+
+  // useEffect Hook'larını düzeltin
+  useEffect(() => {
+    if (isAuthorized) {
+      fetchOrders();
     }
+  }, [isAuthorized, fetchOrders]);
 
-    // Arama terimine göre filtrele
-    if (searchValue) {
-      result = result.filter((order) => {
-        // Sipariş ID'sinde arama
-        if (order.id && order.id.toString().includes(searchValue)) return true;
-        
-        // Müşteri bilgilerinde arama
-        if (order.user && (
-          (order.user.name && order.user.name.toLowerCase().includes(searchValue.toLowerCase())) ||
-          (order.user.surname && order.user.surname.toLowerCase().includes(searchValue.toLowerCase())) ||
-          (order.user.email && order.user.email.toLowerCase().includes(searchValue.toLowerCase())) ||
-          (order.user.phoneNumber && order.user.phoneNumber.includes(searchValue))
-        )) return true;
-
-        // Teslimat adresinde arama
-        if (order.deliveryAddress && (
-          (order.deliveryAddress.fullAddress && order.deliveryAddress.fullAddress.toLowerCase().includes(searchValue.toLowerCase())) ||
-          (order.deliveryAddress.city && order.deliveryAddress.city.toLowerCase().includes(searchValue.toLowerCase())) ||
-          (order.deliveryAddress.district && order.deliveryAddress.district.toLowerCase().includes(searchValue.toLowerCase()))
-        )) return true;
-
-        return false;
-      });
-    }
-
-    setFilteredOrders(result);
-  };
+  // Filtre değiştiğinde veya arama yapıldığında siparişleri filtrele
+  useEffect(() => {
+    filterOrders(filter, searchTerm);
+  }, [filter, searchTerm, filterOrders]);
 
   // Sipariş durumunu güncelle
   const updateOrderStatus = async (orderId, newStatus) => {
     setIsUpdating(true);
     try {
       await instance.put(`/orders/${orderId}/status?status=${newStatus}`);
-      
+
       // Siparişleri yeniden yükle
       await fetchOrders();
-      
+
       // Detay görünümünü güncelle
       if (selectedOrder && selectedOrder.id === orderId) {
         const updatedOrder = await instance.get(`/orders/${orderId}`);
         setSelectedOrder(updatedOrder.data);
       }
-      
+
       toast({
         title: "Başarılı",
         description: "Sipariş durumu güncellendi",
@@ -130,20 +179,20 @@ const OrdersPage = () => {
     if (!confirm("Bu siparişi iptal etmek istediğinizden emin misiniz?")) {
       return;
     }
-    
+
     setIsUpdating(true);
     try {
       await instance.post(`/orders/${orderId}/cancel`);
-      
+
       // Siparişleri yeniden yükle
       await fetchOrders();
-      
+
       // Detay görünümünü güncelle
       if (selectedOrder && selectedOrder.id === orderId) {
         const updatedOrder = await instance.get(`/orders/${orderId}`);
         setSelectedOrder(updatedOrder.data);
       }
-      
+
       toast({
         title: "Başarılı",
         description: "Sipariş iptal edildi",
@@ -238,16 +287,6 @@ const OrdersPage = () => {
   };
 
   // İlk yüklemede siparişleri getir
-  useEffect(() => {
-    if (isAuthorized) {
-      fetchOrders();
-    }
-  }, [isAuthorized]);
-
-  // Filtre değiştiğinde veya arama yapıldığında siparişleri filtrele
-  useEffect(() => {
-    filterOrders(filter, searchTerm);
-  }, [filter, orders, searchTerm]);
 
   // Yetkisiz erişim durumunda içerik gösterme
   if (!isAuthorized) {
@@ -258,9 +297,9 @@ const OrdersPage = () => {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Siparişler</h1>
-        <Button 
-          onClick={fetchOrders} 
-          variant="outline" 
+        <Button
+          onClick={fetchOrders}
+          variant="outline"
           disabled={loading}
           className="flex items-center gap-2"
         >
@@ -272,8 +311,8 @@ const OrdersPage = () => {
       {/* Filtreler */}
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
         <div className="flex items-center gap-2">
-          <Select 
-            value={filter} 
+          <Select
+            value={filter}
             onValueChange={(value) => {
               setFilter(value);
               filterOrders(value, searchTerm);
@@ -295,7 +334,10 @@ const OrdersPage = () => {
         </div>
 
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Search
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={18}
+          />
           <Input
             type="text"
             placeholder="Sipariş ara (ID, müşteri, adres...)"
@@ -376,10 +418,14 @@ const OrdersPage = () => {
                       <div className="flex flex-col">
                         <Badge
                           className={`mb-1 ${
-                            getPaymentStatusBadge(order.payment.paymentStatus).color
+                            getPaymentStatusBadge(order.payment.paymentStatus)
+                              .color
                           } text-white`}
                         >
-                          {getPaymentStatusBadge(order.payment.paymentStatus).text}
+                          {
+                            getPaymentStatusBadge(order.payment.paymentStatus)
+                              .text
+                          }
                         </Badge>
                         <span className="text-xs text-gray-500">
                           {getPaymentMethodText(order.payment.paymentMethod)}
@@ -417,7 +463,9 @@ const OrdersPage = () => {
       >
         <AlertDialogContent className="max-w-3xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Sipariş Detayı #{selectedOrder?.id}</AlertDialogTitle>
+            <AlertDialogTitle>
+              Sipariş Detayı #{selectedOrder?.id}
+            </AlertDialogTitle>
           </AlertDialogHeader>
 
           {selectedOrder && (
@@ -546,16 +594,24 @@ const OrdersPage = () => {
                     <div className="text-sm space-y-2">
                       <p>
                         <span className="font-medium">Yöntem: </span>
-                        {getPaymentMethodText(selectedOrder.payment.paymentMethod)}
+                        {getPaymentMethodText(
+                          selectedOrder.payment.paymentMethod
+                        )}
                       </p>
                       <p>
                         <span className="font-medium">Durum: </span>
                         <Badge
                           className={`${
-                            getPaymentStatusBadge(selectedOrder.payment.paymentStatus).color
+                            getPaymentStatusBadge(
+                              selectedOrder.payment.paymentStatus
+                            ).color
                           } text-white`}
                         >
-                          {getPaymentStatusBadge(selectedOrder.payment.paymentStatus).text}
+                          {
+                            getPaymentStatusBadge(
+                              selectedOrder.payment.paymentStatus
+                            ).text
+                          }
                         </Badge>
                       </p>
                       {selectedOrder.payment.completedAt && (
@@ -608,20 +664,21 @@ const OrdersPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedOrder.items && selectedOrder.items.map((item) => (
-                      <tr key={item.id}>
-                        <th className="font-medium">
-                          {item.product?.name || "Silinmiş Ürün"}
-                        </th>
-                        <th className="text-right">
-                          {item.price?.toFixed(2)} ₺
-                        </th>
-                        <th className="text-right">{item.quantity}</th>
-                        <th className="text-right">
-                          {(item.price * item.quantity).toFixed(2)} ₺
-                        </th>
-                      </tr>
-                    ))}
+                    {selectedOrder.items &&
+                      selectedOrder.items.map((item) => (
+                        <tr key={item.id}>
+                          <th className="font-medium">
+                            {item.product?.name || "Silinmiş Ürün"}
+                          </th>
+                          <th className="text-right">
+                            {item.price?.toFixed(2)} ₺
+                          </th>
+                          <th className="text-right">{item.quantity}</th>
+                          <th className="text-right">
+                            {(item.price * item.quantity).toFixed(2)} ₺
+                          </th>
+                        </tr>
+                      ))}
                     <tr>
                       <th colSpan={3} className="text-right font-bold">
                         Toplam:
@@ -659,7 +716,9 @@ const OrdersPage = () => {
                 )}
 
                 {/* İptal Butonu */}
-                {["PENDING", "CONFIRMED"].includes(selectedOrder.orderStatus) && (
+                {["PENDING", "CONFIRMED"].includes(
+                  selectedOrder.orderStatus
+                ) && (
                   <Button
                     variant="destructive"
                     onClick={() => cancelOrder(selectedOrder.id)}

@@ -31,6 +31,11 @@ const Page = () => {
   const [maxRetries] = useState(3); // Yeniden deneme sayısı
   const [retryCount, setRetryCount] = useState(0);
 
+  // Veriler mevcut değilse uyarı gösterilecek bir state oluştur
+  const hasProductData = Array.isArray(products) && products.length > 0;
+  const hasCategoryData = Array.isArray(categories) && categories.length > 0;
+  const shouldShowWarning = !hasProductData || !hasCategoryData;
+
   useEffect(() => {
     // Sadece bir kez çalışmasını sağlayalım
     if (!initialized) {
@@ -102,6 +107,15 @@ const Page = () => {
     }
   }, [dispatch, selectedCategory, initialized, retryCount, maxRetries]);
 
+  // Uyarıyı göstermek için etkiyi her zaman tanımla
+  useEffect(() => {
+    if (shouldShowWarning) {
+      toast.warning(
+        "Bazı veriler yüklenemedi. Sayfayı yenileyebilir veya devam edebilirsiniz."
+      );
+    }
+  }, [shouldShowWarning]); // shouldShowWarning değiştiğinde çalışacak
+
   const buttonNotifyHandler = () => {
     toast.info("You can customize this button!");
   };
@@ -109,19 +123,6 @@ const Page = () => {
   // Başlatma sürecinde loading göster
   if (initializing || globalLoading) {
     return <Loading />;
-  }
-
-  // Veriler mevcut değilse uyarı göster ama sayfayı yine de render et
-  const hasProductData = Array.isArray(products) && products.length > 0;
-  const hasCategoryData = Array.isArray(categories) && categories.length > 0;
-
-  if (!hasProductData || !hasCategoryData) {
-    // Yalnızca bir kez uyarı göster
-    useEffect(() => {
-      toast.warning(
-        "Bazı veriler yüklenemedi. Sayfayı yenileyebilir veya devam edebilirsiniz."
-      );
-    }, []);
   }
 
   return (

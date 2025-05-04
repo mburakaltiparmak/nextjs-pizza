@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -99,7 +99,29 @@ const CategoryPage = () => {
   }, [error, success, toast]);
   */
 
-  // Add openModal function to DOM element (for external access)
+  const openModal = useCallback(
+    (category = null) => {
+      if (category) {
+        setEditingCategory(category);
+        form.reset({
+          name: category.name,
+          image: null,
+          preview: category.img,
+        });
+      } else {
+        setEditingCategory(null);
+        form.reset({
+          name: "",
+          image: null,
+          preview: null,
+        });
+      }
+      setModalOpen(true);
+    },
+    [form]
+  );
+
+  // DOM element effector'ını da güncelleyin
   useEffect(() => {
     if (typeof document !== "undefined") {
       const pageElement = document.getElementById("admin-page-component");
@@ -107,26 +129,7 @@ const CategoryPage = () => {
         pageElement.openModal = openModal;
       }
     }
-  }, []);
-
-  const openModal = (category = null) => {
-    if (category) {
-      setEditingCategory(category);
-      form.reset({
-        name: category.name,
-        image: null,
-        preview: category.img,
-      });
-    } else {
-      setEditingCategory(null);
-      form.reset({
-        name: "",
-        image: null,
-        preview: null,
-      });
-    }
-    setModalOpen(true);
-  };
+  }, [openModal]);
 
   const closeModal = () => {
     setModalOpen(false);

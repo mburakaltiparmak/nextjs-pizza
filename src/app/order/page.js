@@ -92,37 +92,39 @@ const Page = () => {
     },
   });
 
+  const watchedBoyut = form.watch("boyut");
+  const watchedHamur = form.watch("hamur");
+  const watchedItems = form.watch("items");
+
   useEffect(() => {
     const selectedBoyut = form.getValues("boyut");
     const selectedHamur = form.getValues("hamur");
     const selectedItems = form.getValues("items");
 
     setMalzemeFiyat(selectedItems.length * 5);
-    setBoyutFiyat(() => {
-      switch (selectedBoyut) {
-        case "S":
-          return 20;
-        case "M":
-          return 30;
-        case "L":
-          return 40;
-        default:
-          return 0;
-      }
-    });
-    setHamurFiyat(() => {
-      switch (selectedHamur) {
-        case "Ince":
-          return 20;
-        case "Standart":
-          return 30;
-        case "Kalin":
-          return 40;
-        default:
-          return 0;
-      }
-    });
-  }, [form.watch("boyut"), form.watch("hamur"), form.watch("items")]);
+
+    // Boyut fiyatını ayarla
+    if (selectedBoyut === "S") {
+      setBoyutFiyat(20);
+    } else if (selectedBoyut === "M") {
+      setBoyutFiyat(30);
+    } else if (selectedBoyut === "L") {
+      setBoyutFiyat(40);
+    } else {
+      setBoyutFiyat(0);
+    }
+
+    // Hamur fiyatını ayarla
+    if (selectedHamur === "Ince") {
+      setHamurFiyat(20);
+    } else if (selectedHamur === "Standart") {
+      setHamurFiyat(30);
+    } else if (selectedHamur === "Kalin") {
+      setHamurFiyat(40);
+    } else {
+      setHamurFiyat(0);
+    }
+  }, [form, watchedBoyut, watchedHamur, watchedItems]);
 
   useEffect(() => {
     setToplam(malzemeFiyat + boyutFiyat + hamurFiyat);

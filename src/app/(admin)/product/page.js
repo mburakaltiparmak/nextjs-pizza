@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -125,7 +125,6 @@ const ProductPage = () => {
     console.log("Category Fetch State:", categoryFetchState);
   }, [products, category, productFetchState, categoryFetchState]);
 */
-  // Add openModal function to DOM element
   useEffect(() => {
     if (typeof document !== "undefined") {
       const pageElement = document.getElementById("admin-page-component");
@@ -133,34 +132,37 @@ const ProductPage = () => {
         pageElement.openModal = openModal;
       }
     }
-  }, []);
+  }, [openModal]);
 
-  const openModal = (product = null) => {
-    if (product) {
-      setEditingProduct(product);
-      form.reset({
-        name: product.name,
-        price: product.price,
-        stock: product.stock,
-        rating: product.rating,
-        categoryId: product.categoryId ? product.categoryId.toString() : "",
-        image: null,
-        preview: product.img,
-      });
-    } else {
-      setEditingProduct(null);
-      form.reset({
-        name: "",
-        categoryId: "",
-        price: 0,
-        stock: 0,
-        rating: 0,
-        image: null,
-        preview: null,
-      });
-    }
-    setModalOpen(true);
-  };
+  const openModal = useCallback(
+    (product = null) => {
+      if (product) {
+        setEditingProduct(product);
+        form.reset({
+          name: product.name,
+          price: product.price,
+          stock: product.stock,
+          rating: product.rating,
+          categoryId: product.categoryId ? product.categoryId.toString() : "",
+          image: null,
+          preview: product.img,
+        });
+      } else {
+        setEditingProduct(null);
+        form.reset({
+          name: "",
+          categoryId: "",
+          price: 0,
+          stock: 0,
+          rating: 0,
+          image: null,
+          preview: null,
+        });
+      }
+      setModalOpen(true);
+    },
+    [form]
+  );
 
   const closeModal = () => {
     form.reset();
