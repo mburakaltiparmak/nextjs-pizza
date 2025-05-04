@@ -68,13 +68,13 @@
   }
 }
 .buttonStyle {
-  @apply border border-darkgray rounded-3xl font-Barlow text-xs font-bold w-[144px] h-[48px];
+  @apply border border-darkgray rounded-3xl font-Barlow text-xs font-bold w-36 h-12;
 }
 .size {
-  @apply border border-darkgray rounded-xl w-[40px] h-[40px] bg-lightgray text-gray  hover:text-lightgray hover:bg-red data-[state=on]:bg-yellow;
+  @apply border border-darkgray rounded-xl w-10 h-10 bg-lightgray text-gray  hover:text-lightgray hover:bg-red data-[state=on]:bg-yellow;
 }
 .optionStyle {
-  @apply flex flex-row justify-center max-md:w-[150px] items-center gap-2 text-darkgray font-semibold font-Barlow border border-transparent hover:cursor-pointer hover:text-lightgray hover:bg-darkgray;
+  @apply flex flex-row justify-center max-md:w-36 items-center gap-2 text-darkgray font-semibold font-Barlow border border-transparent hover:cursor-pointer hover:text-lightgray hover:bg-darkgray;
 }
 .btn-primary {
   @apply bg-yellow text-darkgray hover:bg-red hover:text-yellow hover:z-50 ring-2 ring-inset ring-lightgray py-3 px-9 max-md:px-6 max-md:text-sm rounded-full font-semibold text-base transition-all duration-300 font-Barlow shadow-md hover:shadow-lg;
