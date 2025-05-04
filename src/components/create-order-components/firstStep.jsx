@@ -238,8 +238,8 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden font-Barlow">
       <div className="p-6">
-        <h2 className="text-xl font-semibold mb-2 text-gray-800">Kişisel Bilgiler</h2>
-        <p className="text-gray-500 text-sm mb-6">
+        <h2 className="text-xl font-semibold mb-2 text-gray">Kişisel Bilgiler</h2>
+        <p className="text-gray text-sm mb-6">
           Siparişinizi güvenli bir şekilde size ulaştırabilmemiz için bazı
           bilgilere ihtiyacımız var.
         </p>
@@ -317,11 +317,11 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
                         "Adres bilgilerinizi girin."}
                     </p>
                     {newAddress && (
-                      <div className="mb-4 p-3 bg-gray-50 rounded-md border border-gray-200">
+                      <div className="mb-4 p-3 bg-darkgray rounded-md border border-gray">
                         <p className="font-medium">{newAddress.recipientName || fullname}</p>
-                        <p className="text-sm text-gray-700">{newAddress.fullAddress}</p>
-                        <p className="text-sm text-gray-700">{newAddress.district}, {newAddress.city}</p>
-                        <p className="text-sm text-gray-700">{newAddress.phoneNumber}</p>
+                        <p className="text-sm text-darkgray">{newAddress.fullAddress}</p>
+                        <p className="text-sm text-darkgray">{newAddress.district}, {newAddress.city}</p>
+                        <p className="text-sm text-darkgray">{newAddress.phoneNumber}</p>
                       </div>
                     )}
                     <button
@@ -349,7 +349,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
                 <button
                   type="button"
                   onClick={() => setShowNewAddressForm(false)}
-                  className="mt-2 w-full py-2 bg-gray-100 text-gray-800 font-medium rounded-md hover:bg-gray-200 transition-colors"
+                  className="mt-2 w-full py-2 bg-lightgray text-darkgray font-medium rounded-md hover:bg-gray-200 transition-colors"
                 >
                   İptal
                 </button>

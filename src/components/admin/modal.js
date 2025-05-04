@@ -10,7 +10,7 @@ export const Modal = ({ isOpen, onClose, title, children, footer }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center font-Barlow">
-      <div className="flex flex-col justify-between bg-white rounded-lg shadow-lg h-fit w-[500px] max-md:w-[350px] mx-4">
+      <div className="flex flex-col justify-between bg-white rounded-lg shadow-lg h-fit w-2/5 max-md:w-96 mx-4">
         <div className="p-4 border-b">
           <h3 className="text-xl font-semibold text-gray">{title}</h3>
         </div>

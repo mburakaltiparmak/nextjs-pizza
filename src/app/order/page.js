@@ -191,13 +191,14 @@ const Page = () => {
   return (
     <div>
       <Header />
-      <div className="flex flex-col items-center justify-between gap-8 mb-8 font-Barlow w-1/2">
+    <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center gap-2 mb-8 font-Barlow w-1/3 max-md:w-full max-md:px-8">
         <span>
           <Image
             src={headImg.src}
             alt="Pizza"
             className="object-cover"
-            width={300}
+            width={320}
             height={100}
           />
         </span>
@@ -214,14 +215,14 @@ const Page = () => {
             </BreadcrumbList>
           </Breadcrumb>
         </span>
-        <div className="flex flex-col justify-between py-4 gap-4  font-Barlow">
+        <div className="flex flex-col items-start justify-between  py-4 gap-4 font-Barlow">
           {/*düzelt */}
           <h3 className="text-lg font-semibold">Custom Pizza</h3>
           <span className="flex flex-row justify-between items-center gap-4 max-md:gap-2">
             <p className="text-lg font-semibold">
               {toplam ? `${toplam} ₺` : "Seçimlerine göre fiyat belirlenir."}
             </p>
-            <span className="flex flex-row justify-between items-center gap-16 max-md:gap-2 text-gray"></span>
+            <span className="flex flex-row justify-between text-center items-center gap-16 max-md:gap-2 text-gray"></span>
           </span>
           <p className="text-sm text-gray ">
             Kendi pizzanı kendin tasarla! Boyutunu seç, hamur kalınlığını
@@ -233,7 +234,7 @@ const Page = () => {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col items-center justify-between gap-8 max-md:w-full "
+            className="flex flex-col items-center justify-between gap-8 w-full"
           >
             {/*düzelt */}
             <div className="flex flex-row justify-between items-center w-full">
@@ -255,19 +256,19 @@ const Page = () => {
                       >
                         <ToggleGroupItem
                           value="S"
-                          className="border border-lightgray rounded-full w-[40px] h-[40px] bg-lightgray text-gray text-sm font-semibold font-Barlow  hover:text-lightgray hover:bg-red data-[state=on]:bg-yellow"
+                          className="border border-lightgray rounded-full w-10 h-10 bg-lightgray text-gray text-sm font-semibold font-Barlow  hover:text-lightgray hover:bg-red data-[state=on]:bg-yellow"
                         >
                           {/*düzelt */}S
                         </ToggleGroupItem>
                         <ToggleGroupItem
                           value="M"
-                          className="border border-lightgray rounded-full w-[40px] h-[40px] bg-lightgray text-gray text-sm font-semibold font-Barlow  hover:text-lightgray hover:bg-red data-[state=on]:bg-yellow"
+                          className="border border-lightgray rounded-full w-10 h-10 bg-lightgray text-gray text-sm font-semibold font-Barlow  hover:text-lightgray hover:bg-red data-[state=on]:bg-yellow"
                         >
                           {/*düzelt */}M
                         </ToggleGroupItem>
                         <ToggleGroupItem
                           value="L"
-                          className="border border-lightgray rounded-full w-[40px] h-[40px] bg-lightgray text-gray text-sm font-semibold font-Barlow  hover:text-lightgray hover:bg-red data-[state=on]:bg-yellow"
+                          className="border border-lightgray rounded-full w-10 h-10 bg-lightgray text-gray text-sm font-semibold font-Barlow  hover:text-lightgray hover:bg-red data-[state=on]:bg-yellow"
                         >
                           {/*düzelt */}L
                         </ToggleGroupItem>
@@ -373,6 +374,7 @@ const Page = () => {
           </form>
         </Form>
       </div>
+    </div>
       <Footer />
     </div>
   );

@@ -74,7 +74,7 @@ const Categories = () => {
           }`}
         >
           <img
-            className="h-[35px] w-fit object-cover"
+            className="h-9 w-fit object-cover"
             src={allLogo.src}
             alt="all"
           />
@@ -94,7 +94,7 @@ const Categories = () => {
             }`}
           >
             <img
-              className="h-[35px] w-fit object-cover"
+              className="h-9 w-fit object-cover"
               src={item.img}
               alt={item.name}
             />

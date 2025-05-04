@@ -153,10 +153,8 @@ const Page = () => {
                 backgroundImage: `url(${homeCards[0].background.src})`,
               }}
             >
-              {/*düzelt */}
               <span className="m-4 flex flex-col items-start gap-4">
-                <p className="text-5xl font-bold font-Quattrocento  text-left">
-                  {/*düzelt */}
+                <p className="text-5xl font-bold font-Quattrocento w-1/2 text-left">
                   {homeCards[0].text}
                 </p>
                 <button onClick={buttonNotifyHandler} className="btn-primary">
@@ -173,7 +171,7 @@ const Page = () => {
               >
                 {/*düzelt */}
                 <span className="m-4 flex flex-col items-start gap-4">
-                  <p className="text-xl font-bold font-Barlow w-[75%] text-left">
+                  <p className="text-xl font-bold font-Barlow w-3/4 text-left">
                     {homeCards[1].text}
                   </p>
                   <button onClick={buttonNotifyHandler} className="btn-third">
@@ -189,7 +187,7 @@ const Page = () => {
               >
                 {/*düzelt */}
                 <span className="m-4 flex flex-col items-start gap-4">
-                  <p className="text-xl text-darkgray font-bold font-Barlow w-[60%] text-left">
+                  <p className="text-xl text-darkgray font-bold font-Barlow w-3/5 text-left">
                     {/*düzelt */}
                     {homeCards[2].text}
                   </p>

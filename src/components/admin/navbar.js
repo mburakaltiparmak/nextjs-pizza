@@ -9,7 +9,7 @@ const Navbar = ({ title, showAddButton, addButtonText = "Yeni Ekle", onAddButton
   return (
     <header className="bg-yellow text-red shadow-sm">
       <div className="px-4 py-4 flex justify-between items-center">
-        <h1 className={`text-xl font-bold text-gray-800 ${isMobile ? 'ml-12' : ''}`}>
+        <h1 className={`text-xl font-bold text-gray ${isMobile ? 'ml-12' : ''}`}>
           {title}
         </h1>
         

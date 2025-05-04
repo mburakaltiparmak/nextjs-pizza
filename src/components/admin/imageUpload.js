@@ -37,20 +37,7 @@ const ImageUpload = ({ preview, onChange }) => {
       file.size,
       "bytes"
     );
-    /*
-    // Validate file size
-    if (file.size > maxSize) {
-      const errorMsg = `Dosya boyutu ${(maxSize / (1024 * 1024)).toFixed(
-        1
-      )}MB'dan küçük olmalıdır`;
-      setError(errorMsg);
-      if (onError) {
-        onError(errorMsg);
-      }
-      dispatch(setLoading(false));
-      return;
-    }
-*/
+    
     // Create preview URL
     const previewUrl = URL.createObjectURL(file);
     setLocalPreview(previewUrl);
@@ -75,7 +62,7 @@ const ImageUpload = ({ preview, onChange }) => {
   return (
     <div className="">
       <div className="mt-1 flex flex-col items-center">
-        <label className="flex flex-col items-center p-4 bg-white rounded-lg border border-gray-300 border-dashed cursor-pointer hover:bg-gray-50">
+        <label className="flex flex-col items-center p-4 bg-white rounded-lg border border-gray border-dashed cursor-pointer hover:bg-lightgray">
           {loading ? (
             <SecondaryLoading />
           ) : localPreview ? (
@@ -83,7 +70,7 @@ const ImageUpload = ({ preview, onChange }) => {
               <img
                 src={localPreview}
                 alt="Preview"
-                className="h-[150px] max-md:h-[100px] mx-auto object-cover"
+                className="h-36 max-md:h-24 mx-auto object-cover"
               />
               <button
                 type="button"
@@ -93,7 +80,7 @@ const ImageUpload = ({ preview, onChange }) => {
                   setLocalPreview(null);
                   onChange({ file: null, preview: null });
                 }}
-                className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 shadow-md"
+                className="absolute top-0 right-0 bg-red text-white rounded-full p-1 shadow-md"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -114,7 +101,7 @@ const ImageUpload = ({ preview, onChange }) => {
           ) : (
             <div className="flex flex-col items-center justify-center ">
               <svg
-                className="w-8 h-8 mb-4 text-gray-500"
+                className="w-8 h-8 mb-4 text-gray"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -127,12 +114,12 @@ const ImageUpload = ({ preview, onChange }) => {
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 ></path>
               </svg>
-              <p className="mb-2> text-sm text-gray-500">
+              <p className="mb-2> text-sm text-gray">
                 <span className="font-semibold">
                   Resim yüklemek için tıklayın
                 </span>
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray">
                 PNG, JPG (MAX {/*(maxSize / (1024 * 1024)).toFixed(1)*/}MB)
               </p>
             </div>
@@ -145,7 +132,7 @@ const ImageUpload = ({ preview, onChange }) => {
           />
         </label>
 
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-2 text-sm text-red">{error}</p>}
       </div>
     </div>
   );

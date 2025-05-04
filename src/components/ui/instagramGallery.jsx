@@ -122,7 +122,7 @@ export const InstagramGallery = ({ photos }) => {
           aria-modal="true"
           aria-labelledby="modal-title"
         >
-          <div className="relative flex flex-col md:flex-row max-w-4xl w-full md:h-[500px] bg-darkgray rounded-lg overflow-hidden animate-scaleIn">
+          <div className="relative flex flex-col md:flex-row max-w-4xl w-full md:h-96 bg-darkgray rounded-lg overflow-hidden animate-scaleIn">
             <button
               onClick={closePhoto}
               className="absolute top-4 right-4 z-10 bg-red/80 text-white p-2 rounded-full hover:bg-red transition-colors"
@@ -137,7 +137,7 @@ export const InstagramGallery = ({ photos }) => {
                 <img
                   src={selectedPhoto.img}
                   alt="Instagram fotoğrafı"
-                  className="rounded-lg object-contain w-full max-h-[300px] md:max-h-[450px] border-2 border-lightgray"
+                  className="rounded-lg object-contain w-full max-h-80 md:max-h-96 border-2 border-lightgray"
                 />
               </div>
 
@@ -184,6 +184,7 @@ export const InstagramGallery = ({ photos }) => {
 
 // Buraya özel animasyonlar için CSS ekleyin
 // Bu stil kodunu globals.css dosyanıza da ekleyebilirsiniz
+/*
 const styles = `
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -203,5 +204,5 @@ const styles = `
   animation: scaleIn 0.3s ease-out;
 }
 `;
-
+*/
 export default InstagramGallery;

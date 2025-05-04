@@ -203,7 +203,7 @@ const Sidebar = ({ activePage = "dashboard" }) => {
             : collapsed ? 'w-20' : 'w-48'
           }`}
       >
-        <div className="p-4 flex justify-between items-center border-b border-red-700">
+        <div className="p-4 flex justify-between items-center border-b border-red">
           {(!collapsed || (isMobile && mobileOpen)) && (
             <button
               onClick={() => navigateTo("/")}
@@ -216,7 +216,7 @@ const Sidebar = ({ activePage = "dashboard" }) => {
           {!isMobile && (
             <button
               onClick={toggleSidebar}
-              className="p-2 rounded-full hover:bg-red-700 text-white"
+              className="p-2 rounded-full hover:bg-red text-white"
             >
               {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
             </button>

@@ -151,7 +151,7 @@ const AddressList = ({
         <button
           type="button"
           onClick={cancelEditing}
-          className="mt-2 w-full py-2 bg-gray-100 text-gray-800 font-medium rounded-md hover:bg-gray-200 transition-colors"
+          className="mt-2 w-full py-2 bg-lightgray text-gray font-medium rounded-md hover:bg-gray-200 transition-colors"
         >
           İptal
         </button>
@@ -165,7 +165,7 @@ const AddressList = ({
         <div
           key={address.id}
           className={`border-2 p-4 rounded-lg ${
-            selectedAddressId === address.id ? "border-red bg-lightgray2" : "border-gray-300"
+            selectedAddressId === address.id ? "border-red bg-lightgray2" : "border-gray"
           } cursor-pointer hover:border-yellow transition-colors`}
           onClick={() => onSelectAddress(address.id)}
         >
@@ -190,7 +190,7 @@ const AddressList = ({
                     e.stopPropagation();
                     handleSetDefault(address.id);
                   }}
-                  className="text-gray-500 hover:text-yellow p-1"
+                  className="text-gray hover:text-yellow p-1"
                   title="Varsayılan Yap"
                 >
                   <Star size={18} />
@@ -221,16 +221,16 @@ const AddressList = ({
 
           <div className="mt-2">
             <div className="flex items-start gap-2">
-              <MapPin size={18} className="text-gray-500 mt-1 flex-shrink-0" />
+              <MapPin size={18} className="text-gray mt-1 flex-shrink-0" />
               <div>
                 <p className="font-medium">{address.recipientName}</p>
-                <p className="text-sm text-gray-600">{address.fullAddress}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray">{address.fullAddress}</p>
+                <p className="text-sm text-gray">
                   {address.district}, {address.city}
                   {address.postalCode && ` - ${address.postalCode}`}
                 </p>
                 {address.phoneNumber && (
-                  <p className="text-sm text-gray-600">{address.phoneNumber}</p>
+                  <p className="text-sm text-gray">{address.phoneNumber}</p>
                 )}
               </div>
             </div>
@@ -247,7 +247,7 @@ const AddressList = ({
       ))}
       <button
         onClick={onAddNewAddress}
-        className="w-full py-2 bg-gray-100 text-gray-800 font-medium rounded-md hover:bg-gray-200 transition-colors"
+        className="w-full py-2 bg-lightgray text-gray font-medium rounded-md hover:bg-gray-200 transition-colors"
       >
         + Yeni Adres Ekle
       </button>

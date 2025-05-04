@@ -88,7 +88,7 @@ const Products = ({ categoryFilter = "" }) => {
                 <img
                   src={item.img}
                   alt={item.name}
-                  className="object-cover group-hover:scale-110 transition-transform duration-500 w-[150px]"
+                  className="object-cover group-hover:scale-110 transition-transform duration-500 w-36"
                 />
                 {/* Stock Badge */}
                 {item.stock < 10 && item.stock > 0 && (
