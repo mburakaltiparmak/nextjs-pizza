@@ -104,6 +104,7 @@ export default function ProductDetail() {
                 className="flex items-center justify-center rounded-xl overflow-hidden bg-transparent"
               >
                 {product.img ? (
+                  //düzelt
                   <img
                     src={product.img}
                     alt={product.name}

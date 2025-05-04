@@ -1,6 +1,9 @@
 // next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    optimizeCss: false,
+  },
   reactStrictMode: false,
   images: {
     domains: ["res.cloudinary.com"],

@@ -191,7 +191,7 @@ const Page = () => {
   return (
     <div>
       <Header />
-      <div className="flex flex-col items-center justify-between gap-8 mb-8 font-Barlow">
+      <div className="flex flex-col items-center justify-between gap-8 mb-8 font-Barlow w-1/2">
         <span>
           <Image
             src={headImg.src}
@@ -201,7 +201,7 @@ const Page = () => {
             height={100}
           />
         </span>
-        <span className="flex flex-row items-center justify-center px-4">
+        <span className="flex flex-row items-center justify-center">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -214,7 +214,8 @@ const Page = () => {
             </BreadcrumbList>
           </Breadcrumb>
         </span>
-        <div className="flex flex-col justify-between py-4 gap-4 w-[50%] max-md:w-full max-md:px-8 font-Barlow">
+        <div className="flex flex-col justify-between py-4 gap-4  font-Barlow">
+          {/*düzelt */}
           <h3 className="text-lg font-semibold">Custom Pizza</h3>
           <span className="flex flex-row justify-between items-center gap-4 max-md:gap-2">
             <p className="text-lg font-semibold">
@@ -232,8 +233,9 @@ const Page = () => {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col items-center justify-between gap-8 w-[50%] max-md:w-full max-md:px-8"
+            className="flex flex-col items-center justify-between gap-8 max-md:w-full "
           >
+            {/*düzelt */}
             <div className="flex flex-row justify-between items-center w-full">
               <FormField
                 control={form.control}
@@ -255,19 +257,19 @@ const Page = () => {
                           value="S"
                           className="border border-lightgray rounded-full w-[40px] h-[40px] bg-lightgray text-gray text-sm font-semibold font-Barlow  hover:text-lightgray hover:bg-red data-[state=on]:bg-yellow"
                         >
-                          S
+                          {/*düzelt */}S
                         </ToggleGroupItem>
                         <ToggleGroupItem
                           value="M"
                           className="border border-lightgray rounded-full w-[40px] h-[40px] bg-lightgray text-gray text-sm font-semibold font-Barlow  hover:text-lightgray hover:bg-red data-[state=on]:bg-yellow"
                         >
-                          M
+                          {/*düzelt */}M
                         </ToggleGroupItem>
                         <ToggleGroupItem
                           value="L"
                           className="border border-lightgray rounded-full w-[40px] h-[40px] bg-lightgray text-gray text-sm font-semibold font-Barlow  hover:text-lightgray hover:bg-red data-[state=on]:bg-yellow"
                         >
-                          L
+                          {/*düzelt */}L
                         </ToggleGroupItem>
                       </ToggleGroup>
                     </FormControl>
@@ -348,29 +350,6 @@ const Page = () => {
             />
 
             <div className="flex flex-row justify-between gap-8 items-start w-full   max-md:flex-col max-md:items-center">
-              {/*
-            <span className="w-full border border-gray bg-lightgray rounded-lg p-4">
-              <FormField
-                control={form.control}
-                name="siparisNotu"
-                render={({ field }) => (
-                  <FormItem className="w-full">
-                    <FormLabel className="text-lg font-semibold">
-                      Sipariş Notu
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Siparişine eklemek istediğin bir not var mı?"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </span>
-            */}
-
               <span className="flex flex-col items-start justify-between bg-lightgray border border-gray w-full gap-2 rounded-lg">
                 <span className="flex flex-col justify-between  items-stretch gap-4 p-4 w-full">
                   <p className="font-semibold text-lg">Sipariş Toplamı</p>

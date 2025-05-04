@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { instance } from "@/lib/hooks";
 import { useRouter } from "next/navigation";
 import useAuthRoute from "@/hooks/useAuthRole";
@@ -49,6 +49,11 @@ const OrdersPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // useRef ile bir initialFetch flag'i oluştur - bu sayede sadece ilk yüklemede fetchOrders çağrılır
+  const initialFetchDone = useRef(false);
+
+  // fetchOrders fonksiyonunu stable hale getir - bağımlılık olarak toast'u çıkar
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
@@ -65,83 +70,78 @@ const OrdersPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []); // toast bağımlılığını kaldır
 
-  // filterOrders fonksiyonunu useCallback ile sarmalayın
-  const filterOrders = useCallback(
-    (status = filter, searchValue = searchTerm) => {
-      let result = orders;
+  // filterOrders fonksiyonunu useCallback ile sarmalayın ve bağımlılıkları doğru şekilde belirtin
+  const filterOrders = useCallback(() => {
+    let result = orders;
 
-      // Duruma göre filtrele
-      if (status !== "ALL") {
-        result = result.filter((order) => order.orderStatus === status);
-      }
+    // Duruma göre filtrele
+    if (filter !== "ALL") {
+      result = result.filter((order) => order.orderStatus === filter);
+    }
 
-      // Arama terimine göre filtrele
-      if (searchValue) {
-        result = result.filter((order) => {
-          // Sipariş ID'sinde arama
-          if (order.id && order.id.toString().includes(searchValue))
-            return true;
+    // Arama terimine göre filtrele
+    if (searchTerm) {
+      result = result.filter((order) => {
+        // Sipariş ID'sinde arama
+        if (order.id && order.id.toString().includes(searchTerm)) return true;
 
-          // Müşteri bilgilerinde arama
-          if (
-            order.user &&
-            ((order.user.name &&
-              order.user.name
+        // Müşteri bilgilerinde arama
+        if (
+          order.user &&
+          ((order.user.name &&
+            order.user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (order.user.surname &&
+              order.user.surname
                 .toLowerCase()
-                .includes(searchValue.toLowerCase())) ||
-              (order.user.surname &&
-                order.user.surname
-                  .toLowerCase()
-                  .includes(searchValue.toLowerCase())) ||
-              (order.user.email &&
-                order.user.email
-                  .toLowerCase()
-                  .includes(searchValue.toLowerCase())) ||
-              (order.user.phoneNumber &&
-                order.user.phoneNumber.includes(searchValue)))
-          )
-            return true;
-
-          // Teslimat adresinde arama
-          if (
-            order.deliveryAddress &&
-            ((order.deliveryAddress.fullAddress &&
-              order.deliveryAddress.fullAddress
+                .includes(searchTerm.toLowerCase())) ||
+            (order.user.email &&
+              order.user.email
                 .toLowerCase()
-                .includes(searchValue.toLowerCase())) ||
-              (order.deliveryAddress.city &&
-                order.deliveryAddress.city
-                  .toLowerCase()
-                  .includes(searchValue.toLowerCase())) ||
-              (order.deliveryAddress.district &&
-                order.deliveryAddress.district
-                  .toLowerCase()
-                  .includes(searchValue.toLowerCase())))
-          )
-            return true;
+                .includes(searchTerm.toLowerCase())) ||
+            (order.user.phoneNumber &&
+              order.user.phoneNumber.includes(searchTerm)))
+        )
+          return true;
 
-          return false;
-        });
-      }
+        // Teslimat adresinde arama
+        if (
+          order.deliveryAddress &&
+          ((order.deliveryAddress.fullAddress &&
+            order.deliveryAddress.fullAddress
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())) ||
+            (order.deliveryAddress.city &&
+              order.deliveryAddress.city
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase())) ||
+            (order.deliveryAddress.district &&
+              order.deliveryAddress.district
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase())))
+        )
+          return true;
 
-      setFilteredOrders(result);
-    },
-    [orders, filter, searchTerm]
-  );
+        return false;
+      });
+    }
 
-  // useEffect Hook'larını düzeltin
+    setFilteredOrders(result);
+  }, [orders, filter, searchTerm]); // Bu bağımlılıklar gerekli
+
+  // İlk yükleme useEffect'i
   useEffect(() => {
-    if (isAuthorized) {
+    if (isAuthorized && !initialFetchDone.current) {
       fetchOrders();
+      initialFetchDone.current = true; // Sadece bir kez çalıştığını işaretleyin
     }
   }, [isAuthorized, fetchOrders]);
 
   // Filtre değiştiğinde veya arama yapıldığında siparişleri filtrele
   useEffect(() => {
-    filterOrders(filter, searchTerm);
-  }, [filter, searchTerm, filterOrders]);
+    filterOrders();
+  }, [filter, searchTerm, orders, filterOrders]); // filterOrders'ı da bağımlılık olarak ekle
 
   // Sipariş durumunu güncelle
   const updateOrderStatus = async (orderId, newStatus) => {
@@ -286,19 +286,22 @@ const OrdersPage = () => {
     }).format(date);
   };
 
-  // İlk yüklemede siparişleri getir
-
   // Yetkisiz erişim durumunda içerik gösterme
   if (!isAuthorized) {
     return null;
   }
+
+  // Yenile butonuna tıklandığında çağrılacak işlev
+  const handleRefresh = () => {
+    fetchOrders();
+  };
 
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Siparişler</h1>
         <Button
-          onClick={fetchOrders}
+          onClick={handleRefresh}
           variant="outline"
           disabled={loading}
           className="flex items-center gap-2"
@@ -315,10 +318,9 @@ const OrdersPage = () => {
             value={filter}
             onValueChange={(value) => {
               setFilter(value);
-              filterOrders(value, searchTerm);
             }}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-44">
               <SelectValue placeholder="Durum Filtresi" />
             </SelectTrigger>
             <SelectContent>
@@ -340,8 +342,8 @@ const OrdersPage = () => {
           />
           <Input
             type="text"
-            placeholder="Sipariş ara (ID, müşteri, adres...)"
             className="pl-10 pr-4 py-2 w-full sm:w-[300px]"
+            placeholder="Sipariş ara (ID, müşteri, adres...)"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -378,9 +380,9 @@ const OrdersPage = () => {
             </thead>
             <tbody>
               {filteredOrders.map((order) => (
-                <tr key={order.id}>
-                  <th className="font-medium">{order.id}</th>
-                  <th>
+                <tr key={order.id} className="border-b">
+                  <td className="p-2 font-medium">{order.id}</td>
+                  <td className="p-2">
                     {order.user ? (
                       <div className="flex flex-col">
                         <span>
@@ -393,9 +395,9 @@ const OrdersPage = () => {
                     ) : (
                       <span className="text-gray-500">Misafir Siparişi</span>
                     )}
-                  </th>
-                  <th>{formatDate(order.orderDate)}</th>
-                  <th className="text-right">
+                  </td>
+                  <td className="p-2">{formatDate(order.orderDate)}</td>
+                  <td className="p-2 text-right">
                     {order.totalAmount ? (
                       <span className="font-semibold">
                         {order.totalAmount.toFixed(2)} ₺
@@ -403,8 +405,8 @@ const OrdersPage = () => {
                     ) : (
                       "N/A"
                     )}
-                  </th>
-                  <th>
+                  </td>
+                  <td className="p-2">
                     <Badge
                       className={`${
                         getStatusBadge(order.orderStatus).color
@@ -412,8 +414,8 @@ const OrdersPage = () => {
                     >
                       {getStatusBadge(order.orderStatus).text}
                     </Badge>
-                  </th>
-                  <th>
+                  </td>
+                  <td className="p-2">
                     {order.payment ? (
                       <div className="flex flex-col">
                         <Badge
@@ -434,8 +436,8 @@ const OrdersPage = () => {
                     ) : (
                       "N/A"
                     )}
-                  </th>
-                  <th className="text-right">
+                  </td>
+                  <td className="p-2 text-right">
                     <Button
                       variant="secondary"
                       size="sm"
@@ -445,7 +447,7 @@ const OrdersPage = () => {
                       <Eye size={16} className="mr-1" />
                       Detay
                     </Button>
-                  </th>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -654,38 +656,38 @@ const OrdersPage = () => {
                   <span className="font-medium">Sipariş Ürünleri</span>
                 </div>
 
-                <table>
+                <table className="w-full">
                   <thead>
-                    <tr>
-                      <th>Ürün</th>
-                      <th className="text-right">Birim Fiyat</th>
-                      <th className="text-right">Adet</th>
-                      <th className="text-right">Toplam</th>
+                    <tr className="border-b">
+                      <th className="p-2 text-left">Ürün</th>
+                      <th className="p-2 text-right">Birim Fiyat</th>
+                      <th className="p-2 text-right">Adet</th>
+                      <th className="p-2 text-right">Toplam</th>
                     </tr>
                   </thead>
                   <tbody>
                     {selectedOrder.items &&
                       selectedOrder.items.map((item) => (
-                        <tr key={item.id}>
-                          <th className="font-medium">
+                        <tr key={item.id} className="border-b">
+                          <td className="p-2 font-medium">
                             {item.product?.name || "Silinmiş Ürün"}
-                          </th>
-                          <th className="text-right">
+                          </td>
+                          <td className="p-2 text-right">
                             {item.price?.toFixed(2)} ₺
-                          </th>
-                          <th className="text-right">{item.quantity}</th>
-                          <th className="text-right">
+                          </td>
+                          <td className="p-2 text-right">{item.quantity}</td>
+                          <td className="p-2 text-right">
                             {(item.price * item.quantity).toFixed(2)} ₺
-                          </th>
+                          </td>
                         </tr>
                       ))}
                     <tr>
-                      <th colSpan={3} className="text-right font-bold">
+                      <td colSpan={3} className="p-2 text-right font-bold">
                         Toplam:
-                      </th>
-                      <th className="text-right font-bold">
+                      </td>
+                      <td className="p-2 text-right font-bold">
                         {selectedOrder.totalAmount?.toFixed(2)} ₺
-                      </th>
+                      </td>
                     </tr>
                   </tbody>
                 </table>

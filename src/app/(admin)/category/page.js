@@ -79,26 +79,6 @@ const CategoryPage = () => {
     }
   }, [dispatch, categoryFetchState, dataFetchAttempted]);
 
-  // Toast mesajları için
-  /*
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Hata",
-        description: error,
-        variant: "destructive",
-      });
-    }
-
-    if (success) {
-      toast({
-        title: "Başarılı",
-        description: success,
-      });
-    }
-  }, [error, success, toast]);
-  */
-
   const openModal = useCallback(
     (category = null) => {
       if (category) {
@@ -266,7 +246,7 @@ const CategoryPage = () => {
   return (
     <div>
       {/* Arama ve Filtreleme */}
-      <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex items-center border border-gray-100">
+      <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex items-center border border-lightgray">
         <SearchBar
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -293,13 +273,13 @@ const CategoryPage = () => {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => openModal(category)}
-                    className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
+                    className="p-2 bg-white rounded-full hover:bg-lightgray2 transition-colors"
                   >
                     <SquarePen size={16} className="text-blue-600" />
                   </button>
                   <button
                     onClick={() => openDeleteModal(category)}
-                    className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
+                    className="p-2 bg-white rounded-full hover:bg-lightgray2 transition-colors"
                   >
                     <Trash2 size={16} className="text-red" />
                   </button>
@@ -344,7 +324,7 @@ const CategoryPage = () => {
           <div className="flex flex-row items-center justify-between space-x-2 p-4">
             <Button
               type="button"
-              className="border-gray text-lightgray hover:bg-gray hover:text-lightgray font-Barlow"
+              className="border-gray text-lightgray hover:bg-gray hover:border-darkgray hover:text-lightgray font-Barlow"
               onClick={closeModal}
               disabled={loading}
             >

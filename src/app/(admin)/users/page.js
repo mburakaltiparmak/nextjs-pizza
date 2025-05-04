@@ -75,26 +75,6 @@ const UsersPage = () => {
     }
   }, [dispatch, initialLoad]);
 
-  // Show success and error toasts
-  /*
-  useEffect(() => {
-    if (success) {
-      toast({
-        title: "Başarılı",
-        description: success,
-        variant: "default",
-      });
-    }
-    if (error) {
-      toast({
-        title: "Hata",
-        description: error,
-        variant: "destructive",
-      });
-    }
-  }, [success, error, toast]);
-  */
-
   // Handle role change
   const handleRoleChange = (userId, role) => {
     dispatch(updateUserRole(userId, role)).then((result) => {
@@ -123,7 +103,7 @@ const UsersPage = () => {
         );
       case userStatus.LOCKED:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red">
             <X size={12} className="mr-1" />
             Kilitli
           </span>
@@ -202,8 +182,6 @@ const UsersPage = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       <div className="flex-1 flex flex-col overflow-hidden">
-        
-
         <main className="flex-1 overflow-y-auto p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-semibold text-gray-800 font-Quattrocento_Sans">
@@ -405,7 +383,9 @@ const UsersPage = () => {
                                       </div>
                                     </div>
                                     <AlertDialogFooter>
-                                      <AlertDialogCancel>İptal</AlertDialogCancel>
+                                      <AlertDialogCancel>
+                                        İptal
+                                      </AlertDialogCancel>
                                       <AlertDialogAction
                                         disabled={
                                           loading || selectedRole === user.role

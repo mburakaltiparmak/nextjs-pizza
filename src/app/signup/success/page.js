@@ -20,7 +20,7 @@ export default function SignupSuccessPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-red items-center justify-center ">
-      <div className="bg-yellow shadow-md rounded-lg max-w-md mx-auto p-8 w-full text-center">
+      <div className="bg-yellow shadow-md rounded-lg max-w-md mx-auto p-8 w-full text-center font-Barlow">
         <div className="flex justify-center mb-4">
           <FontAwesomeIcon
             icon={faCheckCircle}
