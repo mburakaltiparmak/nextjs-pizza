@@ -414,6 +414,8 @@ const FloatingUserButton = () => {
                     </button>
 
                     {/* Google ile giriş butonu */}
+
+                    {/*
                     <button
                       type="button"
                       onClick={handleGoogleLogin}
@@ -441,6 +443,7 @@ const FloatingUserButton = () => {
                       </svg>
                       Google ile Giriş Yap
                     </button>
+                    */}
 
                     <button
                       type="button"

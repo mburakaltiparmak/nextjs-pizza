@@ -380,7 +380,8 @@ const Page = () => {
                 </button>
 
                 {/* Google ile giriş butonu */}
-                <button
+                {/*
+                 <button
                   type="button"
                   onClick={handleGoogleLogin}
                   disabled={loading}
@@ -407,6 +408,7 @@ const Page = () => {
                   </svg>
                   Google ile Giriş Yap
                 </button>
+                */}
 
                 <div className="relative flex items-center justify-center my-1">
                   <div className="border-t border-white border-opacity-20 w-full"></div>

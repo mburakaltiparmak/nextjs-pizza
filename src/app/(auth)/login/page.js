@@ -181,6 +181,7 @@ const Page = () => {
                 "Giriş Yap"
               )}
             </button>
+            {/*
             <button
               type="button"
               onClick={handleGoogleLogin}
@@ -188,7 +189,7 @@ const Page = () => {
               className="group relative flex w-full justify-center items-center rounded-md border border-white px-3 py-2 text-sm font-semibold bg-darkred text-white hover:bg-red"
             >
               <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
-                {/*düzelt */}
+                
                 <path
                   fill="#4285F4"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -207,7 +208,8 @@ const Page = () => {
                 />
               </svg>
               Google ile Giriş Yap
-            </button>
+            </button> 
+            */}
           </div>
         </form>
       </div>
