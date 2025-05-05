@@ -168,18 +168,33 @@ export const login = (formData) => async (dispatch) => {
 };
 
 export const initiateGoogleLogin = () => () => {
-  // Mevcut URL'i kaydet (geri dönüş için)
-  const returnUrl = window.location.pathname;
-  localStorage.setItem("authReturnUrl", returnUrl);
+  try {
+    console.log("Google login başlatılıyor...");
 
-  // Beni Hatırla tercihini geçici olarak sakla
-  const rememberMe = localStorage.getItem("rememberMe") === "true";
-  localStorage.setItem("tempRememberMe", rememberMe ? "true" : "false");
+    // Mevcut URL'i kaydet (geri dönüş için)
+    const returnUrl = window.location.pathname;
+    localStorage.setItem("authReturnUrl", returnUrl);
+    console.log("Geri dönüş URL'i kaydedildi:", returnUrl);
 
-  // Tarayıcıyı direkt olarak backend'in OAuth endpoint'ine yönlendir
-  // Not: burada proxy kullanmıyoruz, direkt tam URL kullanıyoruz
-  window.location.href =
-    "https://pizza-backend.fly.dev/pizza/api/auth/oauth2/authorize/google";
+    // Beni Hatırla tercihini geçici olarak sakla
+    const rememberMe = localStorage.getItem("rememberMe") === "true";
+    localStorage.setItem("tempRememberMe", rememberMe ? "true" : "false");
+    console.log("RememberMe durumu kaydedildi:", rememberMe);
+
+    // API_BASE_URL'i env değişkenlerinden veya varsayılan değerden al
+    const API_BASE_URL =
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      "https://pizza-backend.fly.dev/pizza";
+    const authUrl = `${API_BASE_URL}/api/auth/oauth2/authorize/google`;
+
+    console.log("Yönlendiriliyor:", authUrl);
+
+    // Tarayıcıyı backend'in OAuth endpoint'ine yönlendir
+    window.location.href = authUrl;
+  } catch (error) {
+    console.error("Google login başlatma hatası:", error);
+    // Hata durumunda global hata state'i güncellenebilir
+  }
 };
 
 // OAuth login sürecini tamamla (callback sayfasında kullanılır)
@@ -501,66 +516,45 @@ export const changePassword = (passwordData) => async (dispatch) => {
 };
 
 // Kullanıcı profil bilgilerini getir
-export const fetchUserProfile = () => async (dispatch) => {
-  dispatch(setUserFetchState(fetchStates.FETCHING));
-
+export const fetchUserProfile = () => async (dispatch, getState) => {
   try {
-    // API isteğini yap - sade ve basit
-    const response = await instance.get("/user/profile");
+    console.log("Kullanıcı profili alınıyor...");
+    const token = getState().user.token;
 
-    console.log("Profil yanıtı:", response.data);
-
-    // Redux store'u güncelle
-    dispatch(setUserProfile(response.data));
-
-    // Diğer bilgileri de güncelle
-    if (response.data.role) {
-      dispatch(setUserRole(response.data.role));
+    if (!token) {
+      console.error("Token bulunamadı");
+      return null;
     }
 
-    if (response.data.status) {
-      dispatch(setUserStatus(response.data.status));
+    // API_BASE_URL'i env değişkenlerinden veya varsayılan değerden al
+    const API_BASE_URL =
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      "https://pizza-backend.fly.dev/pizza";
+
+    const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP hata! Durum: ${response.status}`);
     }
 
-    if (response.data.email) {
-      dispatch(setEmail(response.data.email));
+    const userData = await response.json();
+    console.log("Kullanıcı profili alındı:", userData);
 
-      // "Beni hatırla" durumuna göre email'i uygun storage'a kaydet
-      const rememberMe = localStorage.getItem("rememberMe") === "true";
-      const storage = rememberMe ? localStorage : sessionStorage;
-      storage.setItem("userEmail", response.data.email);
-    }
+    dispatch({
+      type: "SET_USER_PROFILE",
+      payload: userData,
+    });
 
-    dispatch(setUserFetchState(fetchStates.FETCHED));
-    return response.data;
+    return userData;
   } catch (error) {
-    // Detaylı hata bilgisi
-    //console.error("Profil getirme hatası:", error);
-
-    if (error.response) {
-      console.log("Hata yanıtı:", {
-        status: error.response.status,
-        data: error.response.data,
-      });
-
-      // 401 Unauthorized - Yeniden giriş yap
-      if (error.response.status === 401) {
-        dispatch(logout());
-        dispatch(setUserFetchState(fetchStates.FAILED));
-        dispatch(setError("Oturumunuz sona erdi, lütfen tekrar giriş yapın"));
-
-        if (typeof window !== "undefined") {
-          window.location.href = "/login?expired=true";
-        }
-
-        return { error: "auth_expired" };
-      }
-    }
-
-    // Genel hata durumu
-    dispatch(setUserFetchState(fetchStates.FAILED));
-    dispatch(setError("Profil bilgileri alınamadı"));
-    return { error: "failed_to_fetch" };
+    console.error("Kullanıcı profili alma hatası:", error);
+    throw error;
   }
 };
 // userActions.js dosyasına eklenecek kod
