@@ -25,7 +25,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "https://nextjs-pizza-mu.vercel.app//pizza/api/:path*",
+        destination: "https://pizza-backend.fly.dev/pizza/api/:path*",
       },
     ];
   },
