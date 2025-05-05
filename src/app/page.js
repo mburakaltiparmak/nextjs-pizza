@@ -150,18 +150,6 @@ const Page = () => {
   return (
     <div>
       <Header />
-      {/* Show warning if data didn't load properly */}
-      {shouldShowWarning && (
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
-          <p>Please refresh the page or check your connection.</p>
-          <button
-            onClick={() => loadData(selectedCategory)}
-            className="mt-2 bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded text-sm"
-          >
-            Try Again
-          </button>
-        </div>
-      )}
       <div className="flex flex-col justify-between items-center gap-2 text-lightgray">
         <div className="bg-[url('../../assets/mvp-banner.png')] bg-cover bg-center h-screen w-full max-md:h-96">
           <div className="flex flex-col justify-start items-center gap-4 mt-4">
