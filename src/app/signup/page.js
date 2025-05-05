@@ -32,7 +32,7 @@ export default function RegisterPage() {
   });
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { warning, error } = useToast(); // Özel toast hook'unu kullanıyoruz
+  const { warning, error } = useToast();
 
   const loading = useAppSelector((state) => state.global.loading);
   const isSuccess = useAppSelector((state) => state.global.success);
