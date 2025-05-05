@@ -10,7 +10,7 @@ import Footer from "@/components/footer";
 import Header from "@/components/header";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useToast } from "@/lib/hooks/useToast"; // Özel toast hook'unu import ediyoruz
+import { useToast } from "@/hooks/use-toast";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
