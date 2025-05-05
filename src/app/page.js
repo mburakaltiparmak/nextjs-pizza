@@ -153,7 +153,6 @@ const Page = () => {
       {/* Show warning if data didn't load properly */}
       {shouldShowWarning && (
         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
-          <p className="font-bold">Some content couldn't be loaded</p>
           <p>Please refresh the page or check your connection.</p>
           <button
             onClick={() => loadData(selectedCategory)}

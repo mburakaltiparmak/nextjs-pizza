@@ -70,7 +70,7 @@ const OrdersPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []); // toast bağımlılığını kaldır
+  }, [toast]); // toast bağımlılığını kaldır
 
   // filterOrders fonksiyonunu useCallback ile sarmalayın ve bağımlılıkları doğru şekilde belirtin
   const filterOrders = useCallback(() => {
