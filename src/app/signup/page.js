@@ -8,9 +8,7 @@ import Link from "next/link";
 import SecondaryLoading from "@/components/secondaryLoading";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast"; // Import the toast hook
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -32,7 +30,7 @@ export default function RegisterPage() {
   });
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { warning, error } = useToast();
+  const { toast } = useToast(); // Initialize the toast hook
 
   const loading = useAppSelector((state) => state.global.loading);
   const isSuccess = useAppSelector((state) => state.global.success);
@@ -81,12 +79,12 @@ export default function RegisterPage() {
       !value.endsWith("@gmail.com") &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
     ) {
-      warning(
-        "Şu anda sadece Gmail uzantılı e-posta adreslerini kabul edebiliyoruz.",
-        {
-          duration: 5000,
-        }
-      );
+      toast({
+        title: "Uyarı",
+        description: "Şu anda sadece Gmail uzantılı e-posta adreslerini kabul edebiliyoruz.",
+        type: "warning",
+        duration: 5000,
+      });
     }
 
     // Clear any previous error
@@ -109,12 +107,12 @@ export default function RegisterPage() {
       !value.endsWith("@gmail.com") &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
     ) {
-      warning(
-        "Şu anda sadece Gmail uzantılı e-posta adreslerini kabul edebiliyoruz.",
-        {
-          duration: 5000,
-        }
-      );
+      toast({
+        title: "Uyarı",
+        description: "Şu anda sadece Gmail uzantılı e-posta adreslerini kabul edebiliyoruz.",
+        type: "warning",
+        duration: 5000,
+      });
     }
   };
 
@@ -140,12 +138,12 @@ export default function RegisterPage() {
 
     // Email Gmail kontrolü
     if (!formData.email.endsWith("@gmail.com")) {
-      error(
-        "Şu anda sadece Gmail uzantılı e-posta adreslerini kabul edebiliyoruz.",
-        {
-          duration: 5000,
-        }
-      );
+      toast({
+        title: "Hata",
+        description: "Şu anda sadece Gmail uzantılı e-posta adreslerini kabul edebiliyoruz.",
+        type: "error",
+        duration: 5000,
+      });
       return;
     }
 
@@ -165,20 +163,40 @@ export default function RegisterPage() {
           default: "Kayıt işlemi sırasında bir hata oluştu",
         };
 
-        setLocalError(errorMap[result.error] || errorMap.default);
+        const errorMessage = errorMap[result.error] || errorMap.default;
+        setLocalError(errorMessage);
+        toast({
+          title: "Hata",
+          description: errorMessage,
+          type: "error",
+          duration: 5000,
+        });
       } else {
+        toast({
+          title: "Başarılı",
+          description: "Kayıt işlemi başarıyla tamamlandı!",
+          type: "success",
+          duration: 3000,
+        });
         router.push("/signup/success");
       }
     } catch (error) {
       console.error("Kayıt sırasında beklenmeyen bir hata oluştu:", error);
-      setLocalError("Kayıt işlemi sırasında beklenmeyen bir hata oluştu");
+      const errorMessage = "Kayıt işlemi sırasında beklenmeyen bir hata oluştu";
+      setLocalError(errorMessage);
+      toast({
+        title: "Hata",
+        description: errorMessage,
+        type: "error",
+        duration: 5000,
+      });
     }
   };
 
   return (
     <div className="flex flex-col gap-4 bg-red min-h-screen">
       <Header />
-      <ToastContainer position="top-right" />
+      {/* ToastContainer position="top-right" is now handled by the toast hook */}
       <div className="flex flex-col items-center font-Barlow p-4 max-md:px-8">
         <div className="bg-yellow shadow-md rounded-lg max-w-md mx-auto p-8 max-md:p-4 w-full ">
           <h2 className="mt-2 text-center text-3xl font-bold tracking-tight text-red ">
