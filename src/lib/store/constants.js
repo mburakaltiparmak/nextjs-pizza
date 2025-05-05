@@ -1,5 +1,4 @@
-export const API_BASE_URL = "https://nextjs-pizza-mu.vercel.app//pizza";
-//export const API_BASE_URL = "https://nextjs-pizza-mu.vercel.app//pizza/api";
+export const API_BASE_URL = "https://pizza-backend.fly.dev/pizza";
 
 export const fetchStates = {
   NOT_FETCHED: "NOT_FETCHED",

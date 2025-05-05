@@ -1,4 +1,3 @@
-// next.config.mjs dosyanızı şu şekilde güncelleyin
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
@@ -25,7 +24,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "https://nextjs-pizza-mu.vercel.app//pizza/api/:path*",
+        destination: "https://pizza-backend.fly.dev/pizza/api/:path*", // Düzeltildi
       },
     ];
   },
