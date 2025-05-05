@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/lib/hooks";
 import {
@@ -20,11 +20,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
+// Özel event ismi - useToast componenti ile aynı olmalı
+const OPEN_CART_EVENT = "open_floating_cart";
+
 const FloatingCartButton = () => {
   const cart = useAppSelector((state) => state.order.cart);
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [isMobile, setIsMobile] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const triggerButtonRef = useRef(null);
+
   console.log("cart", cart);
 
   useEffect(() => {
@@ -38,8 +44,22 @@ const FloatingCartButton = () => {
     // Add event listener for resize
     window.addEventListener("resize", checkMobile);
 
+    // Custom event için listener ekle - Toast'tan açılması için
+    const handleOpenCartEvent = () => {
+      setIsOpen(true);
+      // Trigger button'a otomatik tıklama yaparak AlertDialog'u açacak
+      if (triggerButtonRef.current) {
+        triggerButtonRef.current.click();
+      }
+    };
+
+    window.addEventListener(OPEN_CART_EVENT, handleOpenCartEvent);
+
     // Cleanup
-    return () => window.removeEventListener("resize", checkMobile);
+    return () => {
+      window.removeEventListener("resize", checkMobile);
+      window.removeEventListener(OPEN_CART_EVENT, handleOpenCartEvent);
+    };
   }, []);
 
   const totalItems = cart.reduce((sum, item) => sum + item.count, 0);
@@ -65,13 +85,16 @@ const FloatingCartButton = () => {
   };
 
   return (
-    <div className="fixed top-2 right-4 z-50 ">
-      <AlertDialog>
+    <div className="fixed top-2 right-4 z-50 shadow-sm hover:z-100 hover:shadow-lg hover:scale-105 active:scale-95 rounded-full">
+      <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
         <AlertDialogTrigger asChild>
-          <button className="bg-yellow max-md:text-xs text-red p-4 max-md:p-2 rounded-full shadow-lg flex items-center justify-center hover:bg-red hover:text-yellow ring-2 ring-inset ring-black transition-colors duration-200">
+          <button
+            ref={triggerButtonRef}
+            className="bg-yellow max-md:text-xs z-10 text-red p-4 max-md:p-2 rounded-full shadow-lg flex items-center justify-center hover:bg-black hover:text-yellow hover:ring-yellow ring-2 ring-inset ring-black transition-colors duration-200 "
+          >
             <ShoppingCart size={24} />
             {totalItems > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">
+              <span className="absolute -bottom-1 -right-1 bg-red border-2 border-black text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-Barlow">
                 {totalItems}
               </span>
             )}
@@ -177,7 +200,10 @@ const FloatingCartButton = () => {
           )}
 
           <AlertDialogFooter className="flex gap-2">
-            <AlertDialogCancel className="bg-gray-100 text-gray-800 hover:bg-gray-200">
+            <AlertDialogCancel
+              className="bg-red text-white ring-2 ring-inset ring-black hover:bg-darkred hover:text-white hover:shadow-lg hover:scale-105 active:scale-95"
+              onClick={() => setIsOpen(false)}
+            >
               Kapat
             </AlertDialogCancel>
             {cart.length > 0 && (

@@ -107,15 +107,6 @@ const Page = () => {
     }
   }, [dispatch, selectedCategory, initialized, retryCount, maxRetries]);
 
-  // Uyarıyı göstermek için etkiyi her zaman tanımla
-  useEffect(() => {
-    if (shouldShowWarning) {
-      toast.warning(
-        "Bazı veriler yüklenemedi. Sayfayı yenileyebilir veya devam edebilirsiniz."
-      );
-    }
-  }, [shouldShowWarning]); // shouldShowWarning değiştiğinde çalışacak
-
   const buttonNotifyHandler = () => {
     toast.info("You can customize this button!");
   };

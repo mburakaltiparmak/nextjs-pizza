@@ -179,7 +179,7 @@ export const initiateGoogleLogin = () => () => {
   // Tarayıcıyı direkt olarak backend'in OAuth endpoint'ine yönlendir
   // Not: burada proxy kullanmıyoruz, direkt tam URL kullanıyoruz
   window.location.href =
-    "https://pizza-backend.fly.dev/pizza/api/auth/oauth2/authorize/google";
+    "https://nextjs-pizza-mu.vercel.app//pizza/api/auth/oauth2/authorize/google";
 };
 
 // OAuth login sürecini tamamla (callback sayfasında kullanılır)

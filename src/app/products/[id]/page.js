@@ -182,39 +182,23 @@ export default function ProductDetail() {
                 {/* Quantity Selector and Add to Cart */}
                 <div className="space-y-4">
                   {product.stock > 0 && (
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 font-Barlow">
                       <label className="text-darkgray font-medium font-Barlow">
                         Adet:
                       </label>
                       <div className="flex items-center border border-lightgray2 rounded-lg">
                         <button
                           onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                          className="px-4 py-2 hover:bg-lightgray transition font-Barlow text-darkgray"
+                          className="px-4 py-2  transition font-Barlow text-darkgray"
                         >
                           -
                         </button>
-                        <input
-                          type="number"
-                          value={quantity}
-                          onChange={(e) => {
-                            const val = parseInt(e.target.value);
-                            if (
-                              !isNaN(val) &&
-                              val > 0 &&
-                              val <= product.stock
-                            ) {
-                              setQuantity(val);
-                            }
-                          }}
-                          className="w-16 text-center border-x border-lightgray2 py-2 focus:outline-none font-Barlow text-darkgray"
-                          min="1"
-                          max={product.stock}
-                        />
+                        {quantity}
                         <button
                           onClick={() =>
                             setQuantity(Math.min(product.stock, quantity + 1))
                           }
-                          className="px-4 py-2 hover:bg-lightgray transition font-Barlow text-darkgray"
+                          className="px-4 py-2 transition font-Barlow text-darkgray"
                         >
                           +
                         </button>

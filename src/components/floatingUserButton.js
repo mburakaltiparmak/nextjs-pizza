@@ -17,10 +17,9 @@ import {
   faShoppingBag,
   faUserTie,
   faGoogle,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { useRouter } from "next/navigation";
-import { Button } from "./ui/button";
-import SecondaryLoading from "@/components/secondaryLoading";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -30,6 +29,7 @@ import {
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 import { AUTH_ERRORS } from "@/lib/authErrorMessages"; // güvenli hata mesajları için
+import Loading from "@/app/loading";
 
 const FloatingUserButton = () => {
   const dispatch = useDispatch();
@@ -77,6 +77,20 @@ const FloatingUserButton = () => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // ESC tuşuna basılınca dialog'u kapatan event listener ekliyoruz
+  useEffect(() => {
+    const handleEscKey = (event) => {
+      if (event.key === "Escape" && loginOpen) {
+        setLoginOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscKey);
+    return () => {
+      document.removeEventListener("keydown", handleEscKey);
+    };
+  }, [loginOpen]);
+
   // Kullanıcının admin veya personel olup olmadığını kontrol et
   const isAdminOrPersonal = role === "ADMIN" || role === "PERSONAL";
 
@@ -123,7 +137,7 @@ const FloatingUserButton = () => {
   };
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+    //e.preventDefault();
 
     // Form alanlarını doğrula
     if (!validateForm()) {
@@ -211,7 +225,7 @@ const FloatingUserButton = () => {
         <div className="relative" ref={dropdownRef}>
           <div
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="bg-yellow z-50 p-3 max-md:fixed max-md:top-2 max-md:text-xs max-md:gap-1 font-Londrina_Solid text-red ring-2 ring-inset ring-black rounded-full shadow-lg hover:bg-red hover:text-yellow  transition-all duration-200 cursor-pointer flex items-center gap-2 text-base font-normal"
+            className="bg-yellow z-50 p-3 max-md:fixed max-md:top-2 max-md:text-xs max-md:gap-1 font-Londrina_Solid text-red ring-2 ring-inset ring-black rounded-lg shadow-lg hover:bg-black hover:ring-yellow hover:text-yellow  transition-all duration-200 cursor-pointer flex items-center gap-2 text-base font-normal"
           >
             <FontAwesomeIcon icon={faUser} />
             <span className="">{name}</span>
@@ -284,19 +298,27 @@ const FloatingUserButton = () => {
         <div className="flex gap-2 items-center max-md:items-start max-md:flex-col max-md:fixed max-md:top-2">
           <AlertDialog open={loginOpen} onOpenChange={setLoginOpen}>
             <AlertDialogTrigger asChild>
-              <button className="h-10 max-md:h-8 max-md:w-16 max-md:text-xs max-md:gap-1 px-4 py-2 bg-yellow text-red hover:bg-red hover:text-yellow ring-2 ring-inset ring-white rounded-full font-Barlow font-bold text-sm inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:bg-opacity-50 disabled:cursor-not-allowed ">
+              <button className="h-10 max-md:h-8 max-md:w-16 max-md:text-xs max-md:gap-1 px-4 py-2 bg-yellow text-red hover:bg-black hover:text-yellow ring-2 ring-inset ring-white rounded-lg font-Barlow font-bold text-sm inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:bg-opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:scale-105 active:scale-95">
                 <FontAwesomeIcon icon={faUser} className="mr-2 max-md:mr-0" />
                 <span className="">Giriş</span>
               </button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="bg-white p-0 border-0 rounded-md max-w-md">
-              <div className="w-full max-w-md space-y-4 border-transparent rounded-md p-16">
+            <AlertDialogContent className="bg-red p-0 border-0 rounded-md max-w-md">
+              <div className="w-full max-w-md space-y-4 border-transparent rounded-md p-16 relative">
+                {/* Close button ekliyoruz */}
+                <button
+                  onClick={() => setLoginOpen(false)}
+                  className="absolute right-4 top-4 rounded-full px-2 py-1 ring-2 ring-inset ring-white text-red transition-colors bg-yellow hover:bg-black hover:text-yellow hover:ring-yellow hover:shadow-lg hover:scale-105 active:scale-95"
+                >
+                  <FontAwesomeIcon icon={faTimes} className="h-4 w-4" />
+                </button>
+
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="mt-6 text-center text-3xl font-bold tracking-tight font-Barlow text-red">
+                  <AlertDialogTitle className="mt-6 text-center text-3xl font-bold tracking-tight font-Barlow text-white">
                     Giriş Yap
                   </AlertDialogTitle>
                   {/* AlertDialogDescription eklendi - erişilebilirlik hatası için */}
-                  <AlertDialogDescription className="text-center text-black font-Barlow">
+                  <AlertDialogDescription className="text-center text-white font-Barlow text-sm">
                     Hesabınıza giriş yapmak için bilgilerinizi giriniz.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
@@ -308,7 +330,7 @@ const FloatingUserButton = () => {
                 )}
 
                 <form
-                  className="mt-8 space-y-6 font-Quattrocento_Sans"
+                  className="mt-8 space-y-3 font-Quattrocento_Sans"
                   onSubmit={handleLogin}
                 >
                   <div className="-space-y-px rounded-md shadow-sm">
@@ -352,20 +374,20 @@ const FloatingUserButton = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between px-2 py-1 text-white">
                     <div className="flex items-center">
                       <input
                         id="remember-me"
                         name="remember-me"
                         type="checkbox"
                         disabled={loading}
-                        className="h-4 w-4 rounded border-gray-300 text-red focus:ring-red"
+                        className="h-4 w-4 rounded border-black text-red focus:ring-red"
                         checked={rememberMe}
                         onChange={(e) => setRememberMeState(e.target.checked)}
                       />
                       <label
                         htmlFor="remember-me"
-                        className="ml-2 block text-sm text-gray-900"
+                        className="ml-2 block text-sm font-semibold "
                       >
                         Beni Hatırla
                       </label>
@@ -376,7 +398,7 @@ const FloatingUserButton = () => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className={`group relative flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white  ${
+                      className={`group relative flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white hover:shadow-lg hover:scale-105 active:scale-95  ${
                         loading
                           ? "bg-red cursor-not-allowed"
                           : "bg-green-800 hover:bg-green-600"
@@ -384,8 +406,7 @@ const FloatingUserButton = () => {
                     >
                       {loading ? (
                         <div className="flex items-center justify-center">
-                          <SecondaryLoading size="small" />
-                          <span className="ml-2">Giriş Yapılıyor...</span>
+                          <Loading />
                         </div>
                       ) : (
                         "Giriş Yap"
@@ -397,7 +418,7 @@ const FloatingUserButton = () => {
                       type="button"
                       onClick={handleGoogleLogin}
                       disabled={loading}
-                      className="group relative flex w-full justify-center items-center rounded-md border border-white px-3 py-2 text-sm font-semibold bg-darkred text-white hover:bg-red"
+                      className="group relative flex w-full justify-center items-center rounded-md border border-black px-3 py-2 text-sm font-semibold bg-white text-red hover:border-white hover:bg-red hover:text-white hover:shadow-lg hover:scale-105 active:scale-95 "
                     >
                       <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                         <path
@@ -427,7 +448,7 @@ const FloatingUserButton = () => {
                         setLoginOpen(false);
                         router.push("/signup");
                       }}
-                      className="group relative flex w-full justify-center rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-darkred bg-yellow hover:bg-lightyellow"
+                      className="group relative flex w-full justify-center rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-darkred bg-yellow hover:bg-lightyellow hover:shadow-lg hover:scale-105 active:scale-95"
                     >
                       <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
                       Üye Ol
@@ -439,7 +460,7 @@ const FloatingUserButton = () => {
           </AlertDialog>
 
           <button
-            className="h-10 max-md:w-16 max-md:text-xs max-md:h-8 px-4 py-2 bg-white gap-1 text-red hover:bg-red hover:text-yellow ring-2 ring-inset ring-yellow rounded-full font-Barlow font-bold text-sm inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:bg-opacity-50 disabled:cursor-not-allowed "
+            className="h-10 max-md:w-16 max-md:text-xs max-md:h-8 px-4 py-2 bg-white gap-1 text-red hover:bg-black hover:text-yellow ring-2 ring-inset ring-yellow hover:ring-white rounded-lg font-Barlow font-bold text-sm inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:bg-opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:scale-105 active:scale-95 "
             onClick={() => router.push("/signup")}
           >
             <FontAwesomeIcon icon={faUserPlus} className="mr-2 max-md:mr-0" />
