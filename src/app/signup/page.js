@@ -34,16 +34,6 @@ export default function RegisterPage() {
 
   const loading = useAppSelector((state) => state.global.loading);
   const isSuccess = useAppSelector((state) => state.global.success);
-  
-  // Show Google login disabled notification when component mounts
-  useEffect(() => {
-    toast({
-      title: "Bilgilendirme",
-      description: "Google ile Giriş Yap özelliği geçici olarak devredışıdır. Lütfen e-posta ve şifre ile kaydolun.",
-      type: "info",
-      duration: 8000,
-    });
-  }, [toast]);
 
   // Validate each field
   const fieldValidations = useMemo(() => {
