@@ -181,7 +181,7 @@ const Page = () => {
                 "Giriş Yap"
               )}
             </button>
-            {/*
+            {
             <button
               type="button"
               onClick={handleGoogleLogin}
@@ -209,7 +209,7 @@ const Page = () => {
               </svg>
               Google ile Giriş Yap
             </button> 
-            */}
+          }
           </div>
         </form>
       </div>
