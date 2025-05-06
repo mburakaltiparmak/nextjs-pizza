@@ -61,6 +61,12 @@ export default function OAuthCallbackPage() {
         const rememberMe = localStorage.getItem("tempRememberMe") === "true";
         console.log("RememberMe durumu:", rememberMe);
 
+        // Redux store'u güncelle
+        dispatch(setToken(token));
+        dispatch(setIsLogin(true));
+        dispatch(setAuthProvider("google"));
+        dispatch(setRememberMe(rememberMe));
+
         // Token'ı uygun storage'a kaydet
         const storage = rememberMe ? localStorage : sessionStorage;
         try {
@@ -75,12 +81,6 @@ export default function OAuthCallbackPage() {
 
         // "Beni hatırla" durumunu localStorage'a kaydet
         localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
-
-        // Redux store'u güncelle
-        dispatch(setToken(token));
-        dispatch(setIsLogin(true));
-        dispatch(setAuthProvider("google"));
-        dispatch(setRememberMe(rememberMe));
 
         // Kullanıcı bilgilerini getir
         try {
