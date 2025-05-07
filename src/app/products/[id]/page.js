@@ -1,4 +1,3 @@
-// app/products/[id]/page.js
 "use client";
 import { useParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
@@ -12,7 +11,6 @@ import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
-import { fetchStates } from "@/lib/store/constants";
 import Loading from "@/app/loading";
 import NotFound from "@/app/not-found";
 
@@ -21,7 +19,7 @@ export default function ProductDetail() {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
-  
+
   // Sayfa durumunu takip et
   const [pageState, setPageState] = useState("loading"); // "loading", "error", "ready"
   const fetchStartedRef = useRef(false);
@@ -30,8 +28,6 @@ export default function ProductDetail() {
   const product = useAppSelector((state) =>
     state.product.products.find((p) => p.id.toString() === params.id)
   );
-  const fetchState = useAppSelector((state) => state.product.fetchState);
-  const loading = useAppSelector((state) => state.global.loading);
 
   // Sayfa yüklendiğinde veya yenilendiğinde ürünü getir
   useEffect(() => {
@@ -40,17 +36,17 @@ export default function ProductDetail() {
       setPageState("ready");
       return; // Ürün zaten mevcutsa API çağrısı yapma
     }
-    
+
     // Daha önce isteği başlatmadıysak, ürünü getir
     if (!fetchStartedRef.current) {
       const fetchProduct = async () => {
         try {
           console.log("Ürün getirme isteği gönderiliyor, ID:", params.id);
           fetchStartedRef.current = true;
-          
+
           // Action'ı dispatch et ve sonucu bekle
           const result = await dispatch(fetchProductById(params.id));
-          
+
           // Sonucu kontrol et
           if (result?.error) {
             console.error("Ürün getirme hatası:", result.error);
@@ -63,10 +59,10 @@ export default function ProductDetail() {
           setPageState("error");
         }
       };
-      
+
       fetchProduct();
     }
-    
+
     // Cleanup function
     return () => {
       fetchStartedRef.current = false;
@@ -93,18 +89,18 @@ export default function ProductDetail() {
             <Image
               src={product.img}
               alt={product.name}
-              width={16}
-              height={16}
-              className="object-cover rounded"
+              width={48}
+              height={48}
+              className="object-cover"
             />
           ) : (
             <div className="w-8 h-8 bg-lightgray2 rounded flex items-center justify-center">
               <span className="text-gray text-xs font-Barlow">Yok</span>
             </div>
           )}
-          <p className="font-Barlow">
+          <span className="font-Barlow">
             {quantity} adet {product.name} sepete eklendi
-          </p>
+          </span>
         </div>
       ),
       duration: 3000,
@@ -147,10 +143,12 @@ export default function ProductDetail() {
                 className="flex items-center justify-center rounded-xl overflow-hidden bg-transparent relative"
               >
                 {product.img ? (
-                  <img
+                  <Image
                     src={product.img}
                     alt={product.name}
-                    className="object-cover h-52"
+                    width={500}
+                    height={500}
+                    className="object-cover"
                   />
                 ) : (
                   <div className="w-full h-full min-h-52 flex items-center justify-center bg-lightgray2">

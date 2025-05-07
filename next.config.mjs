@@ -5,16 +5,17 @@ const nextConfig = {
   },
   reactStrictMode: false,
   images: {
+    domains: ["res.cloudinary.com"],
     remotePatterns: [
       {
         protocol: "https",
         hostname: "res.cloudinary.com",
+        port: "",
         pathname: "/**",
       },
     ],
   },
   webpack: (config) => {
-    // CSS minimizer'ı devre dışı bırak
     config.optimization.minimizer = config.optimization.minimizer.filter(
       (minimizer) => !minimizer.constructor.name.includes("CssMinimizerPlugin")
     );
@@ -24,7 +25,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "https://pizza-backend.fly.dev/api/:path*", // Düzeltildi
+        destination: "https://pizza-backend.fly.dev/api/:path*",
       },
     ];
   },
