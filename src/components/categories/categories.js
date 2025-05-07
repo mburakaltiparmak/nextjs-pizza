@@ -66,18 +66,14 @@ const Categories = () => {
       id="categories"
       className="flex flex-col justify-between items-center gap-8 text-black"
     >
-      <div className="flex flex-row items-center gap-2 mt-4 max-md:grid max-md:grid-cols-2 max-md:place-items-center max-md:gap-4 flex-wrap">
+      <div className="flex flex-row items-center gap-2 mt-4 max-lg:grid max-lg:grid-cols-4 max-md:grid-cols-2 max-md:place-items-center max-md:gap-4 flex-wrap">
         <button
           onClick={(e) => handleAllOfThem(e)}
           className={`btn-secondary ${
             selectedCategoryId === null ? "bg-yellow text-red font-bold" : ""
           }`}
         >
-          <img
-            className="h-9 w-fit object-cover"
-            src={allLogo.src}
-            alt="all"
-          />
+          <img className="h-9 w-fit object-cover" src={allLogo.src} alt="all" />
           <HoverCard>
             <HoverCardTrigger>Hepsi</HoverCardTrigger>
           </HoverCard>

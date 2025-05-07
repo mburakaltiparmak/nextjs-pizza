@@ -13,6 +13,7 @@ import { fetchCategoryById } from "@/lib/store/actions/categoryActions";
 import { fetchProducts } from "@/lib/store/actions/productActions";
 import { fetchCategories } from "@/lib/store/actions/categoryActions";
 import { checkAuthStatus } from "@/lib/store/actions/userActions";
+import { useRouter } from "next/navigation";
 
 // New data loading service
 const useDataLoader = () => {
@@ -105,6 +106,7 @@ const useDataLoader = () => {
 
 const Page = () => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   // Redux state
   const selectedCategory = useAppSelector(
@@ -140,6 +142,15 @@ const Page = () => {
 
   const buttonNotifyHandler = () => {
     toast.info("You can customize this button!");
+  };
+  const handleOzelLezzetus = () => {
+    router.push("/products/12");
+  };
+  const handleHackathlonBurger = () => {
+    router.push("/products/14");
+  };
+  const handleNpmGibi = () => {
+    router.push("/products/4");
   };
 
   // Show loading during initialization or global loading
@@ -179,7 +190,7 @@ const Page = () => {
                 <p className="text-5xl font-bold font-Quattrocento w-1/2 text-left">
                   {homeCards[0].text}
                 </p>
-                <button onClick={buttonNotifyHandler} className="btn-primary">
+                <button onClick={handleOzelLezzetus} className="btn-primary">
                   {homeCards[0].buttonText}
                 </button>
               </span>
@@ -195,7 +206,10 @@ const Page = () => {
                   <p className="text-xl font-bold font-Barlow w-3/4 text-left">
                     {homeCards[1].text}
                   </p>
-                  <button onClick={buttonNotifyHandler} className="btn-third">
+                  <button
+                    onClick={handleHackathlonBurger}
+                    className="btn-third"
+                  >
                     {homeCards[1].buttonText}
                   </button>
                 </span>
@@ -210,7 +224,7 @@ const Page = () => {
                   <p className="text-xl text-darkgray font-bold font-Barlow w-3/5 text-left">
                     {homeCards[2].text}
                   </p>
-                  <button onClick={buttonNotifyHandler} className="btn-fourth">
+                  <button onClick={handleNpmGibi} className="btn-fourth">
                     {homeCards[2].buttonText}
                   </button>
                 </span>
