@@ -295,7 +295,7 @@ const FloatingUserButton = () => {
           )}
         </div>
       ) : (
-        <div className="flex gap-2 items-center max-md:items-start max-md:flex-col max-md:fixed max-md:top-2">
+        <div className="flex gap-2 items-center max-md:items-start max-md:flex-col max-md:fixed max-md:z-100 max-md:top-2">
           <AlertDialog open={loginOpen} onOpenChange={setLoginOpen}>
             <AlertDialogTrigger asChild>
               <button className="h-10 max-md:h-8 max-md:w-16 max-md:text-xs max-md:gap-1 px-4 py-2 bg-yellow text-red hover:bg-black hover:text-yellow ring-2 ring-inset ring-white rounded-lg font-Barlow font-bold text-sm inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:bg-opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:scale-105 active:scale-95">

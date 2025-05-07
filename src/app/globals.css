@@ -80,7 +80,7 @@
   @apply bg-yellow text-darkgray hover:bg-black hover:text-yellow hover:z-50 ring-2 ring-inset ring-lightgray py-3 px-9 max-md:px-6 max-md:text-sm rounded-lg font-semibold text-base transition-all duration-300 font-Barlow shadow-md hover:shadow-lg hover:scale-105 active:scale-95;
 }
 .btn-secondary {
-  @apply flex flex-row items-center gap-2 bg-yellow text-red hover:bg-red hover:text-yellow shadow-md hover:shadow-xl ring-2 ring-inset ring-red hover:ring-yellow py-2 px-4 rounded-lg font-semibold text-base transition-all duration-300 font-Barlow hover:scale-105 active:scale-95;
+  @apply flex flex-row items-center gap-2 bg-yellow text-red hover:bg-red hover:text-yellow shadow-md hover:shadow-xl ring-2 ring-inset ring-red hover:ring-yellow w-32 h-14 px-4 rounded-lg font-semibold text-base transition-all duration-300 font-Barlow hover:scale-105 active:scale-95;
 }
 .btn-third {
   @apply flex flex-row items-center gap-2 bg-yellow text-red hover:text-yellow hover:bg-red ring-2 ring-inset ring-lightgray hover:ring-black p-2 max-md:py-3 max-md:px-6 rounded-lg font-semibold text-sm transition-all duration-300 font-Barlow z-50 shadow-md hover:shadow-lg hover:scale-105 active:scale-95;
