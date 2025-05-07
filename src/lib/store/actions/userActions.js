@@ -184,7 +184,7 @@ export const initiateGoogleLogin = () => () => {
     // API_BASE_URL'i env değişkenlerinden veya varsayılan değerden al
     const API_BASE_URL =
       process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "https://pizza-backend.fly.dev/pizza";
+      "http://localhost:8080";
     const authUrl = `${API_BASE_URL}/api/auth/oauth2/authorize/google`;
 
     console.log("Yönlendiriliyor:", authUrl);
@@ -529,7 +529,7 @@ export const fetchUserProfile = () => async (dispatch, getState) => {
     // API_BASE_URL'i env değişkenlerinden veya varsayılan değerden al
     const API_BASE_URL =
       process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "https://pizza-backend.fly.dev/pizza";
+      "http://localhost:8080";
 
     const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
       method: "GET",

@@ -24,7 +24,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "https://pizza-backend.fly.dev/pizza/api/:path*", // Düzeltildi
+        destination: "http://localhost:8080/api/:path*", // Düzeltildi
       },
     ];
   },

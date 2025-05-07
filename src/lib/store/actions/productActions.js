@@ -70,6 +70,74 @@ export const fetchProducts = () => async (dispatch) => {
   }
 };
 
+// Tek bir ürünü ID'ye göre getir - Sayfa yenilemesinde ürün detayı için
+// Düzeltilmiş aksiyon
+export const fetchProductById = (productId) => async (dispatch) => {
+  dispatch(setLoading(true));
+  dispatch({
+    type: productActions.setProductFetchState,
+    payload: fetchStates.FETCHING,
+  });
+
+  try {
+    console.log("Ürün getiriliyor, ID:", productId);
+    // API isteğini yap
+    const response = await instance.get(`/product/${productId}`);
+
+    // Yanıt kontrolü
+    if (!response || !response.data) {
+      throw new Error("Ürün detayı alınamadı");
+    }
+
+    console.log("API'den gelen ürün verisi:", response.data);
+
+    // Sadece tek bir action dispatch edelim (daha basit ve güvenilir)
+    // API'den gelen ürünü doğrudan products array'ine ekleyelim
+    dispatch({
+      type: productActions.ADD_PRODUCT,
+      payload: response.data,
+    });
+
+    // Başarılı fetch state'i ayarla
+    dispatch({
+      type: productActions.setProductFetchState,
+      payload: fetchStates.FETCHED,
+    });
+
+    // Loading durumunu kapat
+    dispatch(setLoading(false));
+
+    return response.data;
+  } catch (err) {
+    console.error("Ürün detayı getirme hatası:", err);
+
+    // Başarısız fetch state'i ayarla
+    dispatch({
+      type: productActions.setProductFetchState,
+      payload: fetchStates.FAILED,
+    });
+
+    // Hata mesajını oluştur
+    let errorMessage = "Ürün detayı yüklenirken bir hata oluştu";
+    if (err.response) {
+      errorMessage = err.response.data?.message || errorMessage;
+    } else if (err.request) {
+      errorMessage =
+        "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
+    } else {
+      errorMessage = err.message || errorMessage;
+    }
+
+    // Hata mesajını ayarla
+    dispatch(setError(errorMessage));
+
+    // Loading durumunu kapat
+    dispatch(setLoading(false));
+
+    return { error: errorMessage };
+  }
+};
+
 // Kategori ID'sine göre ürünleri getir
 export const fetchProductsByCategory = (categoryId) => async (dispatch) => {
   if (!categoryId) {

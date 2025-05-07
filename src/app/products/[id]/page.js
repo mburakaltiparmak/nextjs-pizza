@@ -3,41 +3,83 @@
 import { useParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { addToCart } from "@/lib/store/actions/orderActions";
+import { fetchProductById } from "@/lib/store/actions/productActions";
 import { useToast } from "@/hooks/use-toast";
 import RatingStars from "@/components/admin/ratingStars";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
+import { fetchStates } from "@/lib/store/constants";
+import Loading from "@/app/loading";
+import NotFound from "@/app/not-found";
 
 export default function ProductDetail() {
   const params = useParams();
   const dispatch = useAppDispatch();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
+  
+  // Sayfa durumunu takip et
+  const [pageState, setPageState] = useState("loading"); // "loading", "error", "ready"
+  const fetchStartedRef = useRef(false);
 
+  // Redux state
   const product = useAppSelector((state) =>
     state.product.products.find((p) => p.id.toString() === params.id)
   );
+  const fetchState = useAppSelector((state) => state.product.fetchState);
+  const loading = useAppSelector((state) => state.global.loading);
 
-  if (!product) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-darkgray mb-4 font-Quattrocento_Sans">
-            Ürün bulunamadı
-          </h2>
-          <Link
-            href="/"
-            className="text-red hover:text-darkred font-medium font-Barlow"
-          >
-            Anasayfaya geri dön
-          </Link>
-        </div>
-      </div>
-    );
+  // Sayfa yüklendiğinde veya yenilendiğinde ürünü getir
+  useEffect(() => {
+    // Önce ürün mevcut mu kontrol et
+    if (product) {
+      setPageState("ready");
+      return; // Ürün zaten mevcutsa API çağrısı yapma
+    }
+    
+    // Daha önce isteği başlatmadıysak, ürünü getir
+    if (!fetchStartedRef.current) {
+      const fetchProduct = async () => {
+        try {
+          console.log("Ürün getirme isteği gönderiliyor, ID:", params.id);
+          fetchStartedRef.current = true;
+          
+          // Action'ı dispatch et ve sonucu bekle
+          const result = await dispatch(fetchProductById(params.id));
+          
+          // Sonucu kontrol et
+          if (result?.error) {
+            console.error("Ürün getirme hatası:", result.error);
+            setPageState("error");
+          } else if (result) {
+            setPageState("ready");
+          }
+        } catch (error) {
+          console.error("Ürün getirme işleminde beklenmeyen hata:", error);
+          setPageState("error");
+        }
+      };
+      
+      fetchProduct();
+    }
+    
+    // Cleanup function
+    return () => {
+      fetchStartedRef.current = false;
+    };
+  }, [dispatch, params.id, product]);
+
+  // Yükleme durumu ve hata durumunu Redux'tan değil kendi state'imizden yönet
+  if (pageState === "loading") {
+    return <Loading />;
+  }
+
+  if (pageState === "error" || !product) {
+    return <NotFound />;
   }
 
   const handleAddToCart = () => {
@@ -69,6 +111,7 @@ export default function ProductDetail() {
     });
   };
 
+  // Ürün içeriğini render et
   return (
     <div className="min-h-screen">
       <Header />
@@ -101,19 +144,16 @@ export default function ProductDetail() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
-                className="flex items-center justify-center rounded-xl overflow-hidden bg-transparent"
+                className="flex items-center justify-center rounded-xl overflow-hidden bg-transparent relative"
               >
                 {product.img ? (
-                  //düzelt
                   <img
                     src={product.img}
                     alt={product.name}
-                    fill="true"
-                    className="object-cover h-[200px]"
-                    priority="true"
+                    className="object-cover h-52"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-lightgray2">
+                  <div className="w-full h-full min-h-52 flex items-center justify-center bg-lightgray2">
                     <span className="text-gray text-xl font-Barlow">
                       Görsel yok
                     </span>
@@ -141,7 +181,7 @@ export default function ProductDetail() {
                   <div className="flex items-center gap-4 mb-4">
                     <RatingStars rating={product.rating} />
                     <span className="text-gray font-medium font-Barlow">
-                      {product.rating.toFixed(1)} / 5.0
+                      {product.rating?.toFixed(1) || "0.0"} / 5.0
                     </span>
                   </div>
 
@@ -189,16 +229,18 @@ export default function ProductDetail() {
                       <div className="flex items-center border border-lightgray2 rounded-lg">
                         <button
                           onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                          className="px-4 py-2  transition font-Barlow text-darkgray"
+                          className="px-4 py-2 transition font-Barlow text-darkgray"
+                          aria-label="Ürün miktarını azalt"
                         >
                           -
                         </button>
-                        {quantity}
+                        <span className="px-4">{quantity}</span>
                         <button
                           onClick={() =>
                             setQuantity(Math.min(product.stock, quantity + 1))
                           }
                           className="px-4 py-2 transition font-Barlow text-darkgray"
+                          aria-label="Ürün miktarını artır"
                         >
                           +
                         </button>
