@@ -17,131 +17,187 @@ export const orderActions = {
   SET_PAYMENT_DATA: "SET_PAYMENT_DATA",
   SET_PAYMENT_METHOD: "SET_PAYMENT_METHOD",
   SET_ORDER_DATA: "SET_ORDER_DATA",
-  SET_SELECTED_ADDRESS: "SET_SELECTED_ADDRESS" // Yeni action type ekle
+  SET_SELECTED_ADDRESS: "SET_SELECTED_ADDRESS",
+  LOAD_CART_FROM_STORAGE: "LOAD_CART_FROM_STORAGE", // Yeni action type ekle
+};
+
+// localStorage yardımcı fonksiyonları
+const saveCartToStorage = (cart) => {
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    } catch (error) {
+      console.error("Cart localStorage kaydetme hatası:", error);
+    }
+  }
+};
+
+const loadCartFromStorage = () => {
+  if (typeof window !== "undefined") {
+    try {
+      const savedCart = localStorage.getItem("cart");
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (error) {
+      console.error("Cart localStorage okuma hatası:", error);
+      return [];
+    }
+  }
+  return [];
 };
 
 // Seçilen adresi kaydetmek için action creator
 export const setSelectedAddress = (address) => ({
   type: orderActions.SET_SELECTED_ADDRESS,
-  payload: address
+  payload: address,
 });
 
 // Action Creators
 export const addToCartAction = (item) => ({
   type: orderActions.ADD_TO_CART,
-  payload: item
+  payload: item,
 });
 
 export const removeFromCartAction = (itemId) => ({
   type: orderActions.REMOVE_FROM_CART,
-  payload: itemId
+  payload: itemId,
 });
 
 export const updateCartItemAction = (itemId, quantity) => ({
   type: orderActions.UPDATE_CART_ITEM,
-  payload: { id: itemId, quantity }
+  payload: { id: itemId, quantity },
 });
 
 export const clearCartAction = () => ({
-  type: orderActions.CLEAR_CART
+  type: orderActions.CLEAR_CART,
+});
+
+export const loadCartFromStorageAction = (cart) => ({
+  type: orderActions.LOAD_CART_FROM_STORAGE,
+  payload: cart,
 });
 
 export const setUserOrders = (orders) => ({
   type: orderActions.SET_USER_ORDERS,
-  payload: orders
+  payload: orders,
 });
 
 export const setOrderDetail = (order) => ({
   type: orderActions.SET_ORDER_DETAIL,
-  payload: order
+  payload: order,
 });
 
 export const setOrderFetchState = (state) => ({
   type: orderActions.SET_FETCH_STATE,
-  payload: state
+  payload: state,
 });
 
 export const setOrderError = (error) => ({
   type: orderActions.SET_ERROR,
-  payload: error
+  payload: error,
 });
 
 export const setUserData = (userData) => ({
   type: orderActions.SET_USER_DATA,
-  payload: userData
+  payload: userData,
 });
 
 export const setPaymentData = (paymentData) => ({
   type: orderActions.SET_PAYMENT_DATA,
-  payload: paymentData
+  payload: paymentData,
 });
 
 export const setPaymentMethod = (method) => ({
   type: orderActions.SET_PAYMENT_METHOD,
-  payload: method
+  payload: method,
 });
 
 export const setOrderData = (orderData) => ({
   type: orderActions.SET_ORDER_DATA,
-  payload: orderData
+  payload: orderData,
 });
+
 // Thunk Actions
 
-// Add product to cart
-export const addToCart = (product, count = 1) => (dispatch) => {
-  const cartItem = {
-    id: product.id,
-    product: product,
-    count: count
-  };
-  
-  dispatch(addToCartAction(cartItem));
-  dispatch(setSuccess("Ürün sepete eklendi"));
-  
-  return { success: true };
+// localStorage'dan sepeti yükle
+export const initializeCart = () => (dispatch) => {
+  const savedCart = loadCartFromStorage();
+  if (savedCart && savedCart.length > 0) {
+    dispatch(loadCartFromStorageAction(savedCart));
+  }
 };
 
+// Add product to cart
+export const addToCart =
+  (product, count = 1) =>
+  (dispatch, getState) => {
+    const cartItem = {
+      id: product.id,
+      product: product,
+      count: count,
+    };
+
+    dispatch(addToCartAction(cartItem));
+    dispatch(setSuccess("Ürün sepete eklendi"));
+
+    // localStorage'a kaydet
+    const updatedCart = getState().order.cart;
+    saveCartToStorage(updatedCart);
+
+    return { success: true };
+  };
+
 // Remove product from cart
-export const removeFromCart = (itemId) => (dispatch) => {
+export const removeFromCart = (itemId) => (dispatch, getState) => {
   dispatch(removeFromCartAction(itemId));
   dispatch(setSuccess("Ürün sepetten kaldırıldı"));
-  
+
+  // localStorage'a kaydet
+  const updatedCart = getState().order.cart;
+  saveCartToStorage(updatedCart);
+
   return { success: true };
 };
 
 // Update cart item quantity
-export const updateCartItem = (itemId, count) => (dispatch) => {
+export const updateCartItem = (itemId, count) => (dispatch, getState) => {
   dispatch(updateCartItemAction(itemId, count));
-  
+
+  // localStorage'a kaydet
+  const updatedCart = getState().order.cart;
+  saveCartToStorage(updatedCart);
+
   return { success: true };
 };
 
 // Clear cart
 export const clearCart = () => (dispatch) => {
   dispatch(clearCartAction());
-  
+
+  // localStorage'dan da temizle
+  saveCartToStorage([]);
+
   return { success: true };
 };
 
 // Fetch user orders
 export const fetchUserOrders = () => async (dispatch) => {
   dispatch(setOrderFetchState(fetchStates.FETCHING));
-  
+
   try {
     const response = await instance.get("/orders/my-orders");
-    
+
     dispatch(setUserOrders(response.data));
     dispatch(setOrderFetchState(fetchStates.FETCHED));
-    
+
     return response.data;
   } catch (err) {
     dispatch(setOrderFetchState(fetchStates.FAILED));
-    
+
     let errorMessage = "Siparişler yüklenemedi";
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
     }
-    
+
     dispatch(setOrderError(errorMessage));
     return { error: errorMessage };
   }
@@ -150,22 +206,22 @@ export const fetchUserOrders = () => async (dispatch) => {
 // Fetch order detail
 export const fetchOrderDetail = (orderId) => async (dispatch) => {
   dispatch(setOrderFetchState(fetchStates.FETCHING));
-  
+
   try {
     const response = await instance.get(`/orders/${orderId}`);
-    
+
     dispatch(setOrderDetail(response.data));
     dispatch(setOrderFetchState(fetchStates.FETCHED));
-    
+
     return response.data;
   } catch (err) {
     dispatch(setOrderFetchState(fetchStates.FAILED));
-    
+
     let errorMessage = "Sipariş detayı yüklenemedi";
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
     }
-    
+
     dispatch(setOrderError(errorMessage));
     return { error: errorMessage };
   }
@@ -174,189 +230,195 @@ export const fetchOrderDetail = (orderId) => async (dispatch) => {
 // Misafir siparişi detayını getir
 export const fetchGuestOrderDetail = (orderId, email) => async (dispatch) => {
   dispatch(setOrderFetchState(fetchStates.FETCHING));
-  
+
   try {
     const response = await instance.get(`/orders/${orderId}`, {
-      params: { email }
+      params: { email },
     });
-    
+
     dispatch(setOrderDetail(response.data));
     dispatch(setOrderFetchState(fetchStates.FETCHED));
-    
+
     return response.data;
   } catch (err) {
     dispatch(setOrderFetchState(fetchStates.FAILED));
-    
+
     let errorMessage = "Sipariş detayı yüklenemedi";
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
     }
-    
+
     dispatch(setOrderError(errorMessage));
     return { error: errorMessage };
   }
 };
+
 const createCustomPizzaProduct = async (pizzaData) => {
   try {
-    const response = await instance.post('/product/custom-pizza', {
+    const response = await instance.post("/product/custom-pizza", {
       totalPrice: pizzaData.price,
-      customDetails: pizzaData.description
+      customDetails: pizzaData.description,
     });
     return response.data;
   } catch (error) {
-    console.error('Custom pizza oluşturulamadı:', error);
+    console.error("Custom pizza oluşturulamadı:", error);
     throw error;
   }
 };
 
-export const createOrder = ({ orderData, paymentData }) => async (dispatch) => {
-  dispatch(setLoading(true));
-  const customPizzaTemplateId = 9999;
-  try {
-    // Sipariş öğelerini kontrol et ve custom pizza varsa önce onu oluştur
-    const processedItems = [];
-    
-    
-    for (const item of orderData.items) {
-      if (item.productId === customPizzaTemplateId) {
-        // Custom pizza ise önce backend'de oluştur
-        const createdPizza = await createCustomPizzaProduct(item.product);
-        processedItems.push({
-          productId: createdPizza.id,
-          quantity: item.quantity
-        });
-      } else {
-        // Normal ürün ise direkt ekle
-        processedItems.push({
-          productId: item.productId,
-          quantity: item.quantity
-        });
-      }
-    }
-    
-    // Backend'e gönderilecek isteği güncelle
-    const requestData = {
-      items: processedItems,
-      paymentMethod: orderData.paymentMethod,
-      notes: orderData.notes || ""
-    };
-    
-    // Adres bilgilerini ekle
-    if (orderData.addressId) {
-      requestData.addressId = orderData.addressId;
-      console.log(`Kayıtlı adres kullanılıyor: ID ${orderData.addressId}`);
-    } else if (orderData.newAddress) {
-      // Backend AddressDto formatına uygun şekilde yeni adres ekle
-      requestData.newAddress = {
-        fullAddress: orderData.newAddress.fullAddress,
-        city: orderData.newAddress.city,
-        district: orderData.newAddress.district,
-        postalCode: orderData.newAddress.postalCode || "",
-        addressTitle: orderData.newAddress.addressTitle || "",
-        phoneNumber: orderData.newAddress.phoneNumber || "",
-        recipientName: orderData.newAddress.recipientName || "",
-        saveAddress: orderData.newAddress.saveAddress === true,
-        isDefault: orderData.newAddress.isDefault === true
-      };
-      console.log("Yeni adres kullanılıyor:", requestData.newAddress);
-    }
-    
-    // Misafir siparişi ise gerekli bilgileri ekle
-   
-    
-    console.log("Backend'e gönderilen sipariş verisi:", JSON.stringify(requestData, null, 2));
-    
-    // İsteği gönder - api prefix'ini doğru şekilde kullan
-    const response = await instance.post("/orders", requestData);
-    
-    if (!response.data || !response.data.id) {
-      throw new Error("Sipariş oluşturuldu fakat ID alınamadı.");
-    }
-    
-    const orderId = response.data.id;
-    console.log(`Sipariş başarıyla oluşturuldu: ID ${orderId}`);
-    
-    // Ödeme işlemini yap
+export const createOrder =
+  ({ orderData, paymentData }) =>
+  async (dispatch) => {
+    dispatch(setLoading(true));
+    const customPizzaTemplateId = 9999;
     try {
-      if (orderData.paymentMethod === "ONLINE_CREDIT_CARD" && paymentData) {
-        // Online kredi kartı ödemesi - api prefix'ini doğru şekilde kullan
-        const paymentEndpoint = `/orders/${orderId}/pay/card`;
-        
-        const paymentRequest = {
-          cardNumber: paymentData.cardNumber,
-          nameOnCard: paymentData.nameOnCard,
-          expirationMonth: paymentData.expirationMonth,
-          expirationYear: paymentData.expirationYear,
-          cvc: paymentData.cvc
+      // Sipariş öğelerini kontrol et ve custom pizza varsa önce onu oluştur
+      const processedItems = [];
+
+      for (const item of orderData.items) {
+        if (item.productId === customPizzaTemplateId) {
+          // Custom pizza ise önce backend'de oluştur
+          const createdPizza = await createCustomPizzaProduct(item.product);
+          processedItems.push({
+            productId: createdPizza.id,
+            quantity: item.quantity,
+          });
+        } else {
+          // Normal ürün ise direkt ekle
+          processedItems.push({
+            productId: item.productId,
+            quantity: item.quantity,
+          });
+        }
+      }
+
+      // Backend'e gönderilecek isteği güncelle
+      const requestData = {
+        items: processedItems,
+        paymentMethod: orderData.paymentMethod,
+        notes: orderData.notes || "",
+      };
+
+      // Adres bilgilerini ekle
+      if (orderData.addressId) {
+        requestData.addressId = orderData.addressId;
+        console.log(`Kayıtlı adres kullanılıyor: ID ${orderData.addressId}`);
+      } else if (orderData.newAddress) {
+        // Backend AddressDto formatına uygun şekilde yeni adres ekle
+        requestData.newAddress = {
+          fullAddress: orderData.newAddress.fullAddress,
+          city: orderData.newAddress.city,
+          district: orderData.newAddress.district,
+          postalCode: orderData.newAddress.postalCode || "",
+          addressTitle: orderData.newAddress.addressTitle || "",
+          phoneNumber: orderData.newAddress.phoneNumber || "",
+          recipientName: orderData.newAddress.recipientName || "",
+          saveAddress: orderData.newAddress.saveAddress === true,
+          isDefault: orderData.newAddress.isDefault === true,
         };
-        
-        console.log(`Kredi kartı ödemesi yapılıyor: ${paymentEndpoint}`);
-        await instance.post(paymentEndpoint, paymentRequest);
-      } 
-      else if (orderData.paymentMethod === "CASH") {
-        // Nakit ödeme - api prefix'ini doğru şekilde kullan
-        const paymentEndpoint = `/orders/${orderId}/pay/cash`;
-        
-        console.log(`Nakit ödeme işaretleniyor: ${paymentEndpoint}`);
-        await instance.post(paymentEndpoint);
+        console.log("Yeni adres kullanılıyor:", requestData.newAddress);
       }
-      else if (orderData.paymentMethod === "CREDIT_CARD") {
-        // Kapıda kredi kartı ödemesi için backend'e bildirim gerekiyorsa
-        console.log("Kapıda kredi kartı ödemesi seçildi");
+
+      console.log(
+        "Backend'e gönderilen sipariş verisi:",
+        JSON.stringify(requestData, null, 2)
+      );
+
+      // İsteği gönder - api prefix'ini doğru şekilde kullan
+      const response = await instance.post("/orders", requestData);
+
+      if (!response.data || !response.data.id) {
+        throw new Error("Sipariş oluşturuldu fakat ID alınamadı.");
       }
-    } catch (paymentError) {
-      console.error("Ödeme işlemi sırasında hata:", paymentError);
-      dispatch(setSuccess("Siparişiniz oluşturuldu fakat ödeme işlemi sırasında bir hata oluştu"));
-      // Ödeme hatası olsa bile siparişi başarılı sayıyoruz
+
+      const orderId = response.data.id;
+      console.log(`Sipariş başarıyla oluşturuldu: ID ${orderId}`);
+
+      // Ödeme işlemini yap
+      try {
+        if (orderData.paymentMethod === "ONLINE_CREDIT_CARD" && paymentData) {
+          // Online kredi kartı ödemesi - api prefix'ini doğru şekilde kullan
+          const paymentEndpoint = `/orders/${orderId}/pay/card`;
+
+          const paymentRequest = {
+            cardNumber: paymentData.cardNumber,
+            nameOnCard: paymentData.nameOnCard,
+            expirationMonth: paymentData.expirationMonth,
+            expirationYear: paymentData.expirationYear,
+            cvc: paymentData.cvc,
+          };
+
+          console.log(`Kredi kartı ödemesi yapılıyor: ${paymentEndpoint}`);
+          await instance.post(paymentEndpoint, paymentRequest);
+        } else if (orderData.paymentMethod === "CASH") {
+          // Nakit ödeme - api prefix'ini doğru şekilde kullan
+          const paymentEndpoint = `/orders/${orderId}/pay/cash`;
+
+          console.log(`Nakit ödeme işaretleniyor: ${paymentEndpoint}`);
+          await instance.post(paymentEndpoint);
+        } else if (orderData.paymentMethod === "CREDIT_CARD") {
+          // Kapıda kredi kartı ödemesi için backend'e bildirim gerekiyorsa
+          console.log("Kapıda kredi kartı ödemesi seçildi");
+        }
+      } catch (paymentError) {
+        console.error("Ödeme işlemi sırasında hata:", paymentError);
+        dispatch(
+          setSuccess(
+            "Siparişiniz oluşturuldu fakat ödeme işlemi sırasında bir hata oluştu"
+          )
+        );
+        // Ödeme hatası olsa bile siparişi başarılı sayıyoruz
+      }
+
+      // Sepeti temizle ve sipariş detayını kaydet
+      dispatch(clearCartAction());
+      saveCartToStorage([]); // localStorage'ı da temizle
+      dispatch(setOrderDetail(response.data));
+      dispatch(setLoading(false));
+      dispatch(setSuccess("Siparişiniz başarıyla oluşturuldu"));
+
+      return response.data;
+    } catch (err) {
+      let errorMessage = "Sipariş oluşturulamadı";
+
+      if (err.response) {
+        errorMessage = err.response.data?.message || errorMessage;
+        console.error("Backend hata detayı:", err.response);
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      dispatch(setError(errorMessage));
+      dispatch(setLoading(false));
+
+      return { error: errorMessage };
     }
-    
-    // Sepeti temizle ve sipariş detayını kaydet
-    dispatch(clearCartAction());
-    dispatch(setOrderDetail(response.data));
-    dispatch(setLoading(false));
-    dispatch(setSuccess("Siparişiniz başarıyla oluşturuldu"));
-    
-    return response.data;
-  } catch (err) {
-    let errorMessage = "Sipariş oluşturulamadı";
-    
-    if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
-      console.error("Backend hata detayı:", err.response);
-    } else if (err.message) {
-      errorMessage = err.message;
-    }
-    
-    dispatch(setError(errorMessage));
-    dispatch(setLoading(false));
-    
-    return { error: errorMessage };
-  }
-};
+  };
+
 // Cancel order
 export const cancelOrder = (orderId) => async (dispatch) => {
   dispatch(setLoading(true));
-  
+
   try {
     const response = await instance.post(`/orders/${orderId}/cancel`);
-    
+
     // Refresh orders after cancellation
     dispatch(fetchUserOrders());
-    
+
     dispatch(setLoading(false));
     dispatch(setSuccess("Siparişiniz iptal edildi"));
-    
+
     return response.data;
   } catch (err) {
     let errorMessage = "Sipariş iptal edilemedi";
-    
+
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
     }
-    
+
     dispatch(setError(errorMessage));
     dispatch(setLoading(false));
-    
+
     return { error: errorMessage };
   }
 };
@@ -364,24 +426,26 @@ export const cancelOrder = (orderId) => async (dispatch) => {
 // Misafir sipariş iptali
 export const cancelGuestOrder = (orderId, email) => async (dispatch) => {
   dispatch(setLoading(true));
-  
+
   try {
-    const response = await instance.post(`/orders/${orderId}/cancel`, { email });
-    
+    const response = await instance.post(`/orders/${orderId}/cancel`, {
+      email,
+    });
+
     dispatch(setLoading(false));
     dispatch(setSuccess("Siparişiniz iptal edildi"));
-    
+
     return response.data;
   } catch (err) {
     let errorMessage = "Sipariş iptal edilemedi";
-    
+
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
     }
-    
+
     dispatch(setError(errorMessage));
     dispatch(setLoading(false));
-    
+
     return { error: errorMessage };
   }
 };

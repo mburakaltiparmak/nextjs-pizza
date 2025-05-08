@@ -31,9 +31,13 @@ const FloatingCartButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const triggerButtonRef = useRef(null);
 
-  console.log("cart", cart);
+  // Hydration sorununu çözmek için client-side rendering kullan
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    // Client-side olduğunu işaretle - bu sayede hydration hatası olmayacak
+    setIsClient(true);
+
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -62,11 +66,13 @@ const FloatingCartButton = () => {
     };
   }, []);
 
-  const totalItems = cart.reduce((sum, item) => sum + item.count, 0);
-  const totalAmount = cart.reduce(
-    (sum, item) => sum + item.product.price * item.count,
-    0
-  );
+  // Client-side hesapla, server-side'da değil
+  const totalItems = isClient
+    ? cart.reduce((sum, item) => sum + item.count, 0)
+    : 0;
+  const totalAmount = isClient
+    ? cart.reduce((sum, item) => sum + item.product.price * item.count, 0)
+    : 0;
 
   const handleCheckout = () => {
     router.push("/create-order");
@@ -93,7 +99,7 @@ const FloatingCartButton = () => {
             className="bg-yellow max-md:text-xs z-10 text-red p-4 max-md:p-2 rounded-full shadow-lg flex items-center justify-center hover:bg-black hover:text-yellow hover:ring-yellow ring-2 ring-inset ring-black transition-colors duration-200 "
           >
             <ShoppingCart size={24} />
-            {totalItems > 0 && (
+            {isClient && totalItems > 0 && (
               <span className="absolute -bottom-1 -right-1 bg-red border-2 border-black text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-Barlow">
                 {totalItems}
               </span>
@@ -106,7 +112,7 @@ const FloatingCartButton = () => {
             <AlertDialogTitle className="text-xl font-semibold text-darkgray">
               Sepetiniz
             </AlertDialogTitle>
-            {cart.length > 0 ? (
+            {isClient && cart.length > 0 ? (
               <AlertDialogDescription>
                 Sepetinizde {totalItems} ürün bulunmaktadır.
               </AlertDialogDescription>
@@ -117,7 +123,7 @@ const FloatingCartButton = () => {
 
           {/* Cart Items */}
           <div className="max-h-64 overflow-y-auto py-2">
-            {cart.length === 0 ? (
+            {!isClient || cart.length === 0 ? (
               <p className="text-center text-gray-500 py-4">
                 Sepetinizde ürün bulunmuyor
               </p>
@@ -130,11 +136,19 @@ const FloatingCartButton = () => {
                   >
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100">
-                        <img
-                          src={item.product.img}
-                          alt={item.product.name}
-                          className="w-full h-full object-cover"
-                        />
+                        {item.product.img ? (
+                          <img
+                            src={item.product.img}
+                            alt={item.product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                            <span className="text-gray-500 text-xs">
+                              Görsel yok
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div>
                         <p className="font-medium text-gray-800">
@@ -188,7 +202,7 @@ const FloatingCartButton = () => {
           </div>
 
           {/* Total Amount */}
-          {cart.length > 0 && (
+          {isClient && cart.length > 0 && (
             <div className="py-3 border-t border-gray-200">
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-gray-800">Toplam:</span>
@@ -206,7 +220,7 @@ const FloatingCartButton = () => {
             >
               Kapat
             </AlertDialogCancel>
-            {cart.length > 0 && (
+            {isClient && cart.length > 0 && (
               <AlertDialogAction
                 onClick={handleCheckout}
                 className="bg-yellow text-red hover:bg-red hover:text-yellow transition-colors"
