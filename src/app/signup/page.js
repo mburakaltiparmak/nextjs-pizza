@@ -50,7 +50,7 @@ export default function RegisterPage() {
       email: isValidEmailFormat && isGmailAddress, // Sadece gmail.com kabul ediliyor
       phoneNumber: /^\d{1,11}$/.test(phoneNumber), // sadece sayılar ve en fazla 11 hane
       password: password.length >= 6,
-      confirmPassword: password === confirmPassword && password.length >= 6,
+      confirmPassword: password === confirmPassword && password.length >= 8,
     };
   }, [formData]);
 
