@@ -93,7 +93,7 @@ module.exports = {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       backgroundImage: {
-        mvpBanner: "url('/assets/mvp-banner.png')",
+        mvpBanner: "url('/assets/wdvoemky4y6jhq5oerjs.webp')",
       },
     },
     screens: {

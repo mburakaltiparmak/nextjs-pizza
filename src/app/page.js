@@ -165,7 +165,7 @@ const Page = () => {
     <div>
       <Header />
       <div className="flex flex-col justify-between items-center gap-2 text-lightgray">
-        <div className="bg-[url('../../assets/mvp-banner.png')] bg-cover bg-center h-screen w-full max-md:h-96">
+        <div className="bg-[url('../../assets/wdvoemky4y6jhq5oerjs.webp')] bg-cover bg-center h-screen w-full max-md:h-96">
           <div className="flex flex-col justify-start items-center gap-4 mt-4">
             <span className="flex flex-col justify-between items-center gap-4 text-center">
               <h4 className="font-Satisfy text-yellow text-2xl">
