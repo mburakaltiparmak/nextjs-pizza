@@ -152,6 +152,9 @@ const Page = () => {
   const handleNpmGibi = () => {
     router.push("/products/4");
   };
+  const handleAciktim = () => {
+    toast.info("Custom Pizza metodu bakımdadır. Daha sonra tekrar deneyin.");
+  };
 
   // Show loading during initialization or global loading
   if (dataLoading || globalLoading) {
@@ -172,9 +175,11 @@ const Page = () => {
                 KOD ACIKTIRIR, <br /> PİZZA DOYURUR
               </h2>
 
-              <Link href="/order">
-                <button className="btn-primary">ACIKTIM</button>
-              </Link>
+              {/*<Link href="/order"> */}
+              <button onClick={handleAciktim} className="btn-primary">
+                ACIKTIM
+              </button>
+              {/*</Link> */}
             </span>
           </div>
         </div>
