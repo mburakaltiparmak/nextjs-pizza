@@ -128,8 +128,8 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
         
         {/* Ürün listesi */}
         <div className="space-y-2 mb-3">
-          {cart.map((item) => (
-            <div key={item.id} className="flex items-center justify-between text-sm">
+          {cart.map((item,index) => (
+            <div key={index} className="flex items-center justify-between text-sm">
               <div className="flex items-center space-x-2">
                 <span className="font-medium">{item.count}x</span>
                 <span>{item.product.name}</span>

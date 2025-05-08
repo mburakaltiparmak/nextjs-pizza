@@ -66,7 +66,7 @@ const Categories = () => {
       id="categories"
       className="flex flex-col justify-between items-center gap-8 text-black"
     >
-      <div className="flex flex-row items-center gap-2 mt-4 max-lg:grid max-lg:grid-cols-4 max-md:grid-cols-2 max-md:place-items-center max-md:gap-4 flex-wrap">
+      <div className="flex flex-row justify-center flex-wrap items-center gap-2 mt-4 max-lg:grid max-xl:grid-cols-4 max-md:grid-cols-2 max-md:place-items-center max-md:gap-4">
         <button
           onClick={(e) => handleAllOfThem(e)}
           className={`btn-secondary ${

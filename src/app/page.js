@@ -153,7 +153,7 @@ const Page = () => {
     router.push("/products/4");
   };
   const handleAciktim = () => {
-    toast.info("Custom Pizza metodu bakımdadır. Daha sonra tekrar deneyin.");
+    router.push("/order");
   };
 
   // Show loading during initialization or global loading

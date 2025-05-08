@@ -11,6 +11,7 @@ import {
 import { setError } from "@/lib/store/actions/globalActions";
 import SecondaryLoading from "@/components/secondaryLoading";
 import { AUTH_ERRORS } from "@/lib/authErrorMessages";
+import Loading from "@/app/loading";
 
 const Page = () => {
   const [email, setEmail] = useState("");
@@ -173,10 +174,7 @@ const Page = () => {
               }`}
             >
               {loading ? (
-                <div className="flex items-center justify-center">
-                  <SecondaryLoading size="small" />
-                  <span className="ml-2">Giriş Yapılıyor...</span>
-                </div>
+                <SecondaryLoading size="large" />
               ) : (
                 "Giriş Yap"
               )}

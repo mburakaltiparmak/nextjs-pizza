@@ -365,12 +365,11 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   });
 
   const submitOrder = async (formData) => {
-
     console.log("Form verileri:", formData);
     console.log("Adres bilgileri:", selectedAddress);
     console.log("Sepet içeriği:", cartData);
     console.log("Kullanıcı bilgileri:", userData);
-
+  
     try {
       setStep3(true);
     
@@ -387,10 +386,14 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
       const orderRequest = {
         // Sepet öğeleri
         items: cartData.map(item => ({
-          productId: item.id,
           quantity: item.count,
-          product: item.product,
-          unitPrice: item.product.price // Product objesini gönder
+          product: {
+            name: item.product.name,
+            price: item.product.price,
+            image: item.product.img,
+            description: item.product.description,
+          },
+          unitPrice: item.product.price
         })),
         
         // Ödeme bilgileri
@@ -446,8 +449,19 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
         setStep3(false);
         return;
       }
-      // Başarılı ise yönlendir
-      router.push("/success");
+  
+      // Başarılı ise
+      toast({
+        title: "Siparişiniz başarıyla oluşturuldu!",
+        description: "Teşekkür ederiz, siparişiniz alındı."
+      });
+      
+      // Başarı sayfasına yönlendir
+      // Kısa bir gecikme ekleyerek toast mesajının görülmesini sağla
+      setTimeout(() => {
+        router.push("/success");
+      }, 1000);
+      
     } catch (error) {
       console.error("Sipariş oluşturma işlemi sırasında beklenmeyen bir hata oluştu:", error);
       toast({

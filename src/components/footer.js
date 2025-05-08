@@ -51,9 +51,9 @@ const instaPhotosWithDescriptions = footerInstaPhoto.map((item, index) => {
 const Footer = () => {
   return (
     <footer className="bg-darkgray text-lightgray font-Barlow">
-      <div className="container mx-auto px-4 md:px-16 py-12">
+      <div className="mx-auto p-8">
         {/* Top Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Company Info Column */}
           <div>
             <h3 className="font-Londrina_Solid text-3xl mb-6 text-yellow">

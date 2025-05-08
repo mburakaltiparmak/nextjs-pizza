@@ -154,22 +154,26 @@ const Page = () => {
   };
 
   const onSubmit = (data) => {
-    // Custom pizza oluştur
+    // Custom pizza bilgilerini oluştur
     const total = hamurFiyat + malzemeFiyat + boyutFiyat;
-    const customPizza = createCustomPizzaCartItem(data, total);
-
-    // API'ye göndermek için gerekli veri yapısı
-    const customPizzaData = {
-      name: customPizza.name,
-      description: customPizza.description, // Bu zaten JSON string formatında
+    const customPizza = {
+      name: "Custom Pizza #" + Math.floor(Math.random() * 501 + 500),
+      price: total,
+      img: "https://res.cloudinary.com/dqjqkgpt3/image/upload/v1724010330/food-2_zwrtrh.png",
+      // Kategori bilgilerini göndermiyoruz
+      description: JSON.stringify({
+        isCustom: true,
+        items: data.items,
+        size: data.boyut,
+        dough: data.hamur,
+        orderNote: data.siparisNotu || ""
+      }),
+      count: 1
     };
-
-    // Token ile API çağrısı
-    dispatch(createCustomPizza(customPizzaData, total, token));
-
-    // Sepete ekle
+  
+    // Sepete ekle (backend'e hiç istek göndermeden)
     dispatch(addToCart(customPizza));
-
+  
     // Bildirim göster
     toast({
       title: (
@@ -185,7 +189,7 @@ const Page = () => {
         </div>
       ),
     });
-
+  
     router.push("/");
   };
   return (

@@ -225,7 +225,7 @@ const FloatingUserButton = () => {
         <div className="relative" ref={dropdownRef}>
           <div
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="bg-yellow z-50 p-3 max-md:fixed max-md:top-2 max-md:text-xs max-md:gap-1 font-Londrina_Solid text-red ring-2 ring-inset ring-black rounded-lg shadow-lg hover:bg-black hover:ring-yellow hover:text-yellow  transition-all duration-200 cursor-pointer flex items-center gap-2 text-base font-normal"
+            className="bg-yellow z-100 p-3 max-md:fixed max-md:top-2 max-md:text-xs max-md:gap-1 font-Londrina_Solid text-red ring-2 ring-inset ring-black rounded-lg shadow-lg hover:bg-black hover:ring-yellow hover:text-yellow  transition-all duration-200 cursor-pointer flex items-center gap-2 text-base font-normal"
           >
             <FontAwesomeIcon icon={faUser} />
             <span className="">{name}</span>
