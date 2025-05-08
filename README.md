@@ -1,72 +1,164 @@
-# Pizza Restoranı Web Sitesi
+# Pizza Restoranı Web Uygulaması
 
-Bu proje, **Next.js** ile geliştirilmiş bir Pizza Restoranı web sitesidir. Kullanıcıların pizza sipariş edebileceği, ürünleri sepetlerine ekleyip sipariş işlemlerini tamamlayabileceği dinamik alışveriş özellikleri sunar. Proje, kullanıcı deneyimini geliştirmek amacıyla **Tailwind CSS** ve **ShadcnUI** kullanılarak optimize edilmiş ve **React Redux** ile verimli durum yönetimi sağlanmıştır.
+Bu proje, modern web teknolojileri kullanılarak geliştirilmiş kapsamlı bir Pizza Restoranı web uygulamasıdır. Kullanıcıların pizza menüsünü inceleyebileceği, özel pizza tasarlayabileceği, ürünleri sepete ekleyip ödeme yapabileceği ve siparişlerini takip edebileceği tam işlevsel bir e-ticaret deneyimi sunar.
 
 ## Proje Özeti
 
-Pizza Restoranı web sitesi, modern web teknolojilerini kullanarak aşağıdaki özellikleri sunar:
+Pizza Restoranı web uygulaması aşağıdaki özellikleri sunar:
 
-- Kullanıcı dostu ve mobil uyumlu bir arayüz
-- Pizza çeşitlerini görüntüleme ve dinamik ürün filtreleme
-- Ürünleri sepete ekleyebilme, sepet içeriğini yönetebilme
-- Sipariş tamamlama (checkout) süreci
-- React Redux ile gelişmiş durum yönetimi
-- Tailwind CSS ve ShadcnUI ile özelleştirilebilir ve modern tasarım
-- Hızlı yükleme süreleri ve cihazlar arasında kesintisiz uyumlu deneyim
+- Kullanıcı dostu ve tüm cihazlarda uyumlu (responsive) arayüz
+- Kapsamlı kullanıcı kimlik doğrulama sistemi (Google OAuth dahil)
+- Kişiselleştirilmiş özel pizza tasarım arayüzü
+- Gelişmiş sepet yönetimi ve sipariş takibi
+- Çoklu ödeme seçenekleri (Online kredi kartı, kapıda ödeme)
+- Adres yönetimi ve teslimat takibi
+- Etkileşimli sipariş durum bildirimleri
+- Admin paneli ve sipariş yönetimi
 
 ## Kullanılan Teknolojiler
 
-- **Next.js**: React tabanlı bir framework, sunucu tarafında render edilen dinamik web uygulamaları geliştirmek için kullanıldı.
-- **Tailwind CSS**: CSS frameworkü kullanılarak esnek ve hızlı bir şekilde stil oluşturuldu.
-- **ShadcnUI**: UI bileşenleri için ShadcnUI kullanılarak modern ve estetik bir kullanıcı arayüzü geliştirildi.
-- **React Redux**: Uygulamanın durum yönetimi için verimli bir şekilde kullanıldı, özellikle alışveriş sepeti ve ürün yönetimi süreçlerinde.
-- **SWR**: API isteklerini yönetmek için Next.js'in SWR kütüphanesi kullanıldı, bu sayede veri güncellemeleri optimize edildi.
+### Front-End
+- **Next.js 15.4.0-canary.26**: React tabanlı modern framework, sayfa yönlendirmesi, API rotaları ve SSR/SSG özellikleri için kullanıldı
+- **React 18**: Kullanıcı arayüzü bileşenlerini ve etkileşimleri geliştirmek için kullanıldı
+- **Redux Toolkit**: Durum yönetimi, asenktion işlemler ve karmaşık veri akışı için kullanıldı
+- **Tailwind CSS**: Hızlı, özelleştirilebilir ve tutarlı bir tasarım sistemi için kullanıldı
+- **ShadcnUI**: Modern UI bileşenleri ve duyarlı tasarım için kullanıldı
+- **React Hook Form**: Form validasyonu ve yönetimi için kullanıldı
+- **Zod**: Şema tabanlı doğrulama için kullanıldı
+- **Lucide React**: Minimalist, özelleştirilebilir ikonlar için kullanıldı
+- **FontAwesome**: Ek ikonlar ve görsel öğeler için kullanıldı
 
-## Özellikler
+### Back-End
+- **Spring Boot**: Java tabanlı API servisleri için kullanıldı
+- **PostgreSQL**: Supabase üzerinde veritabanı yönetimi için kullanıldı
+- **Spring Security**: Kimlik doğrulama ve yetkilendirme için kullanıldı
+- **JWT**: Güvenli token tabanlı yetkilendirme için kullanıldı
+- **Hibernate**: ORM veri erişimi için kullanıldı
+- **Cloudinary**: Görsel depolama ve yönetimi için kullanıldı
+- **SendGrid**: Transaksiyonel e-posta gönderimi için kullanıldı
 
-- **Pizza Ürünleri Görüntüleme**: Farklı kategorilerdeki pizzaları görüntüleyin ve filtreleyin.
-- **Dinamik Sepet Yönetimi**: Ürünleri sepete ekleyin, miktarları ayarlayın ve siparişi tamamlayın.
-- **Kullanıcı Dostu Deneyim**: Tüm cihazlar için optimize edilmiş, duyarlı (responsive) tasarım.
-- **Verimli Durum Yönetimi**: Redux ile uygulama durumu efektif bir şekilde yönetildi.
-- **SEO Optimizasyonu**: Next.js'in sunucu tarafı render (SSR) ve statik site oluşturma (SSG) özellikleri kullanılarak SEO dostu hale getirildi.
+### Deployment & DevOps
+- **Fly.io**: Containerize edilmiş backend uygulamasının dağıtımı için kullanıldı
+- **Vercel**: Frontend uygulamasının dağıtımı ve otomatik CI/CD için kullanıldı
+- **Docker**: Uygulama containerization için kullanıldı
+- **Supabase**: PostgreSQL veri tabanı hosting için kullanıldı
+
+## Gelişmiş Özellikler
+
+### Kullanıcı Deneyimi
+- **Özel Pizza Tasarımı**: Malzeme, hamur ve boyut seçenekleriyle tamamen özelleştirilebilir pizzalar
+- **Sepet Senkronizasyonu**: Yerel depolama ile cihazlar arası sepet senkronizasyonu
+- **Otomatik Fiyat Hesaplama**: Seçimlere göre dinamik fiyat hesaplaması
+- **Anlık Bildirimler**: Toast bildirimleri ile kullanıcı etkileşimleri
+- **Adres Yönetimi**: Çoklu adres saklama ve yönetimi
+- **Sipariş Geçmişi**: Kullanıcılar için geçmiş siparişleri görüntüleme ve sipariş detayları
+
+### Güvenlik
+- **JWT Tabanlı Kimlik Doğrulama**: Güvenli oturum yönetimi
+- **OAuth Entegrasyonu**: Google hesabıyla hızlı kayıt ve giriş
+- **Güvenli Ödeme İşlemleri**: SSL korumalı ödeme akışı
+- **Veri Validasyonu**: Hem client hem de server tarafında kapsamlı veri doğrulama
+- **CORS Yapılandırması**: Güvenli API erişimi
+
+### Performans
+- **Lazy Loading**: Gerektiğinde yüklenen bileşenler
+- **Image Optimization**: Next.js image optimizasyonu
+- **State Management**: Verimli Redux Toolkit entegrasyonu
+- **API Önbelleğe Alma**: SWR ile otomatik veri yenileme ve önbelleğe alma
+- **Code Splitting**: Daha hızlı yükleme süreleri için kod bölümleme
 
 ## Kurulum ve Çalıştırma
 
-1. Projeyi klonlayın:
+### Gereksinimler
+- Node.js 18.x veya üzeri
+- Java 17 veya üzeri (backend için)
+- PostgreSQL veritabanı
+- npm veya yarn
 
+### Frontend Kurulumu
+1. Projeyi klonlayın:
    ```bash
    git clone https://github.com/mburakaltiparmak/nextjs-pizza
    ```
-
 2. Gerekli bağımlılıkları yükleyin:
-
    ```bash
    cd nextjs-pizza
    npm install
    ```
-
-3. Geliştirme ortamını başlatın:
-
+3. Ortam değişkenlerini ayarlayın (`.env.local` dosyası oluşturun):
+   ```
+   NEXT_PUBLIC_API_URL=https://pizza-backend.fly.dev/pizza
+   NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
+   ```
+4. Geliştirme ortamını başlatın:
    ```bash
    npm run dev
    ```
+5. Tarayıcınızda `http://localhost:3000` adresine gidin ve uygulamayı keşfedin.
 
-4. Tarayıcınızda `https://pizza-backend.fly.dev` adresine gidin ve projeyi keşfedin.
+### Backend Kurulumu (İsteğe Bağlı)
+1. Backend repo'sunu klonlayın:
+   ```bash
+   git clone https://github.com/mburakaltiparmak/pizza-backend
+   ```
+2. Projeyi IDE'nizde açın (IntelliJ IDEA, Eclipse vb.)
+3. Maven bağımlılıklarını yükleyin
+4. `application.properties` dosyasını yapılandırın:
+   ```
+   spring.datasource.url=jdbc:postgresql://your-db-url
+   spring.datasource.username=your-username
+   spring.datasource.password=your-password
+   ```
+5. Uygulamayı çalıştırın
 
 ## Proje Yapısı
 
 ```
-/components     # UI bileşenleri
-/pages          # Next.js sayfaları
-/lib            # Redux store ve slice'lar
-/globals.css    # Tailwind CSS ve global stiller
-
+/src
+  /app                  # Next.js App Router sayfaları
+    /api                # API endpoints
+    /auth               # Kimlik doğrulama sayfaları
+    /create-order       # Sipariş oluşturma akışı
+    /menu               # Menü sayfaları
+    /profile            # Kullanıcı profil sayfaları
+    /success            # Sipariş onay sayfası
+  /components           # Yeniden kullanılabilir UI bileşenleri
+    /ui                 # Temel UI bileşenleri (ShadcnUI)
+    /create-order-components   # Sipariş akışı bileşenleri
+    /layout             # Layout bileşenleri
+  /lib                  # Yardımcı fonksiyonlar ve utilities
+    /store              # Redux store
+      /actions          # Redux actions
+      /reducers         # Redux reducers
+    /hooks              # Custom React hooks
+  /assets               # Statik varlıklar (resimler vb.)
+  /styles               # Global ve modül stilleri
 ```
 
 ## Katkıda Bulunma
 
-Bu projeye katkıda bulunmak isterseniz, lütfen önce bir pull request oluşturun. Herhangi bir hata bildirimi veya öneri için de issues kısmını kullanabilirsiniz.
+Bu projeye katkıda bulunmak isterseniz:
+
+1. Projeyi forklayın
+2. Yeni bir branch oluşturun (`git checkout -b feature/amazing-feature`)
+3. Değişikliklerinizi commit edin (`git commit -m 'Add some amazing feature'`)
+4. Branch'inizi push edin (`git push origin feature/amazing-feature`)
+5. Bir Pull Request açın
+
+## Canlı Demo
+
+Uygulamanın çalışan bir örneğini [pizza.burakaltiparmak.com](https://pizza.burakaltiparmak.com) adresinde görebilirsiniz.
+
+## İletişim
+
+Mehmet Burak Altıparmak - [@mburakaltiparmak](https://github.com/mburakaltiparmak) - mburakaltiparmak@gmail.com
+
+Proje Linki: [https://github.com/mburakaltiparmak/nextjs-pizza](https://github.com/mburakaltiparmak/nextjs-pizza)
 
 ## Lisans
 
 Bu proje MIT lisansı altında lisanslanmıştır. Daha fazla bilgi için `LICENSE` dosyasına bakabilirsiniz.
+
+---
+
+Bu projede kullanılan tüm marka ve logolar ilgili sahiplerinin ticari markalarıdır. Bu proje gerçek bir işletmeyi temsil etmemektedir ve sadece eğitim/portfolio amaçlıdır.
