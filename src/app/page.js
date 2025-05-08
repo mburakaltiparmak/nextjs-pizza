@@ -177,7 +177,7 @@ const Page = () => {
 
               {/*<Link href="/order"> */}
               <button onClick={handleAciktim} className="btn-primary">
-                ACIKTIM
+                Kendi Pizzanı Yap
               </button>
               {/*</Link> */}
             </span>

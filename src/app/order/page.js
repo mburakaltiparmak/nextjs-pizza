@@ -101,15 +101,15 @@ const Page = () => {
     const selectedHamur = form.getValues("hamur");
     const selectedItems = form.getValues("items");
 
-    setMalzemeFiyat(selectedItems.length * 5);
+    setMalzemeFiyat(selectedItems.length * 50);
 
     // Boyut fiyatını ayarla
     if (selectedBoyut === "S") {
-      setBoyutFiyat(20);
+      setBoyutFiyat(200);
     } else if (selectedBoyut === "M") {
-      setBoyutFiyat(30);
+      setBoyutFiyat(250);
     } else if (selectedBoyut === "L") {
-      setBoyutFiyat(40);
+      setBoyutFiyat(300);
     } else {
       setBoyutFiyat(0);
     }
@@ -322,7 +322,7 @@ const Page = () => {
                       <p className="text-red">*</p>{" "}
                     </FormLabel>
                     <FormLabel className="text-xs text-gray ">
-                      En fazla 10 malzeme seçebilirsiniz. 5₺
+                      En fazla 10 malzeme seçebilirsiniz. 50₺
                     </FormLabel>
                     <FormControl>
                       <div className="grid grid-cols-3 gap-4 place-items-start max-md:w-full max-md:flex-1 max-md:flex-row max-md:flex-wrap max-md:gap-4 max-md:items-center max-md:justify-between ">
