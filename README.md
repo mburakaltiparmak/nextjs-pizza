@@ -147,7 +147,7 @@ Bu projeye katkıda bulunmak isterseniz:
 
 ## Canlı Demo
 
-Uygulamanın çalışan bir örneğini [pizza.burakaltiparmak.com](https://pizza.burakaltiparmak.com) adresinde görebilirsiniz.
+Uygulamanın çalışan bir örneğini https://nextjs-pizza-mu.vercel.app adresinde görebilirsiniz.
 
 ## İletişim
 
