@@ -93,7 +93,8 @@ module.exports = {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       backgroundImage: {
-        mvpBanner: "url('/assets/wdvoemky4y6jhq5oerjs.webp')",
+        // Optimize edilmiş Cloudinary URL parametreleri ile
+        heroBackground: "url('https://res.cloudinary.com/dqjqkgpt3/image/upload/f_auto,q_auto:good,w_1920/v1746715762/wdvoemky4y6jhq5oerjs_i1ex2e.webp')",
       },
     },
     screens: {

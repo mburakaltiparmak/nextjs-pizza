@@ -14,6 +14,7 @@ import { fetchProducts } from "@/lib/store/actions/productActions";
 import { fetchCategories } from "@/lib/store/actions/categoryActions";
 import { checkAuthStatus } from "@/lib/store/actions/userActions";
 import { useRouter } from "next/navigation";
+import Head from "next/head";
 
 // New data loading service
 const useDataLoader = () => {
@@ -162,97 +163,108 @@ const Page = () => {
   }
 
   return (
-    <div>
-      <Header />
-      <div className="flex flex-col justify-between items-center gap-2 text-lightgray">
-        <div className="bg-[url('../../assets/wdvoemky4y6jhq5oerjs.webp')] bg-cover bg-center h-screen w-full max-md:h-96">
-          <div className="flex flex-col justify-start items-center gap-4 mt-4">
-            <span className="flex flex-col justify-between items-center gap-4 text-center">
-              <h4 className="font-Satisfy text-yellow text-2xl">
-                fırsatı kaçırma
-              </h4>
-              <h2 className="font-Barlow text-4xl tracking-tighter text-lightgray">
-                KOD ACIKTIRIR, <br /> PİZZA DOYURUR
-              </h2>
+    <>
+      <Head>
+        {/* Arkaplan resmini preload et - LCP optimizasyonu için */}
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dqjqkgpt3/image/upload/f_auto,q_auto:good,w_1920/v1746715762/wdvoemky4y6jhq5oerjs_i1ex2e.webp"
+          type="image/webp"
+        />
+      </Head>
+      <div>
+        <Header />
+        <div className="flex flex-col justify-between items-center gap-2 text-lightgray">
+          <div className="bg-heroBackground bg-cover bg-center bg-no-repeat h-screen w-full max-md:h-96">
+            <div className="flex flex-col justify-start items-center gap-4 mt-4">
+              <span className="flex flex-col justify-between items-center gap-4 text-center">
+                <h4 className="font-Satisfy text-yellow text-2xl">
+                  fırsatı kaçırma
+                </h4>
+                <h2 className="font-Barlow text-4xl tracking-tighter text-lightgray">
+                  KOD ACIKTIRIR, <br /> PİZZA DOYURUR
+                </h2>
 
-              {/*<Link href="/order"> */}
-              <button onClick={handleAciktim} className="btn-primary">
-                Kendi Pizzanı Yap
-              </button>
-              {/*</Link> */}
-            </span>
-          </div>
-        </div>
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex flex-row justify-center gap-4 mt-4 max-md:flex-col max-md:items-center max-md:mt-0 max-md:gap-2 w-full">
-            <div
-              className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0 w-full max-md:w-80 bg-cover bg-center"
-              style={{
-                backgroundImage: `url(${homeCards[0].background.src})`,
-              }}
-            >
-              <span className="m-4 flex flex-col items-start gap-4">
-                <p className="text-5xl font-bold font-Quattrocento w-1/2 text-left">
-                  {homeCards[0].text}
-                </p>
-                <button onClick={handleOzelLezzetus} className="btn-primary">
-                  {homeCards[0].buttonText}
+                {/*<Link href="/order"> */}
+                <button onClick={handleAciktim} className="btn-primary">
+                  Kendi Pizzanı Yap
                 </button>
+                {/*</Link> */}
               </span>
             </div>
-            <span className="flex flex-col gap-4 max-md:gap-2 max-md:items-center">
-              <div
-                className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0 bg-cover bg-center h-full w-80"
-                style={{
-                  backgroundImage: `url(${homeCards[1].background.src})`,
-                }}
-              >
-                <span className="m-4 flex flex-col items-start gap-4">
-                  <p className="text-xl font-bold font-Barlow w-3/4 text-left">
-                    {homeCards[1].text}
-                  </p>
-                  <button
-                    onClick={handleHackathlonBurger}
-                    className="btn-third"
-                  >
-                    {homeCards[1].buttonText}
-                  </button>
-                </span>
-              </div>
-              <div
-                className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0 bg-cover bg-center h-full w-80 "
-                style={{
-                  backgroundImage: `url(${homeCards[2].background.src})`,
-                }}
-              >
-                <span className="m-4 flex flex-col items-start gap-4">
-                  <p className="text-xl text-darkgray font-bold font-Barlow w-3/5 text-left">
-                    {homeCards[2].text}
-                  </p>
-                  <button onClick={handleNpmGibi} className="btn-fourth">
-                    {homeCards[2].buttonText}
-                  </button>
-                </span>
-              </div>
-            </span>
           </div>
-          <div className="flex flex-col items-center gap-8 my-16 max-md:my-0 max-md:px-8">
-            <span className="flex flex-col items-center gap-4 max-md:text-center">
-              <h3 className="font-Satisfy font-normal text-3xl text-red">
-                en çok paketlenen menüler
-              </h3>
-              <h4 className="text-darkgray font-semibold text-4xl font-Barlow">
-                Acıktıran Kodlara Doyuran Lezzetler
-              </h4>
-            </span>
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-row justify-center gap-4 mt-4 max-md:flex-col max-md:items-center max-md:mt-0 max-md:gap-2 w-full">
+              <div
+                className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0 w-full max-md:w-80 bg-cover bg-center"
+                style={{
+                  backgroundImage: `url(${homeCards[0].background.src})`,
+                }}
+              >
+                <span className="m-4 flex flex-col items-start gap-4">
+                  <p className="text-5xl font-bold font-Quattrocento w-1/2 text-left">
+                    {homeCards[0].text}
+                  </p>
+                  <button onClick={handleOzelLezzetus} className="btn-primary">
+                    {homeCards[0].buttonText}
+                  </button>
+                </span>
+              </div>
+              <span className="flex flex-col gap-4 max-md:gap-2 max-md:items-center">
+                <div
+                  className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0 bg-cover bg-center h-full w-80"
+                  style={{
+                    backgroundImage: `url(${homeCards[1].background.src})`,
+                  }}
+                >
+                  <span className="m-4 flex flex-col items-start gap-4">
+                    <p className="text-xl font-bold font-Barlow w-3/4 text-left">
+                      {homeCards[1].text}
+                    </p>
+                    <button
+                      onClick={handleHackathlonBurger}
+                      className="btn-third"
+                    >
+                      {homeCards[1].buttonText}
+                    </button>
+                  </span>
+                </div>
+                <div
+                  className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0 bg-cover bg-center h-full w-80 "
+                  style={{
+                    backgroundImage: `url(${homeCards[2].background.src})`,
+                  }}
+                >
+                  <span className="m-4 flex flex-col items-start gap-4">
+                    <p className="text-xl text-darkgray font-bold font-Barlow w-3/5 text-left">
+                      {homeCards[2].text}
+                    </p>
+                    <button onClick={handleNpmGibi} className="btn-fourth">
+                      {homeCards[2].buttonText}
+                    </button>
+                  </span>
+                </div>
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-8 my-16 max-md:my-0 max-md:px-8">
+              <span className="flex flex-col items-center gap-4 max-md:text-center">
+                <h3 className="font-Satisfy font-normal text-3xl text-red">
+                  en çok paketlenen menüler
+                </h3>
+                <h4 className="text-darkgray font-semibold text-4xl font-Barlow">
+                  Acıktıran Kodlara Doyuran Lezzetler
+                </h4>
+              </span>
 
-            <Categories />
+              <Categories />
+            </div>
           </div>
+          <GoToMenu />
         </div>
-        <GoToMenu />
+        <Footer />
       </div>
-      <Footer />
-    </div>
+    </>
   );
 };
 
