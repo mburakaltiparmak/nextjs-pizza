@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
+import { useDispatch, useStore } from "react-redux";
 import {
   setIsLogin,
   setToken,
@@ -24,6 +24,7 @@ import Loading from "@/app/loading";
 export default function OAuthCallbackPage() {
   const router = useRouter();
   const dispatch = useDispatch();
+  const store = useStore(); // Redux store'a erişmek için useStore hook'unu kullanıyoruz
   const processingRef = useRef(false);
   const hasNavigatedRef = useRef(false);
   const { refreshAuth } = useAuthContext([], "/", false);
@@ -176,17 +177,17 @@ export default function OAuthCallbackPage() {
           // Önceki hata mesajlarını temizle
           dispatch(setError(null));
 
+          // Başlangıç profil bilgisi
+          const initialProfile = {
+            name: userMetadata.name || userMetadata.full_name || "",
+            surname: userMetadata.surname || userMetadata.family_name || "",
+            email: userData.email,
+            phoneNumber: userMetadata.phone_number || userMetadata.phone || "",
+            role: "CUSTOMER", // Varsayılan rol
+          };
+
           // ÖNEMLİ: Kullanıcı profil verilerini Redux store'a önden yükle
-          dispatch(
-            setUserProfile({
-              name: userMetadata.name || userMetadata.full_name || "",
-              surname: userMetadata.surname || userMetadata.family_name || "",
-              email: userData.email,
-              phoneNumber: userMetadata.phone_number || userMetadata.phone || "",
-              role: "CUSTOMER", // Varsayılan rol
-              // Gerekli diğer alanlar
-            })
-          );
+          dispatch(setUserProfile(initialProfile));
 
           // Backend'e kullanıcı bilgilerini gönder ve senkronize et
           const syncResponse = await instance.post("/auth/sync-supabase-user", {
@@ -200,12 +201,17 @@ export default function OAuthCallbackPage() {
 
           console.log("Backend senkronizasyonu tamamlandı:", syncResponse.data);
           
-          // Backend'den gelen rol ve durum bilgilerini güncelle
+          // Backend'den gelen rol ve durum bilgilerini güncelle - DÜZELTME BURADA
           if (syncResponse.data && syncResponse.data.role) {
-            dispatch(setUserProfile(prevProfile => ({
-              ...prevProfile,
+            // Store'un mevcut durumunu al
+            const currentState = store.getState();
+            const currentProfile = currentState.user.profile || {};
+            
+            // Doğrudan yeni bir nesne oluşturup gönderiyoruz (fonksiyon kullanmadan)
+            dispatch(setUserProfile({
+              ...currentProfile,
               role: syncResponse.data.role
-            })));
+            }));
           }
 
           // Auth durumunu tek seferde yenile
@@ -280,7 +286,7 @@ export default function OAuthCallbackPage() {
     return () => {
       console.log("OAuthCallbackPage unmounting");
     };
-  }, [dispatch, router, refreshAuth]); // Sadece mount olduğunda çalışması için bağımlılıkları koru
+  }, [dispatch, router, refreshAuth, store]); // store'u bağımlılıklara ekledim
 
   // Yükleme durumdaysa Loading componentini göster
   return <Loading />;
