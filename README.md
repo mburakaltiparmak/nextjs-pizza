@@ -51,7 +51,7 @@ Pizza Restoranı web sitesi, modern web teknolojilerini kullanarak aşağıdaki 
    npm run dev
    ```
 
-4. Tarayıcınızda `http://localhost:8080` adresine gidin ve projeyi keşfedin.
+4. Tarayıcınızda `https://pizza-backend.fly.dev` adresine gidin ve projeyi keşfedin.
 
 ## Proje Yapısı
 
