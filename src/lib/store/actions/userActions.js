@@ -2,6 +2,7 @@ import { instance, userInstance } from "@/lib/hooks";
 import { userActions } from "../reducers/userReducer";
 import { setError, setLoading, setSuccess } from "./globalActions";
 import { fetchStates } from "../constants";
+import { supabase } from "@/lib/supabase";
 import axios from "axios";
 
 export const setEmail = (email) => ({
@@ -99,37 +100,20 @@ export const login = (formData) => async (dispatch) => {
   try {
     console.log("Login formData received:", formData);
 
-    // Request payload hazırla
-    const payload = {
+    // Login with Supabase instead of our backend
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: formData.username,
       password: formData.password,
-    };
-    console.log("FORM DATA", formData);
+    });
 
-    console.log("Login request payload being sent to backend:", payload);
+    if (error) throw error;
 
-    // Adım 1: Login isteğini gönder
-    const res = await instance.post("/auth/login", payload);
-
-    console.log("Login response:", res);
-
-    // Yanıtı doğrula
-    if (!res || !res.data) {
-      throw new Error("Sunucudan geçersiz yanıt alındı");
-    }
-
-    // Token kontrolü
-    const token = res.data.token;
-    if (!token) {
-      throw new Error("Kimlik doğrulama başarısız");
-    }
+    const token = data.session.access_token;
 
     // Redux store'u güncelle
     dispatch(setToken(token));
     dispatch(setIsLogin(true));
-    dispatch(setAuthProvider("email"));
-
-    // rememberMe durumunu store'a kaydet
+    dispatch(setAuthProvider("supabase"));
     dispatch(setRememberMe(formData.rememberMe));
 
     // Token ve email bilgilerini uygun storage'a kaydet
@@ -139,26 +123,11 @@ export const login = (formData) => async (dispatch) => {
     dispatch(setSuccess("Giriş başarılı"));
     return { token };
   } catch (err) {
-    // Hata detayları
     console.error("Login error full details:", err);
 
-    // Hata yanıtını incele
-    if (err.response) {
-      console.error("Login error response:", err.response);
-      console.error("Login error response data:", err.response.data);
-      console.error("Login error response status:", err.response.status);
-    }
-
-    // Hata işleme kodu...
     let errorMessage = "Giriş başarısız oldu";
-
-    if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
-    } else if (err.request) {
-      errorMessage =
-        "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
-    } else {
-      errorMessage = err.message || errorMessage;
+    if (err.message) {
+      errorMessage = err.message;
     }
 
     dispatch(setError(errorMessage));
@@ -167,7 +136,7 @@ export const login = (formData) => async (dispatch) => {
   }
 };
 
-export const initiateGoogleLogin = () => () => {
+export const initiateGoogleLogin = () => async () => {
   try {
     console.log("Google login başlatılıyor...");
 
@@ -181,18 +150,23 @@ export const initiateGoogleLogin = () => () => {
     localStorage.setItem("tempRememberMe", rememberMe ? "true" : "false");
     console.log("RememberMe durumu kaydedildi:", rememberMe);
 
-    // API_BASE_URL'i env değişkenlerinden veya varsayılan değerden al
-    const API_BASE_URL =
-      process.env.NEXT_PUBLIC_API_BASE_URL || "https://pizza-backend.fly.dev";
-    const authUrl = `${API_BASE_URL}/pizza/api/auth/oauth2/authorize/google`;
+    // Start Supabase Google OAuth login with explicit redirect
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin + "/oauth2/callback",
+      },
+    });
 
-    console.log("Yönlendiriliyor:", authUrl);
+    if (error) {
+      console.error("Google OAuth başlatma hatası:", error);
+      throw error;
+    }
 
-    // Tarayıcıyı backend'in OAuth endpoint'ine yönlendir
-    window.location.href = authUrl;
+    console.log("Supabase OAuth başlatma başarılı:", data);
+    // The browser will now be redirected to Google
   } catch (error) {
     console.error("Google login başlatma hatası:", error);
-    // Hata durumunda global hata state'i güncellenebilir
   }
 };
 
@@ -241,10 +215,12 @@ export const handleOAuthCallback =
     }
   };
 
-// Geliştirilmiş logout fonksiyonu
 export const logout = () => async (dispatch) => {
   try {
-    // 1. Tüm storage'dan kimlik bilgilerini temizle
+    // Sign out from Supabase
+    await supabase.auth.signOut();
+
+    // Continue with the rest of your logout logic
     if (typeof window !== "undefined") {
       // localStorage'dan temizle
       localStorage.removeItem("token");
@@ -274,7 +250,7 @@ export const logout = () => async (dispatch) => {
   } catch (error) {
     console.error("Logout hatası:", error);
 
-    // Hata durumunda yine de temizlik yapmaya çalış
+    // Try cleanup anyway
     try {
       if (typeof window !== "undefined") {
         localStorage.removeItem("token");
@@ -291,132 +267,103 @@ export const logout = () => async (dispatch) => {
   }
 };
 
-// checkAuthStatus fonksiyonu - Network hataları için geliştirilmiş
+// lib/store/actions/userActions.js içinde
+
+// İstek kontrolü için değişkenler
+let authCheckInProgress = false;
+let authCheckPromise = null;
+let lastAuthCheckTime = 0;
+const AUTH_CACHE_TIME = 2000; // 2 saniye (ms cinsinden) - OAuth callback için kısa tutuyoruz
+
 export const checkAuthStatus = () => async (dispatch) => {
-  // Ağ hatalarına karşı bir zaman aşımı ayarla
-  const AUTH_TIMEOUT = 5000; // 5 saniye
+  // Şu an için zaten bir istek yapılıyorsa, o Promise'i döndür
+  if (authCheckInProgress && authCheckPromise) {
+    console.log("Auth check zaten devam ediyor, mevcut Promise'i kullan");
+    return authCheckPromise;
+  }
+
+  // Son kontrolden beri belirli bir süre geçmediyse, son sonucu döndür
+  const now = Date.now();
+  if (now - lastAuthCheckTime < AUTH_CACHE_TIME) {
+    console.log(
+      "Son auth check süresi dolmadı, tekrar kontrol yapmaya gerek yok"
+    );
+    return Promise.resolve(true); // Başarılı kabul et
+  }
 
   try {
-    // Önce localStorage'da token ara, yoksa sessionStorage'a bak
-    let token = localStorage.getItem("token");
-    let storage = localStorage;
+    // İstek başlıyor
+    authCheckInProgress = true;
 
-    // localStorage'da token yoksa, sessionStorage'a bak
-    if (!token) {
-      token = sessionStorage.getItem("token");
-      storage = sessionStorage;
-    }
+    // Yeni Promise oluştur ve önbelleğe al
+    authCheckPromise = (async () => {
+      try {
+        // Supabase session kontrolü
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
 
-    // Token yoksa, sessiz bir şekilde çık
-    if (!token) {
-      // Store'u temizle
-      dispatch(clearUserData());
-      return false;
-    }
+        if (sessionError) throw sessionError;
 
-    // "Beni hatırla" durumunu kontrol et
-    const rememberMe = localStorage.getItem("rememberMe") === "true";
-    dispatch(setRememberMe(rememberMe));
-
-    // Token varsa, Axios başlığına ekle ve giriş yapmış olarak işaretle
-    instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    dispatch(setToken(token));
-    dispatch(setIsLogin(true));
-
-    // Kullanıcı email bilgisini al
-    const savedEmail = storage.getItem("userEmail");
-    if (savedEmail) {
-      dispatch(setEmail(savedEmail));
-    }
-
-    try {
-      // Timeout ile API çağrısı - ağ hatalarında takılıp kalmaması için
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(
-          () => reject(new Error("Profil bilgileri zaman aşımına uğradı")),
-          AUTH_TIMEOUT
-        )
-      );
-
-      // Profil bilgilerini çekmeyi dene
-      const profilePromise = instance.get("/user/profile");
-
-      // Hangisi önce tamamlanırsa
-      const response = await Promise.race([profilePromise, timeoutPromise]);
-
-      if (response && response.data) {
-        // Kullanıcı bilgilerini Redux store'a kaydet
-        dispatch(setUserProfile(response.data));
-
-        // Kullanıcının rol ve durumunu güncelle
-        if (response.data.role) {
-          dispatch(setUserRole(response.data.role));
+        if (!session) {
+          dispatch(clearUserData());
+          return false;
         }
 
-        if (response.data.status) {
-          dispatch(setUserStatus(response.data.status));
+        // Token ve kullanıcı bilgileri işleme
+        const token = session.access_token;
+        instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+        // Redux store güncellemeleri
+        dispatch(setToken(token));
+        dispatch(setIsLogin(true));
+        dispatch(setRememberMe(localStorage.getItem("rememberMe") === "true"));
+
+        // Email bilgisi
+        if (session.user && session.user.email) {
+          dispatch(setEmail(session.user.email));
+          const storage =
+            localStorage.getItem("rememberMe") === "true"
+              ? localStorage
+              : sessionStorage;
+          storage.setItem("userEmail", session.user.email);
         }
 
-        // OAuth provider bilgisini kontrol et
-        if (response.data.oauthProvider) {
-          dispatch(setAuthProvider(response.data.oauthProvider));
-        } else {
-          dispatch(setAuthProvider("email"));
-        }
-
-        // Adres bilgilerini yüklemeyi dene, ama bir sorun çıkarsa devam et
-        try {
-          const addressTimeout = new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error("Adres bilgileri zaman aşımına uğradı")),
-              AUTH_TIMEOUT
-            )
+        // Profil bilgilerini yükle - bu kısmı OAuth callback sürecinde atlayabiliriz
+        if (window.location.pathname.includes("/oauth2/callback")) {
+          console.log(
+            "OAuth callback sürecinde tekrarlı profil yüklemesi atlanıyor"
           );
-
-          await Promise.race([dispatch(fetchUserAddresses()), addressTimeout]);
-        } catch (addressError) {
-          console.error("Adres bilgileri yüklenirken hata:", addressError);
-          // Adres hatası kritik değil, devam et
+          return true;
         }
 
-        return true;
-      }
-
-      // Profil bilgileri alınamadı ama token var, kullanıcıyı giriş yapmış kabul et
-      return true;
-    } catch (error) {
-      console.error("Profil bilgisi çekilirken hata:", error);
-
-      // Network hatası olup olmadığını kontrol et
-      if (
-        error.message === "Network Error" ||
-        error.message.includes("zaman aşımı")
-      ) {
-        console.warn("Ağ hatası oluştu ama kullanıcı girişi kabul ediliyor");
-        // Ağ hatası durumunda bile kullanıcıyı giriş yapmış olarak kabul et
-        // Böylece ürünleri ve kategorileri görüntüleyebilir
-        return true;
-      }
-
-      // Token geçersiz olabilir, kontrol et
-      if (error.response && error.response.status === 401) {
-        // Token geçersiz, temizle ve çıkış yap
+        try {
+          await dispatch(fetchUserProfile());
+          return true;
+        } catch (profileError) {
+          console.error("Profil bilgisi çekilirken hata:", profileError);
+          return true; // Yine de auth başarılı sayılır
+        }
+      } catch (error) {
+        console.error("Kimlik doğrulama kontrolü hatası:", error);
         await dispatch(logout());
         return false;
       }
+    })();
 
-      // Diğer hata durumlarında kullanıcının giriş yapmış sayılmasını sağla
-      return true;
-    }
-  } catch (error) {
-    console.error("Kimlik doğrulama kontrolü hatası:", error);
-
-    // Herhangi bir hata durumunda oturum bilgilerini sil ve çık
-    await dispatch(logout());
-    return false;
+    // Promise'i bekle ve zaman damgasını güncelle
+    const result = await authCheckPromise;
+    lastAuthCheckTime = Date.now();
+    return result;
+  } finally {
+    // İşlem bittiğinde flag'i resetle
+    setTimeout(() => {
+      authCheckInProgress = false;
+      authCheckPromise = null;
+    }, 100); // Küçük bir gecikme ile reset et
   }
 };
-// Kullanıcı kaydı
 export const registerUser = (userData) => async (dispatch) => {
   dispatch(setLoading(true));
   dispatch(setError(null));
@@ -425,7 +372,7 @@ export const registerUser = (userData) => async (dispatch) => {
     // Destructure to remove confirmPassword
     const { confirmPassword, ...registrationData } = userData;
 
-    // Telefon numarası alanını kontrol et
+    // Form validation (unchanged)
     if (
       !registrationData.phoneNumber ||
       registrationData.phoneNumber.trim() === ""
@@ -433,22 +380,29 @@ export const registerUser = (userData) => async (dispatch) => {
       throw new Error("Telefon numarası boş olamaz");
     }
 
-    // Tüm gerekli alanların dolu olduğundan emin ol
-    const requiredFields = [
-      "email",
-      "password",
-      "name",
-      "surname",
-      "phoneNumber",
-    ];
-    for (const field of requiredFields) {
-      if (!registrationData[field] || registrationData[field].trim() === "") {
-        throw new Error(`${field} alanı boş olamaz`);
-      }
-    }
+    // Register with Supabase
+    const { data, error } = await supabase.auth.signUp({
+      email: registrationData.email,
+      password: registrationData.password,
+      options: {
+        data: {
+          name: registrationData.name,
+          surname: registrationData.surname,
+          phone_number: registrationData.phoneNumber,
+        },
+      },
+    });
 
-    // API isteğini yap
-    const response = await instance.post("/auth/register", registrationData);
+    if (error) throw error;
+
+    // Also register in our backend
+    await instance.post("/auth/register-supabase", {
+      email: registrationData.email,
+      name: registrationData.name,
+      surname: registrationData.surname,
+      phoneNumber: registrationData.phoneNumber,
+      supabaseId: data.user.id,
+    });
 
     dispatch(setLoading(false));
     dispatch(
@@ -456,26 +410,14 @@ export const registerUser = (userData) => async (dispatch) => {
         "Kayıt başarılı! Lütfen e-posta adresinize gönderilen doğrulama bağlantısına tıklayın."
       )
     );
-    return response.data;
+    return data;
   } catch (err) {
     let errorMessage = "Kayıt işlemi başarısız oldu";
 
-    if (err.response) {
-      // Backend'den gelen hata mesajı
-      if (err.response.data && err.response.data.message) {
-        errorMessage = err.response.data.message;
-      } else if (
-        typeof err.response.data === "object" &&
-        err.response.data.errors
-      ) {
-        const errors = err.response.data.errors;
-        errorMessage = Object.values(errors).join(", ");
-      }
-    } else if (err.request) {
-      errorMessage =
-        "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
-    } else {
-      errorMessage = err.message || errorMessage;
+    if (err.message) {
+      errorMessage = err.message;
+    } else if (err.response && err.response.data && err.response.data.message) {
+      errorMessage = err.response.data.message;
     }
 
     dispatch(setError(errorMessage));
@@ -525,31 +467,34 @@ export const fetchUserProfile = () => async (dispatch, getState) => {
       return null;
     }
 
-    // API_BASE_URL'i env değişkenlerinden veya varsayılan değerden al
-    const API_BASE_URL =
-      process.env.NEXT_PUBLIC_API_BASE_URL || "https://pizza-backend.fly.dev";
+    console.log("Kullanıyor token:", token.substring(0, 10) + "...");
+    console.log(
+      "Authorization header:",
+      instance.defaults.headers.common["Authorization"]
+    );
 
-    const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+    // Double-check auth header is set properly
+    instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-    if (!response.ok) {
-      throw new Error(`HTTP hata! Durum: ${response.status}`);
+    // Use instance directly
+    try {
+      const response = await instance.get("/user/profile");
+
+      const userData = response.data;
+      console.log("Kullanıcı profili alındı:", userData);
+
+      dispatch({
+        type: "SET_USER_PROFILE",
+        payload: userData,
+      });
+
+      return userData;
+    } catch (error) {
+      console.error("API request error:", error);
+      console.error("Error status:", error.response?.status);
+      console.error("Error details:", error.response?.data);
+      throw error;
     }
-
-    const userData = await response.json();
-    console.log("Kullanıcı profili alındı:", userData);
-
-    dispatch({
-      type: "SET_USER_PROFILE",
-      payload: userData,
-    });
-
-    return userData;
   } catch (error) {
     console.error("Kullanıcı profili alma hatası:", error);
     throw error;

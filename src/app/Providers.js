@@ -5,6 +5,7 @@ import { Provider } from "react-redux";
 import { store } from "@/lib/store/store";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { AuthProvider } from "@/lib/context/authContext";
 
 // Custom CSS
 const toastifyStyles = `
@@ -73,7 +74,8 @@ export default function Providers({ children }) {
 
   return (
     <Provider store={store}>
-      {children}
+      {/* AuthProvider eklendi - Redux Provider'ın altında  */}
+      <AuthProvider>{children}</AuthProvider>
 
       {/* Custom styles */}
       <style jsx global>

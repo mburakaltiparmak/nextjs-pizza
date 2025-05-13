@@ -12,8 +12,8 @@ import Footer from "@/components/footer";
 import { fetchCategoryById } from "@/lib/store/actions/categoryActions";
 import { fetchProducts } from "@/lib/store/actions/productActions";
 import { fetchCategories } from "@/lib/store/actions/categoryActions";
-import { checkAuthStatus } from "@/lib/store/actions/userActions";
 import { useRouter } from "next/navigation";
+import useAuth from "@/hooks/use-auth";
 
 // New data loading service
 const useDataLoader = () => {
@@ -29,10 +29,8 @@ const useDataLoader = () => {
     setError(null);
 
     try {
-      // Handle auth separately - don't block on auth
-      dispatch(checkAuthStatus()).catch((err) => {
-        console.warn("Auth check failed, continuing anyway:", err);
-      });
+      // Auth işlemi artık useAuth hook'u üzerinden yapılıyor
+      // Auth statik kontrolünü kaldırdık
 
       // Load product/category data based on selection
       if (selectedCategory) {
@@ -108,6 +106,9 @@ const Page = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
+  // Auth state için useAuth hook'unu kullan
+  const { loading: authLoading } = useAuth([], "/", false);
+
   // Redux state
   const selectedCategory = useAppSelector(
     (store) => store.product.selectedCategory
@@ -143,20 +144,24 @@ const Page = () => {
   const buttonNotifyHandler = () => {
     toast.info("You can customize this button!");
   };
+
   const handleOzelLezzetus = () => {
     router.push("/products/12");
   };
+
   const handleHackathlonBurger = () => {
     router.push("/products/14");
   };
+
   const handleNpmGibi = () => {
     router.push("/products/4");
   };
+
   const handleAciktim = () => {
     router.push("/order");
   };
 
-  // Show loading during initialization or global loading
+  // Show loading during initialization, auth loading or global loading
   if (dataLoading || globalLoading) {
     return <Loading />;
   }
@@ -175,11 +180,9 @@ const Page = () => {
                 KOD ACIKTIRIR, <br /> PİZZA DOYURUR
               </h2>
 
-              {/*<Link href="/order"> */}
               <button onClick={handleAciktim} className="btn-primary">
                 ACIKTIM
               </button>
-              {/*</Link> */}
             </span>
           </div>
         </div>
