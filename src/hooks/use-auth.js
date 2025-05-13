@@ -26,6 +26,7 @@ export const useAuth = (
   // Çıkış işlemi için orijinal dispatch'i koru (geriye dönük uyumluluk için)
   const handleLogout = () => {
     dispatch(logout());
+    /* */
     router.push("/login");
   };
 
