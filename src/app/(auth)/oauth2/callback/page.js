@@ -1,9 +1,8 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import {
-  fetchUserProfile,
   setIsLogin,
   setToken,
   setAuthProvider,
@@ -23,7 +22,6 @@ import { useAuthContext } from "@/lib/context/authContext";
 import Loading from "@/app/loading";
 
 export default function OAuthCallbackPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useDispatch();
   const processingRef = useRef(false);
@@ -53,7 +51,7 @@ export default function OAuthCallbackPage() {
         processingRef.current = true;
         dispatch(setLoading(true));
 
-        console.log("OAuth callback işleniyor - başlangıç");
+        console.log("OAuth callback işleniyor - Google OAuth2 için Supabase kullanılıyor");
 
         // URL parametrelerini kontrol et
         const hash = window.location.hash;
@@ -129,21 +127,23 @@ export default function OAuthCallbackPage() {
         // Kullanıcı bilgisini al
         const userData = currentSession.user;
         const userMetadata = userData.user_metadata || {};
+        const providerType = userData.app_metadata?.provider || "google";
 
         console.log("User info:", {
           email: userData.email,
           id: userData.id,
+          provider: providerType,
           metadata: userMetadata,
         });
 
-        // "Beni hatırla" tercihini al
-        const rememberMe = localStorage.getItem("tempRememberMe") === "true";
+        // "Beni hatırla" tercihini al (default: true)
+        const rememberMe = localStorage.getItem("tempRememberMe") !== "false";
         console.log("RememberMe durumu:", rememberMe);
 
-        // Redux store'u güncelle
+        // Redux store'u güncelle - Önemli: Auth provider olarak Google belirt
         dispatch(setToken(token));
         dispatch(setIsLogin(true));
-        dispatch(setAuthProvider("supabase"));
+        dispatch(setAuthProvider("google"));
         dispatch(setRememberMe(rememberMe));
 
         if (userData.email) {
@@ -154,6 +154,7 @@ export default function OAuthCallbackPage() {
         const storage = rememberMe ? localStorage : sessionStorage;
         try {
           storage.setItem("token", token);
+          storage.setItem("authProvider", "google"); // Auth provider'ı kaydet
           if (userData.email) {
             storage.setItem("userEmail", userData.email);
           }
@@ -170,37 +171,44 @@ export default function OAuthCallbackPage() {
 
         // Backend ile senkronize et ve profil bilgilerini getir
         try {
-          console.log("Backend ile senkronizasyon başlatılıyor");
+          console.log("Backend ile senkronizasyon başlatılıyor - Google OAuth2 kullanıcısı");
 
           // Önceki hata mesajlarını temizle
           dispatch(setError(null));
 
           // ÖNEMLİ: Kullanıcı profil verilerini Redux store'a önden yükle
-          // Bu şekilde UI, yönlendirmeden önce profil verilerine sahip olacak
           dispatch(
             setUserProfile({
               name: userMetadata.name || userMetadata.full_name || "",
               surname: userMetadata.surname || userMetadata.family_name || "",
               email: userData.email,
-              phoneNumber:
-                userMetadata.phone_number || userMetadata.phone || "",
+              phoneNumber: userMetadata.phone_number || userMetadata.phone || "",
+              role: "CUSTOMER", // Varsayılan rol
               // Gerekli diğer alanlar
             })
           );
 
-          // Tek bir post işlemi ile backend'e kullanıcı bilgilerini gönder
-          await instance.post("/auth/sync-supabase-user", {
+          // Backend'e kullanıcı bilgilerini gönder ve senkronize et
+          const syncResponse = await instance.post("/auth/sync-supabase-user", {
             email: userData.email,
             supabaseId: userData.id,
             name: userMetadata.name || userMetadata.full_name || "",
             surname: userMetadata.surname || userMetadata.family_name || "",
             phoneNumber: userMetadata.phone_number || userMetadata.phone || "",
+            provider: "google" // Provider bilgisini ekledik
           });
 
-          console.log("Backend senkronizasyonu tamamlandı");
+          console.log("Backend senkronizasyonu tamamlandı:", syncResponse.data);
+          
+          // Backend'den gelen rol ve durum bilgilerini güncelle
+          if (syncResponse.data && syncResponse.data.role) {
+            dispatch(setUserProfile(prevProfile => ({
+              ...prevProfile,
+              role: syncResponse.data.role
+            })));
+          }
 
           // Auth durumunu tek seferde yenile
-          // Bu şekilde tekrarlayan fetchUserProfile çağrıları önlenir
           await refreshAuth();
         } catch (syncError) {
           // Backend hatası durumunda handleApiError ile yönet
@@ -217,7 +225,7 @@ export default function OAuthCallbackPage() {
         }
 
         // Başarı mesajı
-        dispatch(setSuccess("Giriş başarılı"));
+        dispatch(setSuccess("Google ile giriş başarılı"));
 
         // Geçici "Beni hatırla" verisini temizle
         localStorage.removeItem("tempRememberMe");
@@ -254,12 +262,11 @@ export default function OAuthCallbackPage() {
         const errorMsg = error.message || "Unknown error";
         navigateSafely(
           `/error?message=${encodeURIComponent(
-            "Giriş işlemi sırasında bir hata oluştu: " + errorMsg
+            "Google ile giriş sırasında bir hata oluştu: " + errorMsg
           )}`
         );
       } finally {
         // İşlem tamamlandı - biraz gecikmeli olarak flag'i sıfırla
-        // (olası race condition'ları önlemek için)
         setTimeout(() => {
           processingRef.current = false;
         }, 300);
@@ -271,7 +278,6 @@ export default function OAuthCallbackPage() {
 
     // Cleanup function
     return () => {
-      // Component unmount olursa
       console.log("OAuthCallbackPage unmounting");
     };
   }, [dispatch, router, refreshAuth]); // Sadece mount olduğunda çalışması için bağımlılıkları koru

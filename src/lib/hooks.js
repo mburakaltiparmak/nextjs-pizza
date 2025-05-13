@@ -7,7 +7,7 @@ export const useAppStore = useStore.withTypes();
 
 // API istekleri için sabitler
 const API_TIMEOUT = 10000; // 10 saniye
-const API_BASE_URL = "https://pizza-backend.fly.dev/pizza/api"; // Düzeltildi - sonunda '/' olmadan
+const API_BASE_URL = "http://localhost:8080/pizza/api"; // Düzeltildi - sonunda '/' olmadan
 
 // Axios instance oluştur - timeout ve yeniden denemeleri ekle
 export const instance = axios.create({

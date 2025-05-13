@@ -92,7 +92,7 @@ const storeToken = (token, email, rememberMe) => {
   localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
 };
 
-// Login işlemi
+// Login işlemi - sadece backend kullanacak şekilde güncellendi
 export const login = (formData) => async (dispatch) => {
   dispatch(setLoading(true));
   dispatch(setError(null));
@@ -100,24 +100,29 @@ export const login = (formData) => async (dispatch) => {
   try {
     console.log("Login formData received:", formData);
 
-    // Login with Supabase instead of our backend
-    const { data, error } = await supabase.auth.signInWithPassword({
+    // Backend ile login
+    const response = await instance.post("/auth/login", {
       email: formData.username,
-      password: formData.password,
+      password: formData.password
     });
 
-    if (error) throw error;
+    if (!response.data || !response.data.token) {
+      throw new Error("Token alınamadı");
+    }
 
-    const token = data.session.access_token;
+    const token = response.data.token;
 
     // Redux store'u güncelle
     dispatch(setToken(token));
     dispatch(setIsLogin(true));
-    dispatch(setAuthProvider("supabase"));
+    dispatch(setAuthProvider("backend"));
     dispatch(setRememberMe(formData.rememberMe));
 
     // Token ve email bilgilerini uygun storage'a kaydet
     storeToken(token, formData.username, formData.rememberMe);
+    
+    // Authorization header'ı güncelle
+    instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
     dispatch(setLoading(false));
     dispatch(setSuccess("Giriş başarılı"));
@@ -126,7 +131,9 @@ export const login = (formData) => async (dispatch) => {
     console.error("Login error full details:", err);
 
     let errorMessage = "Giriş başarısız oldu";
-    if (err.message) {
+    if (err.response && err.response.data) {
+      errorMessage = err.response.data.message || errorMessage;
+    } else if (err.message) {
       errorMessage = err.message;
     }
 
@@ -276,92 +283,124 @@ let lastAuthCheckTime = 0;
 const AUTH_CACHE_TIME = 2000; // 2 saniye (ms cinsinden) - OAuth callback için kısa tutuyoruz
 
 export const checkAuthStatus = () => async (dispatch) => {
-  // Şu an için zaten bir istek yapılıyorsa, o Promise'i döndür
+  // Aynı anda birden fazla istek göndermeyi önle
   if (authCheckInProgress && authCheckPromise) {
     console.log("Auth check zaten devam ediyor, mevcut Promise'i kullan");
     return authCheckPromise;
   }
 
-  // Son kontrolden beri belirli bir süre geçmediyse, son sonucu döndür
+  // Önbellek kontrolü
   const now = Date.now();
   if (now - lastAuthCheckTime < AUTH_CACHE_TIME) {
-    console.log(
-      "Son auth check süresi dolmadı, tekrar kontrol yapmaya gerek yok"
-    );
-    return Promise.resolve(true); // Başarılı kabul et
+    console.log("Son auth check süresi dolmadı");
+    return Promise.resolve(true);
   }
 
   try {
-    // İstek başlıyor
     authCheckInProgress = true;
 
-    // Yeni Promise oluştur ve önbelleğe al
     authCheckPromise = (async () => {
       try {
-        // Supabase session kontrolü
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
-
-        if (sessionError) throw sessionError;
-
-        if (!session) {
+        // Önce local storage'da token var mı kontrol et
+        const storage = localStorage.getItem("rememberMe") === "true" ? localStorage : sessionStorage;
+        const token = storage.getItem("token");
+        const authProvider = storage.getItem("authProvider") || "backend";
+        
+        if (!token) {
+          console.log("Token bulunamadı, oturum sonlandırılıyor");
           dispatch(clearUserData());
           return false;
         }
 
-        // Token ve kullanıcı bilgileri işleme
-        const token = session.access_token;
-        instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        // Token türüne göre doğrulama yap
+        if (authProvider === "supabase" || authProvider === "google") {
+          // Supabase session kontrolü (Google OAuth2 veya Supabase login için)
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-        // Redux store güncellemeleri
-        dispatch(setToken(token));
+          if (sessionError || !session) {
+            console.log("Supabase oturumu geçersiz veya sona ermiş");
+            dispatch(clearUserData());
+            return false;
+          }
+
+          // Supabase token kullan
+          const supabaseToken = session.access_token;
+          instance.defaults.headers.common["Authorization"] = `Bearer ${supabaseToken}`;
+          
+          dispatch(setToken(supabaseToken));
+          
+          // Email bilgisini güncelle
+          if (session.user && session.user.email) {
+            dispatch(setEmail(session.user.email));
+            storage.setItem("userEmail", session.user.email);
+          }
+        } else {
+          // Backend token doğrulama
+          try {
+            instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+            
+            // Backend'e token doğrulama isteği gönder
+            const response = await instance.post("/auth/validate-token", null, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            if (!response.data || !response.data.valid) {
+              console.log("Backend token geçersiz");
+              dispatch(clearUserData());
+              return false;
+            }
+            
+            // Email bilgisini güncelle
+            if (response.data.email) {
+              dispatch(setEmail(response.data.email));
+              storage.setItem("userEmail", response.data.email);
+            }
+            
+            // Rol bilgisini güncelle
+            if (response.data.role) {
+              dispatch(setUserRole(response.data.role));
+            }
+          } catch (error) {
+            console.error("Token doğrulama hatası:", error);
+            dispatch(clearUserData());
+            return false;
+          }
+        }
+        
+        // Oturum durumunu güncelle
         dispatch(setIsLogin(true));
         dispatch(setRememberMe(localStorage.getItem("rememberMe") === "true"));
-
-        // Email bilgisi
-        if (session.user && session.user.email) {
-          dispatch(setEmail(session.user.email));
-          const storage =
-            localStorage.getItem("rememberMe") === "true"
-              ? localStorage
-              : sessionStorage;
-          storage.setItem("userEmail", session.user.email);
-        }
-
-        // Profil bilgilerini yükle - bu kısmı OAuth callback sürecinde atlayabiliriz
+        
+        // OAuth callback sırasında gereksiz profil yüklemelerini engelle
         if (window.location.pathname.includes("/oauth2/callback")) {
-          console.log(
-            "OAuth callback sürecinde tekrarlı profil yüklemesi atlanıyor"
-          );
+          console.log("OAuth callback sürecinde profil yüklemesi atlanıyor");
           return true;
         }
 
+        // Kullanıcı profilini çek
         try {
           await dispatch(fetchUserProfile());
-          return true;
         } catch (profileError) {
-          console.error("Profil bilgisi çekilirken hata:", profileError);
-          return true; // Yine de auth başarılı sayılır
+          console.error("Profil bilgisi çekilemedi:", profileError);
+          // Profil çekme hatası olsa bile oturum devam edebilir
         }
+        
+        return true;
       } catch (error) {
-        console.error("Kimlik doğrulama kontrolü hatası:", error);
+        console.error("Auth status kontrolü hatası:", error);
         await dispatch(logout());
         return false;
       }
     })();
 
-    // Promise'i bekle ve zaman damgasını güncelle
     const result = await authCheckPromise;
     lastAuthCheckTime = Date.now();
     return result;
   } finally {
-    // İşlem bittiğinde flag'i resetle
     setTimeout(() => {
       authCheckInProgress = false;
       authCheckPromise = null;
-    }, 100); // Küçük bir gecikme ile reset et
+    }, 100);
   }
 };
 export const registerUser = (userData) => async (dispatch) => {
@@ -369,40 +408,16 @@ export const registerUser = (userData) => async (dispatch) => {
   dispatch(setError(null));
 
   try {
-    // Destructure to remove confirmPassword
-    const { confirmPassword, ...registrationData } = userData;
-
-    // Form validation (unchanged)
-    if (
-      !registrationData.phoneNumber ||
-      registrationData.phoneNumber.trim() === ""
-    ) {
+    // Form validation
+    if (!userData.phoneNumber || userData.phoneNumber.trim() === "") {
       throw new Error("Telefon numarası boş olamaz");
     }
 
-    // Register with Supabase
-    const { data, error } = await supabase.auth.signUp({
-      email: registrationData.email,
-      password: registrationData.password,
-      options: {
-        data: {
-          name: registrationData.name,
-          surname: registrationData.surname,
-          phone_number: registrationData.phoneNumber,
-        },
-      },
-    });
+    // Destructure to remove confirmPassword
+    const { confirmPassword, ...registrationData } = userData;
 
-    if (error) throw error;
-
-    // Also register in our backend
-    await instance.post("/auth/register-supabase", {
-      email: registrationData.email,
-      name: registrationData.name,
-      surname: registrationData.surname,
-      phoneNumber: registrationData.phoneNumber,
-      supabaseId: data.user.id,
-    });
+    // Register directly with our backend
+    const response = await instance.post("/auth/register", registrationData);
 
     dispatch(setLoading(false));
     dispatch(
@@ -410,7 +425,7 @@ export const registerUser = (userData) => async (dispatch) => {
         "Kayıt başarılı! Lütfen e-posta adresinize gönderilen doğrulama bağlantısına tıklayın."
       )
     );
-    return data;
+    return response.data;
   } catch (err) {
     let errorMessage = "Kayıt işlemi başarısız oldu";
 
