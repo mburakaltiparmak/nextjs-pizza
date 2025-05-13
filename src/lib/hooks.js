@@ -20,6 +20,3 @@ export const userInstance = axios.create({
   baseURL: `${API_BASE_URL}/admin/users`,
   timeout: API_TIMEOUT,
 });
-
-// Geri kalan kod aynı kalacak
-// ...

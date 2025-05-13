@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import {
@@ -9,53 +9,132 @@ import {
   setAuthProvider,
   setEmail,
   setRememberMe,
+  setUserProfile,
 } from "@/lib/store/actions/userActions";
-import { setSuccess, setError } from "@/lib/store/actions/globalActions";
+import {
+  setSuccess,
+  setError,
+  setLoading,
+  handleApiError,
+} from "@/lib/store/actions/globalActions";
+import { supabase } from "@/lib/supabase";
+import { instance } from "@/lib/hooks";
+import { useAuthContext } from "@/lib/context/authContext";
+import Loading from "@/app/loading";
 
 export default function OAuthCallbackPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useDispatch();
-  const [status, setStatus] = useState("loading");
-  const [message, setMessage] = useState("");
+  const processingRef = useRef(false);
+  const hasNavigatedRef = useRef(false);
+  const { refreshAuth } = useAuthContext([], "/", false);
+
+  // Güvenli yönlendirme fonksiyonu - tekrarlı yönlendirmeleri önler
+  const navigateSafely = (url) => {
+    if (!hasNavigatedRef.current) {
+      hasNavigatedRef.current = true;
+      router.push(url);
+    } else {
+      console.log("Yönlendirme zaten yapıldı, ek yönlendirme atlanıyor");
+    }
+  };
 
   useEffect(() => {
+    // Eğer işlem zaten başladıysa, tekrar başlatma
+    if (processingRef.current) {
+      console.log("OAuth callback işlemi zaten devam ediyor, atlanıyor");
+      return;
+    }
+
     const processAuth = async () => {
       try {
+        // İşlem başladı olarak işaretle
+        processingRef.current = true;
+        dispatch(setLoading(true));
+
+        console.log("OAuth callback işleniyor - başlangıç");
+
+        // URL parametrelerini kontrol et
+        const hash = window.location.hash;
+        const query = new URLSearchParams(window.location.search);
         console.log(
-          "OAuth callback işleniyor - parametreler:",
-          Object.fromEntries(searchParams.entries())
+          "URL parametreleri kontrol ediliyor:",
+          Object.fromEntries(query.entries())
         );
 
-        // Check for error parameter first
-        const errorMsg = searchParams.get("error");
-        if (errorMsg) {
-          console.error("OAuth hata parametresi:", errorMsg);
-          setStatus("error");
-          setMessage(decodeURIComponent(errorMsg));
-          dispatch(setError(decodeURIComponent(errorMsg)));
+        // Supabase oturumunu kontrol et
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error("Supabase session hatası:", sessionError);
+          navigateSafely("/error?message=Kimlik+doğrulama+bilgisi+alınamadı");
           return;
         }
 
-        const token = searchParams.get("token");
+        let currentSession = session;
+
+        if (!currentSession) {
+          console.error("Supabase oturumu bulunamadı");
+
+          // URL'den hata kontrolü
+          const errorMessage =
+            query.get("error_description") || query.get("error");
+          if (errorMessage) {
+            console.error("OAuth error from URL:", errorMessage);
+            navigateSafely(
+              `/error?message=${encodeURIComponent(
+                "Authentication error: " + errorMessage
+              )}`
+            );
+            return;
+          }
+
+          // Kod varsa oturum için değiş tokuş et
+          const code = query.get("code");
+          if (code) {
+            console.log(
+              "URL'de authorization code bulundu, oturum için değiştiriliyor"
+            );
+            const { data, error } = await supabase.auth.exchangeCodeForSession(
+              code
+            );
+
+            if (error || !data.session) {
+              console.error("Session değişimi hatası:", error);
+              navigateSafely(
+                "/error?message=Kimlik+doğrulama+işlemi+başarısız+oldu"
+              );
+              return;
+            }
+
+            // Yeni oturumu kullan
+            currentSession = data.session;
+          } else {
+            navigateSafely("/error?message=Oturum+bilgisi+alınamadı");
+            return;
+          }
+        }
+
+        // Geçerli bir oturumumuz var
+        const token = currentSession.access_token;
         console.log("Token durumu:", token ? "mevcut" : "eksik");
 
-        if (!token) {
-          console.error("Token bulunamadı");
-          setStatus("error");
-          setMessage("Kimlik doğrulama bilgisi alınamadı.");
-          dispatch(setError("Kimlik doğrulama bilgisi alınamadı."));
-          return;
-        }
+        // Önemli: Authorization header'ı ayarla
+        instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-        // Token formatını doğrula
-        if (!isValidToken(token)) {
-          console.error("Geçersiz token formatı");
-          setStatus("error");
-          setMessage("Geçersiz kimlik doğrulama bilgisi.");
-          dispatch(setError("Geçersiz kimlik doğrulama bilgisi."));
-          return;
-        }
+        // Kullanıcı bilgisini al
+        const userData = currentSession.user;
+        const userMetadata = userData.user_metadata || {};
+
+        console.log("User info:", {
+          email: userData.email,
+          id: userData.id,
+          metadata: userMetadata,
+        });
 
         // "Beni hatırla" tercihini al
         const rememberMe = localStorage.getItem("tempRememberMe") === "true";
@@ -64,13 +143,20 @@ export default function OAuthCallbackPage() {
         // Redux store'u güncelle
         dispatch(setToken(token));
         dispatch(setIsLogin(true));
-        dispatch(setAuthProvider("google"));
+        dispatch(setAuthProvider("supabase"));
         dispatch(setRememberMe(rememberMe));
+
+        if (userData.email) {
+          dispatch(setEmail(userData.email));
+        }
 
         // Token'ı uygun storage'a kaydet
         const storage = rememberMe ? localStorage : sessionStorage;
         try {
           storage.setItem("token", token);
+          if (userData.email) {
+            storage.setItem("userEmail", userData.email);
+          }
           console.log(
             "Token başarıyla saklandı:",
             storage === localStorage ? "localStorage" : "sessionStorage"
@@ -82,181 +168,114 @@ export default function OAuthCallbackPage() {
         // "Beni hatırla" durumunu localStorage'a kaydet
         localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
 
-        // Kullanıcı bilgilerini getir
+        // Backend ile senkronize et ve profil bilgilerini getir
         try {
-          const userData = await dispatch(fetchUserProfile());
+          console.log("Backend ile senkronizasyon başlatılıyor");
 
-          // Kullanıcı email bilgisini kaydet
-          if (userData && userData.email) {
-            storage.setItem("userEmail", userData.email);
-            dispatch(setEmail(userData.email));
-          } else {
-            console.warn("Kullanıcı profil bilgilerinde email bulunamadı");
-          }
-        } catch (profileError) {
-          console.error(
-            "Kullanıcı profil bilgileri getirme hatası:",
-            profileError
+          // Önceki hata mesajlarını temizle
+          dispatch(setError(null));
+
+          // ÖNEMLİ: Kullanıcı profil verilerini Redux store'a önden yükle
+          // Bu şekilde UI, yönlendirmeden önce profil verilerine sahip olacak
+          dispatch(
+            setUserProfile({
+              name: userMetadata.name || userMetadata.full_name || "",
+              surname: userMetadata.surname || userMetadata.family_name || "",
+              email: userData.email,
+              phoneNumber:
+                userMetadata.phone_number || userMetadata.phone || "",
+              // Gerekli diğer alanlar
+            })
           );
-          // Profil bilgileri hata verse bile login sürecine devam et
+
+          // Tek bir post işlemi ile backend'e kullanıcı bilgilerini gönder
+          await instance.post("/auth/sync-supabase-user", {
+            email: userData.email,
+            supabaseId: userData.id,
+            name: userMetadata.name || userMetadata.full_name || "",
+            surname: userMetadata.surname || userMetadata.family_name || "",
+            phoneNumber: userMetadata.phone_number || userMetadata.phone || "",
+          });
+
+          console.log("Backend senkronizasyonu tamamlandı");
+
+          // Auth durumunu tek seferde yenile
+          // Bu şekilde tekrarlayan fetchUserProfile çağrıları önlenir
+          await refreshAuth();
+        } catch (syncError) {
+          // Backend hatası durumunda handleApiError ile yönet
+          const errorResult = handleApiError(syncError, dispatch, "OAuth Sync");
+
+          // Eğer yetkilendirme hatası varsa login sayfasına yönlendir
+          if (errorResult === "auth/expired") {
+            navigateSafely("/login?expired=true");
+            return;
+          }
+
+          console.error("Backend senkronizasyon hatası:", syncError);
+          // Senkronizasyon hatası olsa bile devam et
         }
 
         // Başarı mesajı
-        dispatch(setSuccess("Google ile giriş başarılı"));
+        dispatch(setSuccess("Giriş başarılı"));
 
         // Geçici "Beni hatırla" verisini temizle
         localStorage.removeItem("tempRememberMe");
-
-        setStatus("success");
-        setMessage("Giriş başarılı! Yönlendiriliyorsunuz...");
 
         // Geri dönüş URL'ine yönlendir
         const returnUrl = localStorage.getItem("authReturnUrl") || "/";
         localStorage.removeItem("authReturnUrl"); // Temizle
 
-        // Kısa bir gecikme ekle - kullanıcının başarı mesajını görmesi için
-        setTimeout(() => {
-          router.push(returnUrl);
-        }, 1500);
+        console.log("OAuth işlemi tamamlandı, yönlendiriliyor:", returnUrl);
+
+        // Loading state'i kapat
+        dispatch(setLoading(false));
+
+        // Güvenli yönlendirme fonksiyonunu kullan
+        navigateSafely(returnUrl);
       } catch (error) {
         console.error("OAuth işleme hatası:", error);
-        // Detaylı hata log'u
-        console.error("Hata detayları:", {
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        });
 
-        setStatus("error");
-        setMessage("Giriş işlemi sırasında bir hata oluştu.");
-        dispatch(setError("Giriş işlemi sırasında bir hata oluştu."));
+        // Hata detaylarını logla
+        if (error.response) {
+          console.error("Response hata detayları:", {
+            status: error.response.status,
+            data: error.response.data,
+          });
+        }
+
+        // Genel hata yönetimi
+        handleApiError(error, dispatch, "OAuth Process");
+
+        // Loading state'i kapat
+        dispatch(setLoading(false));
+
+        // Hata sayfasına güvenli yönlendirme yap
+        const errorMsg = error.message || "Unknown error";
+        navigateSafely(
+          `/error?message=${encodeURIComponent(
+            "Giriş işlemi sırasında bir hata oluştu: " + errorMsg
+          )}`
+        );
+      } finally {
+        // İşlem tamamlandı - biraz gecikmeli olarak flag'i sıfırla
+        // (olası race condition'ları önlemek için)
+        setTimeout(() => {
+          processingRef.current = false;
+        }, 300);
       }
     };
 
+    // Tek seferlik çalıştır
     processAuth();
-  }, [searchParams, dispatch, router]);
 
-  // Token doğrulama fonksiyonu
-  const isValidToken = (token) => {
-    return token && token.length > 20; // Basit bir doğrulama, gerçek JWT doğrulaması olabilir
-  };
+    // Cleanup function
+    return () => {
+      // Component unmount olursa
+      console.log("OAuthCallbackPage unmounting");
+    };
+  }, [dispatch, router, refreshAuth]); // Sadece mount olduğunda çalışması için bağımlılıkları koru
 
-  // Status cards based on the current authentication status
-  const statusCards = {
-    loading: (
-      <div className="flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-lg border border-gray-100">
-        <div className="w-16 h-16 relative mb-6">
-          <div className="absolute top-0 left-0 w-full h-full border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-        </div>
-        <h2 className="text-2xl font-Barlow font-bold text-gray-800 mb-3">
-          Bağlanıyor
-        </h2>
-        <p className="text-gray-600 font-Quattrocento_Sans text-center">
-          Google ile giriş yapılıyor, lütfen bekleyin...
-        </p>
-      </div>
-    ),
-
-    success: (
-      <div className="flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-lg border-l-4 border-green-500">
-        <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
-          <svg
-            className="w-8 h-8 text-green-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M5 13l4 4L19 7"
-            ></path>
-          </svg>
-        </div>
-        <h2 className="text-3xl font-Barlow font-bold text-gray-800 mb-2">
-          Giriş Başarılı!
-        </h2>
-        <p className="text-gray-600 font-Quattrocento_Sans text-center mb-6">
-          {message}
-        </p>
-        <div className="w-full max-w-xs bg-gray-100 h-2 rounded-full overflow-hidden">
-          <div className="bg-green-500 h-full animate-pulse"></div>
-        </div>
-      </div>
-    ),
-
-    error: (
-      <div className="flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-lg border-l-4 border-red">
-        <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
-          <svg
-            className="w-8 h-8 text-red"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M6 18L18 6M6 6l12 12"
-            ></path>
-          </svg>
-        </div>
-        <h2 className="text-3xl font-Barlow font-bold text-gray-800 mb-2">
-          Giriş Başarısız
-        </h2>
-        <p className="text-gray-600 font-Quattrocento_Sans text-center mb-6">
-          {message}
-        </p>
-        <button
-          onClick={() => router.push("/login")}
-          className="px-6 py-3 bg-red text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-Barlow font-medium flex items-center"
-        >
-          <svg
-            className="w-5 h-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M11 17l-5-5m0 0l5-5m-5 5h12"
-            ></path>
-          </svg>
-          Giriş Sayfasına Dön
-        </button>
-      </div>
-    ),
-  };
-
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-      <div className="w-full max-w-md mx-auto">
-        {/* Logo or Brand Element */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-Londrina_Solid text-red">
-            Teknolojik Yemekler
-          </h1>
-          <p className="text-gray-600 font-Quattrocento_Sans">
-            Google ile Giriş
-          </p>
-        </div>
-
-        {/* Auth Status Card */}
-        {statusCards[status]}
-
-        {/* Footer */}
-        <div className="mt-8 text-center text-gray-500 text-sm font-Quattrocento_Sans">
-          &copy; {new Date().getFullYear()} Teknolojik Yemekler. Tüm hakları
-          saklıdır.
-        </div>
-      </div>
-    </div>
-  );
+  // Yükleme durumdaysa Loading componentini göster
+  return <Loading />;
 }
