@@ -12,6 +12,7 @@ import { setError } from "@/lib/store/actions/globalActions";
 import SecondaryLoading from "@/components/secondaryLoading";
 import { AUTH_ERRORS } from "@/lib/authErrorMessages";
 import Loading from "@/app/loading";
+import Link from "next/link";
 
 const Page = () => {
   const [email, setEmail] = useState("");
@@ -163,6 +164,11 @@ const Page = () => {
               Beni Hatırla
             </label>
           </div>
+           <div className="mt-2 text-center">
+      <Link href="/forgot-password" className="text-sm text-white hover:underline">
+        Şifrenizi mi unuttunuz?
+      </Link>
+    </div>
           <div className="flex flex-col space-y-2">
             <button
               type="submit"

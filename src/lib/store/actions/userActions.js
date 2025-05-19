@@ -1,9 +1,25 @@
+// lib/store/actions/userActions.js
 import { instance, userInstance } from "@/lib/hooks";
-import { userActions } from "../reducers/userReducer";
 import { setError, setLoading, setSuccess } from "./globalActions";
 import { fetchStates } from "../constants";
-import { supabase } from "@/lib/supabase";
-import axios from "axios";
+
+export const userActions = {
+  SET_EMAIL: "SET_EMAIL",
+  SET_REMEMBER_ME: "SET_REMEMBER_ME",
+  SET_IS_LOGIN: "SET_IS_LOGIN",
+  SET_TOKEN: "SET_TOKEN",
+  SET_USER_PROFILE: "SET_USER_PROFILE",
+  SET_USER_STATUS: "SET_USER_STATUS",
+  SET_USER_ROLE: "SET_USER_ROLE",
+  SET_FETCH_STATE: "SET_FETCH_STATE",
+  CLEAR_USER_DATA: "CLEAR_USER_DATA",
+  SET_AUTH_PROVIDER: "SET_AUTH_PROVIDER",
+  SET_USER_ADDRESSES: "SET_USER_ADDRESSES",
+  ADD_USER_ADDRESS: "ADD_USER_ADDRESS",
+  UPDATE_USER_ADDRESS: "UPDATE_USER_ADDRESS",
+  REMOVE_USER_ADDRESS: "REMOVE_USER_ADDRESS",
+  SET_DEFAULT_ADDRESS: "SET_DEFAULT_ADDRESS"
+};
 
 export const setEmail = (email) => ({
   type: userActions.SET_EMAIL,
@@ -90,9 +106,12 @@ const storeToken = (token, email, rememberMe) => {
 
   // "Beni hatırla" tercihini kaydet
   localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
+  
+  // Authorization header'ı güncelle
+  instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 };
 
-// Login işlemi - sadece backend kullanacak şekilde güncellendi
+// Login işlemi - birleştirilmiş kimlik doğrulama sistemi için güncellendi
 export const login = (formData) => async (dispatch) => {
   dispatch(setLoading(true));
   dispatch(setError(null));
@@ -115,14 +134,28 @@ export const login = (formData) => async (dispatch) => {
     // Redux store'u güncelle
     dispatch(setToken(token));
     dispatch(setIsLogin(true));
-    dispatch(setAuthProvider("backend"));
+    dispatch(setAuthProvider("email"));
     dispatch(setRememberMe(formData.rememberMe));
+    
+    // Ek kullanıcı bilgilerini güncelle (eğer backend'den dönüyorsa)
+    if (response.data.email) {
+      dispatch(setEmail(response.data.email));
+    } else {
+      dispatch(setEmail(formData.username));
+    }
+    
+    if (response.data.role) {
+      dispatch(setUserRole(response.data.role));
+    }
+    
+    if (response.data.name || response.data.surname) {
+      dispatch(setUserProfile({
+        ...response.data
+      }));
+    }
 
     // Token ve email bilgilerini uygun storage'a kaydet
-    storeToken(token, formData.username, formData.rememberMe);
-    
-    // Authorization header'ı güncelle
-    instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    storeToken(token, response.data.email || formData.username, formData.rememberMe);
 
     dispatch(setLoading(false));
     dispatch(setSuccess("Giriş başarılı"));
@@ -143,6 +176,7 @@ export const login = (formData) => async (dispatch) => {
   }
 };
 
+// Google OAuth başlatma - backend'e yönlendirme yapacak
 export const initiateGoogleLogin = () => async () => {
   try {
     console.log("Google login başlatılıyor...");
@@ -157,77 +191,86 @@ export const initiateGoogleLogin = () => async () => {
     localStorage.setItem("tempRememberMe", rememberMe ? "true" : "false");
     console.log("RememberMe durumu kaydedildi:", rememberMe);
 
-    // Start Supabase Google OAuth login with explicit redirect
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin + "/oauth2/callback",
-      },
-    });
-
-    if (error) {
-      console.error("Google OAuth başlatma hatası:", error);
-      throw error;
-    }
-
-    console.log("Supabase OAuth başlatma başarılı:", data);
-    // The browser will now be redirected to Google
+    // Backend'in OAuth başlatma URL'ine yönlendir
+    const baseUrl = instance.defaults.baseURL || "";
+    window.location.href = `${baseUrl}/auth/google`;
   } catch (error) {
     console.error("Google login başlatma hatası:", error);
   }
 };
 
-// OAuth login sürecini tamamla (callback sayfasında kullanılır)
-export const handleOAuthCallback =
-  (token, rememberMe = true) =>
-  async (dispatch) => {
-    if (!token) return { error: "Token bulunamadı" };
+// OAuth callback işleyici - Supabase token için güncellendi
+export const handleOAuthCallback = (token, rememberMe = true) => async (dispatch) => {
+  if (!token) return { error: "Token bulunamadı" };
 
+  try {
+    dispatch(setLoading(true));
+
+    // Redux store'u güncelle
+    dispatch(setToken(token));
+    dispatch(setIsLogin(true));
+    dispatch(setAuthProvider("google"));
+    dispatch(setRememberMe(rememberMe));
+
+    // Token bilgisini kaydet
+    storeToken(token, "", rememberMe);
+    
+    // Token doğrulama isteği gönder - kullanıcı bilgilerini al
     try {
-      dispatch(setLoading(true));
-
-      // Redux store'u güncelle
-      dispatch(setToken(token));
-      dispatch(setIsLogin(true));
-      dispatch(setAuthProvider("google"));
-      dispatch(setRememberMe(rememberMe));
-
-      // Token bilgisini kaydet (Google giriş için varsayılan olarak rememberMe true)
-      storeToken(token, "", rememberMe);
-
-      try {
-        // Profil bilgilerini getir
-        const userData = await dispatch(fetchUserProfile());
-
-        // Email bilgisini kaydet
-        if (userData && userData.email) {
+      const response = await instance.post("/auth/validate-token", null, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data && response.data.valid) {
+        // Email bilgisini güncelle
+        if (response.data.email) {
+          const email = response.data.email;
+          dispatch(setEmail(email));
+          
+          // Email'i storage'a kaydet
           const storage = rememberMe ? localStorage : sessionStorage;
-          storage.setItem("userEmail", userData.email);
-          dispatch(setEmail(userData.email));
+          storage.setItem("userEmail", email);
         }
-      } catch (profileError) {
-        console.error("Profil bilgileri alınamadı:", profileError);
-        // Profil bilgileri alınamazsa bile temel giriş başarılı sayalım
+        
+        // Rol bilgisini güncelle
+        if (response.data.role) {
+          dispatch(setUserRole(response.data.role));
+        }
+        
+        // Status bilgisini güncelle
+        if (response.data.status) {
+          dispatch(setUserStatus(response.data.status));
+        }
       }
-
-      dispatch(setLoading(false));
-      dispatch(setSuccess("Google ile giriş başarılı"));
-
-      return { success: true };
-    } catch (error) {
-      dispatch(setError("OAuth ile giriş yapılamadı"));
-      dispatch(setLoading(false));
-      console.error("OAuth callback error:", error);
-      return { error: "OAuth callback failed" };
+    } catch (validationError) {
+      console.error("Token doğrulama hatası:", validationError);
+      // Doğrulama hatası olsa bile devam et
     }
-  };
+    
+    // Kullanıcı profilini getir
+    try {
+      await dispatch(fetchUserProfile());
+    } catch (profileError) {
+      console.error("Profil bilgisi alınamadı:", profileError);
+      // Profil hatası olsa bile devam et
+    }
 
+    dispatch(setLoading(false));
+    dispatch(setSuccess("Google ile giriş başarılı"));
+
+    return { success: true };
+  } catch (error) {
+    dispatch(setError("OAuth ile giriş yapılamadı"));
+    dispatch(setLoading(false));
+    console.error("OAuth callback error:", error);
+    return { error: "OAuth callback failed" };
+  }
+};
+
+// Çıkış işlemi - birleştirilmiş sistem için güncellendi
 export const logout = () => async (dispatch) => {
   try {
-    // Sign out from Supabase
-    await supabase.auth.signOut();
-
-    // Continue with the rest of your logout logic
+    // Tüm depolamaları temizle
     if (typeof window !== "undefined") {
       // localStorage'dan temizle
       localStorage.removeItem("token");
@@ -237,27 +280,23 @@ export const logout = () => async (dispatch) => {
       sessionStorage.removeItem("token");
       sessionStorage.removeItem("userEmail");
 
-      // "Beni hatırla" tercihini koru ama default olarak false yap
+      // "Beni hatırla" tercihini koru, ama default false yap
       localStorage.setItem("rememberMe", "false");
     }
 
-    // 2. Axios header'larını temizle
-    if (
-      typeof instance !== "undefined" &&
-      instance.defaults &&
-      instance.defaults.headers
-    ) {
+    // Axios header'larını temizle
+    if (typeof instance !== "undefined" && instance.defaults && instance.defaults.headers) {
       delete instance.defaults.headers.common["Authorization"];
     }
 
-    // 3. Redux store temizliği
+    // Redux store temizliği
     dispatch(clearUserData());
 
     return { success: true };
   } catch (error) {
     console.error("Logout hatası:", error);
 
-    // Try cleanup anyway
+    // Hata olsa bile temizlik yapmaya çalış
     try {
       if (typeof window !== "undefined") {
         localStorage.removeItem("token");
@@ -274,14 +313,13 @@ export const logout = () => async (dispatch) => {
   }
 };
 
-// lib/store/actions/userActions.js içinde
-
 // İstek kontrolü için değişkenler
 let authCheckInProgress = false;
 let authCheckPromise = null;
 let lastAuthCheckTime = 0;
-const AUTH_CACHE_TIME = 2000; // 2 saniye (ms cinsinden) - OAuth callback için kısa tutuyoruz
+const AUTH_CACHE_TIME = 2000; // 2 saniye (ms cinsinden)
 
+// Auth durumu kontrolü - birleştirilmiş token sistemi için güncellendi
 export const checkAuthStatus = () => async (dispatch) => {
   // Aynı anda birden fazla istek göndermeyi önle
   if (authCheckInProgress && authCheckPromise) {
@@ -304,7 +342,6 @@ export const checkAuthStatus = () => async (dispatch) => {
         // Önce local storage'da token var mı kontrol et
         const storage = localStorage.getItem("rememberMe") === "true" ? localStorage : sessionStorage;
         const token = storage.getItem("token");
-        const authProvider = storage.getItem("authProvider") || "backend";
         
         if (!token) {
           console.log("Token bulunamadı, oturum sonlandırılıyor");
@@ -312,66 +349,47 @@ export const checkAuthStatus = () => async (dispatch) => {
           return false;
         }
 
-        // Token türüne göre doğrulama yap
-        if (authProvider === "supabase" || authProvider === "google") {
-          // Supabase session kontrolü (Google OAuth2 veya Supabase login için)
-          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-          if (sessionError || !session) {
-            console.log("Supabase oturumu geçersiz veya sona ermiş");
+        // Token doğrulama
+        try {
+          instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+          
+          // Birleştirilmiş token doğrulama isteği
+          const response = await instance.post("/auth/validate-token", null, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          if (!response.data || !response.data.valid) {
+            console.log("Token geçersiz");
             dispatch(clearUserData());
             return false;
           }
-
-          // Supabase token kullan
-          const supabaseToken = session.access_token;
-          instance.defaults.headers.common["Authorization"] = `Bearer ${supabaseToken}`;
-          
-          dispatch(setToken(supabaseToken));
           
           // Email bilgisini güncelle
-          if (session.user && session.user.email) {
-            dispatch(setEmail(session.user.email));
-            storage.setItem("userEmail", session.user.email);
+          if (response.data.email) {
+            dispatch(setEmail(response.data.email));
+            storage.setItem("userEmail", response.data.email);
           }
-        } else {
-          // Backend token doğrulama
-          try {
-            instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-            
-            // Backend'e token doğrulama isteği gönder
-            const response = await instance.post("/auth/validate-token", null, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            
-            if (!response.data || !response.data.valid) {
-              console.log("Backend token geçersiz");
-              dispatch(clearUserData());
-              return false;
-            }
-            
-            // Email bilgisini güncelle
-            if (response.data.email) {
-              dispatch(setEmail(response.data.email));
-              storage.setItem("userEmail", response.data.email);
-            }
-            
-            // Rol bilgisini güncelle
-            if (response.data.role) {
-              dispatch(setUserRole(response.data.role));
-            }
-          } catch (error) {
-            console.error("Token doğrulama hatası:", error);
-            dispatch(clearUserData());
-            return false;
+          
+          // Rol bilgisini güncelle
+          if (response.data.role) {
+            dispatch(setUserRole(response.data.role));
           }
+          
+          // Status bilgisini güncelle
+          if (response.data.status) {
+            dispatch(setUserStatus(response.data.status));
+          }
+        } catch (error) {
+          console.error("Token doğrulama hatası:", error);
+          dispatch(clearUserData());
+          return false;
         }
         
         // Oturum durumunu güncelle
         dispatch(setIsLogin(true));
         dispatch(setRememberMe(localStorage.getItem("rememberMe") === "true"));
         
-        // OAuth callback sırasında gereksiz profil yüklemelerini engelle
+        // OAuth callback'te profil yüklemesini atla
         if (window.location.pathname.includes("/oauth2/callback")) {
           console.log("OAuth callback sürecinde profil yüklemesi atlanıyor");
           return true;
@@ -403,6 +421,7 @@ export const checkAuthStatus = () => async (dispatch) => {
     }, 100);
   }
 };
+
 export const registerUser = (userData) => async (dispatch) => {
   dispatch(setLoading(true));
   dispatch(setError(null));
@@ -425,10 +444,24 @@ export const registerUser = (userData) => async (dispatch) => {
         "Kayıt başarılı! Lütfen e-posta adresinize gönderilen doğrulama bağlantısına tıklayın."
       )
     );
-    return response.data;
+    return { success: true, data: response.data };
   } catch (err) {
+    console.error("Registration error details:", err);
     let errorMessage = "Kayıt işlemi başarısız oldu";
 
+    // Timeout hatası kontrolü
+    if (err.code === 'ECONNABORTED') {
+      // Timeout hatası - bunu başarı olarak işleyelim çünkü backend'deki işlem aslında başarılı
+      dispatch(setLoading(false));
+      dispatch(
+        setSuccess(
+          "Kayıt işlemi muhtemelen başarılı! Lütfen e-posta kutunuzu kontrol edin."
+        )
+      );
+      return { success: true, timeout: true };
+    }
+
+    // Diğer hatalar için normal hata işleme
     if (err.message) {
       errorMessage = err.message;
     } else if (err.response && err.response.data && err.response.data.message) {
@@ -440,8 +473,11 @@ export const registerUser = (userData) => async (dispatch) => {
     return { error: errorMessage };
   }
 };
+// userActions.js dosyasına eklenecek kod
 
-// Şifre değiştir
+
+
+// Şifre değiştirme fonksiyonu
 export const changePassword = (passwordData) => async (dispatch) => {
   dispatch(setLoading(true));
   dispatch(setError(null));
@@ -459,8 +495,7 @@ export const changePassword = (passwordData) => async (dispatch) => {
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
     } else if (err.request) {
-      errorMessage =
-        "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
+      errorMessage = "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
     } else {
       errorMessage = err.message || errorMessage;
     }
@@ -471,7 +506,7 @@ export const changePassword = (passwordData) => async (dispatch) => {
   }
 };
 
-// Kullanıcı profil bilgilerini getir
+// Kullanıcı profil bilgilerini getirme fonksiyonu
 export const fetchUserProfile = () => async (dispatch, getState) => {
   try {
     console.log("Kullanıcı profili alınıyor...");
@@ -483,31 +518,36 @@ export const fetchUserProfile = () => async (dispatch, getState) => {
     }
 
     console.log("Kullanıyor token:", token.substring(0, 10) + "...");
-    console.log(
-      "Authorization header:",
-      instance.defaults.headers.common["Authorization"]
-    );
-
+    
     // Double-check auth header is set properly
     instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-    // Use instance directly
     try {
       const response = await instance.get("/user/profile");
-
       const userData = response.data;
       console.log("Kullanıcı profili alındı:", userData);
 
-      dispatch({
-        type: "SET_USER_PROFILE",
-        payload: userData,
-      });
+      dispatch(setUserProfile(userData));
+      
+      // Rol bilgisini güncelle (eğer mevcutsa)
+      if (userData.role) {
+        dispatch(setUserRole(userData.role));
+      }
+      
+      // Status bilgisini güncelle (eğer mevcutsa)
+      if (userData.status) {
+        dispatch(setUserStatus(userData.status));
+      }
 
       return userData;
     } catch (error) {
       console.error("API request error:", error);
-      console.error("Error status:", error.response?.status);
-      console.error("Error details:", error.response?.data);
+      
+      // Yetkilendirme hatası durumunda
+      if (error.response && error.response.status === 401) {
+        dispatch(clearUserData()); // Oturumu temizle
+      }
+      
       throw error;
     }
   } catch (error) {
@@ -515,7 +555,6 @@ export const fetchUserProfile = () => async (dispatch, getState) => {
     throw error;
   }
 };
-// userActions.js dosyasına eklenecek kod
 
 // Kullanıcı email doğrulama fonksiyonu
 export const verifyEmail = (token) => async (dispatch) => {
@@ -524,7 +563,7 @@ export const verifyEmail = (token) => async (dispatch) => {
     dispatch(setLoading(true));
     dispatch(setError(null));
 
-    // instance kullanarak API endpointine istek gönder
+    // API endpointine istek gönder
     const response = await instance.get(`/auth/verify?token=${token}`);
     console.log("Doğrulama yanıtı:", response.data);
 
@@ -557,7 +596,8 @@ export const verifyEmail = (token) => async (dispatch) => {
     return { error: errorMessage };
   }
 };
-// Kullanıcı profil bilgilerini güncelle
+
+// Kullanıcı profil bilgilerini güncelleme fonksiyonu
 export const updateUserProfile = (userData) => async (dispatch) => {
   dispatch(setLoading(true));
   dispatch(setError(null));
@@ -574,9 +614,14 @@ export const updateUserProfile = (userData) => async (dispatch) => {
     // Güncellenmiş kullanıcı bilgilerini Redux store'a kaydet
     dispatch(setUserProfile(updatedUserData));
 
+    // Email değiştiyse, email state'ini de güncelle
     if (updatedUserData.email) {
       dispatch(setEmail(updatedUserData.email));
-      localStorage.setItem("userEmail", updatedUserData.email);
+      
+      // Local storage'daki email'i de güncelle
+      const rememberMe = localStorage.getItem("rememberMe") === "true";
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem("userEmail", updatedUserData.email);
     }
 
     dispatch(setLoading(false));
@@ -606,7 +651,7 @@ export const updateUserProfile = (userData) => async (dispatch) => {
   }
 };
 
-// Kullanıcı adreslerini getir - hata yönetimi iyileştirildi
+// Kullanıcı adreslerini getirme fonksiyonu
 export const fetchUserAddresses = () => async (dispatch) => {
   dispatch(setUserFetchState(fetchStates.FETCHING));
 
@@ -620,16 +665,30 @@ export const fetchUserAddresses = () => async (dispatch) => {
   } catch (err) {
     console.error("Adresler yüklenirken hata:", err);
 
-    // Hata durumunda boş dizi ile devam et
+    // 403 veya 404 hatası durumunda - yeni kullanıcı veya henüz adres yok
+    if (err.response && (err.response.status === 403 || err.response.status === 404)) {
+      console.log("Kullanıcının adresi bulunamadı veya yetki hatası - bu normal olabilir");
+      dispatch(setUserAddresses([]));
+      dispatch(setUserFetchState(fetchStates.FETCHED)); // FAILED değil, FETCHED
+      return []; // Boş dizi dön, hata fırlatma
+    }
+
+    // Yetkilendirme hatası durumunda
+    if (err.response && err.response.status === 401) {
+      dispatch(logout()); // Oturumu temizle
+    }
+
+    // Diğer hata durumlarında
     dispatch(setUserAddresses([]));
     dispatch(setUserFetchState(fetchStates.FAILED));
-
-    // Hatayı fırlat ama state'i güncelle
-    throw err;
+    
+    // Hatayı kontrollü bir şekilde işleyip, boş dizi döndür
+    console.warn("Adres yükleme hatası işlendi:", err.message);
+    return [];
   }
 };
 
-// Yeni adres ekle
+// Yeni adres ekleme fonksiyonu
 export const createAddress = (addressData) => async (dispatch) => {
   dispatch(setLoading(true));
 
@@ -640,7 +699,7 @@ export const createAddress = (addressData) => async (dispatch) => {
       throw new Error("Adres eklenirken bir hata oluştu");
     }
 
-    dispatch(addUserAddress(response.data));
+    dispatch(setUserAddresses(response.data)); // Backend tüm adresleri döndürür
     dispatch(setSuccess("Adres başarıyla eklendi"));
     dispatch(setLoading(false));
 
@@ -651,6 +710,11 @@ export const createAddress = (addressData) => async (dispatch) => {
     let errorMessage = "Adres eklenemedi";
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
+      
+      // Yetkilendirme hatası durumunda
+      if (err.response.status === 401) {
+        dispatch(logout()); // Oturumu temizle
+      }
     }
 
     dispatch(setError(errorMessage));
@@ -660,7 +724,7 @@ export const createAddress = (addressData) => async (dispatch) => {
   }
 };
 
-// Adres güncelle
+// Adres güncelleme fonksiyonu
 export const updateAddress = (addressId, addressData) => async (dispatch) => {
   dispatch(setLoading(true));
 
@@ -674,7 +738,7 @@ export const updateAddress = (addressId, addressData) => async (dispatch) => {
       throw new Error("Adres güncellenirken bir hata oluştu");
     }
 
-    dispatch(updateUserAddress(response.data));
+    dispatch(setUserAddresses(response.data)); // Backend'in tüm güncel adresleri döndürdüğünü varsayıyoruz
     dispatch(setSuccess("Adres başarıyla güncellendi"));
     dispatch(setLoading(false));
 
@@ -685,6 +749,11 @@ export const updateAddress = (addressId, addressData) => async (dispatch) => {
     let errorMessage = "Adres güncellenemedi";
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
+      
+      // Yetkilendirme hatası durumunda
+      if (err.response.status === 401) {
+        dispatch(logout()); // Oturumu temizle
+      }
     }
 
     dispatch(setError(errorMessage));
@@ -694,14 +763,21 @@ export const updateAddress = (addressId, addressData) => async (dispatch) => {
   }
 };
 
-// Adres sil
+// Adres silme fonksiyonu
 export const deleteAddress = (addressId) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
-    await instance.delete(`/user/addresses/${addressId}`);
-
-    dispatch(removeUserAddress(addressId));
+    const response = await instance.delete(`/user/addresses/${addressId}`);
+    
+    // Backend'in tüm güncel adresleri döndürdüğünü varsayıyoruz
+    if (response && response.data) {
+      dispatch(setUserAddresses(response.data));
+    } else {
+      // Eğer backend sadece başarı durumu dönüyorsa, adresleri tekrar çekelim
+      await dispatch(fetchUserAddresses());
+    }
+    
     dispatch(setSuccess("Adres başarıyla silindi"));
     dispatch(setLoading(false));
 
@@ -712,6 +788,11 @@ export const deleteAddress = (addressId) => async (dispatch) => {
     let errorMessage = "Adres silinemedi";
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
+      
+      // Yetkilendirme hatası durumunda
+      if (err.response.status === 401) {
+        dispatch(logout()); // Oturumu temizle
+      }
     }
 
     dispatch(setError(errorMessage));
@@ -721,7 +802,7 @@ export const deleteAddress = (addressId) => async (dispatch) => {
   }
 };
 
-// Varsayılan adres ayarla
+// Varsayılan adres ayarlama fonksiyonu
 export const setAddressAsDefault = (addressId) => async (dispatch) => {
   dispatch(setLoading(true));
 
@@ -734,12 +815,9 @@ export const setAddressAsDefault = (addressId) => async (dispatch) => {
       throw new Error("Varsayılan adres ayarlanırken bir hata oluştu");
     }
 
-    dispatch(setDefaultAddress(addressId));
+    dispatch(setUserAddresses(response.data)); // Tüm güncellenmiş adresleri al
     dispatch(setSuccess("Varsayılan adres ayarlandı"));
     dispatch(setLoading(false));
-
-    // Tüm adresleri yeniden yükle
-    dispatch(fetchUserAddresses());
 
     return response.data;
   } catch (err) {
@@ -748,11 +826,68 @@ export const setAddressAsDefault = (addressId) => async (dispatch) => {
     let errorMessage = "Varsayılan adres ayarlanamadı";
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
+      
+      // Yetkilendirme hatası durumunda
+      if (err.response.status === 401) {
+        dispatch(logout()); // Oturumu temizle
+      }
     }
 
     dispatch(setError(errorMessage));
     dispatch(setLoading(false));
 
+    return { error: errorMessage };
+  }
+};
+
+// Şifre sıfırlama işlemleri için yeni eklenen eylemler
+export const forgotPassword = (email) => async (dispatch) => {
+  dispatch(setLoading(true));
+  dispatch(setError(null));
+
+  try {
+    const response = await instance.post("/auth/forgot-password", { email });
+    
+    dispatch(setLoading(false));
+    dispatch(setSuccess("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi"));
+    
+    return { success: true };
+  } catch (err) {
+    let errorMessage = "Şifre sıfırlama işlemi başarısız oldu";
+    
+    if (err.response && err.response.data) {
+      errorMessage = err.response.data.message || errorMessage;
+    }
+    
+    dispatch(setError(errorMessage));
+    dispatch(setLoading(false));
+    return { error: errorMessage };
+  }
+};
+
+export const resetPassword = (token, newPassword) => async (dispatch) => {
+  dispatch(setLoading(true));
+  dispatch(setError(null));
+
+  try {
+    const response = await instance.post("/auth/reset-password", { 
+      token, 
+      newPassword 
+    });
+    
+    dispatch(setLoading(false));
+    dispatch(setSuccess("Şifreniz başarıyla sıfırlandı. Lütfen giriş yapın."));
+    
+    return { success: true };
+  } catch (err) {
+    let errorMessage = "Şifre sıfırlama işlemi başarısız oldu";
+    
+    if (err.response && err.response.data) {
+      errorMessage = err.response.data.message || errorMessage;
+    }
+    
+    dispatch(setError(errorMessage));
+    dispatch(setLoading(false));
     return { error: errorMessage };
   }
 };

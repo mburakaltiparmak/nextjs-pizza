@@ -6,13 +6,13 @@ export const useAppSelector = useSelector.withTypes();
 export const useAppStore = useStore.withTypes();
 
 // API istekleri için sabitler
-const API_TIMEOUT = 10000; // 10 saniye
-const API_BASE_URL = "https://pizza-backend.fly.dev/pizza/api"; // Düzeltildi - sonunda '/' olmadan
+const API_TIMEOUT = 30000; 
+const API_BASE_URL = "http://localhost:8080/pizza/api"; // Düzeltildi - sonunda '/' olmadan
 
 // Axios instance oluştur - timeout ve yeniden denemeleri ekle
 export const instance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: API_TIMEOUT, // 10 saniye zaman aşımı
+  timeout: API_TIMEOUT, // 30 saniye zaman aşımı
 });
 
 // Kullanıcı işlemleri için ayrı bir instance

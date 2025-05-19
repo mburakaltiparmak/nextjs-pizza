@@ -13,9 +13,17 @@ import {
   checkAuthStatus,
   fetchUserAddresses,
   logout,
+  setEmail,
+  setToken,
+  setIsLogin,
+  setUserProfile,
+  setUserRole,
+  setUserStatus
 } from "@/lib/store/actions/userActions";
 import { getSafeErrorMessage } from "@/lib/authErrorMessages";
 import { createDebouncedRequest } from "@/lib/utils/asyncUtils";
+// Supabase importları
+import { supabase, syncSupabaseUser } from "@/lib/supabase";
 
 // Auth context oluşturma
 const AuthContext = createContext(null);
@@ -48,76 +56,202 @@ export function AuthProvider({ children }) {
       mountedRef.current = false;
     };
   }, []);
-
-  // Auth kontrolü - deduplikasyon için geliştirildi
-  const checkAuth = useCallback(
-    async (force = false) => {
-      // Bir sorgu zaten devam ediyorsa ve zorlanmadıysa işlemi atla
-      if (authInProgress.current && !force) {
-        console.log("Auth check zaten devam ediyor, atlıyorum");
-        return true; // İşlem devam ediyor, başarılı kabul et
+  
+ // Supabase Auth Listener
+useEffect(() => {
+  // Eğer component unmount olduysa hiçbir şey yapma
+  if (!mountedRef.current) return;
+  
+  // Supabase auth değişikliklerini dinle
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log('Supabase auth durumu değişti:', event);
+    
+    if (!mountedRef.current) return;
+    
+    if (event === 'SIGNED_IN' && session) {
+      try {
+        setLoading(true);
+        
+        // Import kontrolü
+        if (typeof syncSupabaseUser !== 'function') {
+          console.error('syncSupabaseUser fonksiyonu bulunamadı');
+          return;
+        }
+        
+        // Backend ile kullanıcıyı senkronize et
+        const userData = await syncSupabaseUser(session);
+        
+        if (userData) {
+          // Redux store'u güncelle
+          dispatch(setToken(session.access_token));
+          dispatch(setIsLogin(true));
+          dispatch(setEmail(session.user.email));
+          
+          dispatch(setUserRole(userData.role));
+          dispatch(setUserStatus(userData.status));
+          dispatch(setUserProfile({
+            name: userData.name || '',
+            surname: userData.surname || '',
+            email: userData.email,
+            // Diğer profil bilgileri
+          }));
+          
+          // Adres bilgilerini getir
+          try {
+            await dispatch(fetchUserAddresses());
+          } catch (addressError) {
+            console.error("Adresler yüklenirken hata:", addressError);
+          }
+        }
+      } catch (error) {
+        console.error('Supabase auth entegrasyonu hatası:', error);
+      } finally {
+        if (mountedRef.current) {
+          setLoading(false);
+        }
       }
+    } else if (event === 'SIGNED_OUT') {
+      // Oturum sonlandı, Redux store'u temizle
+      dispatch(logout());
+    }
+  });
+  
+  // Cleanup
+  return () => {
+    subscription?.unsubscribe();
+  };
+}, [dispatch]);
+  // Auth kontrolü - deduplikasyon için geliştirildi
+const checkAuth = useCallback(
+  async (force = false) => {
+    // Bir sorgu zaten devam ediyorsa ve zorlanmadıysa işlemi atla
+    if (authInProgress.current && !force) {
+      console.log("Auth check zaten devam ediyor, atlıyorum");
+      return true; // İşlem devam ediyor, başarılı kabul et
+    }
 
-      const now = Date.now();
-      const CACHE_TIME = 60000; // 1 dakika
+    const now = Date.now();
+    const CACHE_TIME = 60000; // 1 dakika
 
-      // Eğer ilk kontrol yapılmadıysa veya force ile çağrıldıysa veya son kontrolden uzun zaman geçtiyse
-      if (!initialCheckDone.current || force || now - lastCheck > CACHE_TIME) {
-        try {
-          // Component unmount olduysa işlemi durdur
-          if (!mountedRef.current) return false;
+    // Eğer ilk kontrol yapılmadıysa veya force ile çağrıldıysa veya son kontrolden uzun zaman geçtiyse
+    if (!initialCheckDone.current || force || now - lastCheck > CACHE_TIME) {
+      try {
+        // Component unmount olduysa işlemi durdur
+        if (!mountedRef.current) return false;
 
-          setLoading(true);
-          authInProgress.current = true;
+        setLoading(true);
+        authInProgress.current = true;
 
-          console.log(
-            "Auth durumu kontrol ediliyor - " +
-              (force
-                ? "force"
-                : initialCheckDone.current
-                ? "periyodik kontrol"
-                : "ilk kontrol")
-          );
+        console.log(
+          "Auth durumu kontrol ediliyor - " +
+            (force
+              ? "force"
+              : initialCheckDone.current
+              ? "periyodik kontrol"
+              : "ilk kontrol")
+        );
 
-          // Auth durumunu kontrol et
-          const authResult = await dispatch(checkAuthStatus());
-
-          // Component unmount olduysa işlemi durdur
-          if (!mountedRef.current) return authResult;
-
-          // Adres bilgilerini getir (sadece giriş yapılmışsa ve token varsa)
-          if (isLogin && token) {
-            try {
-              await dispatch(fetchUserAddresses());
-            } catch (addressError) {
-              console.error("Adresler yüklenirken hata:", addressError);
-              // Adres hatası işlemi engellemez
+        // Önce Supabase session kontrolü
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        let authResult = false;
+        
+        if (session) {
+          // Supabase oturumu varsa
+          console.log("Supabase oturumu bulundu, backend senkronizasyonu yapılıyor");
+          
+          // Import kontrolü
+          if (typeof syncSupabaseUser !== 'function') {
+            console.error('syncSupabaseUser fonksiyonu bulunamadı');
+            // Normal auth kontrolüne devam et
+          } else {
+            // syncSupabaseUser fonksiyonu mevcutsa kullan
+            const userData = await syncSupabaseUser(session);
+            
+            if (userData) {
+              // Redux store'u güncelle
+              dispatch(setToken(session.access_token));
+              dispatch(setIsLogin(true));
+              dispatch(setEmail(session.user.email));
+              
+              if (userData.role) dispatch(setUserRole(userData.role));
+              if (userData.status) dispatch(setUserStatus(userData.status));
+              dispatch(setUserProfile({
+                name: userData.name || '',
+                surname: userData.surname || '',
+                email: userData.email,
+                // Ek profil bilgileri
+              }));
+              
+              authResult = true;
             }
           }
-
-          // Kontrol tarihini güncelle
-          setLastCheck(Date.now());
-          initialCheckDone.current = true;
-
-          return authResult;
-        } catch (error) {
-          console.error("Auth kontrol hatası:", error);
-          return false;
-        } finally {
-          if (mountedRef.current) {
-            setLoading(false);
-          }
-          authInProgress.current = false;
         }
-      } else {
-        console.log(
-          "Auth kontrolü atlandı - son kontrol üzerinden yeterince zaman geçmedi"
-        );
-        return true; // Önbellekte geçerli bir değer var, başarılı kabul et
+        
+        // Eğer Supabase ile auth olmadıysa, normal JWT kontrolü
+        if (!authResult) {
+          authResult = await dispatch(checkAuthStatus());
+        }
+
+        // Component unmount olduysa işlemi durdur
+        if (!mountedRef.current) return authResult;
+
+        // Adres bilgilerini getir (sadece giriş yapılmışsa ve token varsa)
+        if ((isLogin || authResult) && token) {
+          try {
+            await dispatch(fetchUserAddresses());
+          } catch (addressError) {
+            console.error("Adresler yüklenirken hata:", addressError);
+            // Adres hatası işlemi engellemez
+          }
+        }
+
+        // Kontrol tarihini güncelle
+        setLastCheck(Date.now());
+        initialCheckDone.current = true;
+
+        return authResult;
+      } catch (error) {
+        console.error("Auth kontrol hatası:", error);
+        return false;
+      } finally {
+        if (mountedRef.current) {
+          setLoading(false);
+        }
+        authInProgress.current = false;
       }
-    },
-    [dispatch, lastCheck, isLogin, token]
-  );
+    } else {
+      console.log(
+        "Auth kontrolü atlandı - son kontrol üzerinden yeterince zaman geçmedi"
+      );
+      return true; // Önbellekte geçerli bir değer var, başarılı kabul et
+    }
+  },
+  [dispatch, lastCheck, isLogin, token]
+);
+
+  // Google OAuth başlatma
+  const initiateGoogleLogin = useCallback(async (rememberMe = true) => {
+    try {
+      // Mevcut URL'i kaydet (geri dönüş için)
+      const returnUrl = window.location.pathname;
+      localStorage.setItem("authReturnUrl", returnUrl);
+      localStorage.setItem("tempRememberMe", rememberMe ? "true" : "false");
+      
+      // Supabase OAuth başlat
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/oauth2/callback`
+        }
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Google OAuth başlatma hatası:", error);
+      throw error;
+    }
+  }, []);
 
   // İlk yükleme kontrolü - sadece bir kez çalışır
   useEffect(() => {
@@ -166,6 +300,10 @@ export function AuthProvider({ children }) {
   // Çıkış yap ve yönlendir
   const handleLogout = useCallback(async () => {
     try {
+      // Önce Supabase oturumunu kapat
+      await supabase.auth.signOut();
+      
+      // Sonra Redux store'u temizle
       await dispatch(logout());
       router.push("/login");
     } catch (error) {
@@ -183,7 +321,7 @@ export function AuthProvider({ children }) {
     [isLogin, role]
   );
 
-  // Context değerini oluştur
+  // Context değerini genişlet - Google login eklendi
   const contextValue = {
     isAuthenticated: isLogin,
     user,
@@ -198,6 +336,8 @@ export function AuthProvider({ children }) {
     logout: handleLogout,
     isAuthorized,
     checkAuth,
+    // Yeni eklenen fonksiyon
+    googleLogin: initiateGoogleLogin
   };
 
   return (
@@ -205,13 +345,7 @@ export function AuthProvider({ children }) {
   );
 }
 
-/**
- * Auth Context Hook
- * @param {Array} allowedRoles - İzin verilen roller dizisi (boşsa tüm roller)
- * @param {string} redirectPath - Yetkisiz erişimde yönlendirilecek yol
- * @param {boolean} requireAuth - Giriş gerektirme durumu
- * @returns {Object} Auth durumu ve yardımcı fonksiyonlar
- */
+// Mevcut hook tanımlamaları aynı kalıyor
 export const useAuthContext = (
   allowedRoles = [],
   redirectPath = "/",
@@ -283,7 +417,7 @@ export const useAuth = () => {
     throw new Error("useAuth hook must be used within an AuthProvider");
   }
 
-  // Sadece sık kullanılan özellikleri döndür
+  // Sadece sık kullanılan özellikleri döndür - googleLogin eklendi
   return {
     isAuthenticated: context.isAuthenticated,
     loading: context.loading,
@@ -291,6 +425,7 @@ export const useAuth = () => {
     role: context.role,
     refreshAuth: context.refreshAuth,
     logout: context.logout,
+    googleLogin: context.googleLogin
   };
 };
 

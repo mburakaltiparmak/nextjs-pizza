@@ -116,73 +116,70 @@ export default function RegisterPage() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    // Final validation before submission
-    const isValid = Object.entries(fieldValidations).every(
-      ([field, isValid]) => {
-        if (!isValid) {
-          setTouched((prev) => ({
-            ...prev,
-            [field]: true,
-          }));
-        }
-        return isValid;
+  // Final validation before submission
+  const isValid = Object.entries(fieldValidations).every(
+    ([field, isValid]) => {
+      if (!isValid) {
+        setTouched((prev) => ({
+          ...prev,
+          [field]: true,
+        }));
       }
-    );
-
-    if (!isValid) {
-      return;
+      return isValid;
     }
+  );
 
-    // Email Gmail kontrolü
-    if (!formData.email.endsWith("@gmail.com")) {
+  if (!isValid) {
+    return;
+  }
+
+  // Email Gmail kontrolü
+  if (!formData.email.endsWith("@gmail.com")) {
+    toast({
+      title: "Hata",
+      description: "Şu anda sadece Gmail uzantılı e-posta adreslerini kabul edebiliyoruz.",
+      type: "error",
+      duration: 5000,
+    });
+    return;
+  }
+
+  // Şifre tekrarını formdan çıkar
+  const { confirmPassword, ...registrationData } = formData;
+
+  try {
+    // Kayıt işlemini gerçekleştir
+    const result = await dispatch(registerUser(registrationData));
+
+    // Timeout durumunu kontrol et
+    if (result && result.success) {
+      let message = "Kayıt işlemi başarıyla tamamlandı!";
+      
+      // Timeout durumunda daha açıklayıcı mesaj
+      if (result.timeout) {
+        message = "Kayıt işlemi alındı! Sunucu geç yanıt verdi, ancak işleminiz muhtemelen başarılı. Lütfen e-posta kutunuzu kontrol edin.";
+      }
+      
       toast({
-        title: "Hata",
-        description: "Şu anda sadece Gmail uzantılı e-posta adreslerini kabul edebiliyoruz.",
-        type: "error",
+        title: "Başarılı",
+        description: message,
+        type: "success",
         duration: 5000,
       });
-      return;
-    }
+      
+      router.push("/signup/success");
+    } else if (result && result.error) {
+      // Özel hata mesajları
+      const errorMap = {
+        "Bu email zaten kullanılıyor":
+          "Bu e-posta adresi zaten kayıtlı. Farklı bir e-posta adresi kullanın veya giriş yapın.",
+        default: "Kayıt işlemi sırasında bir hata oluştu",
+      };
 
-    // Şifre tekrarını formdan çıkar
-    const { confirmPassword, ...registerData } = formData;
-
-    try {
-      // Kayıt işlemini gerçekleştir
-      const result = await dispatch(registerUser(registerData));
-
-      // Eğer sonuç bir hata içeriyorsa
-      if (result && result.error) {
-        // Özel hata mesajları
-        const errorMap = {
-          "Bu email zaten kullanılıyor":
-            "Bu e-posta adresi zaten kayıtlı. Farklı bir e-posta adresi kullanın veya giriş yapın.",
-          default: "Kayıt işlemi sırasında bir hata oluştu",
-        };
-
-        const errorMessage = errorMap[result.error] || errorMap.default;
-        setLocalError(errorMessage);
-        toast({
-          title: "Hata",
-          description: errorMessage,
-          type: "error",
-          duration: 5000,
-        });
-      } else {
-        toast({
-          title: "Başarılı",
-          description: "Kayıt işlemi başarıyla tamamlandı!",
-          type: "success",
-          duration: 3000,
-        });
-        router.push("/signup/success");
-      }
-    } catch (error) {
-      console.error("Kayıt sırasında beklenmeyen bir hata oluştu:", error);
-      const errorMessage = "Kayıt işlemi sırasında beklenmeyen bir hata oluştu";
+      const errorMessage = errorMap[result.error] || errorMap.default;
       setLocalError(errorMessage);
       toast({
         title: "Hata",
@@ -191,7 +188,19 @@ export default function RegisterPage() {
         duration: 5000,
       });
     }
-  };
+  } catch (error) {
+    console.error("Kayıt sırasında beklenmeyen bir hata oluştu:", error);
+    const errorMessage = "Kayıt işlemi sırasında beklenmeyen bir hata oluştu";
+    setLocalError(errorMessage);
+    toast({
+      title: "Hata",
+      description: errorMessage,
+      type: "error",
+      duration: 5000,
+    });
+  }
+};
+
   const handleGoogleLogin = () => {
       // Google girişine başlamadan önce rememberMe tercihini localStorage'a kaydet
       localStorage.setItem("rememberMe",true);
