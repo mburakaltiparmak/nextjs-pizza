@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { useRouter } from "next/navigation";
 import { instance } from "@/lib/hooks"; // Backend API için instance
-import { setSelectedAddress } from "@/lib/store/actions/orderActions"; // Action'ı import et
+import { clearCartAction, saveCartToStorage, setSelectedAddress } from "@/lib/store/actions/orderActions"; // Action'ı import et
 import Loading from "../loading";
 import NotFound from "../not-found";
 import { Home } from "lucide-react";
@@ -32,6 +32,15 @@ export default function SuccessPage() {
 
   const [latestOrder, setLatestOrder] = useState(null);
   const [addressLoading, setAddressLoading] = useState(false);
+
+  useEffect(() => {
+    // Sayfa başarıyla render edildi, sepeti temizle
+    if (!loading && !error) {
+      console.log("Success sayfası yüklendi, sepet temizleniyor...");
+      dispatch(clearCartAction());
+      saveCartToStorage([]);
+    }
+  }, [dispatch,loading,error]); 
 
   // Eğer adres ID'si varsa ve adres nesnesi yoksa, adresi API'den getir
   useEffect(() => {

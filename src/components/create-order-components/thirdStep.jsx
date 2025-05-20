@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, CreditCard } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import Loading from "@/app/loading";
+import SecondaryLoading from "../secondaryLoading";
 
 // Online Kredi Kartı component'i - Kart bilgileri formu
 const OnlineCardPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control }) => {
@@ -22,6 +24,7 @@ const OnlineCardPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control
         </p>
         
         <div className="space-y-6">
+          {/* Mevcut form alanları */}
           <Controller
             name="cardNumber"
             control={control}
@@ -46,6 +49,7 @@ const OnlineCardPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control
             )}
           />
           
+          {/* Diğer form alanları - değişmiyor */}
           <Controller
             name="nameOnCard"
             control={control}
@@ -175,12 +179,13 @@ const OnlineCardPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control
           disabled={isSubmitting}
           className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md bg-yellow text-red hover:bg-red hover:text-yellow border border-transparent hover:border-yellow"
         >
-          {isSubmitting ? "İşleniyor..." : "SİPARİŞİ TAMAMLA"}
+          SİPARİŞİ TAMAMLA
         </button>
       </div>
     </form>
   );
 };
+
 // Diğer ödeme yöntemleri için component - Sadece not alanı
 const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, paymentMethod }) => {
   // Ödeme yöntemine göre başlık ve açıklama
@@ -211,7 +216,6 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
   const selectedAddress = useAppSelector((state) => state.order.selectedAddress);
   const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
   const role = useAppSelector((state) => state.user.role);
-
   
   console.log("userData", userData);
   console.log("selectedAddress", selectedAddress);
@@ -254,9 +258,6 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
     return null;
   };
 
-  // Misafir bilgilerini görüntüle
-  
-
   return (
     <form onSubmit={onSubmit} className="bg-white rounded-lg shadow-md overflow-hidden font-Barlow">
       <div className="p-6">
@@ -288,8 +289,6 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
           
           {/* Teslimat Bilgileri Özeti */}
           {renderDeliveryInfo()}
-          
-          {/* Misafir Bilgileri Özeti */}
         </div>
       </div>
       
@@ -308,7 +307,7 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
           disabled={isSubmitting}
           className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md bg-yellow text-red hover:bg-red hover:text-yellow border border-transparent hover:border-yellow"
         >
-          {isSubmitting ? "İşleniyor..." : "SİPARİŞİ TAMAMLA"}
+          SİPARİŞİ TAMAMLA
         </button>
       </div>
     </form>
@@ -363,6 +362,11 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
       notes: ""
     },
   });
+
+  // isSubmitting durumunda tüm sayfayı kaplayan Loading göster
+  if (isSubmitting) {
+    return <SecondaryLoading text="Siparişiniz Alınıyor" size="fullPage" />;
+  }
 
   const submitOrder = async (formData) => {
     console.log("Form verileri:", formData);

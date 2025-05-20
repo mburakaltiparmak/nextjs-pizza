@@ -79,49 +79,64 @@ const ProfilePage = () => {
   const [formErrors, setFormErrors] = useState({});
   const [passwordErrors, setPasswordErrors] = useState({});
 
-  useEffect(() => {
-    // Create a flag to prevent multiple calls
-    let isMounted = true;
+// ProfilePage.jsx içinde yapılacak değişiklik
 
-    const authCheck = async () => {
-      // Skip if already fetching
-      if (userFetchState === fetchStates.FETCHING) {
+useEffect(() => {
+  // Create a flag to prevent multiple calls
+  let isMounted = true;
+
+  const authCheck = async () => {
+    // Skip if already fetching
+    if (userFetchState === fetchStates.FETCHING) {
+      return;
+    }
+
+    // Check auth status only if not logged in
+    if (!isLogin) {
+      const authStatus = await dispatch(checkAuthStatus());
+
+      if (!authStatus || !isMounted) {
+        router.push("/login");
         return;
       }
+    }
 
-      // Check auth status only if not logged in
-      if (!isLogin) {
-        const authStatus = await dispatch(checkAuthStatus());
-
-        if (!authStatus || !isMounted) {
-          router.push("/login");
-          return;
+    // Only fetch profile if needed and not already fetching
+    if (
+      isMounted &&
+      (userFetchState === fetchStates.NOT_FETCHED || !userProfile) &&
+      userFetchState !== fetchStates.FETCHING
+    ) {
+      try {
+        // Fetching durumuna geçtiğimizi belirtelim
+        dispatch(setUserFetchState(fetchStates.FETCHING));
+        
+        await dispatch(fetchUserProfile());
+        
+        // Başarılı durumda FETCHED olarak güncelleyelim
+        if (isMounted) {
+          dispatch(setUserFetchState(fetchStates.FETCHED));
+        }
+      } catch (error) {
+        console.error("Profil bilgileri alınamadı:", error);
+        
+        // Hata durumunda FAILED olarak güncelleyelim
+        if (isMounted) {
+          dispatch(setUserFetchState(fetchStates.FAILED));
         }
       }
+    }
+  };
 
-      // Only fetch profile if needed and not already fetching
-      if (
-        isMounted &&
-        (userFetchState === fetchStates.NOT_FETCHED || !userProfile) &&
-        userFetchState !== fetchStates.FETCHING
-      ) {
-        try {
-          await dispatch(fetchUserProfile());
-        } catch (error) {
-          console.error("Profil bilgileri alınamadı:", error);
-        }
-      }
-    };
+  authCheck();
 
-    authCheck();
+  // Cleanup function to prevent updates after unmount
+  return () => {
+    isMounted = false;
+  };
 
-    // Cleanup function to prevent updates after unmount
-    return () => {
-      isMounted = false;
-    };
-
-    // Remove userProfile from dependency array to prevent loops
-  }, [dispatch, isLogin, userFetchState, router]);
+  // Remove userProfile from dependency array to prevent loops
+}, [dispatch, isLogin, userFetchState, router]);
 
   // Bileşen yüklendiğinde formData'yı mevcut kullanıcı verileriyle doldur
   useEffect(() => {
@@ -312,9 +327,6 @@ const ProfilePage = () => {
           <TabsList className="w-full mb-6">
             <TabsTrigger value="profile" className="flex-1 text-darkgray">
               Profil Bilgilerim
-            </TabsTrigger>
-            <TabsTrigger value="orders" className="flex-1 text-darkgray">
-              Siparişlerim
             </TabsTrigger>
           </TabsList>
 
@@ -517,30 +529,7 @@ const ProfilePage = () => {
             </Card>
           </TabsContent>
 
-          {/* Siparişlerim Tab */}
-          <TabsContent value="orders">
-            <Card className="border-gray">
-              <CardHeader>
-                <CardTitle className="text-darkgray font-Quattrocento_Sans">
-                  Siparişlerim
-                </CardTitle>
-                <CardDescription className="text-gray font-Barlow">
-                  Önceki siparişlerinizi burada görüntüleyebilirsiniz.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-gray font-Barlow">
-                  <p>Henüz bir sipariş vermemişsiniz.</p>
-                  <Button
-                    onClick={() => router.push("/")}
-                    className="mt-4 bg-red text-lightgray hover:bg-yellow hover:text-red font-Barlow"
-                  >
-                    Alışverişe Başla
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          
         </Tabs>
       </div>
 

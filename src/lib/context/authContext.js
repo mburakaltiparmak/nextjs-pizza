@@ -24,6 +24,9 @@ import { getSafeErrorMessage } from "@/lib/authErrorMessages";
 import { createDebouncedRequest } from "@/lib/utils/asyncUtils";
 // Supabase importları
 import { supabase, syncSupabaseUser } from "@/lib/supabase";
+// Yeni utility fonksiyonlarını import et
+import { configureAuthHeaders, enhancedSyncSupabaseUser, extractSupabaseToken, syncSupabaseTokenToSystem } from "@/lib/supabaseSync";
+import { initializeAuth } from "../store/actions/initAuth";
 
 // Auth context oluşturma
 const AuthContext = createContext(null);
@@ -57,10 +60,13 @@ export function AuthProvider({ children }) {
     };
   }, []);
   
- // Supabase Auth Listener
+// Supabase Auth Listener - Token senkronizasyonu eklendi
 useEffect(() => {
   // Eğer component unmount olduysa hiçbir şey yapma
   if (!mountedRef.current) return;
+  
+  // Önce mevcut Supabase token'ını kontrol et ve sisteme senkronize et
+  syncSupabaseTokenToSystem();
   
   // Supabase auth değişikliklerini dinle
   const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -71,24 +77,41 @@ useEffect(() => {
     if (event === 'SIGNED_IN' && session) {
       try {
         setLoading(true);
+
+        // Supabase token'ını sistem token'ına da senkronize et
+        const rememberMe = localStorage.getItem("tempRememberMe") === "true" || localStorage.getItem("rememberMe") === "true";
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem("token", session.access_token);
         
-        // Import kontrolü
-        if (typeof syncSupabaseUser !== 'function') {
-          console.error('syncSupabaseUser fonksiyonu bulunamadı');
-          return;
+        // Token'i Redux'a da kaydet
+        dispatch(setToken(session.access_token));
+        
+        // API headers'larını token ile yapılandır
+        await configureAuthHeaders(session.access_token);
+        
+        // Geliştirilmiş sync fonksiyonunu dene
+        let userData = null;
+        
+        try {
+          userData = await enhancedSyncSupabaseUser(session);
+        } catch (syncError) {
+          console.error("Gelişmiş sync başarısız, orijinali deneniyor:", syncError);
+          // Gelişmiş fonksiyon başarısız olursa orijinale geri dön
+          if (typeof syncSupabaseUser === 'function') {
+            userData = await syncSupabaseUser(session);
+          }
         }
-        
-        // Backend ile kullanıcıyı senkronize et
-        const userData = await syncSupabaseUser(session);
         
         if (userData) {
           // Redux store'u güncelle
-          dispatch(setToken(session.access_token));
           dispatch(setIsLogin(true));
           dispatch(setEmail(session.user.email));
           
-          dispatch(setUserRole(userData.role));
-          dispatch(setUserStatus(userData.status));
+          // Email bilgisini storage'a da kaydet
+          storage.setItem("userEmail", session.user.email);
+          
+          dispatch(setUserRole(userData.role || 'CUSTOMER'));
+          dispatch(setUserStatus(userData.status || 'ACTIVE'));
           dispatch(setUserProfile({
             name: userData.name || '',
             surname: userData.surname || '',
@@ -96,12 +119,16 @@ useEffect(() => {
             // Diğer profil bilgileri
           }));
           
-          // Adres bilgilerini getir
-          try {
-            await dispatch(fetchUserAddresses());
-          } catch (addressError) {
-            console.error("Adresler yüklenirken hata:", addressError);
-          }
+          // Adres bilgilerini getirmeden önce küçük bir gecikme ekle
+          setTimeout(async () => {
+            try {
+              if (mountedRef.current) {
+                await dispatch(fetchUserAddresses());
+              }
+            } catch (addressError) {
+              console.error("Adresler yüklenirken hata:", addressError);
+            }
+          }, 500); // Token'in yayılmasını sağlamak için 500ms gecikme
         }
       } catch (error) {
         console.error('Supabase auth entegrasyonu hatası:', error);
@@ -121,7 +148,7 @@ useEffect(() => {
     subscription?.unsubscribe();
   };
 }, [dispatch]);
-  // Auth kontrolü - deduplikasyon için geliştirildi
+
 const checkAuth = useCallback(
   async (force = false) => {
     // Bir sorgu zaten devam ediyorsa ve zorlanmadıysa işlemi atla
@@ -151,7 +178,14 @@ const checkAuth = useCallback(
               : "ilk kontrol")
         );
 
-        // Önce Supabase session kontrolü
+        // Önce Supabase localStorage token'ını kontrol et ve senkronize et
+        const supabaseLocalToken = extractSupabaseToken();
+        if (supabaseLocalToken) {
+          console.log("Supabase token localStorage'da bulundu, sistem token'ına senkronize ediliyor");
+          syncSupabaseTokenToSystem();
+        }
+
+        // Supabase session kontrolü
         const { data: { session } } = await supabase.auth.getSession();
         
         let authResult = false;
@@ -160,19 +194,26 @@ const checkAuth = useCallback(
           // Supabase oturumu varsa
           console.log("Supabase oturumu bulundu, backend senkronizasyonu yapılıyor");
           
-          // Import kontrolü
-          if (typeof syncSupabaseUser !== 'function') {
-            console.error('syncSupabaseUser fonksiyonu bulunamadı');
-            // Normal auth kontrolüne devam et
-          } else {
-            // syncSupabaseUser fonksiyonu mevcutsa kullan
-            const userData = await syncSupabaseUser(session);
+          // Token'ı sisteme kaydet
+          const rememberMe = localStorage.getItem("rememberMe") === "true";
+          const storage = rememberMe ? localStorage : sessionStorage;
+          storage.setItem("token", session.access_token);
+          dispatch(setToken(session.access_token));
+          
+          // Token headers'ları yapılandır
+          await configureAuthHeaders(session.access_token);
+          
+          // Gelişmiş sync fonksiyonunu dene
+          try {
+            const userData = await enhancedSyncSupabaseUser(session);
             
             if (userData) {
               // Redux store'u güncelle
-              dispatch(setToken(session.access_token));
               dispatch(setIsLogin(true));
               dispatch(setEmail(session.user.email));
+              
+              // Email bilgisini de kaydet
+              storage.setItem("userEmail", session.user.email);
               
               if (userData.role) dispatch(setUserRole(userData.role));
               if (userData.status) dispatch(setUserStatus(userData.status));
@@ -185,12 +226,56 @@ const checkAuth = useCallback(
               
               authResult = true;
             }
+          } catch (syncError) {
+            console.error("Gelişmiş sync başarısız, orijinali deneniyor:", syncError);
+            
+            // Orijinal sync fonksiyonuna geri dön
+            if (typeof syncSupabaseUser === 'function') {
+              const userData = await syncSupabaseUser(session);
+              
+              if (userData) {
+                // Redux store'u güncelle
+                dispatch(setIsLogin(true));
+                dispatch(setEmail(session.user.email));
+                
+                // Email bilgisini de kaydet
+                storage.setItem("userEmail", session.user.email);
+                
+                if (userData.role) dispatch(setUserRole(userData.role));
+                if (userData.status) dispatch(setUserStatus(userData.status));
+                dispatch(setUserProfile({
+                  name: userData.name || '',
+                  surname: userData.surname || '',
+                  email: userData.email,
+                  // Ek profil bilgileri
+                }));
+                
+                authResult = true;
+              }
+            }
           }
         }
         
         // Eğer Supabase ile auth olmadıysa, normal JWT kontrolü
         if (!authResult) {
-          authResult = await dispatch(checkAuthStatus());
+          // localStorage veya sessionStorage'dan normal sistem token'ını kontrol et
+          const systemToken = localStorage.getItem("token") || sessionStorage.getItem("token");
+          
+          if (systemToken) {
+            // Sistem token'ı varsa, bununla normal auth kontrolü yap
+            authResult = await dispatch(checkAuthStatus());
+          } else {
+            // Supabase token'ı da yoksa, son bir kontrol daha yap
+            const supabaseTokenSync = syncSupabaseTokenToSystem();
+            
+            if (supabaseTokenSync) {
+              // Senkronizasyon başarılıysa tekrar kontrol et
+              authResult = await dispatch(checkAuthStatus());
+            } else {
+              // Hiçbir token bulunamadı, başarısız
+              authResult = false;
+            }
+          }
         }
 
         // Component unmount olduysa işlemi durdur
@@ -199,7 +284,12 @@ const checkAuth = useCallback(
         // Adres bilgilerini getir (sadece giriş yapılmışsa ve token varsa)
         if ((isLogin || authResult) && token) {
           try {
-            await dispatch(fetchUserAddresses());
+            // Gecikme ekle - token propagasyonu için
+            setTimeout(async () => {
+              if (mountedRef.current) {
+                await dispatch(fetchUserAddresses());
+              }
+            }, 500);
           } catch (addressError) {
             console.error("Adresler yüklenirken hata:", addressError);
             // Adres hatası işlemi engellemez
@@ -253,12 +343,25 @@ const checkAuth = useCallback(
     }
   }, []);
 
-  // İlk yükleme kontrolü - sadece bir kez çalışır
-  useEffect(() => {
-    if (!initialCheckDone.current) {
-      checkAuth();
-    }
-  }, [checkAuth]);
+// AuthProvider.js içinde useEffect güncellemesi
+// İlk yükleme kontrolü - sadece bir kez çalışır
+useEffect(() => {
+  // Başlangıçta localStorage/Redux senkronizasyonunu kontrol et
+  if (!initialCheckDone.current) {
+    const initAuth = async () => {
+      // Redux'ta token varsa kontrol et, yoksa localStorage token'ı Redux'a yükle
+      if (!token) {
+        // Token Redux'ta yoksa initializeAuth işlemini çağır
+        await dispatch(initializeAuth());
+      }
+      
+      // Normal auth kontrolünü gerçekleştir
+      await checkAuth();
+    };
+    
+    initAuth();
+  }
+}, [checkAuth, dispatch, token]);
 
   // Periyodik yenileme - sadece aktif oturum varsa
   useEffect(() => {
@@ -297,19 +400,22 @@ const checkAuth = useCallback(
     [error]
   );
 
-  // Çıkış yap ve yönlendir
-  const handleLogout = useCallback(async () => {
-    try {
-      // Önce Supabase oturumunu kapat
-      await supabase.auth.signOut();
-      
-      // Sonra Redux store'u temizle
-      await dispatch(logout());
-      router.push("/login");
-    } catch (error) {
-      console.error("Çıkış yapma hatası:", error);
-    }
-  }, [dispatch, router]);
+const handleLogout = useCallback(async () => {
+  try {
+    // Önce Supabase oturumunu kapat
+    await supabase.auth.signOut();
+    
+    // Sonra Redux store'u temizle
+    await dispatch(logout());
+    
+    // Supabase localStorage token'ını da manuel olarak temizle
+    localStorage.removeItem("sb-nslkxjzddnjpouzkevii-auth-token");
+    
+    router.push("/login");
+  } catch (error) {
+    console.error("Çıkış yapma hatası:", error);
+  }
+}, [dispatch, router]);
 
   // Role göre yetki kontrolü
   const isAuthorized = useCallback(

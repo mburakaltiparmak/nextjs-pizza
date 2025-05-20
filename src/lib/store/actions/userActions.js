@@ -2,6 +2,7 @@
 import { instance, userInstance } from "@/lib/hooks";
 import { setError, setLoading, setSuccess } from "./globalActions";
 import { fetchStates } from "../constants";
+import { initializeAuth } from "./initAuth";
 
 export const userActions = {
   SET_EMAIL: "SET_EMAIL",
@@ -267,7 +268,6 @@ export const handleOAuthCallback = (token, rememberMe = true) => async (dispatch
   }
 };
 
-// Çıkış işlemi - birleştirilmiş sistem için güncellendi
 export const logout = () => async (dispatch) => {
   try {
     // Tüm depolamaları temizle
@@ -275,6 +275,9 @@ export const logout = () => async (dispatch) => {
       // localStorage'dan temizle
       localStorage.removeItem("token");
       localStorage.removeItem("userEmail");
+      
+      // Supabase token'ını da temizle
+      localStorage.removeItem("sb-nslkxjzddnjpouzkevii-auth-token");
 
       // sessionStorage'dan temizle
       sessionStorage.removeItem("token");
@@ -295,12 +298,13 @@ export const logout = () => async (dispatch) => {
     return { success: true };
   } catch (error) {
     console.error("Logout hatası:", error);
-
+    
     // Hata olsa bile temizlik yapmaya çalış
     try {
       if (typeof window !== "undefined") {
         localStorage.removeItem("token");
         localStorage.removeItem("userEmail");
+        localStorage.removeItem("sb-nslkxjzddnjpouzkevii-auth-token");
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("userEmail");
       }
@@ -510,17 +514,33 @@ export const changePassword = (passwordData) => async (dispatch) => {
 export const fetchUserProfile = () => async (dispatch, getState) => {
   try {
     console.log("Kullanıcı profili alınıyor...");
-    const token = getState().user.token;
+    const { user } = getState();
+    const token = user.token;
 
+    // Token yoksa localStorage/sessionStorage'dan kontrol et
     if (!token) {
-      console.error("Token bulunamadı");
-      return null;
+      console.log("Redux'ta token bulunamadı, localStorage'dan kontrol ediliyor");
+      // Token'ı Redux'a yüklemeyi dene
+      await dispatch(initializeAuth());
+      
+      // Tekrar token kontrolü yap
+      const updatedState = getState();
+      const updatedToken = updatedState.user.token;
+      
+      if (!updatedToken) {
+        console.error("Token bulunamadı (Redux ve localStorage'da yok)");
+        return null;
+      }
     }
 
-    console.log("Kullanıyor token:", token.substring(0, 10) + "...");
+    // En güncel token'ı al
+    const currentState = getState();
+    const currentToken = currentState.user.token;
+    
+    console.log("Kullanıyor token:", currentToken.substring(0, 10) + "...");
     
     // Double-check auth header is set properly
-    instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    instance.defaults.headers.common["Authorization"] = `Bearer ${currentToken}`;
 
     try {
       const response = await instance.get("/user/profile");
@@ -538,6 +558,7 @@ export const fetchUserProfile = () => async (dispatch, getState) => {
       if (userData.status) {
         dispatch(setUserStatus(userData.status));
       }
+      dispatch(setUserFetchState(fetchStates.FETCHED));
 
       return userData;
     } catch (error) {
@@ -651,43 +672,66 @@ export const updateUserProfile = (userData) => async (dispatch) => {
   }
 };
 
-// Kullanıcı adreslerini getirme fonksiyonu
-export const fetchUserAddresses = () => async (dispatch) => {
+export const fetchUserAddresses = () => async (dispatch, getState) => {
   dispatch(setUserFetchState(fetchStates.FETCHING));
 
   try {
-    const response = await instance.get("/user/addresses");
-
-    dispatch(setUserAddresses(response.data || [])); // Boş dizi varsayılanı
-    dispatch(setUserFetchState(fetchStates.FETCHED));
-
-    return response.data || [];
-  } catch (err) {
-    console.error("Adresler yüklenirken hata:", err);
-
-    // 403 veya 404 hatası durumunda - yeni kullanıcı veya henüz adres yok
-    if (err.response && (err.response.status === 403 || err.response.status === 404)) {
-      console.log("Kullanıcının adresi bulunamadı veya yetki hatası - bu normal olabilir");
-      dispatch(setUserAddresses([]));
-      dispatch(setUserFetchState(fetchStates.FETCHED)); // FAILED değil, FETCHED
-      return []; // Boş dizi dön, hata fırlatma
-    }
-
-    // Yetkilendirme hatası durumunda
-    if (err.response && err.response.status === 401) {
-      dispatch(logout()); // Oturumu temizle
-    }
-
-    // Diğer hata durumlarında
-    dispatch(setUserAddresses([]));
-    dispatch(setUserFetchState(fetchStates.FAILED));
+    // Get current token from Redux store
+    const { user } = getState();
+    let token = user.token;
     
-    // Hatayı kontrollü bir şekilde işleyip, boş dizi döndür
-    console.warn("Adres yükleme hatası işlendi:", err.message);
+    // Token yoksa localStorage/sessionStorage'dan kontrol et
+    if (!token) {
+      await dispatch(initializeAuth());
+      
+      // Tekrar token kontrolü yap
+      const updatedState = getState();
+      token = updatedState.user.token;
+      
+      if (!token) {
+        dispatch(setUserAddresses([]));
+        dispatch(setUserFetchState(fetchStates.FETCHED));
+        return [];
+      }
+    }
+    
+    // Debug ve sorun giderme amaçlı token bilgisi
+    console.debug('Adres API token tipi:', token.substring(0, 30));
+    
+    // Ensure the token is set in the request headers
+    instance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+    try {
+      // API endpoint'i düzeltildi
+      const response = await instance.get("/user/addresses", {
+        timeout: 10000, // Timeout süresi artırıldı
+        headers: { 'Authorization': `Bearer ${token}` } // Header'ı isteğe özel tekrar ekle
+      });
+      
+      dispatch(setUserAddresses(response.data || []));
+      dispatch(setUserFetchState(fetchStates.FETCHED));
+      return response.data || [];
+    } catch (requestError) {
+      // Tüm hata durumlarını debug için logla
+      console.warn("Adres API isteği hatası:", {
+        status: requestError.response?.status, 
+        data: requestError.response?.data,
+        message: requestError.message
+      });
+      
+      // Tüm hatalarda boş dizi dön
+      dispatch(setUserAddresses([]));
+      dispatch(setUserFetchState(fetchStates.FETCHED));
+      return [];
+    }
+  } catch (err) {
+    // Genel hata yakalama
+    console.error("Adres fonksiyonu hatası:", err);
+    dispatch(setUserAddresses([]));
+    dispatch(setUserFetchState(fetchStates.FETCHED));
     return [];
   }
 };
-
 // Yeni adres ekleme fonksiyonu
 export const createAddress = (addressData) => async (dispatch) => {
   dispatch(setLoading(true));

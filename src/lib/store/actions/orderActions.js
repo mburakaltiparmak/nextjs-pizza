@@ -22,7 +22,7 @@ export const orderActions = {
 };
 
 // localStorage yardımcı fonksiyonları
-const saveCartToStorage = (cart) => {
+export const saveCartToStorage = (cart) => {
   if (typeof window !== "undefined") {
     try {
       localStorage.setItem("cart", JSON.stringify(cart));
@@ -188,7 +188,7 @@ export const fetchUserOrders = () => async (dispatch) => {
 
     dispatch(setUserOrders(response.data));
     dispatch(setOrderFetchState(fetchStates.FETCHED));
-
+    console.log("order res",response.data);
     return response.data;
   } catch (err) {
     dispatch(setOrderFetchState(fetchStates.FAILED));
@@ -383,14 +383,14 @@ export const createOrder = ({ orderData, paymentData }) => async (dispatch) => {
       // Ödeme hatası olsa bile siparişi başarılı sayıyoruz
     }
 
-    // Sepeti temizle ve sipariş detayını kaydet
-    dispatch(clearCartAction());
-    saveCartToStorage([]); // localStorage'ı da temizle
-    
     // Sipariş ve ödeme bilgileri Redux'a kaydedildi
     dispatch(setOrderFetchState(fetchStates.FETCHED)); // Loading state'ini kapat
     dispatch(setLoading(false));
     dispatch(setSuccess("Siparişiniz başarıyla oluşturuldu"));
+    /*
+    dispatch(clearCartAction());
+    saveCartToStorage([]); // localStorage'ı da temizle
+    */
 
     return response.data;
   } catch (err) {

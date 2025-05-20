@@ -8,6 +8,7 @@ import { orderReducer } from "./reducers/orderReducer";
 import { globalReducer } from "./reducers/globalReducer";
 import { guestReducer } from "./reducers/guestReducer";
 import { initializeCart } from "./actions/orderActions";
+import { initializeAuth } from "./actions/initAuth"; // Yeni eklenen import
 
 export const store = configureStore({
   reducer: {
@@ -22,11 +23,10 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
 });
 
-// Initialize cart from localStorage on app startup
-// Using setTimeout to ensure this runs after the store is fully configured
-// This helps avoid potential issues with async initialization
+// Initialize auth and cart from localStorage on app startup
 setTimeout(() => {
-  store.dispatch(initializeCart());
+  store.dispatch(initializeAuth()); // Önce auth bilgilerini başlat
+  store.dispatch(initializeCart()); // Sonra sepet bilgilerini başlat
 }, 0);
 
 export default store;
