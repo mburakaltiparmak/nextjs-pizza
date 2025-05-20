@@ -27,12 +27,21 @@ const nextConfig = {
     return config;
   },
   async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/:path*`,
-      },
-    ];
+    // API_BASE_URL'in tanımlı olup olmadığını kontrol et
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    
+    // API URL tanımlı ise rewrite kuralı oluştur, değilse boş dizi döndür
+    if (apiBaseUrl) {
+      return [
+        {
+          source: "/api/:path*",
+          destination: `${apiBaseUrl}/api/:path*`,
+        },
+      ];
+    } else {
+      console.warn("NEXT_PUBLIC_API_BASE_URL ortam değişkeni tanımlanmamış! API proxy rewrite'ları devre dışı bırakılıyor.");
+      return [];
+    }
   },
 };
 
