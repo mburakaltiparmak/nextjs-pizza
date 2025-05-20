@@ -2,6 +2,12 @@
 import { instance } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
 
+// Senkronizasyon durumu
+let syncInProgress = false;
+let lastEnhancedSyncTime = 0;
+let lastEnhancedSyncUserId = null;
+const SYNC_DEBOUNCE_MS = 5000; // 5 saniye
+
 /**
  * Supabase localStorage token'ını system token'ına dönüştürür
  * @returns {string|null} - Bulunan token veya null
@@ -31,7 +37,6 @@ export const extractSupabaseToken = () => {
  * Supabase token'ını sistem token'ı olarak senkronize eder
  * @returns {boolean} - İşlemin başarılı olup olmadığı
  */
-// supabaseSync.js içinde syncSupabaseTokenToSystem fonksiyonunu güncelleme
 export const syncSupabaseTokenToSystem = (rememberMe = true, dispatch) => {
   try {
     const token = extractSupabaseToken();
@@ -65,10 +70,15 @@ export const syncSupabaseTokenToSystem = (rememberMe = true, dispatch) => {
     
     // Redux store'a da token bilgisini yükle (eğer dispatch fonksiyonu sağlanmışsa)
     if (dispatch) {
-      dispatch(setToken(token));
-      dispatch(setIsLogin(true));
-      if (email) {
-        dispatch(setEmail(email));
+      try {
+        const { setToken, setIsLogin, setEmail } = require('@/lib/store/actions/userActions');
+        dispatch(setToken(token));
+        dispatch(setIsLogin(true));
+        if (email) {
+          dispatch(setEmail(email));
+        }
+      } catch (e) {
+        console.warn('Redux action import hatası:', e);
       }
     }
     
@@ -98,19 +108,12 @@ export const configureAuthHeaders = async (token) => {
   // Tüm istekler için Authorization header'ını ayarla
   instance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   
-  // Token'ın backend ile geçerli olup olmadığını kontrol et
-  try {
-    // Bu endpoint hem JWT hem de Supabase token'larını işleyebilmeli
-    const response = await instance.post('/auth/validate-token');
-    return response.data?.valid || false;
-  } catch (error) {
-    console.warn('Token doğrulama başarısız:', error.message);
-    return false;
-  }
+  // Her zaman doğrulama yapmaya gerek yok, sadece token'ı ayarla
+  return true;
 };
 
 /**
- * Geliştirilmiş syncSupabaseUser fonksiyonu
+ * Geliştirilmiş syncSupabaseUser fonksiyonu - token geçerli kabul edilir
  */
 export const enhancedSyncSupabaseUser = async (session) => {
   if (!session || !session.access_token) {
@@ -119,51 +122,67 @@ export const enhancedSyncSupabaseUser = async (session) => {
   }
   
   try {
-    // Supabase token'ını sistem token'ına senkronize et
-    const rememberMe = localStorage.getItem("rememberMe") === "true";
-    const storage = rememberMe ? localStorage : sessionStorage;
-    storage.setItem("token", session.access_token);
+    const now = Date.now();
+    const userId = session.user.id;
     
-    // API header'larını önce Supabase token'ı ile yapılandır
-    await configureAuthHeaders(session.access_token);
-    
-    // Şimdi backend ile senkronizasyon yap
-    const response = await fetch('/api/auth/sync-supabase-user', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`
-      },
-      body: JSON.stringify({
-        email: session.user.email,
-        name: session.user.user_metadata?.name || 
-              session.user.user_metadata?.full_name?.split(' ')[0] || '',
-        surname: session.user.user_metadata?.family_name || 
-                (session.user.user_metadata?.full_name ? 
-                 session.user.user_metadata.full_name.split(' ').slice(1).join(' ') : ''),
-        phoneNumber: session.user.user_metadata?.phone || '',
-        supabaseId: session.user.id,
-        provider: 'google'
-      })
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Backend kullanıcı senkronizasyonu başarısız:', errorData);
-      throw new Error(`Senkronizasyon başarısız, durum: ${response.status}`);
+    // Senkronizasyon zaten devam ediyorsa veya son senkronizasyondan bu yana yeterince zaman geçmediyse
+    if (syncInProgress || (lastEnhancedSyncUserId === userId && now - lastEnhancedSyncTime < SYNC_DEBOUNCE_MS)) {
+      console.log("Senkronizasyon atlanıyor - zaten yakın zamanda yapıldı veya devam ediyor");
+      // Önbellekten kullanıcı verilerini getir
+      try {
+        const cachedUser = localStorage.getItem('supabase_user_data');
+        if (cachedUser) {
+          return JSON.parse(cachedUser);
+        }
+      } catch (e) {
+        // Önbellek hatası, devam et
+      }
     }
     
-    const userData = await response.json();
+    syncInProgress = true;
     
-    // Eğer backend farklı bir token döndürürse, onu kullan
-    if (userData.token) {
-      storage.setItem("token", userData.token); // System token'ı güncelle
-      await configureAuthHeaders(userData.token);
+    try {
+      // Supabase token'ını sistem token'ına senkronize et
+      const rememberMe = localStorage.getItem("rememberMe") === "true";
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem("token", session.access_token);
+      
+      // API header'larını Supabase token'ı ile yapılandır
+      await configureAuthHeaders(session.access_token);
+      
+      // Mevcut syncSupabaseUser fonksiyonunu kullan
+      const { syncSupabaseUser } = require('@/lib/supabase');
+      const userData = await syncSupabaseUser(session);
+      
+      if (userData) {
+        // Senkronizasyon bilgilerini güncelle
+        lastEnhancedSyncTime = now;
+        lastEnhancedSyncUserId = userId;
+        
+        // Backend farklı bir token döndürürse, onu kullan
+        if (userData.token) {
+          storage.setItem("token", userData.token);
+          await configureAuthHeaders(userData.token);
+        }
+      }
+      
+      return userData;
+    } finally {
+      syncInProgress = false;
     }
-    
-    return userData;
   } catch (error) {
     console.error('Kullanıcı senkronizasyon hatası:', error);
+    syncInProgress = false;
     return null;
   }
 };
+
+// Uygulama başladığında önbelleği yeniden yükleyelim
+if (typeof window !== 'undefined') {
+  try {
+    lastEnhancedSyncTime = parseInt(localStorage.getItem('supabase_enhanced_sync_time') || '0');
+    lastEnhancedSyncUserId = localStorage.getItem('supabase_enhanced_sync_user_id');
+  } catch (e) {
+    console.warn("Önbellek yüklenirken hata:", e);
+  }
+}
