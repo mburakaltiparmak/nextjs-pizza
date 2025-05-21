@@ -8,7 +8,7 @@ import Link from "next/link";
 import SecondaryLoading from "@/components/secondaryLoading";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
-import { useToast } from "@/hooks/use-toast"; // Import the toast hook
+import { useToast } from "@/hooks/use-toast";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -30,7 +30,7 @@ export default function RegisterPage() {
   });
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { toast } = useToast(); // Initialize the toast hook
+  const { toast } = useToast();
 
   const loading = useAppSelector((state) => state.global.loading);
   const isSuccess = useAppSelector((state) => state.global.success);
@@ -40,14 +40,12 @@ export default function RegisterPage() {
     const { name, surname, email, phoneNumber, password, confirmPassword } =
       formData;
 
-    // Email kontrol - sadece gmail.com kabul ediliyor
-    //const isGmailAddress = email.endsWith("@gmail.com");
     const isValidEmailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
     return {
       name: name.trim() !== "",
       surname: surname.trim() !== "",
-      email: isValidEmailFormat /* && isGmailAddress*/, // Sadece gmail.com kabul ediliyor
+      email: isValidEmailFormat,
       phoneNumber: /^\d{1,11}$/.test(phoneNumber), // sadece sayılar ve en fazla 11 hane
       password: password.length >= 6,
       confirmPassword: password === confirmPassword && password.length >= 8,
@@ -72,21 +70,6 @@ export default function RegisterPage() {
       [name]: true,
     }));
 
-    // Email alanı değiştirildiğinde ve gmail.com ile bitmiyorsa uyarı göster
-    if (
-      name === "email" &&
-      value.includes("@") &&
-      !value.endsWith("@gmail.com") &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-    ) {
-      toast({
-        title: "Uyarı",
-        description: "Şu anda sadece Gmail uzantılı e-posta adreslerini kabul edebiliyoruz.",
-        type: "warning",
-        duration: 5000,
-      });
-    }
-
     // Clear any previous error
     if (localError) {
       setLocalError("");
@@ -94,26 +77,11 @@ export default function RegisterPage() {
   };
 
   const handleBlur = (e) => {
-    const { name, value } = e.target;
+    const { name } = e.target;
     setTouched((prev) => ({
       ...prev,
       [name]: true,
     }));
-
-    // Email alanından çıkıldığında ve gmail.com ile bitmiyorsa uyarı göster
-    if (
-      name === "email" &&
-      value.includes("@") &&
-      !value.endsWith("@gmail.com") &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-    ) {
-      toast({
-        title: "Uyarı",
-        description: "Şu anda sadece Gmail uzantılı e-posta adreslerini kabul edebiliyoruz.",
-        type: "warning",
-        duration: 5000,
-      });
-    }
   };
 
  const handleSubmit = async (e) => {
@@ -136,18 +104,6 @@ export default function RegisterPage() {
     return;
   }
 
-  // Email Gmail kontrolü
-  /*
-  if (!formData.email.endsWith("@gmail.com")) {
-    toast({
-      title: "Hata",
-      description: "Şu anda sadece Gmail uzantılı e-posta adreslerini kabul edebiliyoruz.",
-      type: "error",
-      duration: 5000,
-    });
-    return;
-  }
-*/
   // Şifre tekrarını formdan çıkar
   const { confirmPassword, ...registrationData } = formData;
 
@@ -211,7 +167,6 @@ export default function RegisterPage() {
   return (
     <div className="flex flex-col gap-4 bg-red min-h-screen">
       <Header />
-      {/* ToastContainer position="top-right" is now handled by the toast hook */}
       <div className="flex flex-col items-center font-Barlow p-4 max-md:px-8">
         <div className="bg-yellow shadow-md rounded-lg max-w-md mx-auto p-8 max-md:p-4 w-full ">
           <h2 className="mt-2 text-center text-3xl font-bold tracking-tight text-red ">
@@ -318,7 +273,7 @@ export default function RegisterPage() {
                 name="email"
                 type="email"
                 autoComplete="email"
-                placeholder="example@gmail.com"
+                placeholder="mail@example.com"
                 required
                 className={`mt-1 block w-full rounded-md border px-3 py-2 focus:outline-none sm:text-sm ${
                   touched.email && !fieldValidations.email
@@ -332,7 +287,7 @@ export default function RegisterPage() {
               />
               {touched.email && !fieldValidations.email && (
                 <p className="text-red-500 text-xs mt-1">
-                  Geçerli bir Gmail adresi girin
+                  Geçerli bir e-posta adresi girin
                 </p>
               )}
             </div>
