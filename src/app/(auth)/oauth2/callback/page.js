@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/context/authContext";
 import Loading from "@/app/loading";
 import Link from "next/link";
+import SecondaryLoading from "@/components/secondaryLoading";
 
 export default function OAuth2CallbackPage() {
   const router = useRouter();
@@ -80,7 +81,7 @@ export default function OAuth2CallbackPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-red">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-red font-Barlow">
       <div className="bg-yellow p-8 rounded-lg shadow-lg max-w-md text-center">
         {error ? (
           <>
@@ -89,13 +90,10 @@ export default function OAuth2CallbackPage() {
             <p>Giriş sayfasına yönlendiriliyorsunuz...</p>
           </>
         ) : loading ? (
-          <>
-            <h2 className="text-2xl font-bold text-red mb-4">
-              Giriş Yapılıyor
-            </h2>
-            <p className="mb-4">Oturumunuz başlatılıyor, lütfen bekleyin...</p>
-            <Loading />
-          </>
+          <SecondaryLoading
+            size="large"
+            text="Oturumunuz başlatılıyor, lütfen bekleyin..."
+          />
         ) : (
           <>
             <h2 className="text-2xl font-bold text-green-700 mb-4">

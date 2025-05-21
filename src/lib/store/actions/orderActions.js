@@ -188,7 +188,7 @@ export const fetchUserOrders = () => async (dispatch) => {
 
     dispatch(setUserOrders(response.data));
     dispatch(setOrderFetchState(fetchStates.FETCHED));
-    console.log("order res",response.data);
+    console.log("order res", response.data);
     return response.data;
   } catch (err) {
     dispatch(setOrderFetchState(fetchStates.FAILED));
@@ -266,160 +266,169 @@ const createCustomPizzaProduct = async (pizzaData) => {
   }
 };
 
-export const createOrder = ({ orderData, paymentData }) => async (dispatch) => {
-  dispatch(setLoading(true));
-  try {
-    // Sipariş öğelerini hazırla
-    const processedItems = orderData.items.map(item => {
-      return {
-        // Sadece gerekli ürün bilgilerini gönderiyoruz (ID ve kategori bilgisi olmadan)
-        product: {
-          name: item.product.name,
-          price: item.product.price,
-          image: item.product.img,
-          description: item.product.description,
-          isCustom: isCustomProduct(item.product)
-        },
-        quantity: item.quantity,
-        unitPrice: item.product.price
-      };
-    });
-
-    // Backend'e gönderilecek isteği güncelle
-    const requestData = {
-      items: processedItems,
-      paymentMethod: orderData.paymentMethod,
-      notes: orderData.notes || ""
-    };
-
-    // Adres bilgilerini ekle
-    if (orderData.addressId) {
-      requestData.addressId = orderData.addressId;
-      console.log(`Kayıtlı adres kullanılıyor: ID ${orderData.addressId}`);
-    } else if (orderData.newAddress) {
-      // Backend AddressDto formatına uygun şekilde yeni adres ekle
-      requestData.newAddress = {
-        fullAddress: orderData.newAddress.fullAddress,
-        city: orderData.newAddress.city,
-        district: orderData.newAddress.district,
-        postalCode: orderData.newAddress.postalCode || "",
-        addressTitle: orderData.newAddress.addressTitle || "",
-        phoneNumber: orderData.newAddress.phoneNumber || "",
-        recipientName: orderData.newAddress.recipientName || "",
-        saveAddress: orderData.newAddress.saveAddress === true,
-        isDefault: orderData.newAddress.isDefault === true,
-      };
-      console.log("Yeni adres kullanılıyor:", requestData.newAddress);
-    }
-
-    console.log(
-      "Backend'e gönderilen sipariş verisi:",
-      JSON.stringify(requestData, null, 2)
-    );
-
-    // İsteği gönder - api prefix'ini doğru şekilde kullan
-    const response = await instance.post("/orders", requestData);
-
-    if (!response.data || !response.data.id) {
-      throw new Error("Sipariş oluşturuldu fakat ID alınamadı.");
-    }
-
-    const orderId = response.data.id;
-    console.log(`Sipariş başarıyla oluşturuldu: ID ${orderId}`);
-    
-    // Sipariş detaylarını Redux state'ine kaydet
-    dispatch(setOrderDetail(response.data));
-
-    // Ödeme işlemini yap
+export const createOrder =
+  ({ orderData, paymentData }) =>
+  async (dispatch) => {
+    dispatch(setLoading(true));
     try {
-      if (orderData.paymentMethod === "ONLINE_CREDIT_CARD" && paymentData) {
-        // Online kredi kartı ödemesi - api prefix'ini doğru şekilde kullan
-        const paymentEndpoint = `/orders/${orderId}/pay/card`;
-
-        const paymentRequest = {
-          cardNumber: paymentData.cardNumber,
-          nameOnCard: paymentData.nameOnCard,
-          expirationMonth: paymentData.expirationMonth,
-          expirationYear: paymentData.expirationYear,
-          cvc: paymentData.cvc,
+      // Sipariş öğelerini hazırla
+      const processedItems = orderData.items.map((item) => {
+        return {
+          // Sadece gerekli ürün bilgilerini gönderiyoruz (ID ve kategori bilgisi olmadan)
+          product: {
+            name: item.product.name,
+            price: item.product.price,
+            image: item.product.img,
+            description: item.product.description,
+            isCustom: isCustomProduct(item.product),
+          },
+          quantity: item.quantity,
+          unitPrice: item.product.price,
         };
+      });
 
-        console.log(`Kredi kartı ödemesi yapılıyor: ${paymentEndpoint}`);
-        const paymentResponse = await instance.post(paymentEndpoint, paymentRequest);
-        
-        // Ödeme bilgilerini de Redux'a ekle
-        if (paymentResponse && paymentResponse.data) {
-          const updatedOrderResponse = await instance.get(`/orders/${orderId}`);
-          if (updatedOrderResponse && updatedOrderResponse.data) {
-            dispatch(setOrderDetail(updatedOrderResponse.data));
-          }
-        }
-        
-      } else if (orderData.paymentMethod === "CASH") {
-        // Nakit ödeme - api prefix'ini doğru şekilde kullan
-        const paymentEndpoint = `/orders/${orderId}/pay/cash`;
+      // Backend'e gönderilecek isteği güncelle
+      const requestData = {
+        items: processedItems,
+        paymentMethod: orderData.paymentMethod,
+        notes: orderData.notes || "",
+      };
 
-        console.log(`Nakit ödeme işaretleniyor: ${paymentEndpoint}`);
-        const paymentResponse = await instance.post(paymentEndpoint);
-        
-        // Ödeme sonrası sipariş bilgilerini güncelle
-        if (paymentResponse && paymentResponse.data) {
-          const updatedOrderResponse = await instance.get(`/orders/${orderId}`);
-          if (updatedOrderResponse && updatedOrderResponse.data) {
-            dispatch(setOrderDetail(updatedOrderResponse.data));
-          }
-        }
-      } else if (orderData.paymentMethod === "CREDIT_CARD") {
-        // Kapıda kredi kartı ödemesi için backend'e bildirim gerekiyorsa
-        console.log("Kapıda kredi kartı ödemesi seçildi");
+      // Adres bilgilerini ekle
+      if (orderData.addressId) {
+        requestData.addressId = orderData.addressId;
+        console.log(`Kayıtlı adres kullanılıyor: ID ${orderData.addressId}`);
+      } else if (orderData.newAddress) {
+        // Backend AddressDto formatına uygun şekilde yeni adres ekle
+        requestData.newAddress = {
+          fullAddress: orderData.newAddress.fullAddress,
+          city: orderData.newAddress.city,
+          district: orderData.newAddress.district,
+          postalCode: orderData.newAddress.postalCode || "",
+          addressTitle: orderData.newAddress.addressTitle || "",
+          phoneNumber: orderData.newAddress.phoneNumber || "",
+          recipientName: orderData.newAddress.recipientName || "",
+          saveAddress: orderData.newAddress.saveAddress === true,
+          isDefault: orderData.newAddress.isDefault === true,
+        };
+        console.log("Yeni adres kullanılıyor:", requestData.newAddress);
       }
-    } catch (paymentError) {
-      console.error("Ödeme işlemi sırasında hata:", paymentError);
-      dispatch(
-        setSuccess(
-          "Siparişiniz oluşturuldu fakat ödeme işlemi sırasında bir hata oluştu"
-        )
-      );
-      // Ödeme hatası olsa bile siparişi başarılı sayıyoruz
-    }
 
-    // Sipariş ve ödeme bilgileri Redux'a kaydedildi
-    dispatch(setOrderFetchState(fetchStates.FETCHED)); // Loading state'ini kapat
-    dispatch(setLoading(false));
-    dispatch(setSuccess("Siparişiniz başarıyla oluşturuldu"));
-    /*
+      console.log(
+        "Backend'e gönderilen sipariş verisi:",
+        JSON.stringify(requestData, null, 2)
+      );
+
+      // İsteği gönder - api prefix'ini doğru şekilde kullan
+      const response = await instance.post("/orders", requestData);
+
+      if (!response.data || !response.data.id) {
+        throw new Error("Sipariş oluşturuldu fakat ID alınamadı.");
+      }
+
+      const orderId = response.data.id;
+      console.log(`Sipariş başarıyla oluşturuldu: ID ${orderId}`);
+
+      // Sipariş detaylarını Redux state'ine kaydet
+      dispatch(setOrderDetail(response.data));
+
+      // Ödeme işlemini yap
+      try {
+        if (orderData.paymentMethod === "ONLINE_CREDIT_CARD" && paymentData) {
+          // Online kredi kartı ödemesi - api prefix'ini doğru şekilde kullan
+          const paymentEndpoint = `/orders/${orderId}/pay/card`;
+
+          const paymentRequest = {
+            cardNumber: paymentData.cardNumber,
+            nameOnCard: paymentData.nameOnCard,
+            expirationMonth: paymentData.expirationMonth,
+            expirationYear: paymentData.expirationYear,
+            cvc: paymentData.cvc,
+          };
+
+          console.log(`Kredi kartı ödemesi yapılıyor: ${paymentEndpoint}`);
+          const paymentResponse = await instance.post(
+            paymentEndpoint,
+            paymentRequest
+          );
+
+          // Ödeme bilgilerini de Redux'a ekle
+          if (paymentResponse && paymentResponse.data) {
+            const updatedOrderResponse = await instance.get(
+              `/orders/${orderId}`
+            );
+            if (updatedOrderResponse && updatedOrderResponse.data) {
+              dispatch(setOrderDetail(updatedOrderResponse.data));
+            }
+          }
+        } else if (orderData.paymentMethod === "CASH") {
+          // Nakit ödeme - api prefix'ini doğru şekilde kullan
+          const paymentEndpoint = `/orders/${orderId}/pay/cash`;
+
+          console.log(`Nakit ödeme işaretleniyor: ${paymentEndpoint}`);
+          const paymentResponse = await instance.post(paymentEndpoint);
+
+          // Ödeme sonrası sipariş bilgilerini güncelle
+          if (paymentResponse && paymentResponse.data) {
+            const updatedOrderResponse = await instance.get(
+              `/orders/${orderId}`
+            );
+            if (updatedOrderResponse && updatedOrderResponse.data) {
+              dispatch(setOrderDetail(updatedOrderResponse.data));
+            }
+          }
+        } else if (orderData.paymentMethod === "CREDIT_CARD") {
+          // Kapıda kredi kartı ödemesi için backend'e bildirim gerekiyorsa
+          console.log("Kapıda kredi kartı ödemesi seçildi");
+        }
+      } catch (paymentError) {
+        console.error("Ödeme işlemi sırasında hata:", paymentError);
+        dispatch(
+          setSuccess(
+            "Siparişiniz oluşturuldu fakat ödeme işlemi sırasında bir hata oluştu"
+          )
+        );
+        // Ödeme hatası olsa bile siparişi başarılı sayıyoruz
+      }
+
+      // Sipariş ve ödeme bilgileri Redux'a kaydedildi
+      dispatch(setOrderFetchState(fetchStates.FETCHED)); // Loading state'ini kapat
+      dispatch(setLoading(false));
+
+      /*
     dispatch(clearCartAction());
     saveCartToStorage([]); // localStorage'ı da temizle
     */
 
-    return response.data;
-  } catch (err) {
-    let errorMessage = "Sipariş oluşturulamadı";
+      return response.data;
+    } catch (err) {
+      let errorMessage = "Sipariş oluşturulamadı";
 
-    if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
-      console.error("Backend hata detayı:", err.response);
-    } else if (err.message) {
-      errorMessage = err.message;
+      if (err.response) {
+        errorMessage = err.response.data?.message || errorMessage;
+        console.error("Backend hata detayı:", err.response);
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      dispatch(setError(errorMessage));
+      dispatch(setLoading(false));
+      dispatch(setOrderFetchState(fetchStates.FAILED)); // Error durumunu ayarla
+
+      return { error: errorMessage };
     }
-
-    dispatch(setError(errorMessage));
-    dispatch(setLoading(false));
-    dispatch(setOrderFetchState(fetchStates.FAILED)); // Error durumunu ayarla
-
-    return { error: errorMessage };
-  }
-};
+  };
 
 // Custom pizza kontrolü için yardımcı fonksiyon
 function isCustomProduct(product) {
   try {
     if (!product.description) return false;
-    
-    const description = typeof product.description === 'string' 
-      ? JSON.parse(product.description) 
-      : product.description;
-      
+
+    const description =
+      typeof product.description === "string"
+        ? JSON.parse(product.description)
+        : product.description;
+
     return description.isCustom === true;
   } catch (e) {
     return false;

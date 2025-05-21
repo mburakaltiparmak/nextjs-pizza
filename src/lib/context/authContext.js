@@ -354,11 +354,11 @@ export function AuthProvider({ children }) {
       localStorage.setItem("authReturnUrl", returnUrl);
       localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
 
-      // Supabase OAuth başlat
+      // Supabase OAuth başlat - callback sayfasına yönlendirecek
       await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/oauth2/callback`,
+          redirectTo: `${window.location.origin}/oauth2/callback`, // Callback sayfasını belirt
         },
       });
 

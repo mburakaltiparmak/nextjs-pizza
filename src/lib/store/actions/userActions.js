@@ -3,6 +3,7 @@ import { instance, userInstance } from "@/lib/hooks";
 import { setError, setLoading, setSuccess } from "./globalActions";
 import { fetchStates } from "../constants";
 import { initializeAuth } from "./initAuth";
+import { supabase } from "@/lib/supabase";
 
 export const userActions = {
   SET_EMAIL: "SET_EMAIL",
@@ -183,7 +184,7 @@ export const login = (formData) => async (dispatch) => {
   }
 };
 
-// Google OAuth başlatma - backend'e yönlendirme yapacak
+// Google OAuth başlatma - Supabase'e yönlendirme yapacak
 export const initiateGoogleLogin = () => async () => {
   try {
     console.log("Google login başlatılıyor...");
@@ -198,9 +199,13 @@ export const initiateGoogleLogin = () => async () => {
     localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
     console.log("RememberMe durumu kaydedildi:", rememberMe);
 
-    // Backend'in OAuth başlatma URL'ine yönlendir
-    const baseUrl = instance.defaults.baseURL || "";
-    window.location.href = `${baseUrl}/auth/google`;
+    // Supabase OAuth başlat - callback sayfasına yönlendirecek
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/oauth2/callback`, // Callback sayfasını belirt
+      },
+    });
   } catch (error) {
     console.error("Google login başlatma hatası:", error);
   }
