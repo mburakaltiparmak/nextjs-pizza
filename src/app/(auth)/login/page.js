@@ -94,7 +94,7 @@ const Page = () => {
   };
 
   const handleGoogleLogin = () => {
-    localStorage.setItem("tempRememberMe", rememberMe ? "true" : "false");
+    localStorage.setItem("rememberMe",true);
     dispatch(initiateGoogleLogin());
   };
 
