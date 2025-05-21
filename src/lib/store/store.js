@@ -23,10 +23,13 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
 });
 
-// Initialize auth and cart from localStorage on app startup
-setTimeout(() => {
-  store.dispatch(initializeAuth()); // Önce auth bilgilerini başlat
-  store.dispatch(initializeCart()); // Sonra sepet bilgilerini başlat
-}, 0);
+// Tarayıcı ortamında olup olmadığımızı kontrol et
+if (typeof window !== "undefined") {
+  // Initialize auth and cart from localStorage on app startup
+  setTimeout(() => {
+    store.dispatch(initializeAuth()); // Önce auth bilgilerini başlat
+    store.dispatch(initializeCart()); // Sonra sepet bilgilerini başlat
+  }, 0);
+}
 
 export default store;

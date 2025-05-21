@@ -18,6 +18,7 @@ Pizza Restoranı web uygulaması aşağıdaki özellikleri sunar:
 ## Kullanılan Teknolojiler
 
 ### Front-End
+
 - **Next.js 15.4.0-canary.26**: React tabanlı modern framework, sayfa yönlendirmesi, API rotaları ve SSR/SSG özellikleri için kullanıldı
 - **React 18**: Kullanıcı arayüzü bileşenlerini ve etkileşimleri geliştirmek için kullanıldı
 - **Redux Toolkit**: Durum yönetimi, asenktion işlemler ve karmaşık veri akışı için kullanıldı
@@ -29,6 +30,7 @@ Pizza Restoranı web uygulaması aşağıdaki özellikleri sunar:
 - **FontAwesome**: Ek ikonlar ve görsel öğeler için kullanıldı
 
 ### Back-End
+
 - **Spring Boot**: Java tabanlı API servisleri için kullanıldı
 - **PostgreSQL**: Supabase üzerinde veritabanı yönetimi için kullanıldı
 - **Spring Security**: Kimlik doğrulama ve yetkilendirme için kullanıldı
@@ -38,6 +40,7 @@ Pizza Restoranı web uygulaması aşağıdaki özellikleri sunar:
 - **SendGrid**: Transaksiyonel e-posta gönderimi için kullanıldı
 
 ### Deployment & DevOps
+
 - **Fly.io**: Containerize edilmiş backend uygulamasının dağıtımı için kullanıldı
 - **Vercel**: Frontend uygulamasının dağıtımı ve otomatik CI/CD için kullanıldı
 - **Docker**: Uygulama containerization için kullanıldı
@@ -46,6 +49,7 @@ Pizza Restoranı web uygulaması aşağıdaki özellikleri sunar:
 ## Gelişmiş Özellikler
 
 ### Kullanıcı Deneyimi
+
 - **Özel Pizza Tasarımı**: Malzeme, hamur ve boyut seçenekleriyle tamamen özelleştirilebilir pizzalar
 - **Sepet Senkronizasyonu**: Yerel depolama ile cihazlar arası sepet senkronizasyonu
 - **Otomatik Fiyat Hesaplama**: Seçimlere göre dinamik fiyat hesaplaması
@@ -54,6 +58,7 @@ Pizza Restoranı web uygulaması aşağıdaki özellikleri sunar:
 - **Sipariş Geçmişi**: Kullanıcılar için geçmiş siparişleri görüntüleme ve sipariş detayları
 
 ### Güvenlik
+
 - **JWT Tabanlı Kimlik Doğrulama**: Güvenli oturum yönetimi
 - **OAuth Entegrasyonu**: Google hesabıyla hızlı kayıt ve giriş
 - **Güvenli Ödeme İşlemleri**: SSL korumalı ödeme akışı
@@ -61,6 +66,7 @@ Pizza Restoranı web uygulaması aşağıdaki özellikleri sunar:
 - **CORS Yapılandırması**: Güvenli API erişimi
 
 ### Performans
+
 - **Lazy Loading**: Gerektiğinde yüklenen bileşenler
 - **Image Optimization**: Next.js image optimizasyonu
 - **State Management**: Verimli Redux Toolkit entegrasyonu
@@ -70,12 +76,14 @@ Pizza Restoranı web uygulaması aşağıdaki özellikleri sunar:
 ## Kurulum ve Çalıştırma
 
 ### Gereksinimler
+
 - Node.js 18.x veya üzeri
 - Java 17 veya üzeri (backend için)
 - PostgreSQL veritabanı
 - npm veya yarn
 
 ### Frontend Kurulumu
+
 1. Projeyi klonlayın:
    ```bash
    git clone https://github.com/mburakaltiparmak/nextjs-pizza
@@ -87,7 +95,7 @@ Pizza Restoranı web uygulaması aşağıdaki özellikleri sunar:
    ```
 3. Ortam değişkenlerini ayarlayın (`.env.local` dosyası oluşturun):
    ```
-   NEXT_PUBLIC_API_URL=https://pizza-backend.fly.dev
+   NEXT_PUBLIC_API_URL=http://localhost:8080
    NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
    ```
 4. Geliştirme ortamını başlatın:
@@ -97,6 +105,7 @@ Pizza Restoranı web uygulaması aşağıdaki özellikleri sunar:
 5. Tarayıcınızda `http://localhost:3000` adresine gidin ve uygulamayı keşfedin.
 
 ### Backend Kurulumu (İsteğe Bağlı)
+
 1. Backend repo'sunu klonlayın:
    ```bash
    git clone https://github.com/mburakaltiparmak/pizza-backend

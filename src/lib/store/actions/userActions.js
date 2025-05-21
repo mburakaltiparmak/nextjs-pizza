@@ -19,7 +19,7 @@ export const userActions = {
   ADD_USER_ADDRESS: "ADD_USER_ADDRESS",
   UPDATE_USER_ADDRESS: "UPDATE_USER_ADDRESS",
   REMOVE_USER_ADDRESS: "REMOVE_USER_ADDRESS",
-  SET_DEFAULT_ADDRESS: "SET_DEFAULT_ADDRESS"
+  SET_DEFAULT_ADDRESS: "SET_DEFAULT_ADDRESS",
 };
 
 export const setEmail = (email) => ({
@@ -107,7 +107,7 @@ const storeToken = (token, email, rememberMe) => {
 
   // "Beni hatırla" tercihini kaydet
   localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
-  
+
   // Authorization header'ı güncelle
   instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 };
@@ -123,7 +123,7 @@ export const login = (formData) => async (dispatch) => {
     // Backend ile login
     const response = await instance.post("/auth/login", {
       email: formData.username,
-      password: formData.password
+      password: formData.password,
     });
 
     if (!response.data || !response.data.token) {
@@ -137,26 +137,32 @@ export const login = (formData) => async (dispatch) => {
     dispatch(setIsLogin(true));
     dispatch(setAuthProvider("email"));
     dispatch(setRememberMe(formData.rememberMe));
-    
+
     // Ek kullanıcı bilgilerini güncelle (eğer backend'den dönüyorsa)
     if (response.data.email) {
       dispatch(setEmail(response.data.email));
     } else {
       dispatch(setEmail(formData.username));
     }
-    
+
     if (response.data.role) {
       dispatch(setUserRole(response.data.role));
     }
-    
+
     if (response.data.name || response.data.surname) {
-      dispatch(setUserProfile({
-        ...response.data
-      }));
+      dispatch(
+        setUserProfile({
+          ...response.data,
+        })
+      );
     }
 
     // Token ve email bilgilerini uygun storage'a kaydet
-    storeToken(token, response.data.email || formData.username, formData.rememberMe);
+    storeToken(
+      token,
+      response.data.email || formData.username,
+      formData.rememberMe
+    );
 
     dispatch(setLoading(false));
     dispatch(setSuccess("Giriş başarılı"));
@@ -189,7 +195,7 @@ export const initiateGoogleLogin = () => async () => {
 
     // Beni Hatırla tercihini geçici olarak sakla
     const rememberMe = localStorage.getItem("rememberMe") === "true";
-    localStorage.setItem("tempRememberMe", rememberMe ? "true" : "false");
+    localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
     console.log("RememberMe durumu kaydedildi:", rememberMe);
 
     // Backend'in OAuth başlatma URL'ine yönlendir
@@ -201,72 +207,74 @@ export const initiateGoogleLogin = () => async () => {
 };
 
 // OAuth callback işleyici - Supabase token için güncellendi
-export const handleOAuthCallback = (token, rememberMe = true) => async (dispatch) => {
-  if (!token) return { error: "Token bulunamadı" };
+export const handleOAuthCallback =
+  (token, rememberMe = true) =>
+  async (dispatch) => {
+    if (!token) return { error: "Token bulunamadı" };
 
-  try {
-    dispatch(setLoading(true));
-
-    // Redux store'u güncelle
-    dispatch(setToken(token));
-    dispatch(setIsLogin(true));
-    dispatch(setAuthProvider("google"));
-    dispatch(setRememberMe(rememberMe));
-
-    // Token bilgisini kaydet
-    storeToken(token, "", rememberMe);
-    
-    // Token doğrulama isteği gönder - kullanıcı bilgilerini al
     try {
-      const response = await instance.post("/auth/validate-token", null, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (response.data && response.data.valid) {
-        // Email bilgisini güncelle
-        if (response.data.email) {
-          const email = response.data.email;
-          dispatch(setEmail(email));
-          
-          // Email'i storage'a kaydet
-          const storage = rememberMe ? localStorage : sessionStorage;
-          storage.setItem("userEmail", email);
+      dispatch(setLoading(true));
+
+      // Redux store'u güncelle
+      dispatch(setToken(token));
+      dispatch(setIsLogin(true));
+      dispatch(setAuthProvider("google"));
+      dispatch(setRememberMe(rememberMe));
+
+      // Token bilgisini kaydet
+      storeToken(token, "", rememberMe);
+
+      // Token doğrulama isteği gönder - kullanıcı bilgilerini al
+      try {
+        const response = await instance.post("/auth/validate-token", null, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.data && response.data.valid) {
+          // Email bilgisini güncelle
+          if (response.data.email) {
+            const email = response.data.email;
+            dispatch(setEmail(email));
+
+            // Email'i storage'a kaydet
+            const storage = rememberMe ? localStorage : sessionStorage;
+            storage.setItem("userEmail", email);
+          }
+
+          // Rol bilgisini güncelle
+          if (response.data.role) {
+            dispatch(setUserRole(response.data.role));
+          }
+
+          // Status bilgisini güncelle
+          if (response.data.status) {
+            dispatch(setUserStatus(response.data.status));
+          }
         }
-        
-        // Rol bilgisini güncelle
-        if (response.data.role) {
-          dispatch(setUserRole(response.data.role));
-        }
-        
-        // Status bilgisini güncelle
-        if (response.data.status) {
-          dispatch(setUserStatus(response.data.status));
-        }
+      } catch (validationError) {
+        console.error("Token doğrulama hatası:", validationError);
+        // Doğrulama hatası olsa bile devam et
       }
-    } catch (validationError) {
-      console.error("Token doğrulama hatası:", validationError);
-      // Doğrulama hatası olsa bile devam et
-    }
-    
-    // Kullanıcı profilini getir
-    try {
-      await dispatch(fetchUserProfile());
-    } catch (profileError) {
-      console.error("Profil bilgisi alınamadı:", profileError);
-      // Profil hatası olsa bile devam et
-    }
 
-    dispatch(setLoading(false));
-    dispatch(setSuccess("Google ile giriş başarılı"));
+      // Kullanıcı profilini getir
+      try {
+        await dispatch(fetchUserProfile());
+      } catch (profileError) {
+        console.error("Profil bilgisi alınamadı:", profileError);
+        // Profil hatası olsa bile devam et
+      }
 
-    return { success: true };
-  } catch (error) {
-    dispatch(setError("OAuth ile giriş yapılamadı"));
-    dispatch(setLoading(false));
-    console.error("OAuth callback error:", error);
-    return { error: "OAuth callback failed" };
-  }
-};
+      dispatch(setLoading(false));
+      dispatch(setSuccess("Google ile giriş başarılı"));
+
+      return { success: true };
+    } catch (error) {
+      dispatch(setError("OAuth ile giriş yapılamadı"));
+      dispatch(setLoading(false));
+      console.error("OAuth callback error:", error);
+      return { error: "OAuth callback failed" };
+    }
+  };
 
 export const logout = () => async (dispatch) => {
   try {
@@ -275,7 +283,7 @@ export const logout = () => async (dispatch) => {
       // localStorage'dan temizle
       localStorage.removeItem("token");
       localStorage.removeItem("userEmail");
-      
+
       // Supabase token'ını da temizle
       localStorage.removeItem("sb-nslkxjzddnjpouzkevii-auth-token");
 
@@ -288,7 +296,11 @@ export const logout = () => async (dispatch) => {
     }
 
     // Axios header'larını temizle
-    if (typeof instance !== "undefined" && instance.defaults && instance.defaults.headers) {
+    if (
+      typeof instance !== "undefined" &&
+      instance.defaults &&
+      instance.defaults.headers
+    ) {
       delete instance.defaults.headers.common["Authorization"];
     }
 
@@ -298,7 +310,7 @@ export const logout = () => async (dispatch) => {
     return { success: true };
   } catch (error) {
     console.error("Logout hatası:", error);
-    
+
     // Hata olsa bile temizlik yapmaya çalış
     try {
       if (typeof window !== "undefined") {
@@ -344,9 +356,12 @@ export const checkAuthStatus = () => async (dispatch) => {
     authCheckPromise = (async () => {
       try {
         // Önce local storage'da token var mı kontrol et
-        const storage = localStorage.getItem("rememberMe") === "true" ? localStorage : sessionStorage;
+        const storage =
+          localStorage.getItem("rememberMe") === "true"
+            ? localStorage
+            : sessionStorage;
         const token = storage.getItem("token");
-        
+
         if (!token) {
           console.log("Token bulunamadı, oturum sonlandırılıyor");
           dispatch(clearUserData());
@@ -356,29 +371,29 @@ export const checkAuthStatus = () => async (dispatch) => {
         // Token doğrulama
         try {
           instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-          
+
           // Birleştirilmiş token doğrulama isteği
           const response = await instance.post("/auth/validate-token", null, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
           });
-          
+
           if (!response.data || !response.data.valid) {
             console.log("Token geçersiz");
             dispatch(clearUserData());
             return false;
           }
-          
+
           // Email bilgisini güncelle
           if (response.data.email) {
             dispatch(setEmail(response.data.email));
             storage.setItem("userEmail", response.data.email);
           }
-          
+
           // Rol bilgisini güncelle
           if (response.data.role) {
             dispatch(setUserRole(response.data.role));
           }
-          
+
           // Status bilgisini güncelle
           if (response.data.status) {
             dispatch(setUserStatus(response.data.status));
@@ -388,11 +403,11 @@ export const checkAuthStatus = () => async (dispatch) => {
           dispatch(clearUserData());
           return false;
         }
-        
+
         // Oturum durumunu güncelle
         dispatch(setIsLogin(true));
         dispatch(setRememberMe(localStorage.getItem("rememberMe") === "true"));
-        
+
         // OAuth callback'te profil yüklemesini atla
         if (window.location.pathname.includes("/oauth2/callback")) {
           console.log("OAuth callback sürecinde profil yüklemesi atlanıyor");
@@ -406,7 +421,7 @@ export const checkAuthStatus = () => async (dispatch) => {
           console.error("Profil bilgisi çekilemedi:", profileError);
           // Profil çekme hatası olsa bile oturum devam edebilir
         }
-        
+
         return true;
       } catch (error) {
         console.error("Auth status kontrolü hatası:", error);
@@ -454,7 +469,7 @@ export const registerUser = (userData) => async (dispatch) => {
     let errorMessage = "Kayıt işlemi başarısız oldu";
 
     // Timeout hatası kontrolü
-    if (err.code === 'ECONNABORTED') {
+    if (err.code === "ECONNABORTED") {
       // Timeout hatası - bunu başarı olarak işleyelim çünkü backend'deki işlem aslında başarılı
       dispatch(setLoading(false));
       dispatch(
@@ -479,8 +494,6 @@ export const registerUser = (userData) => async (dispatch) => {
 };
 // userActions.js dosyasına eklenecek kod
 
-
-
 // Şifre değiştirme fonksiyonu
 export const changePassword = (passwordData) => async (dispatch) => {
   dispatch(setLoading(true));
@@ -499,7 +512,8 @@ export const changePassword = (passwordData) => async (dispatch) => {
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
     } else if (err.request) {
-      errorMessage = "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
+      errorMessage =
+        "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
     } else {
       errorMessage = err.message || errorMessage;
     }
@@ -519,14 +533,16 @@ export const fetchUserProfile = () => async (dispatch, getState) => {
 
     // Token yoksa localStorage/sessionStorage'dan kontrol et
     if (!token) {
-      console.log("Redux'ta token bulunamadı, localStorage'dan kontrol ediliyor");
+      console.log(
+        "Redux'ta token bulunamadı, localStorage'dan kontrol ediliyor"
+      );
       // Token'ı Redux'a yüklemeyi dene
       await dispatch(initializeAuth());
-      
+
       // Tekrar token kontrolü yap
       const updatedState = getState();
       const updatedToken = updatedState.user.token;
-      
+
       if (!updatedToken) {
         console.error("Token bulunamadı (Redux ve localStorage'da yok)");
         return null;
@@ -536,11 +552,13 @@ export const fetchUserProfile = () => async (dispatch, getState) => {
     // En güncel token'ı al
     const currentState = getState();
     const currentToken = currentState.user.token;
-    
+
     console.log("Kullanıyor token:", currentToken.substring(0, 10) + "...");
-    
+
     // Double-check auth header is set properly
-    instance.defaults.headers.common["Authorization"] = `Bearer ${currentToken}`;
+    instance.defaults.headers.common[
+      "Authorization"
+    ] = `Bearer ${currentToken}`;
 
     try {
       const response = await instance.get("/user/profile");
@@ -548,12 +566,12 @@ export const fetchUserProfile = () => async (dispatch, getState) => {
       console.log("Kullanıcı profili alındı:", userData);
 
       dispatch(setUserProfile(userData));
-      
+
       // Rol bilgisini güncelle (eğer mevcutsa)
       if (userData.role) {
         dispatch(setUserRole(userData.role));
       }
-      
+
       // Status bilgisini güncelle (eğer mevcutsa)
       if (userData.status) {
         dispatch(setUserStatus(userData.status));
@@ -563,12 +581,12 @@ export const fetchUserProfile = () => async (dispatch, getState) => {
       return userData;
     } catch (error) {
       console.error("API request error:", error);
-      
+
       // Yetkilendirme hatası durumunda
       if (error.response && error.response.status === 401) {
         dispatch(clearUserData()); // Oturumu temizle
       }
-      
+
       throw error;
     }
   } catch (error) {
@@ -638,7 +656,7 @@ export const updateUserProfile = (userData) => async (dispatch) => {
     // Email değiştiyse, email state'ini de güncelle
     if (updatedUserData.email) {
       dispatch(setEmail(updatedUserData.email));
-      
+
       // Local storage'daki email'i de güncelle
       const rememberMe = localStorage.getItem("rememberMe") === "true";
       const storage = rememberMe ? localStorage : sessionStorage;
@@ -679,46 +697,46 @@ export const fetchUserAddresses = () => async (dispatch, getState) => {
     // Get current token from Redux store
     const { user } = getState();
     let token = user.token;
-    
+
     // Token yoksa localStorage/sessionStorage'dan kontrol et
     if (!token) {
       await dispatch(initializeAuth());
-      
+
       // Tekrar token kontrolü yap
       const updatedState = getState();
       token = updatedState.user.token;
-      
+
       if (!token) {
         dispatch(setUserAddresses([]));
         dispatch(setUserFetchState(fetchStates.FETCHED));
         return [];
       }
     }
-    
+
     // Debug ve sorun giderme amaçlı token bilgisi
-    console.debug('Adres API token tipi:', token.substring(0, 30));
-    
+    console.debug("Adres API token tipi:", token.substring(0, 30));
+
     // Ensure the token is set in the request headers
-    instance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    
+    instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
     try {
       // API endpoint'i düzeltildi
       const response = await instance.get("/user/addresses", {
         timeout: 10000, // Timeout süresi artırıldı
-        headers: { 'Authorization': `Bearer ${token}` } // Header'ı isteğe özel tekrar ekle
+        headers: { Authorization: `Bearer ${token}` }, // Header'ı isteğe özel tekrar ekle
       });
-      
+
       dispatch(setUserAddresses(response.data || []));
       dispatch(setUserFetchState(fetchStates.FETCHED));
       return response.data || [];
     } catch (requestError) {
       // Tüm hata durumlarını debug için logla
       console.warn("Adres API isteği hatası:", {
-        status: requestError.response?.status, 
+        status: requestError.response?.status,
         data: requestError.response?.data,
-        message: requestError.message
+        message: requestError.message,
       });
-      
+
       // Tüm hatalarda boş dizi dön
       dispatch(setUserAddresses([]));
       dispatch(setUserFetchState(fetchStates.FETCHED));
@@ -754,7 +772,7 @@ export const createAddress = (addressData) => async (dispatch) => {
     let errorMessage = "Adres eklenemedi";
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
-      
+
       // Yetkilendirme hatası durumunda
       if (err.response.status === 401) {
         dispatch(logout()); // Oturumu temizle
@@ -793,7 +811,7 @@ export const updateAddress = (addressId, addressData) => async (dispatch) => {
     let errorMessage = "Adres güncellenemedi";
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
-      
+
       // Yetkilendirme hatası durumunda
       if (err.response.status === 401) {
         dispatch(logout()); // Oturumu temizle
@@ -813,7 +831,7 @@ export const deleteAddress = (addressId) => async (dispatch) => {
 
   try {
     const response = await instance.delete(`/user/addresses/${addressId}`);
-    
+
     // Backend'in tüm güncel adresleri döndürdüğünü varsayıyoruz
     if (response && response.data) {
       dispatch(setUserAddresses(response.data));
@@ -821,7 +839,7 @@ export const deleteAddress = (addressId) => async (dispatch) => {
       // Eğer backend sadece başarı durumu dönüyorsa, adresleri tekrar çekelim
       await dispatch(fetchUserAddresses());
     }
-    
+
     dispatch(setSuccess("Adres başarıyla silindi"));
     dispatch(setLoading(false));
 
@@ -832,7 +850,7 @@ export const deleteAddress = (addressId) => async (dispatch) => {
     let errorMessage = "Adres silinemedi";
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
-      
+
       // Yetkilendirme hatası durumunda
       if (err.response.status === 401) {
         dispatch(logout()); // Oturumu temizle
@@ -870,7 +888,7 @@ export const setAddressAsDefault = (addressId) => async (dispatch) => {
     let errorMessage = "Varsayılan adres ayarlanamadı";
     if (err.response) {
       errorMessage = err.response.data?.message || errorMessage;
-      
+
       // Yetkilendirme hatası durumunda
       if (err.response.status === 401) {
         dispatch(logout()); // Oturumu temizle
@@ -891,18 +909,20 @@ export const forgotPassword = (email) => async (dispatch) => {
 
   try {
     const response = await instance.post("/auth/forgot-password", { email });
-    
+
     dispatch(setLoading(false));
-    dispatch(setSuccess("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi"));
-    
+    dispatch(
+      setSuccess("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi")
+    );
+
     return { success: true };
   } catch (err) {
     let errorMessage = "Şifre sıfırlama işlemi başarısız oldu";
-    
+
     if (err.response && err.response.data) {
       errorMessage = err.response.data.message || errorMessage;
     }
-    
+
     dispatch(setError(errorMessage));
     dispatch(setLoading(false));
     return { error: errorMessage };
@@ -914,22 +934,22 @@ export const resetPassword = (token, newPassword) => async (dispatch) => {
   dispatch(setError(null));
 
   try {
-    const response = await instance.post("/auth/reset-password", { 
-      token, 
-      newPassword 
+    const response = await instance.post("/auth/reset-password", {
+      token,
+      newPassword,
     });
-    
+
     dispatch(setLoading(false));
     dispatch(setSuccess("Şifreniz başarıyla sıfırlandı. Lütfen giriş yapın."));
-    
+
     return { success: true };
   } catch (err) {
     let errorMessage = "Şifre sıfırlama işlemi başarısız oldu";
-    
+
     if (err.response && err.response.data) {
       errorMessage = err.response.data.message || errorMessage;
     }
-    
+
     dispatch(setError(errorMessage));
     dispatch(setLoading(false));
     return { error: errorMessage };

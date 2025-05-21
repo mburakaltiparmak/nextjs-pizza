@@ -1,5 +1,5 @@
-import { supabase } from './supabase';
-import { instance } from './hooks';
+import { supabase } from "./supabase";
+import { instance } from "./hooks";
 
 export const AuthService = {
   // Email ve şifre ile giriş - eski yöntem korunuyor
@@ -7,11 +7,15 @@ export const AuthService = {
     try {
       const response = await instance.post("/auth/login", {
         email: email,
-        password: password
+        password: password,
       });
-      
+
       if (response.data && response.data.token) {
-        storeAuthData(response.data.token, response.data.email || email, rememberMe);
+        storeAuthData(
+          response.data.token,
+          response.data.email || email,
+          rememberMe
+        );
         return response.data;
       }
       throw new Error("Token alınamadı");
@@ -25,21 +29,21 @@ export const AuthService = {
     // Mevcut URL'i kaydet (geri dönüş için)
     const returnUrl = window.location.pathname;
     localStorage.setItem("authReturnUrl", returnUrl);
-    localStorage.setItem("tempRememberMe", rememberMe ? "true" : "false");
-    
+    localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
+
     // Supabase OAuth başlat
     const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/oauth2/callback`
-      }
+        redirectTo: `${window.location.origin}/oauth2/callback`,
+      },
     });
-    
+
     if (error) {
       console.error("Google OAuth başlatma hatası:", error);
       throw error;
     }
-    
+
     return data;
   },
 
@@ -47,18 +51,18 @@ export const AuthService = {
   validateToken: async (token) => {
     try {
       // Eğer token Supabase'den geliyorsa
-      if (token.startsWith('sbx_')) {
+      if (token.startsWith("sbx_")) {
         // Supabase session kontrolü
         const { data: session } = await supabase.auth.getSession();
-        return { 
-          valid: !!session, 
+        return {
+          valid: !!session,
           email: session?.user?.email,
-          role: 'CUSTOMER' // Varsayılan rol - backend sync sonrası güncellenecek
+          role: "CUSTOMER", // Varsayılan rol - backend sync sonrası güncellenecek
         };
       } else {
         // Backend JWT token doğrulama
         const response = await instance.post("/auth/validate-token", null, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         return response.data;
       }
@@ -72,16 +76,16 @@ export const AuthService = {
     try {
       // Supabase oturumunu kapat
       await supabase.auth.signOut();
-      
+
       // Tüm yerel depolamayı temizle
       localStorage.removeItem("token");
       localStorage.removeItem("userEmail");
       sessionStorage.removeItem("token");
       sessionStorage.removeItem("userEmail");
-      
+
       // Axios header'larını temizle
       delete instance.defaults.headers.common["Authorization"];
-      
+
       return { success: true };
     } catch (error) {
       console.error("Logout hatası:", error);
@@ -103,10 +107,10 @@ const storeAuthData = (token, email, rememberMe) => {
 export const getStoredAuthData = () => {
   const rememberMe = localStorage.getItem("rememberMe") === "true";
   const storage = rememberMe ? localStorage : sessionStorage;
-  
+
   return {
     token: storage.getItem("token"),
     email: storage.getItem("userEmail"),
-    rememberMe: rememberMe
+    rememberMe: rememberMe,
   };
 };

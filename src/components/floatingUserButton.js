@@ -203,21 +203,24 @@ const FloatingUserButton = () => {
         setForgotPasswordSuccess(true);
         toast({
           title: "Başarılı",
-          description: "Şifre sıfırlama bağlantısı email adresinize gönderildi.",
+          description:
+            "Şifre sıfırlama bağlantısı email adresinize gönderildi.",
         });
       } else if (result && result.error) {
         setForgotPasswordError(result.error);
       }
     } catch (err) {
       console.error("Şifre sıfırlama hatası:", err);
-      setForgotPasswordError("Şifre sıfırlama işlemi sırasında bir hata oluştu");
+      setForgotPasswordError(
+        "Şifre sıfırlama işlemi sırasında bir hata oluştu"
+      );
     }
   };
 
   // Google ile giriş yapmak için
   const handleGoogleLogin = () => {
     // Google girişine başlamadan önce rememberMe tercihini localStorage'a kaydet
-    localStorage.setItem("tempRememberMe", rememberMe ? "true" : "false");
+    localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
     dispatch(initiateGoogleLogin());
     setLoginOpen(false);
   };
@@ -275,7 +278,9 @@ const FloatingUserButton = () => {
                   <div className="font-bold truncate font-Londrina_Solid text-red max-md:text-lg">
                     {name ? name : userEmail}
                   </div>
-                  <div className="text-gray-600 text-xs truncate">{userEmail}</div>
+                  <div className="text-gray-600 text-xs truncate">
+                    {userEmail}
+                  </div>
                 </div>
               </div>
 
@@ -355,7 +360,7 @@ const FloatingUserButton = () => {
                 <AlertDialogHeader>
                   <AlertDialogTitle className="mt-6 text-center text-3xl font-bold tracking-tight font-Barlow text-white">
                     Giriş
-                    </AlertDialogTitle>
+                  </AlertDialogTitle>
                   <AlertDialogDescription className="text-center text-white font-Barlow text-sm">
                     Hesabınıza giriş yapmak için bilgilerinizi giriniz.
                   </AlertDialogDescription>
@@ -511,7 +516,10 @@ const FloatingUserButton = () => {
           </AlertDialog>
 
           {/* Şifremi Unuttum Modalı */}
-          <AlertDialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+          <AlertDialog
+            open={forgotPasswordOpen}
+            onOpenChange={setForgotPasswordOpen}
+          >
             <AlertDialogContent className="bg-red p-0 border-0 rounded-md max-w-md">
               <div className="w-full max-w-md space-y-4 border-transparent rounded-md p-16 relative">
                 <button
@@ -526,7 +534,7 @@ const FloatingUserButton = () => {
                     Şifremi Unuttum
                   </AlertDialogTitle>
                   <AlertDialogDescription className="text-center text-white font-Barlow text-sm">
-                    {!forgotPasswordSuccess 
+                    {!forgotPasswordSuccess
                       ? "Şifre sıfırlama bağlantısı için email adresinizi girin."
                       : "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi."}
                   </AlertDialogDescription>
@@ -534,7 +542,9 @@ const FloatingUserButton = () => {
 
                 {forgotPasswordError && (
                   <div className="font-Barlow rounded-md bg-darkred p-4">
-                    <div className="text-sm text-white">{forgotPasswordError}</div>
+                    <div className="text-sm text-white">
+                      {forgotPasswordError}
+                    </div>
                   </div>
                 )}
 
@@ -542,7 +552,10 @@ const FloatingUserButton = () => {
                   <div className="space-y-4">
                     <div className="bg-green-700 p-4 rounded-md text-white text-center">
                       <FontAwesomeIcon icon={faKey} className="text-2xl mb-2" />
-                      <p>Şifre sıfırlama bağlantısı e-posta adresinize gönderildi. Lütfen e-postanızı kontrol edin.</p>
+                      <p>
+                        Şifre sıfırlama bağlantısı e-posta adresinize
+                        gönderildi. Lütfen e-postanızı kontrol edin.
+                      </p>
                     </div>
                     <button
                       type="button"
