@@ -13,7 +13,7 @@ import {
   ShoppingCart,
   User,
   Menu,
-  X
+  X,
 } from "lucide-react";
 import { Separator } from "../ui/separator";
 
@@ -30,29 +30,28 @@ const LogoutButton = ({ collapsed, onLogoutStart }) => {
     try {
       // Logout durumunu işaretle
       setIsLoggingOut(true);
-      
+
       // Parent bileşene bildir
       if (onLogoutStart) {
         onLogoutStart();
       }
-      
+
       // Dynamic import kullanarak logout fonksiyonunu yükle
-      const userActionsModule = await import('@/lib/store/actions/userActions');
-      
+      const userActionsModule = await import("@/lib/store/actions/userActions");
+
       // Logout action'ını çağır
       await dispatch(userActionsModule.logout());
-      
+
       // Çıkış başarılı - localStorage'ı temizle
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userEmail');
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userEmail");
       }
-      
+
       // Kullanıcıyı login sayfasına yönlendir
       setTimeout(() => {
-        router.push('/login');
+        router.push("/login");
       }, 100);
-      
     } catch (error) {
       console.error("Çıkış yapma hatası:", error);
       setIsLoggingOut(false);
@@ -64,14 +63,13 @@ const LogoutButton = ({ collapsed, onLogoutStart }) => {
       onClick={handleLogout}
       disabled={isLoggingOut}
       className={`flex items-center w-full p-3 rounded-lg text-white hover:bg-yellow hover:text-black border border-red font-medium ${
-        isLoggingOut ? 'opacity-70 cursor-not-allowed' : ''
+        isLoggingOut ? "opacity-70 cursor-not-allowed" : ""
       }`}
     >
-      <LogOut
-        className={`${collapsed ? "mx-auto" : "mr-3"}`}
-        size={20}
-      />
-      {!collapsed && <span>{isLoggingOut ? 'Çıkış Yapılıyor...' : 'Çıkış Yap'}</span>}
+      <LogOut className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />
+      {!collapsed && (
+        <span>{isLoggingOut ? "Çıkış Yapılıyor..." : "Çıkış Yap"}</span>
+      )}
     </button>
   );
 };
@@ -89,21 +87,21 @@ const Sidebar = ({ activePage = "dashboard" }) => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      
+
       // Mobil cihazda sidebar'ı daralt
       if (mobile && !collapsed) {
         setCollapsed(true);
       }
     };
-    
+
     // İlk kontrol
     checkMobile();
-    
+
     // Resize olayını dinle
-    window.addEventListener('resize', checkMobile);
-    
+    window.addEventListener("resize", checkMobile);
+
     // Temizleme
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, [collapsed]);
 
   // Sidebar durumunu değiştir
@@ -116,16 +114,19 @@ const Sidebar = ({ activePage = "dashboard" }) => {
   };
 
   // Sayfa yönlendirmesi
-  const navigateTo = useCallback((path) => {
-    setIsNavigating(true);
-    if (isMobile) {
-      setMobileOpen(false);
-    }
-    router.push(path);
-    setTimeout(() => {
-      setIsNavigating(false);
-    }, 300);
-  }, [router, isMobile]);
+  const navigateTo = useCallback(
+    (path) => {
+      setIsNavigating(true);
+      if (isMobile) {
+        setMobileOpen(false);
+      }
+      router.push(path);
+      setTimeout(() => {
+        setIsNavigating(false);
+      }, 300);
+    },
+    [router, isMobile]
+  );
 
   // Çıkış işlemi başladığında çağrılacak
   const handleLogoutStart = useCallback(() => {
@@ -136,7 +137,12 @@ const Sidebar = ({ activePage = "dashboard" }) => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       const sidebar = document.getElementById("sidebar-container");
-      if (isMobile && mobileOpen && sidebar && !sidebar.contains(event.target)) {
+      if (
+        isMobile &&
+        mobileOpen &&
+        sidebar &&
+        !sidebar.contains(event.target)
+      ) {
         setMobileOpen(false);
       }
     };
@@ -152,25 +158,42 @@ const Sidebar = ({ activePage = "dashboard" }) => {
     {
       path: "/dashboard",
       name: "Dashboard",
-      icon: <LayoutDashboard className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />,
+      icon: (
+        <LayoutDashboard
+          className={`${collapsed ? "mx-auto" : "mr-3"}`}
+          size={20}
+        />
+      ),
       id: "dashboard",
     },
     {
       path: "/category",
       name: "Kategoriler",
-      icon: <ListOrdered className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />,
+      icon: (
+        <ListOrdered
+          className={`${collapsed ? "mx-auto" : "mr-3"}`}
+          size={20}
+        />
+      ),
       id: "category",
     },
     {
       path: "/product",
       name: "Ürünler",
-      icon: <Package className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />,
+      icon: (
+        <Package className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />
+      ),
       id: "product",
     },
     {
-      path: "/orders",
+      path: "/orders-admin",
       name: "Siparişler",
-      icon: <ShoppingCart className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />,
+      icon: (
+        <ShoppingCart
+          className={`${collapsed ? "mx-auto" : "mr-3"}`}
+          size={20}
+        />
+      ),
       id: "orders",
     },
     {
@@ -187,20 +210,25 @@ const Sidebar = ({ activePage = "dashboard" }) => {
       {isMobile && (
         <button
           onClick={toggleSidebar}
-          className="fixed top-3 left-4 bg-red text-yellow z-50 p-2 ring-2 ring-inset ring-black text-darkred shadow-lg md:hidden"
+          className="fixed top-3 left-4 bg-red text-yellow z-50 p-2 ring-2 ring-inset ring-black  shadow-lg md:hidden"
           aria-label="Menüyü aç/kapat"
         >
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       )}
-      
+
       {/* Sidebar */}
       <div
         id="sidebar-container"
         className={`bg-red text-white transition-all duration-300 ease-in-out 
-          ${isMobile 
-            ? `fixed inset-y-0 left-0 z-40 w-48 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`
-            : collapsed ? 'w-20' : 'w-48'
+          ${
+            isMobile
+              ? `fixed inset-y-0 left-0 z-40 w-48 ${
+                  mobileOpen ? "translate-x-0" : "-translate-x-full"
+                }`
+              : collapsed
+              ? "w-20"
+              : "w-48"
           }`}
       >
         <div className="p-4 flex justify-between items-center border-b border-red">
@@ -218,7 +246,11 @@ const Sidebar = ({ activePage = "dashboard" }) => {
               onClick={toggleSidebar}
               className="p-2 rounded-full hover:bg-red text-white"
             >
-              {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+              {collapsed ? (
+                <ChevronRight size={20} />
+              ) : (
+                <ChevronLeft size={20} />
+              )}
             </button>
           )}
         </div>
@@ -234,29 +266,33 @@ const Sidebar = ({ activePage = "dashboard" }) => {
                     activePage === item.id
                       ? "bg-yellow text-black"
                       : "text-white hover:bg-yellow hover:text-black"
-                  } border border-red font-medium ${isNavigating ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  } border border-red font-medium ${
+                    isNavigating ? "opacity-70 cursor-not-allowed" : ""
+                  }`}
                 >
-                 <span>{item.icon}</span> 
-                  {(!collapsed || (isMobile && mobileOpen)) && <span>{item.name}</span>}
+                  <span>{item.icon}</span>
+                  {(!collapsed || (isMobile && mobileOpen)) && (
+                    <span>{item.name}</span>
+                  )}
                 </button>
                 <Separator orientation="horizontal" />
               </li>
             ))}
 
             <li className="w-full">
-              <LogoutButton 
-                collapsed={collapsed && !isMobile} 
-                onLogoutStart={handleLogoutStart} 
+              <LogoutButton
+                collapsed={collapsed && !isMobile}
+                onLogoutStart={handleLogoutStart}
               />
             </li>
           </ul>
         </div>
       </div>
-      
+
       {/* Mobil overlay - sidebar açıldığında arkaplanı karartır */}
       {isMobile && mobileOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-30" 
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-30"
           onClick={() => setMobileOpen(false)}
         />
       )}

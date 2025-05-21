@@ -17,7 +17,7 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!email.trim()) {
       toast({
         title: "Hata",
@@ -26,9 +26,9 @@ export default function ForgotPasswordPage() {
       });
       return;
     }
-    
+
     const result = await dispatch(forgotPassword(email));
-    
+
     if (result.success) {
       setSubmitted(true);
       toast({
@@ -46,20 +46,20 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-red">
+    <div className="flex flex-col min-h-screen bg-red font-Barlow">
       <div className="flex flex-1 items-center justify-center">
         <div className="w-full max-w-md p-8 bg-yellow rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold text-center text-red mb-6">
             Şifremi Unuttum
           </h2>
-          
+
           {submitted ? (
             <div className="text-center">
               <p className="mb-4">
-                Şifre sıfırlama bağlantısı e-posta adresinize gönderildi. 
-                Lütfen e-postanızı kontrol edin.
+                Şifre sıfırlama bağlantısı e-posta adresinize gönderildi. Lütfen
+                e-postanızı kontrol edin.
               </p>
-              <Link 
+              <Link
                 href="/login"
                 className="inline-block px-4 py-2 bg-red text-white rounded hover:bg-darkred"
               >
@@ -69,9 +69,9 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label 
-                  htmlFor="email" 
-                  className="block text-sm font-medium text-gray-700"
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-darkgray"
                 >
                   E-posta Adresiniz
                 </label>
@@ -79,14 +79,15 @@ export default function ForgotPasswordPage() {
                   id="email"
                   name="email"
                   type="email"
+                  placeholder="mail@example.com"
                   required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red focus:ring-red"
+                  className="py-1 px-2 mt-1 block w-full text-sm rounded-md border-gray shadow-sm placeholder:text-gray text-darkgray focus:border-red focus:ring-red"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
                 />
               </div>
-              
+
               <button
                 type="submit"
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red hover:bg-darkred focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red"
@@ -98,15 +99,12 @@ export default function ForgotPasswordPage() {
                   "Şifre Sıfırlama Bağlantısı Gönder"
                 )}
               </button>
-              
-              <div className="text-center mt-4">
-                <Link 
-                  href="/login"
-                  className="text-sm text-red hover:text-darkred"
-                >
+
+              <button className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-800  hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red">
+                <Link href="/login" className="text-sm text-white ">
                   Giriş Sayfasına Dön
                 </Link>
-              </div>
+              </button>
             </form>
           )}
         </div>

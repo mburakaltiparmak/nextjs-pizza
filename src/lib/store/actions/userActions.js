@@ -727,7 +727,7 @@ export const fetchUserAddresses = () => async (dispatch, getState) => {
     try {
       // API endpoint'i düzeltildi
       const response = await instance.get("/user/addresses", {
-        timeout: 10000, // Timeout süresi artırıldı
+        // timeout: 10000, // Timeout süresi artırıldı
         headers: { Authorization: `Bearer ${token}` }, // Header'ı isteğe özel tekrar ekle
       });
 

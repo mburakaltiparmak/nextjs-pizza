@@ -19,53 +19,53 @@ const AdminLayoutClient = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { isLogin, role, status } = useSelector(state => state.user);
-  
+  const { isLogin, role, status } = useSelector((state) => state.user);
+
   // URL yolundan aktif sayfayı belirle
   const getActivePageFromPath = (path) => {
     if (path.includes("/dashboard")) return "dashboard";
     if (path.includes("/category")) return "category";
     if (path.includes("/product")) return "product";
-    if (path.includes("/orders")) return "orders";
+    if (path.includes("/orders-admin")) return "orders-admin";
     if (path.includes("/users")) return "users";
     return "dashboard"; // varsayılan
   };
 
   // Aktif sayfayı burada belirleyelim
   const activePage = getActivePageFromPath(pathname);
-  
+
   // Mobil cihaz kontrolü
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     // İlk kontrol
     checkMobile();
-    
+
     // Resize olayını dinle
-    window.addEventListener('resize', checkMobile);
-    
+    window.addEventListener("resize", checkMobile);
+
     // Cleanup
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
-  
+
   // Auth kontrolü ve diğer useEffect'ler aynı...
   useEffect(() => {
     // Client-side mount olduğunu işaretle
     setIsMounted(true);
-    
+
     // Kullanıcı giriş yapmamışsa
     if (!isLogin) {
-      router.push('/login');
+      router.push("/login");
       return;
     }
-    
+
     // Kullanıcı rolü ADMIN veya PERSONAL değilse
     const allowedRoles = [userRoles.ADMIN, userRoles.PERSONAL];
     if (!allowedRoles.includes(role)) {
       // Yetkisiz erişim, ana sayfaya yönlendir
-      router.push('/');
+      router.push("/");
       return;
     }
 
@@ -81,7 +81,7 @@ const AdminLayoutClient = ({ children }) => {
         }
       };
     }
-    
+
     // Temizleme işlevi
     return () => {
       if (typeof window !== "undefined" && window.openAdminModal) {
@@ -89,9 +89,13 @@ const AdminLayoutClient = ({ children }) => {
       }
     };
   }, [isLogin, role, router]);
-  
+
   // Diğer kontroller...
-  if (!isMounted || !isLogin || ![userRoles.ADMIN, userRoles.PERSONAL].includes(role)) {
+  if (
+    !isMounted ||
+    !isLogin ||
+    ![userRoles.ADMIN, userRoles.PERSONAL].includes(role)
+  ) {
     return <Loading />;
   }
 
@@ -105,13 +109,13 @@ const AdminLayoutClient = ({ children }) => {
 
   // Sayfa başlığını belirle
   const pageTitle = pageProps.title || "Admin Panel";
-  
+
   // URL'ye ve sayfa başlığına göre buton gösterilip gösterilmeyeceğini belirle
-  const showAddButton = 
-    pathname.includes("/category") || 
-    pathname.includes("/product") || 
-    pageTitle === "Kategoriler" || 
-    pageTitle === "Ürünler" || 
+  const showAddButton =
+    pathname.includes("/category") ||
+    pathname.includes("/product") ||
+    pageTitle === "Kategoriler" ||
+    pageTitle === "Ürünler" ||
     pageProps.showAddButton === true;
 
   return (
@@ -149,7 +153,9 @@ const AdminLayoutClient = ({ children }) => {
           ) : pageProps.error ? (
             <ErrorMessage error={pageProps.error} />
           ) : (
-            <div id="admin-page-component" className="mt-4 md:mt-0">{children}</div>
+            <div id="admin-page-component" className="mt-4 md:mt-0">
+              {children}
+            </div>
           )}
         </main>
       </div>

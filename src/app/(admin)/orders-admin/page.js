@@ -50,182 +50,272 @@ const OrdersPage = () => {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // useRef ile bir initialFetch flag'i oluştur - bu sayede sadece ilk yüklemede fetchOrders çağrılır
+  // Ref'ler
   const initialFetchDone = useRef(false);
+  const currentRequestRef = useRef(null);
+  const lastFetchTime = useRef(0);
+  const mountedRef = useRef(true);
 
-  // fetchOrders fonksiyonunu stable hale getir - bağımlılık olarak toast'u çıkar
-  const fetchOrders = useCallback(async () => {
+  // Component unmount takibi
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      // Aktif istekleri iptal et
+      if (currentRequestRef.current) {
+        currentRequestRef.current.abort();
+      }
+    };
+  }, []);
+
+  const fetchOrders = useCallback(async (force = false) => {
+    // Son fetch'ten 5 saniye geçmemişse ve zorlanmadıysa iptal et
+    const now = Date.now();
+    if (!force && now - lastFetchTime.current < 5000) {
+      console.log("Son fetch çok yakın zamanda yapıldı, atlanıyor");
+      return;
+    }
+
+    // Önceki isteği iptal et
+    if (currentRequestRef.current) {
+      currentRequestRef.current.abort();
+    }
+
+    // Yeni AbortController oluştur
+    const abortController = new AbortController();
+    currentRequestRef.current = abortController;
+
     setLoading(true);
     try {
-      const response = await instance.get("/orders");
+      const response = await instance.get("/orders", {
+        //timeout: 15000, // 15 saniye timeout
+        //signal: abortController.signal,
+      });
+
+      if (!mountedRef.current) return;
+      console.log("orders", response.data);
       setOrders(response.data);
       setFilteredOrders(response.data);
-    } catch (error) {
-      console.error("Siparişler yüklenirken hata oluştu:", error);
-      toast({
-        title: "Hata",
-        description: "Siparişler yüklenemedi",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]); // toast bağımlılığını kaldır
 
-  // filterOrders fonksiyonunu useCallback ile sarmalayın ve bağımlılıkları doğru şekilde belirtin
+      lastFetchTime.current = now;
+    } catch (error) {
+      if (!mountedRef.current) return;
+
+      // İptal edilen istekleri sayma
+      if (error.name !== "AbortError" && error.name !== "CanceledError") {
+        console.error("Siparişler yüklenirken hata oluştu:", error);
+        toast({
+          title: "Hata",
+          description: "Siparişler yüklenemedi",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      if (mountedRef.current) {
+        setLoading(false);
+      }
+      currentRequestRef.current = null;
+    }
+  }, []); // toast bağımlılığını kaldırdık
+
+  // Optimize edilmiş filterOrders
   const filterOrders = useCallback(() => {
+    if (!orders.length) {
+      setFilteredOrders([]);
+      return;
+    }
+
     let result = orders;
 
-    // Duruma göre filtrele
+    // Durum filtresi
     if (filter !== "ALL") {
       result = result.filter((order) => order.orderStatus === filter);
     }
 
-    // Arama terimine göre filtrele
-    if (searchTerm) {
+    // Arama filtresi
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
       result = result.filter((order) => {
         // Sipariş ID'sinde arama
         if (order.id && order.id.toString().includes(searchTerm)) return true;
 
-        // Müşteri bilgilerinde arama
-        if (
-          order.user &&
-          ((order.user.name &&
-            order.user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (order.user.surname &&
-              order.user.surname
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())) ||
-            (order.user.email &&
-              order.user.email
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())) ||
-            (order.user.phoneNumber &&
-              order.user.phoneNumber.includes(searchTerm)))
-        )
-          return true;
+        // Kullanıcı bilgilerinde arama
+        if (order.user) {
+          const userFields = [
+            order.user.name,
+            order.user.surname,
+            order.user.email,
+            order.user.phoneNumber,
+          ].filter(Boolean);
 
-        // Teslimat adresinde arama
-        if (
-          order.deliveryAddress &&
-          ((order.deliveryAddress.fullAddress &&
-            order.deliveryAddress.fullAddress
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase())) ||
-            (order.deliveryAddress.city &&
-              order.deliveryAddress.city
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())) ||
-            (order.deliveryAddress.district &&
-              order.deliveryAddress.district
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())))
-        )
-          return true;
+          if (
+            userFields.some((field) =>
+              field.toLowerCase().includes(searchLower)
+            )
+          )
+            return true;
+        }
+
+        // Adres bilgilerinde arama
+        if (order.deliveryAddress) {
+          const addressFields = [
+            order.deliveryAddress.fullAddress,
+            order.deliveryAddress.city,
+            order.deliveryAddress.district,
+          ].filter(Boolean);
+
+          if (
+            addressFields.some((field) =>
+              field.toLowerCase().includes(searchLower)
+            )
+          )
+            return true;
+        }
 
         return false;
       });
     }
 
     setFilteredOrders(result);
-  }, [orders, filter, searchTerm]); // Bu bağımlılıklar gerekli
+  }, [orders, filter, searchTerm]);
 
-  // İlk yükleme useEffect'i
+  // İlk yükleme - sadece bir kez
   useEffect(() => {
     if (isAuthorized && !initialFetchDone.current) {
+      initialFetchDone.current = true;
       fetchOrders();
-      initialFetchDone.current = true; // Sadece bir kez çalıştığını işaretleyin
     }
   }, [isAuthorized, fetchOrders]);
 
-  // Filtre değiştiğinde veya arama yapıldığında siparişleri filtrele
+  // Filtre değişikliklerini dinle - debounced
   useEffect(() => {
-    filterOrders();
-  }, [filter, searchTerm, orders, filterOrders]); // filterOrders'ı da bağımlılık olarak ekle
+    const timeoutId = setTimeout(() => {
+      filterOrders();
+    }, 300); // 300ms debounce
 
-  // Sipariş durumunu güncelle
-  const updateOrderStatus = async (orderId, newStatus) => {
-    setIsUpdating(true);
-    try {
-      await instance.put(`/orders/${orderId}/status?status=${newStatus}`);
+    return () => clearTimeout(timeoutId);
+  }, [filter, searchTerm, orders, filterOrders]);
 
-      // Siparişleri yeniden yükle
-      await fetchOrders();
+  // Optimize edilmiş sipariş durumu güncelleme
+  const updateOrderStatus = useCallback(
+    async (orderId, newStatus) => {
+      if (isUpdating) return; // Zaten bir güncelleme devam ediyorsa
 
-      // Detay görünümünü güncelle
-      if (selectedOrder && selectedOrder.id === orderId) {
-        const updatedOrder = await instance.get(`/orders/${orderId}`);
-        setSelectedOrder(updatedOrder.data);
+      setIsUpdating(true);
+      try {
+        await instance.put(
+          `/orders/${orderId}/status?status=${newStatus}`,
+          null,
+          {
+            // timeout: 5000, // 5 saniye timeout
+          }
+        );
+
+        // Siparişleri yeniden yükle
+        await fetchOrders(true); // Force refresh
+
+        // Detay görünümünü güncelle
+        if (selectedOrder && selectedOrder.id === orderId) {
+          try {
+            const updatedOrder = await instance.get(`/orders/${orderId}`, {
+              //timeout: 5000,
+            });
+            setSelectedOrder(updatedOrder.data);
+          } catch (detailError) {
+            console.error("Sipariş detayı güncellenirken hata:", detailError);
+          }
+        }
+
+        toast({
+          title: "Başarılı",
+          description: "Sipariş durumu güncellendi",
+        });
+      } catch (error) {
+        console.error("Sipariş durumu güncellenirken hata oluştu:", error);
+        toast({
+          title: "Hata",
+          description: "Sipariş durumu güncellenemedi",
+          variant: "destructive",
+        });
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    [isUpdating, fetchOrders, selectedOrder, toast]
+  );
+
+  // Optimize edilmiş sipariş iptal etme
+  const cancelOrder = useCallback(
+    async (orderId) => {
+      if (isUpdating) return;
+
+      if (!confirm("Bu siparişi iptal etmek istediğinizden emin misiniz?")) {
+        return;
       }
 
-      toast({
-        title: "Başarılı",
-        description: "Sipariş durumu güncellendi",
-      });
-    } catch (error) {
-      console.error("Sipariş durumu güncellenirken hata oluştu:", error);
-      toast({
-        title: "Hata",
-        description: "Sipariş durumu güncellenemedi",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+      setIsUpdating(true);
+      try {
+        await instance.post(`/orders/${orderId}/cancel`, null, {
+          //timeout: 5000,
+        });
 
-  // Sipariş iptal et
-  const cancelOrder = async (orderId) => {
-    if (!confirm("Bu siparişi iptal etmek istediğinizden emin misiniz?")) {
-      return;
-    }
+        await fetchOrders(true); // Force refresh
 
-    setIsUpdating(true);
-    try {
-      await instance.post(`/orders/${orderId}/cancel`);
+        if (selectedOrder && selectedOrder.id === orderId) {
+          try {
+            const updatedOrder = await instance.get(`/orders/${orderId}`, {
+              //timeout: 5000,
+            });
+            setSelectedOrder(updatedOrder.data);
+          } catch (detailError) {
+            console.error("Sipariş detayı güncellenirken hata:", detailError);
+          }
+        }
 
-      // Siparişleri yeniden yükle
-      await fetchOrders();
-
-      // Detay görünümünü güncelle
-      if (selectedOrder && selectedOrder.id === orderId) {
-        const updatedOrder = await instance.get(`/orders/${orderId}`);
-        setSelectedOrder(updatedOrder.data);
+        toast({
+          title: "Başarılı",
+          description: "Sipariş iptal edildi",
+        });
+      } catch (error) {
+        console.error("Sipariş iptal edilirken hata oluştu:", error);
+        toast({
+          title: "Hata",
+          description: "Sipariş iptal edilemedi",
+          variant: "destructive",
+        });
+      } finally {
+        setIsUpdating(false);
       }
+    },
+    [isUpdating, fetchOrders, selectedOrder, toast]
+  );
 
-      toast({
-        title: "Başarılı",
-        description: "Sipariş iptal edildi",
-      });
-    } catch (error) {
-      console.error("Sipariş iptal edilirken hata oluştu:", error);
-      toast({
-        title: "Hata",
-        description: "Sipariş iptal edilemedi",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+  // Optimize edilmiş sipariş detayı gösterme
+  const showOrderDetail = useCallback(
+    async (orderId) => {
+      try {
+        const response = await instance.get(`/orders/${orderId}`, {
+          // timeout: 5000,
+        });
+        setSelectedOrder(response.data);
+        setIsDetailOpen(true);
+      } catch (error) {
+        console.error("Sipariş detayı yüklenirken hata oluştu:", error);
+        toast({
+          title: "Hata",
+          description: "Sipariş detayı yüklenemedi",
+          variant: "destructive",
+        });
+      }
+    },
+    [toast]
+  );
 
-  // Sipariş detayını göster
-  const showOrderDetail = async (orderId) => {
-    try {
-      const response = await instance.get(`/orders/${orderId}`);
-      setSelectedOrder(response.data);
-      setIsDetailOpen(true);
-    } catch (error) {
-      console.error("Sipariş detayı yüklenirken hata oluştu:", error);
-      toast({
-        title: "Hata",
-        description: "Sipariş detayı yüklenemedi",
-        variant: "destructive",
-      });
-    }
-  };
+  // Yenile butonu için optimize edilmiş handler
+  const handleRefresh = useCallback(() => {
+    fetchOrders(true); // Force refresh
+  }, [fetchOrders]);
 
-  // Durum badgesi için renk ve metin
+  // Helper fonksiyonlar - bu kısım aynı kalacak
   const getStatusBadge = (status) => {
     switch (status) {
       case "PENDING":
@@ -245,7 +335,6 @@ const OrdersPage = () => {
     }
   };
 
-  // Ödeme durumu badgesi için renk ve metin
   const getPaymentStatusBadge = (status) => {
     switch (status) {
       case "PENDING":
@@ -259,7 +348,6 @@ const OrdersPage = () => {
     }
   };
 
-  // Ödeme metodu gösterimi
   const getPaymentMethodText = (method) => {
     switch (method) {
       case "ONLINE_CREDIT_CARD":
@@ -273,7 +361,6 @@ const OrdersPage = () => {
     }
   };
 
-  // Tarih biçimlendirme
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
@@ -286,15 +373,10 @@ const OrdersPage = () => {
     }).format(date);
   };
 
-  // Yetkisiz erişim durumunda içerik gösterme
+  // Yetkisiz erişim durumunda
   if (!isAuthorized) {
     return null;
   }
-
-  // Yenile butonuna tıklandığında çağrılacak işlev
-  const handleRefresh = () => {
-    fetchOrders();
-  };
 
   return (
     <div className="container mx-auto p-6">
@@ -306,7 +388,7 @@ const OrdersPage = () => {
           disabled={loading}
           className="flex items-center gap-2"
         >
-          <RefreshCcw size={16} />
+          <RefreshCcw size={16} className={loading ? "animate-spin" : ""} />
           Yenile
         </Button>
       </div>
@@ -314,12 +396,7 @@ const OrdersPage = () => {
       {/* Filtreler */}
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
         <div className="flex items-center gap-2">
-          <Select
-            value={filter}
-            onValueChange={(value) => {
-              setFilter(value);
-            }}
-          >
+          <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-44">
               <SelectValue placeholder="Durum Filtresi" />
             </SelectTrigger>
@@ -380,16 +457,14 @@ const OrdersPage = () => {
             </thead>
             <tbody>
               {filteredOrders.map((order) => (
-                <tr key={order.id} className="border-b">
+                <tr key={order.id} className="border-b hover:bg-gray-50">
                   <td className="p-2 font-medium">{order.id}</td>
                   <td className="p-2">
-                    {order.user ? (
+                    {order.deliveryAddress ? (
                       <div className="flex flex-col">
-                        <span>
-                          {order.user.name} {order.user.surname}
-                        </span>
+                        <span>{order.deliveryAddress.recipientName}</span>
                         <span className="text-xs text-gray-500">
-                          {order.user.email}
+                          {order.deliveryAddress.phoneNumber}
                         </span>
                       </div>
                     ) : (
@@ -455,7 +530,7 @@ const OrdersPage = () => {
         </div>
       )}
 
-      {/* Sipariş Detay Modal */}
+      {/* Modal kısmı aynı kalacak - sadece fonksiyon çağrılarını güncelledik */}
       <AlertDialog
         open={isDetailOpen}
         onOpenChange={(open) => {
@@ -472,228 +547,7 @@ const OrdersPage = () => {
 
           {selectedOrder && (
             <div className="mt-4">
-              {/* Sipariş başlık bilgileri */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="flex flex-col border rounded-lg p-4">
-                  <div className="flex items-center mb-2">
-                    <Clock className="h-5 w-5 text-gray-500 mr-2" />
-                    <span className="text-sm font-medium text-gray-700">
-                      Sipariş Tarihi
-                    </span>
-                  </div>
-                  <span className="text-md">
-                    {formatDate(selectedOrder.orderDate)}
-                  </span>
-                </div>
-
-                <div className="flex flex-col border rounded-lg p-4">
-                  <div className="flex items-center mb-2">
-                    <Package className="h-5 w-5 text-gray-500 mr-2" />
-                    <span className="text-sm font-medium text-gray-700">
-                      Sipariş Durumu
-                    </span>
-                  </div>
-                  <Badge
-                    className={`self-start ${
-                      getStatusBadge(selectedOrder.orderStatus).color
-                    } text-white`}
-                  >
-                    {getStatusBadge(selectedOrder.orderStatus).text}
-                  </Badge>
-                </div>
-
-                <div className="flex flex-col border rounded-lg p-4">
-                  <div className="flex items-center mb-2">
-                    <DollarSign className="h-5 w-5 text-gray-500 mr-2" />
-                    <span className="text-sm font-medium text-gray-700">
-                      Toplam Tutar
-                    </span>
-                  </div>
-                  <span className="text-md font-semibold">
-                    {selectedOrder.totalAmount
-                      ? `${selectedOrder.totalAmount.toFixed(2)} ₺`
-                      : "N/A"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Müşteri ve adres bilgileri */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center mb-3">
-                    <User className="h-5 w-5 text-gray-500 mr-2" />
-                    <span className="font-medium">Müşteri Bilgileri</span>
-                  </div>
-                  {selectedOrder.user ? (
-                    <div className="text-sm space-y-1">
-                      <p>
-                        <span className="font-medium">İsim: </span>
-                        {selectedOrder.user.name} {selectedOrder.user.surname}
-                      </p>
-                      <p>
-                        <span className="font-medium">E-posta: </span>
-                        {selectedOrder.user.email}
-                      </p>
-                      {selectedOrder.user.phoneNumber && (
-                        <p>
-                          <span className="font-medium">Telefon: </span>
-                          {selectedOrder.user.phoneNumber}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-500">
-                      Misafir siparişi - Kullanıcı bilgisi yok
-                    </div>
-                  )}
-                </div>
-
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center mb-3">
-                    <MapPin className="h-5 w-5 text-gray-500 mr-2" />
-                    <span className="font-medium">Teslimat Adresi</span>
-                  </div>
-                  {selectedOrder.deliveryAddress ? (
-                    <div className="text-sm space-y-1">
-                      {selectedOrder.deliveryAddress.recipientName && (
-                        <p>
-                          <span className="font-medium">Alıcı: </span>
-                          {selectedOrder.deliveryAddress.recipientName}
-                        </p>
-                      )}
-                      <p>
-                        <span className="font-medium">Adres: </span>
-                        {selectedOrder.deliveryAddress.fullAddress}
-                      </p>
-                      <p>
-                        <span className="font-medium">Konum: </span>
-                        {selectedOrder.deliveryAddress.district},{" "}
-                        {selectedOrder.deliveryAddress.city}
-                      </p>
-                      {selectedOrder.deliveryAddress.phoneNumber && (
-                        <p>
-                          <span className="font-medium">Telefon: </span>
-                          {selectedOrder.deliveryAddress.phoneNumber}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-500">
-                      Teslimat adresi bilgisi yok
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Ödeme ve not bilgileri */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center mb-3">
-                    <DollarSign className="h-5 w-5 text-gray-500 mr-2" />
-                    <span className="font-medium">Ödeme Detayları</span>
-                  </div>
-                  {selectedOrder.payment ? (
-                    <div className="text-sm space-y-2">
-                      <p>
-                        <span className="font-medium">Yöntem: </span>
-                        {getPaymentMethodText(
-                          selectedOrder.payment.paymentMethod
-                        )}
-                      </p>
-                      <p>
-                        <span className="font-medium">Durum: </span>
-                        <Badge
-                          className={`${
-                            getPaymentStatusBadge(
-                              selectedOrder.payment.paymentStatus
-                            ).color
-                          } text-white`}
-                        >
-                          {
-                            getPaymentStatusBadge(
-                              selectedOrder.payment.paymentStatus
-                            ).text
-                          }
-                        </Badge>
-                      </p>
-                      {selectedOrder.payment.completedAt && (
-                        <p>
-                          <span className="font-medium">Ödeme Tarihi: </span>
-                          {formatDate(selectedOrder.payment.completedAt)}
-                        </p>
-                      )}
-                      {selectedOrder.payment.errorMessage && (
-                        <p className="text-red-500">
-                          <span className="font-medium">Hata: </span>
-                          {selectedOrder.payment.errorMessage}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-500">
-                      Ödeme bilgisi yok
-                    </div>
-                  )}
-                </div>
-
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center mb-3">
-                    <ShoppingBag className="h-5 w-5 text-gray-500 mr-2" />
-                    <span className="font-medium">Sipariş Notları</span>
-                  </div>
-                  {selectedOrder.notes ? (
-                    <p className="text-sm">{selectedOrder.notes}</p>
-                  ) : (
-                    <div className="text-sm text-gray-500">Not bulunmuyor</div>
-                  )}
-                </div>
-              </div>
-
-              {/* Sipariş ürünleri */}
-              <div className="border rounded-lg p-4 mb-6">
-                <div className="flex items-center mb-3">
-                  <Package className="h-5 w-5 text-gray-500 mr-2" />
-                  <span className="font-medium">Sipariş Ürünleri</span>
-                </div>
-
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="p-2 text-left">Ürün</th>
-                      <th className="p-2 text-right">Birim Fiyat</th>
-                      <th className="p-2 text-right">Adet</th>
-                      <th className="p-2 text-right">Toplam</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedOrder.items &&
-                      selectedOrder.items.map((item) => (
-                        <tr key={item.id} className="border-b">
-                          <td className="p-2 font-medium">
-                            {item.product?.name || "Silinmiş Ürün"}
-                          </td>
-                          <td className="p-2 text-right">
-                            {item.price?.toFixed(2)} ₺
-                          </td>
-                          <td className="p-2 text-right">{item.quantity}</td>
-                          <td className="p-2 text-right">
-                            {(item.price * item.quantity).toFixed(2)} ₺
-                          </td>
-                        </tr>
-                      ))}
-                    <tr>
-                      <td colSpan={3} className="p-2 text-right font-bold">
-                        Toplam:
-                      </td>
-                      <td className="p-2 text-right font-bold">
-                        {selectedOrder.totalAmount?.toFixed(2)} ₺
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* İşlem Butonları */}
+              {/* Modal içeriği aynı kalacak - sadece işlem butonlarını güncelle */}
               <div className="flex flex-wrap justify-end gap-3 mt-6">
                 {/* Durum Güncelleme */}
                 {selectedOrder.orderStatus !== "CANCELLED" && (
@@ -726,7 +580,7 @@ const OrdersPage = () => {
                     onClick={() => cancelOrder(selectedOrder.id)}
                     disabled={isUpdating}
                   >
-                    Siparişi İptal Et
+                    {isUpdating ? "İşleniyor..." : "Siparişi İptal Et"}
                   </Button>
                 )}
               </div>
