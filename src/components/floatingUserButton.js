@@ -266,7 +266,6 @@ const FloatingUserButton = () => {
             className="bg-yellow z-100 p-3 max-md:fixed max-md:top-2 max-md:text-xs max-md:gap-1 font-Londrina_Solid text-red ring-2 ring-inset ring-black rounded-lg shadow-lg hover:bg-black hover:ring-yellow hover:text-yellow  transition-all duration-200 cursor-pointer flex items-center gap-2 text-base font-normal"
           >
             <FontAwesomeIcon icon={faUser} />
-            <span className="">{name}</span>
           </div>
 
           {dropdownOpen && (
@@ -274,7 +273,7 @@ const FloatingUserButton = () => {
               <div className="py-2 border-b border-red">
                 <div className="px-4 py-2">
                   <div className="font-bold truncate font-Londrina_Solid text-red max-md:text-lg">
-                    {name}
+                    {name ? name : userEmail}
                   </div>
                   <div className="text-gray-600 text-xs truncate">{userEmail}</div>
                 </div>

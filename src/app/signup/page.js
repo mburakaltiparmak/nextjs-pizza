@@ -41,13 +41,13 @@ export default function RegisterPage() {
       formData;
 
     // Email kontrol - sadece gmail.com kabul ediliyor
-    const isGmailAddress = email.endsWith("@gmail.com");
+    //const isGmailAddress = email.endsWith("@gmail.com");
     const isValidEmailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
     return {
       name: name.trim() !== "",
       surname: surname.trim() !== "",
-      email: isValidEmailFormat && isGmailAddress, // Sadece gmail.com kabul ediliyor
+      email: isValidEmailFormat /* && isGmailAddress*/, // Sadece gmail.com kabul ediliyor
       phoneNumber: /^\d{1,11}$/.test(phoneNumber), // sadece sayılar ve en fazla 11 hane
       password: password.length >= 6,
       confirmPassword: password === confirmPassword && password.length >= 8,
@@ -137,6 +137,7 @@ export default function RegisterPage() {
   }
 
   // Email Gmail kontrolü
+  /*
   if (!formData.email.endsWith("@gmail.com")) {
     toast({
       title: "Hata",
@@ -146,7 +147,7 @@ export default function RegisterPage() {
     });
     return;
   }
-
+*/
   // Şifre tekrarını formdan çıkar
   const { confirmPassword, ...registrationData } = formData;
 
