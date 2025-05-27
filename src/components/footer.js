@@ -110,22 +110,22 @@ const Footer = () => {
 
             <ul className="space-y-3 font-Barlow">
               <li className="hover:text-yellow transition-colors">
-                <Link href="#">Terminal Pizza</Link>
+                <Link href="/products/31">Cheesy Pizza</Link>
               </li>
               <li className="hover:text-yellow transition-colors">
-                <Link href="#">5 Kişilik Hackathon Pizza</Link>
+                <Link href="/products/39">NY Pizza</Link>
               </li>
               <li className="hover:text-yellow transition-colors">
-                <Link href="#">useEffect Tavuklu Pizza</Link>
+                <Link href="/products/32">Spicy Pizza</Link>
               </li>
               <li className="hover:text-yellow transition-colors">
-                <Link href="#">Beyaz Console Frosty</Link>
+                <Link href="/products/33">Classic Burger</Link>
               </li>
               <li className="hover:text-yellow transition-colors">
-                <Link href="#">Testler Geçti Mutlu Burger</Link>
+                <Link href="/products/26">Bacon Burger</Link>
               </li>
               <li className="hover:text-yellow transition-colors">
-                <Link href="#">Position Absolute Acı Burger</Link>
+                <Link href="/products/30">Double Cheeseburger</Link>
               </li>
             </ul>
           </div>

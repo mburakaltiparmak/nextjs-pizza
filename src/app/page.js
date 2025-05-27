@@ -146,15 +146,15 @@ const Page = () => {
   };
 
   const handleOzelLezzetus = () => {
-    router.push("/products/12");
+    router.push("/products/39");
   };
 
   const handleHackathlonBurger = () => {
-    router.push("/products/14");
+    router.push("/products/33");
   };
 
   const handleNpmGibi = () => {
-    router.push("/products/4");
+    router.push("/products/36");
   };
 
   const handleAciktim = () => {
