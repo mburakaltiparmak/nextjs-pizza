@@ -27,9 +27,7 @@ const API_BASE_URL = getBaseUrl();
 export const instance = axios.create({
   baseURL: API_BASE_URL,
   //timeout: API_TIMEOUT,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // FormData için default Content-Type kaldırıldı
 });
 
 // Kullanıcı işlemleri için ayrı bir instance
@@ -38,7 +36,7 @@ export const userInstance = axios.create({
   //timeout: API_TIMEOUT,
 });
 
-// Request interceptor - otomatik token ekleme
+// Request interceptor - otomatik token ekleme VE Content-Type yönetimi
 instance.interceptors.request.use(
   (config) => {
     // Development'ta log
@@ -46,6 +44,16 @@ instance.interceptors.request.use(
       console.log(
         `🔷 API İsteği: ${config.method?.toUpperCase()} ${config.url}`
       );
+    }
+
+    // Content-Type yönetimi - FormData için özel handling
+    if (config.data instanceof FormData) {
+      // FormData için Content-Type'ı silme - browser otomatik boundary ekleyecek
+      delete config.headers['Content-Type'];
+      console.log("🔍 FormData detected, removing Content-Type header");
+    } else {
+      // Normal JSON istekleri için
+      config.headers['Content-Type'] = 'application/json';
     }
 
     // Token'ı otomatik ekle

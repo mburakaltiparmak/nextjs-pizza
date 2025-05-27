@@ -193,7 +193,6 @@ export const fetchProductsByCategory = (categoryId) => async (dispatch) => {
   }
 };
 
-// Ürün oluştur
 export const createProduct = (productData, token) => async (dispatch) => {
   dispatch(setLoading(true));
   dispatch(setError(null));
@@ -202,37 +201,70 @@ export const createProduct = (productData, token) => async (dispatch) => {
     // FormData oluştur
     const formData = new FormData();
 
-    // Temel ürün verilerini ekle
-    formData.append("name", productData.name);
-    formData.append("rating", productData.rating);
-    formData.append("stock", productData.stock);
-    formData.append("price", productData.price);
-    formData.append("categoryId", productData.categoryId);
-    formData.append("image", productData.image);
+    console.log("🔍 Original productData:", productData);
 
-    //Açıklama varsa ekle
+    // Temel ürün verilerini ekle - tümü string olarak
+    formData.append("name", productData.name);
+    formData.append("rating", productData.rating.toString());
+    formData.append("stock", productData.stock.toString());
+    formData.append("price", productData.price.toString());
+    formData.append("categoryId", productData.categoryId.toString());
+    
+    // Resim dosyasını ekle
+    if (productData.image && productData.image instanceof File) {
+      formData.append("image", productData.image);
+      console.log("✅ Image file added:", {
+        name: productData.image.name,
+        size: productData.image.size,
+        type: productData.image.type
+      });
+    } else {
+      console.log("❌ No valid image file found:", productData.image);
+    }
+
+    // Açıklama varsa ekle
     if (productData.description) {
       formData.append("description", productData.description);
     }
 
-    // API isteği yap
+    // FormData içeriğini debug için logla
+    console.log("📤 FormData contents:");
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value instanceof File ? `File(${value.name}, ${value.size} bytes)` : value);
+    }
+
+    // API isteği - interceptor Content-Type'ı otomatik yönetecek
     const response = await instance.post("/product", formData);
 
-    // Ürün oluşturulduktan sonra verileri yeniden getir
-    await Promise.all([dispatch(fetchCategories()), dispatch(fetchProducts())]);
+    console.log("✅ Product created successfully:", response.data);
 
+    // Başarılı işlem
+    await Promise.all([dispatch(fetchCategories()), dispatch(fetchProducts())]);
     dispatch(setSuccess("Ürün başarıyla oluşturuldu"));
     dispatch(setLoading(false));
 
     return response.data;
   } catch (err) {
+    console.error("❌ Product creation error:", err);
+    
+    if (err.response) {
+      console.error("📨 Error details:", {
+        status: err.response.status,
+        data: err.response.data,
+        headers: err.response.headers
+      });
+    }
+    
     let errorMessage = "Ürün oluşturulamadı";
 
     if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
+      if (typeof err.response.data === 'string') {
+        errorMessage = err.response.data;
+      } else if (err.response.data?.message) {
+        errorMessage = err.response.data.message;
+      }
     } else if (err.request) {
-      errorMessage =
-        "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
+      errorMessage = "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
     } else {
       errorMessage = err.message || errorMessage;
     }
@@ -252,16 +284,27 @@ export const updateProduct = (id, productData, token) => async (dispatch) => {
     // FormData oluştur
     const formData = new FormData();
 
-    // Temel ürün verilerini ekle
+    // Temel ürün verilerini ekle - tümü string olarak
     formData.append("name", productData.name);
-    formData.append("rating", productData.rating);
-    formData.append("stock", productData.stock);
-    formData.append("price", productData.price);
-    formData.append("categoryId", productData.categoryId);
+    formData.append("rating", productData.rating.toString());
+    formData.append("stock", productData.stock.toString());
+    formData.append("price", productData.price.toString());
+    formData.append("categoryId", productData.categoryId.toString());
 
     // Resim varsa ekle
-    if (productData.image) {
+    if (productData.image && productData.image instanceof File) {
       formData.append("image", productData.image);
+      console.log("✅ Image file added for update:", productData.image.name);
+    }
+
+    // Açıklama varsa ekle
+    if (productData.description) {
+      formData.append("description", productData.description);
+    }
+
+    console.log("📤 Update FormData contents:");
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value instanceof File ? `File(${value.name})` : value);
     }
 
     // API isteği yap
@@ -275,13 +318,18 @@ export const updateProduct = (id, productData, token) => async (dispatch) => {
 
     return response.data;
   } catch (err) {
+    console.error("❌ Product update error:", err);
+    
     let errorMessage = "Ürün güncellenemedi";
 
     if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
+      if (typeof err.response.data === 'string') {
+        errorMessage = err.response.data;
+      } else if (err.response.data?.message) {
+        errorMessage = err.response.data.message;
+      }
     } else if (err.request) {
-      errorMessage =
-        "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
+      errorMessage = "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
     } else {
       errorMessage = err.message || errorMessage;
     }

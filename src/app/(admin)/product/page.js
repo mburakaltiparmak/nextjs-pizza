@@ -211,6 +211,7 @@ const openModal = useCallback(
         categoryId: data.categoryId,
         image: data.image,
       };
+      console.log("productData",productData);
 
       let result;
 
