@@ -5,23 +5,9 @@ export const useAppDispatch = useDispatch.withTypes();
 export const useAppSelector = useSelector.withTypes();
 export const useAppStore = useStore.withTypes();
 
-// API URL'sini ortama göre belirle
-const getBaseUrl = () => {
-  if (process.env.NODE_ENV === "development") {
-    return "https://pizza-backend.fly.dev/pizza/api";
-  }
-
-  if (typeof window !== "undefined") {
-    const host = window.location.origin;
-    return `${host}/pizza/api`;
-  }
-
-  return "/pizza/api";
-};
-
 // API istekleri için sabitler - timeout azaltıldı
 const API_TIMEOUT = 10000; // 10 saniye - 30 saniyeden düşürüldü
-const API_BASE_URL = getBaseUrl();
+const API_BASE_URL = "https://pizza-backend.fly.dev/pizza/api";
 
 // Axios instance oluştur - timeout ve optimizasyonlar ekle
 export const instance = axios.create({
