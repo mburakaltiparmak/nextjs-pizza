@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useAppDispatch } from "@/lib/hooks";
 import { instance } from "@/lib/hooks";
 import { useToast } from "@/hooks/use-toast";
-import { Check, Trash2, Edit, MapPin, Star, SquarePen } from "lucide-react";
+import { Check, Trash2, MapPin, Star, SquarePen, Plus, Loader2, AlertCircle } from "lucide-react";
 import AddressForm from "./addressForm";
 
 const AddressList = ({ 
@@ -18,7 +18,8 @@ const AddressList = ({
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
-  const { toast } = useToast();
+  const [processingId, setProcessingId] = useState(null);
+  const { success, error } = useToast();
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -47,50 +48,37 @@ const AddressList = ({
 
   const handleSetDefault = async (addressId) => {
     try {
+      setProcessingId(addressId);
       await instance.put(`/user/addresses/${addressId}/set-default`);
-      toast({
-        title: "Başarılı",
-        description: "Varsayılan adres güncellendi",
-      });
-      fetchAddresses(); // Listeyi yeniden yükle
-    } catch (error) {
-      toast({
-        title: "Hata",
-        description: "Varsayılan adres ayarlanırken bir hata oluştu",
-        variant: "destructive",
-      });
-      console.error("Varsayılan adres ayarlanırken hata:", error);
+      success("Varsayılan adres güncellendi");
+      fetchAddresses();
+    } catch (err) {
+      error("Varsayılan adres ayarlanırken bir hata oluştu");
+      console.error("Varsayılan adres ayarlanırken hata:", err);
+    } finally {
+      setProcessingId(null);
     }
   };
 
   const handleDeleteAddress = async (addressId) => {
     if (window.confirm("Bu adresi silmek istediğinizden emin misiniz?")) {
       try {
+        setProcessingId(addressId);
         await instance.delete(`/user/addresses/${addressId}`);
-        toast({
-          title: "Başarılı",
-          description: "Adres silindi",
-        });
-        fetchAddresses(); // Listeyi yeniden yükle
-      } catch (error) {
-        toast({
-          title: "Hata",
-          description: "Adres silinirken bir hata oluştu",
-          variant: "destructive",
-        });
-        console.error("Adres silinirken hata:", error);
+        success("Adres silindi");
+        fetchAddresses();
+      } catch (err) {
+        error("Adres silinirken bir hata oluştu");
+        console.error("Adres silinirken hata:", err);
+      } finally {
+        setProcessingId(null);
       }
     }
   };
 
   const handleEditFormSubmit = (updatedAddressData) => {
-    // Form gönderimi tamamlandığında düzenleme modundan çık
     setEditingAddress(null);
-    
-    // Parent bileşene düzenlenmiş adresi ilet
     handleAddressSubmit(updatedAddressData);
-    
-    // Adres listesini yeniden yükle
     fetchAddresses();
   };
 
@@ -102,35 +90,67 @@ const AddressList = ({
     setEditingAddress(null);
   };
 
+  // Loading State
   if (loading) {
-    return <div className="p-4 text-center">Adresler yükleniyor...</div>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin text-yellow mx-auto" />
+          <p className="text-gray font-medium">Adresler yükleniyor...</p>
+        </div>
+      </div>
+    );
   }
 
-  // Adres yoksa veya yükleme hatası varsa "Yeni Adres Ekle" düğmesi göster
+  // Empty State
   if (addresses.length === 0) {
     return (
-      <div className="p-4">
-        <div className="text-center mb-4">
-          {fetchError 
-            ? "Adreslerinize erişilemiyor, lütfen yeni bir adres ekleyin." 
-            : "Kayıtlı adresiniz bulunmamaktadır."}
+      <div className="text-center py-12 space-y-6">
+        <div className="bg-gradient-to-r from-lightgray to-lightgray2 rounded-2xl p-8 border border-lightgray2">
+          <div className="space-y-4">
+            <div className="bg-yellow rounded-full p-4 w-16 h-16 mx-auto flex items-center justify-center">
+              <MapPin className="w-8 h-8 text-red" />
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-darkgray">
+                {fetchError ? "Adreslerinize Erişilemiyor" : "Kayıtlı Adres Bulunamadı"}
+              </h3>
+              <p className="text-gray">
+                {fetchError 
+                  ? "Lütfen yeni bir adres ekleyerek devam edin." 
+                  : "Hızlı teslimat için ilk adresinizi ekleyin."}
+              </p>
+            </div>
+            
+            {fetchError && (
+              <div className="flex items-center justify-center gap-2 text-red bg-red-50 py-2 px-4 rounded-lg border border-red-200">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-sm font-medium">Bağlantı sorunu yaşanıyor</span>
+              </div>
+            )}
+          </div>
         </div>
         
         <button
           onClick={onAddNewAddress}
-          className="w-full py-2 bg-yellow text-red font-semibold rounded-md hover:bg-red hover:text-yellow transition-colors"
+          className="inline-flex items-center gap-3 px-8 py-4 bg-yellow text-red font-bold rounded-xl hover:bg-red hover:text-yellow transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
         >
+          <Plus className="w-5 h-5" />
           Yeni Adres Ekle
         </button>
       </div>
     );
   }
 
-  // Eğer bir adres düzenleme modundaysa
+  // Edit Form State
   if (editingAddress) {
     return (
-      <div className="mt-4 border p-4 rounded-lg">
-        <h4 className="font-medium mb-3">Adresi Düzenle</h4>
+      <div className="bg-gradient-to-r from-lightgray to-lightgray2 rounded-2xl p-6 border border-lightgray2">
+        <h4 className="font-bold text-xl text-darkgray mb-6 flex items-center gap-2">
+          <SquarePen className="w-6 h-6 text-red" />
+          Adresi Düzenle
+        </h4>
         <AddressForm
           onSubmit={handleEditFormSubmit}
           submitText="Adresi Güncelle"
@@ -151,7 +171,7 @@ const AddressList = ({
         <button
           type="button"
           onClick={cancelEditing}
-          className="mt-2 w-full py-2 bg-lightgray text-gray font-medium rounded-md hover:bg-gray-200 transition-colors"
+          className="mt-4 w-full py-3 bg-white text-darkgray font-semibold rounded-xl hover:bg-darkgray hover:text-white transition-colors border-2 border-lightgray2 hover:border-darkgray"
         >
           İptal
         </button>
@@ -159,98 +179,134 @@ const AddressList = ({
     );
   }
 
+  // Address List
   return (
-    <div className="space-y-4">
-      {addresses.map((address) => (
-        <div
-          key={address.id}
-          className={`border-2 p-4 rounded-lg ${
-            selectedAddressId === address.id ? "border-red bg-lightgray2" : "border-gray"
-          } cursor-pointer hover:border-yellow transition-colors`}
-          onClick={() => onSelectAddress(address.id)}
-        >
-          <div className="flex justify-between">
-            <div className="flex items-center gap-2">
-              {address.addressTitle ? (
-                <span className="font-semibold">{address.addressTitle}</span>
-              ) : (
-                <span className="font-semibold">Adres {address.id}</span>
-              )}
-              {address.isDefault && (
-                <span className="text-yellow text-xs px-2 py-1 rounded-full bg-red flex items-center gap-1">
-                  <Star size={12} />
-                  Varsayılan
-                </span>
-              )}
-            </div>
-            <div className="flex gap-2">
-              {!address.isDefault && (
+    <div className="space-y-6">
+      <div className="grid gap-4">
+        {addresses.map((address) => (
+          <div
+            key={address.id}
+            className={`group relative border-2 rounded-2xl p-6 cursor-pointer transition-all duration-300 transform hover:scale-102 hover:shadow-lg ${
+              selectedAddressId === address.id 
+                ? "border-red bg-gradient-to-r from-yellow to-lightyellow shadow-lg scale-102" 
+                : "border-lightgray2 bg-white hover:border-yellow"
+            }`}
+            onClick={() => onSelectAddress(address.id)}
+          >
+            {/* Header */}
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg border-2 ${
+                  selectedAddressId === address.id 
+                    ? "bg-red border-red" 
+                    : "bg-yellow border-yellow"
+                }`}>
+                  <MapPin className={`w-5 h-5 ${
+                    selectedAddressId === address.id ? "text-yellow" : "text-red"
+                  }`} />
+                </div>
+                
+                <div>
+                  <h4 className={`font-bold text-lg ${
+                    selectedAddressId === address.id ? "text-red" : "text-darkgray"
+                  }`}>
+                    {address.addressTitle || `Adres ${address.id}`}
+                  </h4>
+                  
+                  {address.isDefault && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <Star className="w-4 h-4 text-red fill-current" />
+                      <span className="text-sm font-medium text-red">Varsayılan</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons - Kontrast Düzeltildi */}
+              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                {!address.isDefault && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSetDefault(address.id);
+                    }}
+                    disabled={processingId === address.id}
+                    className="p-2 bg-white text-yellow border-2 border-yellow rounded-lg hover:bg-yellow hover:text-red transition-colors shadow-md hover:shadow-lg disabled:opacity-50"
+                    title="Varsayılan Yap"
+                  >
+                    {processingId === address.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Star className="w-4 h-4" />
+                    )}
+                  </button>
+                )}
+                
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleSetDefault(address.id);
+                    startEditingAddress(address);
                   }}
-                  className="text-gray hover:text-yellow p-1"
-                  title="Varsayılan Yap"
+                  className="p-2 bg-white text-darkgray border-2 border-darkgray rounded-lg hover:bg-darkgray hover:text-white transition-colors shadow-md hover:shadow-lg"
+                  title="Düzenle"
                 >
-                  <Star size={18} />
+                  <SquarePen className="w-4 h-4" />
                 </button>
-              )}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  startEditingAddress(address);
-                }}
-                className="text-black hover:text-red p-1 border border-black rounded-md hover:border-red"
-                title="Adresi Düzenle"
-              >
-                <SquarePen size={18}/>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteAddress(address.id);
-                }}
-                className="text-black hover:text-red p-1 border border-black rounded-md hover:border-red"
-                title="Adresi Sil"
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-2">
-            <div className="flex items-start gap-2">
-              <MapPin size={18} className="text-gray mt-1 flex-shrink-0" />
-              <div>
-                <p className="font-medium">{address.recipientName}</p>
-                <p className="text-sm text-gray">{address.fullAddress}</p>
-                <p className="text-sm text-gray">
-                  {address.district}, {address.city}
-                  {address.postalCode && ` - ${address.postalCode}`}
-                </p>
-                {address.phoneNumber && (
-                  <p className="text-sm text-gray">{address.phoneNumber}</p>
-                )}
+                
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteAddress(address.id);
+                  }}
+                  disabled={processingId === address.id}
+                  className="p-2 bg-white text-red border-2 border-red rounded-lg hover:bg-red hover:text-white transition-colors shadow-md hover:shadow-lg disabled:opacity-50"
+                  title="Sil"
+                >
+                  {processingId === address.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
-          </div>
 
-          {selectedAddressId === address.id && (
-            <div className="mt-2 text-right">
-              <span className="inline-flex items-center text-white bg-red gap-1 px-4 py-2 rounded-md border-2 border-red">
-                <Check size={16} /> Seçili
-              </span>
+            {/* Address Details */}
+            <div className={`space-y-2 text-sm ${
+              selectedAddressId === address.id ? "text-red" : "text-gray"
+            }`}>
+              <p className="font-semibold text-base">{address.recipientName}</p>
+              <p className="leading-relaxed">{address.fullAddress}</p>
+              <div className="flex flex-wrap gap-4">
+                <span>📍 {address.district}, {address.city}</span>
+                {address.postalCode && <span>📮 {address.postalCode}</span>}
+                {address.phoneNumber && <span>📱 {address.phoneNumber}</span>}
+              </div>
             </div>
-          )}
-        </div>
-      ))}
-      <button
-        onClick={onAddNewAddress}
-        className="w-full py-2 bg-lightgray text-gray font-medium rounded-md hover:bg-gray-200 transition-colors"
-      >
-        + Yeni Adres Ekle
-      </button>
+
+            {/* Selected Indicator */}
+            {selectedAddressId === address.id && (
+              <div className="absolute bottom-4 right-4">
+                <div className="bg-red text-yellow px-3 py-1 rounded-full text-sm font-bold flex items-center gap-2 shadow-lg border-2 border-red">
+                  <Check className="w-4 h-4" />
+                  Seçili
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Add New Address Button */}
+      <div className="pt-4 border-t border-lightgray2">
+        <button
+          onClick={onAddNewAddress}
+          className="w-full py-4 bg-white text-darkgray font-semibold rounded-xl hover:bg-yellow hover:text-red transition-all duration-300 border-2 border-lightgray2 hover:border-yellow shadow-md hover:shadow-lg flex items-center justify-center gap-3"
+        >
+          <Plus className="w-5 h-5" />
+          Yeni Adres Ekle
+        </button>
+      </div>
     </div>
   );
 };

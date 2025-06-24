@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { User, Phone, MapPin, Building, Mail, Star, Save, Loader2 } from "lucide-react";
 
 const addressSchema = z.object({
   fullAddress: z.string().min(5, { message: "Adres en az 5 karakter olmalıdır" }),
@@ -28,9 +29,9 @@ const AddressForm = ({
   isGuest = false, 
   initialData = {}, 
   submitText = "Adresi Kaydet",
-  existingAddressId = null  // Düzenleme için adres ID'si
+  existingAddressId = null
 }) => {
-  const { toast } = useToast();
+  const { success, error } = useToast();
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
   const role = useAppSelector((state) => state.user.role);
@@ -57,300 +58,344 @@ const AddressForm = ({
     }
   });
 
-  // Adres kaydetme seçeneğini izle
   const saveAddressChecked = watch("saveAddress");
 
   const onFormSubmit = async (data) => {
     try {
-      // Eğer misafir kullanıcı ise, adresi doğrudan parent komponente ilet, API çağrısı yapma
+      // Misafir kullanıcı kontrolü
       if (isGuestUser) {
-        // Misafir kullanıcılar için API çağrısı yapmadan direk adresi kullan
         onSubmit({
           ...data,
-          id: null, // Misafir kullanıcılar için ID null olmalı
-          saveAddress: false // Misafir kullanıcılar adresi kaydedemez
+          id: null,
+          saveAddress: false
         });
         
-        toast({
-          title: "Adres bilgileri alındı",
-          description: "Siparişiniz için kullanılacak."
+        success("Adres bilgileri alındı", {
+          title: "Adres Kaydedildi",
+          message: "Siparişiniz için kullanılacak."
         });
         
         return;
       }
       
-      // Eğer kullanıcı giriş yapmışsa ve "Adresi Kaydet" seçeneğini işaretlediyse
+      // Kayıtlı kullanıcı için adres kaydetme
       if (isAuthenticated && data.saveAddress) {
         setIsSaving(true);
         
-        // Yeni adres mi yoksa mevcut adresi güncelleme mi?
         const isNewAddress = !existingAddressId;
         
         try {
           let response;
+          const addressPayload = {
+            fullAddress: data.fullAddress,
+            city: data.city,
+            district: data.district,
+            postalCode: data.postalCode || "",
+            addressTitle: data.addressTitle || `Adres ${new Date().toLocaleDateString()}`,
+            phoneNumber: data.phoneNumber || "",
+            recipientName: data.recipientName,
+            isDefault: data.isDefault || false
+          };
+
           if (isNewAddress) {
-            // Yeni adres ekleme
-            response = await instance.post("user/addresses", {
-              fullAddress: data.fullAddress,
-              city: data.city,
-              district: data.district,
-              postalCode: data.postalCode || "",
-              addressTitle: data.addressTitle || `Adres ${new Date().toISOString().substring(0, 10)}`,
-              phoneNumber: data.phoneNumber || "",
-              recipientName: data.recipientName,
-              isDefault: data.isDefault || false
-            });
+            response = await instance.post("user/addresses", addressPayload);
           } else {
-            // Mevcut adresi güncelleme
-            response = await instance.put(`user/addresses/${existingAddressId}`, {
-              fullAddress: data.fullAddress,
-              city: data.city,
-              district: data.district,
-              postalCode: data.postalCode || "",
-              addressTitle: data.addressTitle || `Adres ${new Date().toISOString().substring(0, 10)}`,
-              phoneNumber: data.phoneNumber || "",
-              recipientName: data.recipientName,
-              isDefault: data.isDefault || false
-            });
+            response = await instance.put(`user/addresses/${existingAddressId}`, addressPayload);
           }
         
           setIsSaving(false);
         
           if (response.data) {
-            // Backend'ten dönen adres ID'sini ekleyerek parent komponente ilet
             onSubmit({
               ...data,
               id: isNewAddress ? response.data.id : existingAddressId,
-              // Adres zaten kaydedildiği için redux'ta kaydetme seçeneğini false yapıyoruz
               saveAddress: false
             });
           
-            toast({
-              title: isNewAddress ? "Adres başarıyla kaydedildi" : "Adres başarıyla güncellendi",
-              description: data.isDefault ? "Varsayılan adresiniz olarak ayarlandı." : "",
+            success(isNewAddress ? "Adres başarıyla kaydedildi" : "Adres başarıyla güncellendi", {
+              title: "İşlem Başarılı",
+              message: data.isDefault ? "Varsayılan adresiniz olarak ayarlandı." : ""
             });
           }
         } catch (apiError) {
           setIsSaving(false);
           console.error("Adres kaydedilirken hata:", apiError);
           
-          toast({
-            title: "Hata",
-            description: apiError.response?.data?.message || "Adres kaydedilemedi",
-            variant: "destructive",
+          error(apiError.response?.data?.message || "Adres kaydedilemedi", {
+            title: "Hata"
           });
           
-          // Hataya rağmen adresi kullanmak için parent komponente iletelim
           onSubmit(data);
         }
       } else {
-        // Giriş yapılmamışsa veya adres kaydetme seçeneği işaretlenmemişse
-        // Direk parent komponente bilgileri ilet
         onSubmit(data);
       }
     } catch (error) {
       setIsSaving(false);
       console.error("Adres işleminde hata:", error);
       
-      toast({
-        title: "Adres kaydedilemedi",
-        description: "Lütfen daha sonra tekrar deneyin.",
-        variant: "destructive",
+      error("Lütfen daha sonra tekrar deneyin", {
+        title: "Adres kaydedilemedi"
       });
       
-      // Hataya rağmen adresi kullanmak için parent komponente iletelim
       onSubmit(data);
     }
   };
 
+  const inputClasses = "w-full px-4 py-3 border-2 border-lightgray2 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow focus:border-yellow transition-all text-base placeholder-gray";
+  const errorInputClasses = "border-red focus:ring-red focus:border-red";
+
   return (
-    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
-      <div>
-        <Label htmlFor="recipientName">Alıcı Adı Soyadı *</Label>
-        <Controller
-          name="recipientName"
-          control={control}
-          render={({ field }) => (
-            <Input
-              id="recipientName"
-              placeholder="Alıcı Adı Soyadı"
-              {...field}
-              className={errors.recipientName ? "border-red" : ""}
-            />
-          )}
-        />
-        {errors.recipientName && (
-          <p className="text-red text-sm mt-1">{errors.recipientName.message}</p>
-        )}
-      </div>
-      <div>
-        <Label htmlFor="phoneNumber">Telefon Numarası</Label>
-        <Controller
-          name="phoneNumber"
-          control={control}
-          render={({ field }) => (
-            <Input
-              id="phoneNumber"
-              placeholder="05XX XXX XX XX"
-              {...field}
-              className={errors.phoneNumber ? "border-red" : ""}
-            />
-          )}
-        />
-        {errors.phoneNumber && (
-          <p className="text-red text-sm mt-1">{errors.phoneNumber.message}</p>
-        )}
-      </div>
-
-      <div>
-        <Label htmlFor="fullAddress">Açık Adres *</Label>
-        <Controller
-          name="fullAddress"
-          control={control}
-          render={({ field }) => (
-            <Textarea
-              id="fullAddress"
-              placeholder="Mahalle, sokak, bina no, daire no vb."
-              {...field}
-              className={errors.fullAddress ? "border-red" : ""}
-              rows={3}
-            />
-          )}
-        />
-        {errors.fullAddress && (
-          <p className="text-red text-sm mt-1">{errors.fullAddress.message}</p>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="city">Şehir *</Label>
-          <Controller
-            name="city"
-            control={control}
-            render={({ field }) => (
-              <Input
-                id="city"
-                placeholder="Şehir"
-                {...field}
-                className={errors.city ? "border-red" : ""}
-              />
-            )}
-          />
-          {errors.city && (
-            <p className="text-red text-sm mt-1">{errors.city.message}</p>
-          )}
-        </div>
-
-        <div>
-          <Label htmlFor="district">İlçe *</Label>
-          <Controller
-            name="district"
-            control={control}
-            render={({ field }) => (
-              <Input
-                id="district"
-                placeholder="İlçe"
-                {...field}
-                className={errors.district ? "border-red" : ""}
-              />
-            )}
-          />
-          {errors.district && (
-            <p className="text-red text-sm mt-1">{errors.district.message}</p>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="postalCode">Posta Kodu</Label>
-        <Controller
-          name="postalCode"
-          control={control}
-          render={({ field }) => (
-            <Input
-              id="postalCode"
-              placeholder="Posta Kodu"
-              {...field}
-              className={errors.postalCode ? "border-red" : ""}
-            />
-          )}
-        />
-        {errors.postalCode && (
-          <p className="text-red text-sm mt-1">{errors.postalCode.message}</p>
-        )}
-      </div>
-
-      <div>
-        <Label htmlFor="addressTitle">Adres Başlığı</Label>
-        <Controller
-          name="addressTitle"
-          control={control}
-          render={({ field }) => (
-            <Input
-              id="addressTitle"
-              placeholder="Örn: Ev, İş vb."
-              {...field}
-              className={errors.addressTitle ? "border-red" : ""}
-            />
-          )}
-        />
-        {errors.addressTitle && (
-          <p className="text-red text-sm mt-1">{errors.addressTitle.message}</p>
-        )}
-      </div>
-
-      {/* Adres kaydetme seçeneğini sadece giriş yapmış ve misafir olmayan kullanıcılara göster */}
-      {isAuthenticated && !isGuestUser && (
-        <div className="flex flex-col space-y-2">
-          <div className="flex items-center space-x-2">
+    <div className="space-y-6">
+      {/* Alıcı Bilgileri */}
+      <div className="bg-white rounded-xl p-6 border border-lightgray2 space-y-4">
+        <h4 className="flex items-center gap-2 text-lg font-bold text-darkgray border-b border-lightgray2 pb-3">
+          <User className="w-5 h-5 text-red" />
+          Alıcı Bilgileri
+        </h4>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="lg:col-span-2">
+            <Label htmlFor="recipientName" className="text-base font-semibold text-darkgray mb-2 block">
+              Alıcı Adı Soyadı *
+            </Label>
             <Controller
-              name="saveAddress"
+              name="recipientName"
               control={control}
               render={({ field }) => (
-                <Checkbox 
-                  id="saveAddress" 
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
+                <input
+                  id="recipientName"
+                  placeholder="Ad Soyad"
+                  {...field}
+                  className={`${inputClasses} ${errors.recipientName ? errorInputClasses : ""}`}
                 />
               )}
             />
-            <Label htmlFor="saveAddress" className="text-sm cursor-pointer">
-              Bu adresi kaydet
-            </Label>
+            {errors.recipientName && (
+              <p className="text-red text-sm mt-2 font-medium">{errors.recipientName.message}</p>
+            )}
           </div>
 
-          {saveAddressChecked && (
-            <div className="flex items-center space-x-2">
+          <div>
+            <Label htmlFor="phoneNumber" className="text-base font-semibold text-darkgray mb-2 block">
+              Telefon Numarası
+            </Label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray w-5 h-5" />
               <Controller
-                name="isDefault"
+                name="phoneNumber"
                 control={control}
                 render={({ field }) => (
-                  <Checkbox 
-                    id="isDefault" 
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
+                  <input
+                    id="phoneNumber"
+                    placeholder="05XX XXX XX XX"
+                    {...field}
+                    className={`${inputClasses} pl-12 ${errors.phoneNumber ? errorInputClasses : ""}`}
                   />
                 )}
               />
-              <Label htmlFor="isDefault" className="text-sm cursor-pointer">
-                Varsayılan adres olarak ayarla
+            </div>
+            {errors.phoneNumber && (
+              <p className="text-red text-sm mt-2 font-medium">{errors.phoneNumber.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="addressTitle" className="text-base font-semibold text-darkgray mb-2 block">
+              Adres Başlığı
+            </Label>
+            <div className="relative">
+              <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray w-5 h-5" />
+              <Controller
+                name="addressTitle"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    id="addressTitle"
+                    placeholder="Ev, İş, Ofis vb."
+                    {...field}
+                    className={`${inputClasses} pl-12 ${errors.addressTitle ? errorInputClasses : ""}`}
+                  />
+                )}
+              />
+            </div>
+            {errors.addressTitle && (
+              <p className="text-red text-sm mt-2 font-medium">{errors.addressTitle.message}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Adres Bilgileri */}
+      <div className="bg-white rounded-xl p-6 border border-lightgray2 space-y-4">
+        <h4 className="flex items-center gap-2 text-lg font-bold text-darkgray border-b border-lightgray2 pb-3">
+          <MapPin className="w-5 h-5 text-red" />
+          Adres Detayları
+        </h4>
+
+        <div>
+          <Label htmlFor="fullAddress" className="text-base font-semibold text-darkgray mb-2 block">
+            Açık Adres *
+          </Label>
+          <Controller
+            name="fullAddress"
+            control={control}
+            render={({ field }) => (
+              <textarea
+                id="fullAddress"
+                placeholder="Mahalle, sokak, bina no, daire no vb."
+                {...field}
+                className={`${inputClasses} min-h-[100px] resize-none ${errors.fullAddress ? errorInputClasses : ""}`}
+                rows={3}
+              />
+            )}
+          />
+          {errors.fullAddress && (
+            <p className="text-red text-sm mt-2 font-medium">{errors.fullAddress.message}</p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <Label htmlFor="city" className="text-base font-semibold text-darkgray mb-2 block">
+              Şehir *
+            </Label>
+            <Controller
+              name="city"
+              control={control}
+              render={({ field }) => (
+                <input
+                  id="city"
+                  placeholder="Şehir"
+                  {...field}
+                  className={`${inputClasses} ${errors.city ? errorInputClasses : ""}`}
+                />
+              )}
+            />
+            {errors.city && (
+              <p className="text-red text-sm mt-2 font-medium">{errors.city.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="district" className="text-base font-semibold text-darkgray mb-2 block">
+              İlçe *
+            </Label>
+            <Controller
+              name="district"
+              control={control}
+              render={({ field }) => (
+                <input
+                  id="district"
+                  placeholder="İlçe"
+                  {...field}
+                  className={`${inputClasses} ${errors.district ? errorInputClasses : ""}`}
+                />
+              )}
+            />
+            {errors.district && (
+              <p className="text-red text-sm mt-2 font-medium">{errors.district.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="postalCode" className="text-base font-semibold text-darkgray mb-2 block">
+              Posta Kodu
+            </Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray w-5 h-5" />
+              <Controller
+                name="postalCode"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    id="postalCode"
+                    placeholder="Posta Kodu"
+                    {...field}
+                    className={`${inputClasses} pl-12 ${errors.postalCode ? errorInputClasses : ""}`}
+                  />
+                )}
+              />
+            </div>
+            {errors.postalCode && (
+              <p className="text-red text-sm mt-2 font-medium">{errors.postalCode.message}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Kaydetme Seçenekleri - Sadece giriş yapmış kullanıcılar için */}
+      {isAuthenticated && !isGuestUser && (
+        <div className="bg-gradient-to-r from-lightgray to-lightgray2 rounded-xl p-6 border border-lightgray2">
+          <h4 className="flex items-center gap-2 text-lg font-bold text-darkgray mb-4">
+            <Save className="w-5 h-5 text-red" />
+            Kaydetme Seçenekleri
+          </h4>
+          
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <Controller
+                name="saveAddress"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox 
+                    id="saveAddress" 
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    className="w-5 h-5"
+                  />
+                )}
+              />
+              <Label htmlFor="saveAddress" className="text-base font-semibold cursor-pointer text-darkgray">
+                Bu adresi profilime kaydet
               </Label>
             </div>
-          )}
+
+            {saveAddressChecked && (
+              <div className="ml-8 flex items-center space-x-3 animate-in slide-in-from-left-2 fade-in-0">
+                <Controller
+                  name="isDefault"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox 
+                      id="isDefault" 
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className="w-5 h-5"
+                    />
+                  )}
+                />
+                <Label htmlFor="isDefault" className="text-base font-semibold cursor-pointer text-darkgray flex items-center gap-2">
+                  <Star className="w-4 h-4 text-yellow" />
+                  Varsayılan adres olarak ayarla
+                </Label>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      <div>
+      {/* Submit Button */}
+      <div className="pt-4">
         <button
-          type="submit"
+          onClick={handleSubmit(onFormSubmit)}
           disabled={isSubmitting || isSaving}
-          className="w-full py-2 bg-yellow text-red font-semibold rounded-md hover:bg-red hover:text-yellow transition-colors"
+          className="w-full py-4 bg-yellow text-red font-bold text-lg rounded-xl hover:bg-red hover:text-yellow transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-3"
         >
-          {isSubmitting || isSaving ? "İşleniyor..." : submitText}
+          {isSubmitting || isSaving ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              İşleniyor...
+            </>
+          ) : (
+            <>
+              <Save className="w-5 h-5" />
+              {submitText}
+            </>
+          )}
         </button>
       </div>
-    </form>
+    </div>
   );
 };
 

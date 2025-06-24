@@ -3,37 +3,37 @@
 import React, { useEffect } from 'react';
 import { Check, X, AlertCircle, Info, ShoppingBag } from 'lucide-react';
 
-// Toast tiplerine göre stiller ve ikonlar - Şık ve tutarlı tasarım
+// Toast tiplerine göre stiller ve ikonlar - Proje renkleriyle uyumlu
 const toastConfig = {
   success: {
     icon: Check,
-    className: 'bg-gradient-to-r from-green-50 to-green-100 border border-green-200 text-green-800 shadow-lg',
+    className: 'bg-gradient-to-r from-green-50 to-lightgray border border-green-300 text-green-800 shadow-lg',
     iconColor: 'text-green-600',
     iconBg: 'bg-green-100'
   },
   error: {
     icon: X,
-    className: 'bg-gradient-to-r from-red-50 to-red-100 border border-red-200 text-red-800 shadow-lg',
-    iconColor: 'text-red-600',
+    className: 'bg-gradient-to-r from-red-50 to-lightgray border border-red text-red shadow-lg',
+    iconColor: 'text-red',
     iconBg: 'bg-red-100'
   },
   warning: {
     icon: AlertCircle,
-    className: 'bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 text-amber-800 shadow-lg',
-    iconColor: 'text-amber-600',
-    iconBg: 'bg-amber-100'
+    className: 'bg-gradient-to-r from-yellow-50 to-lightgray border border-yellow text-darkgray shadow-lg',
+    iconColor: 'text-yellow',
+    iconBg: 'bg-yellow'
   },
   info: {
     icon: Info,
-    className: 'bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 text-blue-800 shadow-lg',
+    className: 'bg-gradient-to-r from-blue-50 to-lightgray border border-blue-300 text-blue-800 shadow-lg',
     iconColor: 'text-blue-600',
     iconBg: 'bg-blue-100'
   },
   cart: {
     icon: ShoppingBag,
-    className: 'bg-gradient-to-r from-yellow-400 to-yellow-500 border border-yellow-300 text-red shadow-lg',
+    className: 'bg-gradient-to-r from-yellow to-lightyellow border border-yellow text-red shadow-lg',
     iconColor: 'text-red',
-    iconBg: 'bg-yellow-100'
+    iconBg: 'bg-lightyellow'
   }
 };
 
@@ -113,7 +113,7 @@ export const ToastItem = ({ toast, onRemove }) => {
               window.dispatchEvent(event);
               onRemove(toast.id);
             }}
-            className="mt-3 w-full py-2 bg-red text-yellow rounded-lg text-sm font-bold hover:bg-yellow hover:text-red transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+            className="mt-3 w-full py-2 bg-red text-yellow rounded-lg text-sm font-bold hover:bg-darkred hover:text-lightyellow transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
           >
             <div className="flex items-center justify-center gap-2">
               <ShoppingBag size={16} />
@@ -126,7 +126,7 @@ export const ToastItem = ({ toast, onRemove }) => {
       {/* Kapatma butonu */}
       <button
         onClick={() => onRemove(toast.id)}
-        className="flex-shrink-0 p-2 rounded-lg hover:bg-black hover:bg-opacity-10 transition-all duration-200 group"
+        className="flex-shrink-0 p-2 rounded-lg hover:bg-darkgray hover:bg-opacity-10 transition-all duration-200 group"
       >
         <X className="w-4 h-4 opacity-60 group-hover:opacity-100 transition-opacity" />
       </button>

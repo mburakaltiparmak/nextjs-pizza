@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { setUserData, setSelectedAddress } from "@/lib/store/actions/orderActions";
-import { ChevronRight, CheckCircle } from "lucide-react";
+import { ChevronRight, CheckCircle, MapPin, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import AddressForm from "./addressForm";
 import AddressList from "./addressList";
@@ -227,62 +227,78 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden font-Barlow">
-      <div className="p-6">
-        <h2 className="text-xl font-semibold mb-2 text-gray">Kişisel Bilgiler</h2>
-        <p className="text-gray text-sm mb-6">
-          Siparişinizi güvenli bir şekilde size ulaştırabilmemiz için bazı
-          bilgilere ihtiyacımız var.
-        </p>
+    <div className="bg-white rounded-2xl shadow-xl overflow-hidden font-Barlow border border-lightgray2">
+      <div className="p-6 lg:p-8">
+        <div className="mb-8">
+          <h2 className="text-2xl lg:text-3xl font-bold mb-3 text-darkgray">Kişisel Bilgiler</h2>
+          <p className="text-gray text-base leading-relaxed">
+            Siparişinizi güvenli bir şekilde size ulaştırabilmemiz için bazı
+            bilgilere ihtiyacımız var.
+          </p>
+        </div>
         
-        <div className="space-y-5">
+        <div className="space-y-8">
           {/* Misafir modunda ise Misafir bilgileri formunu göster */}
           {isGuest ? (
             <>
               {guestInfoSubmitted ? (
-                <div className="mb-4">
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-md">
-                    <div className="flex items-center">
-                      <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-                      <h3 className="text-lg font-medium text-green-800">Bilgileriniz kaydedildi</h3>
+                <div className="bg-gradient-to-r from-green-50 to-lightgray border-2 border-green-300 rounded-xl p-6">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-green-100 rounded-full p-2 mr-4">
+                      <CheckCircle className="w-6 h-6 text-green-600" />
                     </div>
-                    <div className="mt-2 text-sm text-green-700">
-                      <p><strong>İsim Soyisim:</strong> {guestData.name} {guestData.surname}</p>
-                      <p><strong>E-posta:</strong> {guestData.email}</p>
-                      <p><strong>Telefon:</strong> {guestData.phoneNumber}</p>
-                    </div>
-                    <button 
-                      type="button"
-                      onClick={() => setGuestInfoSubmitted(false)}
-                      className="mt-2 text-sm font-medium text-green-700 hover:text-green-900"
-                    >
-                      Düzenle
-                    </button>
+                    <h3 className="text-xl font-bold text-green-800">Bilgileriniz Kaydedildi</h3>
                   </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-green-700">
+                    <div>
+                      <span className="font-semibold">İsim Soyisim:</span>
+                      <p className="mt-1">{guestData.name} {guestData.surname}</p>
+                    </div>
+                    <div>
+                      <span className="font-semibold">E-posta:</span>
+                      <p className="mt-1">{guestData.email}</p>
+                    </div>
+                    <div>
+                      <span className="font-semibold">Telefon:</span>
+                      <p className="mt-1">{guestData.phoneNumber}</p>
+                    </div>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setGuestInfoSubmitted(false)}
+                    className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
+                  >
+                    Düzenle
+                  </button>
                 </div>
               ) : (
                 <GuestInfoForm />
               )}
             </>
           ) : (
-            <div>
-              <label htmlFor="fullname" className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="space-y-3">
+              <label htmlFor="fullname" className="block text-base font-semibold text-darkgray">
                 İsim & Soyisim
               </label>
               <input
                 {...register("fullname")}
                 id="fullname"
                 placeholder="Lütfen isminizi girin"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red focus:border-red"
+                className="w-full px-4 py-3 border-2 border-lightgray2 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow focus:border-yellow transition-all text-base"
               />
               {errors?.fullname?.message && (
-                <p className="mt-1 text-sm text-red">{errors.fullname.message}</p>
+                <p className="text-red text-sm font-medium">{errors.fullname.message}</p>
               )}
             </div>
           )}
           
-          <div>
-            <h3 className="text-lg font-medium mb-4">Teslimat Adresi</h3>
+          <div className="space-y-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="bg-yellow rounded-full p-2">
+                <MapPin className="w-6 h-6 text-red" />
+              </div>
+              <h3 className="text-xl lg:text-2xl font-bold text-darkgray">Teslimat Adresi</h3>
+            </div>
             
             {/* Adres Listesi veya Form */}
             {!showNewAddressForm ? (
@@ -299,33 +315,45 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
                   />
                 ) : (
                   // Misafir için yeni adres ekle butonu göster
-                  <div className="p-4 text-center">
-                    <p className="mb-4">
-                      {newAddress ? 
-                        "Adres bilgileriniz alındı. Düzenlemek için yeni adres ekleyebilirsiniz." : 
-                        "Adres bilgilerinizi girin."}
-                    </p>
-                    {newAddress && (
-                      <div className="mb-4 p-3 bg-darkgray rounded-md border border-gray">
-                        <p className="font-medium">{newAddress.recipientName || fullname}</p>
-                        <p className="text-sm text-darkgray">{newAddress.fullAddress}</p>
-                        <p className="text-sm text-darkgray">{newAddress.district}, {newAddress.city}</p>
-                        <p className="text-sm text-darkgray">{newAddress.phoneNumber}</p>
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      onClick={handleAddNewClick}
-                      className="w-full py-2 bg-yellow text-red font-semibold rounded-md hover:bg-red hover:text-yellow transition-colors"
-                    >
-                      {newAddress ? "Adresi Değiştir" : "Adres Ekle"}
-                    </button>
+                  <div className="text-center space-y-6">
+                    <div className="bg-gradient-to-r from-lightgray to-lightgray2 rounded-xl p-6">
+                      <p className="text-gray text-base mb-6 leading-relaxed">
+                        {newAddress ? 
+                          "✅ Adres bilgileriniz alındı. Düzenlemek için yeni adres ekleyebilirsiniz." : 
+                          "📍 Siparişinizin teslim edileceği adresi belirtin."}
+                      </p>
+                      
+                      {newAddress && (
+                        <div className="mb-6 p-4 bg-white rounded-xl border-2 border-yellow shadow-md">
+                          <div className="text-left space-y-2">
+                            <p className="font-bold text-darkgray text-lg">{newAddress.recipientName || fullname}</p>
+                            <p className="text-gray">{newAddress.fullAddress}</p>
+                            <p className="text-gray">{newAddress.district}, {newAddress.city}</p>
+                            {newAddress.phoneNumber && (
+                              <p className="text-gray">📱 {newAddress.phoneNumber}</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <button
+                        type="button"
+                        onClick={handleAddNewClick}
+                        className="inline-flex items-center gap-3 px-6 py-3 bg-yellow text-red font-bold rounded-xl hover:bg-red hover:text-yellow transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+                      >
+                        <Plus className="w-5 h-5" />
+                        {newAddress ? "Adresi Değiştir" : "Adres Ekle"}
+                      </button>
+                    </div>
                   </div>
                 )}  
               </div>
             ) : (
-              <div className="mt-4 border p-4 rounded-lg">
-                <h4 className="font-medium mb-3">Yeni Adres Ekle</h4>
+              <div className="bg-gradient-to-r from-lightgray to-lightgray2 rounded-xl p-6 border border-lightgray2">
+                <h4 className="font-bold text-xl text-darkgray mb-6 flex items-center gap-2">
+                  <Plus className="w-6 h-6 text-red" />
+                  Yeni Adres Ekle
+                </h4>
                 <AddressForm 
                   onSubmit={handleAddressSubmit}
                   submitText="Adresi Kaydet"
@@ -338,7 +366,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
                 <button
                   type="button"
                   onClick={() => setShowNewAddressForm(false)}
-                  className="mt-2 w-full py-2 bg-lightgray text-darkgray font-medium rounded-md hover:bg-gray-200 transition-colors"
+                  className="mt-4 w-full py-3 bg-lightgray text-darkgray font-semibold rounded-xl hover:bg-gray hover:text-white transition-colors"
                 >
                   İptal
                 </button>
@@ -347,20 +375,23 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
           </div>
         </div>
       </div>
-      <div className="px-6 py-4 bg-gray-50 flex justify-end">
-        <button
-          type="button"
-          onClick={handleSubmit(onSubmit)}
-          disabled={!isStep1Valid}
-          className={`flex items-center font-semibold gap-2 px-6 py-2 rounded-md transition-colors ${
-            isStep1Valid 
-              ? "bg-yellow text-red hover:bg-red hover:text-yellow border border-transparent hover:border-yellow" 
-              : "bg-red text-lightgray opacity-80 cursor-not-allowed"
-          }`}
-        >
-          İLERLE
-          <ChevronRight className="w-5 h-5" />
-        </button>
+      
+      <div className="px-6 lg:px-8 py-6 bg-gradient-to-r from-lightgray to-lightgray2 border-t border-lightgray2">
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handleSubmit(onSubmit)}
+            disabled={!isStep1Valid}
+            className={`inline-flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${
+              isStep1Valid 
+                ? "bg-yellow text-red hover:bg-red hover:text-yellow hover:scale-105 hover:shadow-xl border-2 border-transparent hover:border-yellow" 
+                : "bg-gray text-lightgray cursor-not-allowed opacity-60"
+            }`}
+          >
+            İLERLE
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        </div>
       </div>
     </div>
   );
