@@ -27,7 +27,7 @@ const toastConfig = {
     icon: Info,
     className: 'bg-white border-2 border-blue-400 text-blue-800 shadow-xl',
     iconColor: 'text-blue-600',
-    iconBg: 'bg-blue-100'
+    iconBg: 'bg-blue-400'
   },
   cart: {
     icon: ShoppingBag,

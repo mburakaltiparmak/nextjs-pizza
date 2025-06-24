@@ -204,12 +204,7 @@ const Page = () => {
         {/* Content */}
         <div className="mb-8">{displaySteps()}</div>
 
-        {/* Debug Info - Geliştirme aşamasında kullanılabilir */}
-        {typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
-          <div className="mt-8 p-4 bg-gray-100 rounded-lg text-xs">
-            <p>Debug: Role: {role}, IsLogin: {String(isLogin)}, Cart Items: {cart?.length || 0}</p>
-          </div>
-        )}
+        
       </div>
       <Footer />
     </div>

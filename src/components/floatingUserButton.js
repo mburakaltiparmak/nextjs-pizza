@@ -34,10 +34,11 @@ import { AUTH_ERRORS } from "@/lib/authErrorMessages";
 import Loading from "@/app/loading";
 import useAuth from "@/hooks/use-auth";
 import SecondaryLoading from "./secondaryLoading";
+import { X } from "lucide-react";
 
 const FloatingUserButton = () => {
   const dispatch = useDispatch();
-  const { toast } = useToast();
+  const { success, error: showError } = useToast();
   const router = useRouter();
   const {
     isAuthenticated,
@@ -167,12 +168,13 @@ const FloatingUserButton = () => {
       const result = await dispatch(login(formData));
 
       if (result && result.error) {
-        // Güvenli bir hata mesajı kullan
         setErrorMessage(AUTH_ERRORS.INVALID_CREDENTIALS);
+        showError(AUTH_ERRORS.INVALID_CREDENTIALS, {
+          title: "Giriş Hatası"
+        });
       } else {
-        toast({
-          title: "Giriş başarılı!",
-          description: "Hoş geldiniz.",
+        success("Hoş geldiniz!", {
+          title: "Giriş Başarılı"
         });
 
         setLoginOpen(false);
@@ -182,6 +184,9 @@ const FloatingUserButton = () => {
     } catch (err) {
       console.error("Login error:", err);
       setErrorMessage(AUTH_ERRORS.LOGIN_FAILED);
+      showError(AUTH_ERRORS.LOGIN_FAILED, {
+        title: "Giriş Hatası"
+      });
     }
   };
 
@@ -201,19 +206,22 @@ const FloatingUserButton = () => {
 
       if (result && result.success) {
         setForgotPasswordSuccess(true);
-        toast({
-          title: "Başarılı",
-          description:
-            "Şifre sıfırlama bağlantısı email adresinize gönderildi.",
+        success("Şifre sıfırlama bağlantısı email adresinize gönderildi", {
+          title: "Başarılı"
         });
       } else if (result && result.error) {
         setForgotPasswordError(result.error);
+        showError(result.error, {
+          title: "Hata"
+        });
       }
     } catch (err) {
       console.error("Şifre sıfırlama hatası:", err);
-      setForgotPasswordError(
-        "Şifre sıfırlama işlemi sırasında bir hata oluştu"
-      );
+      const errorMsg = "Şifre sıfırlama işlemi sırasında bir hata oluştu";
+      setForgotPasswordError(errorMsg);
+      showError(errorMsg, {
+        title: "Hata"
+      });
     }
   };
 
@@ -238,9 +246,8 @@ const FloatingUserButton = () => {
 
       setDropdownOpen(false);
 
-      toast({
-        title: "Çıkış yapıldı",
-        description: "Başarıyla çıkış yaptınız.",
+      success("Başarıyla çıkış yaptınız", {
+        title: "Çıkış Yapıldı"
       });
 
       // Yönlendirmeyi geciktir
@@ -250,10 +257,8 @@ const FloatingUserButton = () => {
     } catch (error) {
       console.error("Çıkış yapma hatası:", error);
 
-      toast({
-        title: "Hata",
-        description: "Çıkış yapılırken bir sorun oluştu.",
-        variant: "destructive",
+      showError("Çıkış yapılırken bir sorun oluştu", {
+        title: "Hata"
       });
 
       setIsLoggingOut(false);
@@ -347,39 +352,38 @@ const FloatingUserButton = () => {
                 <span className="">Giriş</span>
               </button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="bg-red p-0 border-0 rounded-md max-w-md">
-              <div className="w-full max-w-md space-y-4 border-transparent rounded-md p-16 relative">
+            <AlertDialogContent className="bg-white border-2 border-red rounded-xl max-w-md shadow-2xl">
+              <div className="w-full max-w-md space-y-4 rounded-xl p-8 relative">
+                
                 {/* Kapat butonu */}
                 <button
-                  onClick={() => setLoginOpen(false)}
-                  className="absolute right-4 top-4 rounded-full px-2 py-1 ring-2 ring-inset ring-white text-red transition-colors bg-yellow hover:bg-black hover:text-yellow hover:ring-yellow hover:shadow-lg hover:scale-105 active:scale-95"
-                >
-                  <FontAwesomeIcon icon={faTimes} className="h-4 w-4" />
-                </button>
+              onClick={() => setLoginOpen(false)}
+              className="absolute top-6 right-6 z-10 bg-red text-white p-3 rounded-full hover:bg-darkred transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110"
+              aria-label="Kapat"
+            >
+              <X size={24} />
+            </button>
 
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="mt-6 text-center text-3xl font-bold tracking-tight font-Barlow text-white">
-                    Giriş
+                  <AlertDialogTitle className="mt-6 text-center text-3xl font-bold tracking-tight font-Barlow text-red">
+                    Giriş Yap
                   </AlertDialogTitle>
-                  <AlertDialogDescription className="text-center text-white font-Barlow text-sm">
+                  <AlertDialogDescription className="text-center text-darkgray font-Barlow text-sm">
                     Hesabınıza giriş yapmak için bilgilerinizi giriniz.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
 
                 {errorMessage && (
-                  <div className="font-Barlow rounded-md bg-red p-4">
-                    <div className="text-sm text-lightgray">{errorMessage}</div>
+                  <div className="font-Barlow rounded-lg bg-red-50 border border-red p-4">
+                    <div className="text-sm text-red font-semibold">{errorMessage}</div>
                   </div>
                 )}
 
-                <form
-                  className="mt-8 space-y-3 font-Quattrocento_Sans"
-                  onSubmit={handleLogin}
-                >
-                  <div className="-space-y-px rounded-md shadow-sm">
+                <div className="mt-8 space-y-4 font-Quattrocento_Sans">
+                  <div className="space-y-3">
                     <div>
-                      <label htmlFor="email" className="sr-only">
-                        Email
+                      <label htmlFor="email" className="block text-sm font-semibold text-darkgray mb-1">
+                        Email Adresi
                       </label>
                       <input
                         id="username"
@@ -387,8 +391,8 @@ const FloatingUserButton = () => {
                         type="email"
                         required
                         disabled={loading}
-                        className="relative block w-full rounded-t-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-red sm:text-sm sm:leading-6"
-                        placeholder="Email adresiniz"
+                        className="w-full rounded-lg border-2 border-lightgray2 py-3 px-4 text-darkgray focus:border-yellow focus:outline-none focus:ring-2 focus:ring-yellow focus:ring-opacity-50 transition-all"
+                        placeholder="Email adresinizi girin"
                         value={email}
                         onChange={(e) => {
                           setEmail(e.target.value);
@@ -397,7 +401,7 @@ const FloatingUserButton = () => {
                       />
                     </div>
                     <div>
-                      <label htmlFor="password" className="sr-only">
+                      <label htmlFor="password" className="block text-sm font-semibold text-darkgray mb-1">
                         Şifre
                       </label>
                       <input
@@ -406,8 +410,8 @@ const FloatingUserButton = () => {
                         type="password"
                         required
                         disabled={loading}
-                        className="relative block w-full rounded-b-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-red sm:text-sm sm:leading-6"
-                        placeholder="Şifreniz"
+                        className="w-full rounded-lg border-2 border-lightgray2 py-3 px-4 text-darkgray focus:border-yellow focus:outline-none focus:ring-2 focus:ring-yellow focus:ring-opacity-50 transition-all"
+                        placeholder="Şifrenizi girin"
                         value={password}
                         onChange={(e) => {
                           setPassword(e.target.value);
@@ -417,20 +421,20 @@ const FloatingUserButton = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between px-2 py-1 text-white">
+                  <div className="flex items-center justify-between px-1 py-2">
                     <div className="flex items-center">
                       <input
                         id="remember-me"
                         name="remember-me"
                         type="checkbox"
                         disabled={loading}
-                        className="h-4 w-4 rounded border-black text-red focus:ring-red"
+                        className="h-4 w-4 rounded border-2 border-gray text-yellow focus:ring-yellow"
                         checked={rememberMe}
                         onChange={(e) => setRememberMeState(e.target.checked)}
                       />
                       <label
                         htmlFor="remember-me"
-                        className="ml-2 block text-sm font-semibold"
+                        className="ml-2 block text-sm font-semibold text-darkgray"
                       >
                         Beni Hatırla
                       </label>
@@ -443,21 +447,21 @@ const FloatingUserButton = () => {
                           setForgotPasswordOpen(true);
                           setForgotPasswordEmail(email);
                         }}
-                        className="font-semibold text-white hover:text-yellow"
+                        className="font-semibold text-red hover:text-darkred transition-colors"
                       >
                         Şifremi Unuttum
                       </button>
                     </div>
                   </div>
 
-                  <div className="flex flex-col space-y-2">
+                  <div className="flex flex-col space-y-3">
                     <button
-                      type="submit"
+                      onClick={handleLogin}
                       disabled={loading}
-                      className={`group relative flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white hover:shadow-lg hover:scale-105 active:scale-95 ${
+                      className={`w-full py-3 px-4 rounded-lg font-bold text-white transition-all duration-200 ${
                         loading
-                          ? "bg-red cursor-not-allowed"
-                          : "bg-green-800 hover:bg-green-600"
+                          ? "bg-gray cursor-not-allowed opacity-60"
+                          : "bg-red hover:bg-darkred shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95"
                       }`}
                     >
                       {loading ? (
@@ -471,12 +475,11 @@ const FloatingUserButton = () => {
 
                     {/* Google ile giriş butonu */}
                     <button
-                      type="button"
                       onClick={handleGoogleLogin}
                       disabled={loading}
-                      className="group relative flex w-full justify-center items-center rounded-md border border-black px-3 py-2 text-sm font-semibold bg-white text-red hover:border-white hover:bg-red hover:text-white hover:shadow-lg hover:scale-105 active:scale-95"
+                      className="w-full py-3 px-4 rounded-lg font-bold bg-green-600 hover:bg-green-700  text-white border-2 border-lightgray2  transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95 flex items-center justify-center"
                     >
-                      <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
+                      <svg className="w-7 h-7 bg-white rounded-full mr-2" viewBox="0 0 24 24">
                         <path
                           fill="#4285F4"
                           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -499,18 +502,17 @@ const FloatingUserButton = () => {
                     </button>
 
                     <button
-                      type="button"
                       onClick={() => {
                         setLoginOpen(false);
                         router.push("/signup");
                       }}
-                      className="group relative flex w-full justify-center rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-darkred bg-yellow hover:bg-lightyellow hover:shadow-lg hover:scale-105 active:scale-95"
+                      className="w-full py-3 px-4 rounded-lg font-bold bg-yellow text-red hover:bg-lightyellow hover:text-darkred transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95 flex items-center justify-center"
                     >
                       <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
                       Üye Ol
                     </button>
                   </div>
-                </form>
+                </div>
               </div>
             </AlertDialogContent>
           </AlertDialog>
@@ -520,20 +522,20 @@ const FloatingUserButton = () => {
             open={forgotPasswordOpen}
             onOpenChange={setForgotPasswordOpen}
           >
-            <AlertDialogContent className="bg-red p-0 border-0 rounded-md max-w-md">
-              <div className="w-full max-w-md space-y-4 border-transparent rounded-md p-16 relative">
+            <AlertDialogContent className="bg-white border-2 border-red rounded-xl max-w-md shadow-2xl">
+              <div className="w-full max-w-md space-y-4 rounded-xl p-8 relative">
                 <button
                   onClick={() => setForgotPasswordOpen(false)}
-                  className="absolute right-4 top-4 rounded-full px-2 py-1 ring-2 ring-inset ring-white text-red transition-colors bg-yellow hover:bg-black hover:text-yellow hover:ring-yellow hover:shadow-lg hover:scale-105 active:scale-95"
+                  className="absolute right-4 top-4 rounded-full p-2 bg-red text-white hover:bg-darkred transition-all duration-200 shadow-md hover:shadow-lg"
                 >
                   <FontAwesomeIcon icon={faTimes} className="h-4 w-4" />
                 </button>
 
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="mt-6 text-center text-3xl font-bold tracking-tight font-Barlow text-white">
+                  <AlertDialogTitle className="mt-6 text-center text-3xl font-bold tracking-tight font-Barlow text-red">
                     Şifremi Unuttum
                   </AlertDialogTitle>
-                  <AlertDialogDescription className="text-center text-white font-Barlow text-sm">
+                  <AlertDialogDescription className="text-center text-darkgray font-Barlow text-sm">
                     {!forgotPasswordSuccess
                       ? "Şifre sıfırlama bağlantısı için email adresinizi girin."
                       : "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi."}
@@ -541,8 +543,8 @@ const FloatingUserButton = () => {
                 </AlertDialogHeader>
 
                 {forgotPasswordError && (
-                  <div className="font-Barlow rounded-md bg-darkred p-4">
-                    <div className="text-sm text-white">
+                  <div className="font-Barlow rounded-lg bg-red-50 border border-red p-4">
+                    <div className="text-sm text-red font-semibold">
                       {forgotPasswordError}
                     </div>
                   </div>
@@ -550,32 +552,28 @@ const FloatingUserButton = () => {
 
                 {forgotPasswordSuccess ? (
                   <div className="space-y-4">
-                    <div className="bg-green-700 p-4 rounded-md text-white text-center">
-                      <FontAwesomeIcon icon={faKey} className="text-2xl mb-2" />
-                      <p>
+                    <div className="bg-green-50 border border-green-300 p-6 rounded-lg text-center">
+                      <FontAwesomeIcon icon={faKey} className="text-3xl mb-3 text-green-600" />
+                      <p className="text-green-800 font-semibold">
                         Şifre sıfırlama bağlantısı e-posta adresinize
                         gönderildi. Lütfen e-postanızı kontrol edin.
                       </p>
                     </div>
                     <button
-                      type="button"
                       onClick={() => {
                         setForgotPasswordOpen(false);
                         setForgotPasswordSuccess(false);
                         setLoginOpen(true);
                       }}
-                      className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-darkred bg-yellow hover:bg-lightyellow hover:shadow-lg hover:scale-105 active:scale-95"
+                      className="w-full py-3 px-4 rounded-lg font-bold bg-yellow text-red hover:bg-lightyellow hover:text-darkred transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95"
                     >
                       Giriş Ekranına Dön
                     </button>
                   </div>
                 ) : (
-                  <form
-                    className="mt-8 space-y-4 font-Quattrocento_Sans"
-                    onSubmit={handleForgotPassword}
-                  >
+                  <div className="mt-8 space-y-4 font-Quattrocento_Sans">
                     <div>
-                      <label htmlFor="forgotPasswordEmail" className="sr-only">
+                      <label htmlFor="forgotPasswordEmail" className="block text-sm font-semibold text-darkgray mb-1">
                         Email Adresi
                       </label>
                       <input
@@ -584,8 +582,8 @@ const FloatingUserButton = () => {
                         type="email"
                         required
                         disabled={loading}
-                        className="relative block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-red sm:text-sm sm:leading-6"
-                        placeholder="Email adresiniz"
+                        className="w-full rounded-lg border-2 border-lightgray2 py-3 px-4 text-darkgray focus:border-yellow focus:outline-none focus:ring-2 focus:ring-yellow focus:ring-opacity-50 transition-all"
+                        placeholder="Email adresinizi girin"
                         value={forgotPasswordEmail}
                         onChange={(e) => {
                           setForgotPasswordEmail(e.target.value);
@@ -594,14 +592,14 @@ const FloatingUserButton = () => {
                       />
                     </div>
 
-                    <div className="flex flex-col space-y-2">
+                    <div className="flex flex-col space-y-3">
                       <button
-                        type="submit"
+                        onClick={handleForgotPassword}
                         disabled={loading}
-                        className={`group relative flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white hover:shadow-lg hover:scale-105 active:scale-95 ${
+                        className={`w-full py-3 px-4 rounded-lg font-bold text-white transition-all duration-200 ${
                           loading
-                            ? "bg-red cursor-not-allowed"
-                            : "bg-green-800 hover:bg-green-600"
+                            ? "bg-gray cursor-not-allowed opacity-60"
+                            : "bg-red hover:bg-darkred shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95"
                         }`}
                       >
                         {loading ? (
@@ -614,17 +612,16 @@ const FloatingUserButton = () => {
                       </button>
 
                       <button
-                        type="button"
                         onClick={() => {
                           setForgotPasswordOpen(false);
                           setLoginOpen(true);
                         }}
-                        className="group relative flex w-full justify-center rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-darkred bg-yellow hover:bg-lightyellow hover:shadow-lg hover:scale-105 active:scale-95"
+                        className="w-full py-3 px-4 rounded-lg font-bold bg-yellow text-red hover:bg-lightyellow hover:text-darkred transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95"
                       >
                         Giriş Ekranına Dön
                       </button>
                     </div>
-                  </form>
+                  </div>
                 )}
               </div>
             </AlertDialogContent>
