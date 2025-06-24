@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { useToast } from "@/hooks/use-toast";
@@ -17,13 +17,15 @@ import ThirdStep from "@/components/create-order-components/thirdStep.jsx";
 import Loading from "../loading";
 
 const Page = () => {
-  const { toast } = useToast();
+  const { error, warning } = useToast();
   const router = useRouter();
   const cart = useAppSelector((state) => state.order.cart);
   const role = useAppSelector((state) => state.user.role);
+  const isLogin = useAppSelector((state) => state.user.isLogin);
   
-  // Hydration için gerekli durum
+  // Hydration ve yönlendirme için gerekli durumlar
   const [isClient, setIsClient] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [step1, setStep1] = useState(false);
   const [step2, setStep2] = useState(false);
@@ -32,28 +34,55 @@ const Page = () => {
   // Client tarafında olduğumuzu belirten useEffect
   useEffect(() => {
     setIsClient(true);
-    
-    // İstemci tarafında olduğumuzda kontroller yapılır
-    if (isClient) {
-      // Sepet boş ise anasayfaya yönlendir
-      if (!cart || cart.length <= 0) {
-        toast({
-          title: "Sepetiniz boş.",
-          description: "Anasayfaya yönlendiriliyorsunuz.",
-        });
-        router.push("/");
-      }
+  }, []);
+
+  // Yönlendirme fonksiyonları - useCallback ile optimize
+  const redirectToHome = useCallback(() => {
+    if (!isRedirecting) {
+      setIsRedirecting(true);
+      warning("Sepetiniz boş", {
+        title: "Yönlendirme",
+        message: "Anasayfaya yönlendiriliyorsunuz."
+      });
       
-      // Kullanıcı giriş yapmamış ise login sayfasına yönlendir
-      if (!role) {
-        toast({
-          title: "Siparişinize devam etmek için lütfen giriş yapın.",
-          description: "Giriş sayfasına yönlendiriliyorsunuz.",
-        });
-        router.push("/login");
-      }
+      setTimeout(() => {
+        router.push("/");
+      }, 1500);
     }
-  }, [cart, role, router, toast, isClient]);
+  }, [isRedirecting, router, warning]);
+
+  const redirectToLogin = useCallback(() => {
+    if (!isRedirecting) {
+      setIsRedirecting(true);
+      warning("Siparişinize devam etmek için lütfen giriş yapın", {
+        title: "Giriş Gerekli",
+        message: "Giriş sayfasına yönlendiriliyorsunuz."
+      });
+      
+      setTimeout(() => {
+        router.push("/login");
+      }, 1500);
+    }
+  }, [isRedirecting, router, warning]);
+
+  // İstemci tarafında kontroller - ayrı useEffect
+  useEffect(() => {
+    if (!isClient || isRedirecting) return; // Henüz client-side değilse veya zaten yönlendirme varsa çık
+
+    // Sepet kontrolü
+    if (!cart || cart.length === 0) {
+      redirectToHome();
+      return;
+    }
+
+    // Kullanıcı giriş kontrolü - hem role hem isLogin kontrol et
+    // Guest kullanıcılar (role === "GUEST") sipariş verebilir
+    if (!role || (!isLogin && role !== "GUEST")) {
+      redirectToLogin();
+      return;
+    }
+
+  }, [isClient, cart, role, isLogin, isRedirecting, redirectToHome, redirectToLogin]);
 
   // Define steps
   const steps = [
@@ -102,24 +131,35 @@ const Page = () => {
     }
   };
 
-  // Sayfa yüklenirken veya istemci kontrollerini yaparken yükleme göster
-  if (!isClient || (!role && isClient) || (isClient && (!cart || cart.length <= 0))) {
-    return (
-      <Loading />
-    );
+  // Loading durumları
+  if (!isClient) {
+    return <Loading />; // Hydration bekleniyor
+  }
+
+  if (isRedirecting) {
+    return <Loading />; // Yönlendirme yapılıyor
+  }
+
+  // Sepet boş veya kullanıcı yetkisiz ama henüz yönlendirme başlamamış
+  if (!cart || cart.length === 0) {
+    return <Loading />; // Yönlendirme effect'i çalışacak
+  }
+
+  if (!role || (!isLogin && role !== "GUEST")) {
+    return <Loading />; // Yönlendirme effect'i çalışacak
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-lightgray">
       <Header />
-      <div className="container mx-auto max-w-3xl px-4 py-8">
+      <div className="container mx-auto max-w-4xl px-4 py-8">
         {/* Modern Stepper */}
         <div className="mb-8">
           <div className="relative">
             {/* Progress bar */}
-            <div className="absolute bottom-10 left-2 h-1 bg-yellow w-full -translate-y-1/2" />
+            <div className="absolute top-5 left-0 h-1 bg-lightgray2 w-full rounded-full" />
             <div
-              className="absolute bottom-10 left-2 h-1 bg-red transition-all duration-300 -translate-y-1/2"
+              className="absolute top-5 left-0 h-1 bg-gradient-to-r from-yellow to-red transition-all duration-500 rounded-full"
               style={{
                 width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%`,
               }}
@@ -130,23 +170,27 @@ const Page = () => {
               {steps.map((step) => (
                 <div key={step.id} className="flex flex-col items-center">
                   <div
-                    className={`flex items-center justify-center w-10 h-10 rounded-full z-10 transition-all duration-300 ${
+                    className={`flex items-center justify-center w-12 h-12 rounded-full z-10 transition-all duration-300 shadow-lg ${
                       step.completed
-                        ? "bg-yellow text-red border-2 border-white ring-2 ring-darkred"
+                        ? "bg-gradient-to-r from-yellow to-lightyellow text-red border-2 border-yellow ring-4 ring-yellow ring-opacity-30"
                         : step.id === currentStep
-                        ? "bg-red border-2 border-yellow text-yellow ring-2 ring-red"
-                        : "bg-gray border-2 border-white text-darkgray ring-2 ring-darkgray"
+                        ? "bg-gradient-to-r from-red to-darkred border-2 border-red text-yellow ring-4 ring-red ring-opacity-30"
+                        : "bg-white border-2 border-lightgray2 text-gray shadow-md"
                     }`}
                   >
                     {step.completed ? (
-                      <Check className="w-5 h-5" />
+                      <Check className="w-6 h-6 font-bold" />
                     ) : (
                       step.icon
                     )}
                   </div>
                   <span
-                    className={`mt-2 text-sm font-medium ${
-                      step.id <= currentStep ? "text-red" : "text-black"
+                    className={`mt-3 text-sm font-semibold transition-colors duration-300 ${
+                      step.completed
+                        ? "text-red"
+                        : step.id === currentStep
+                        ? "text-red"
+                        : "text-gray"
                     }`}
                   >
                     {step.title}
@@ -160,7 +204,12 @@ const Page = () => {
         {/* Content */}
         <div className="mb-8">{displaySteps()}</div>
 
-        {/* Navigation buttons are handled by individual step components */}
+        {/* Debug Info - Geliştirme aşamasında kullanılabilir */}
+        {typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
+          <div className="mt-8 p-4 bg-gray-100 rounded-lg text-xs">
+            <p>Debug: Role: {role}, IsLogin: {String(isLogin)}, Cart Items: {cart?.length || 0}</p>
+          </div>
+        )}
       </div>
       <Footer />
     </div>
