@@ -54,7 +54,7 @@ const Page = () => {
   const redirectToLogin = useCallback(() => {
     if (!isRedirecting) {
       setIsRedirecting(true);
-      warning("Siparişinize devam etmek için lütfen giriş yapın", {
+      error("Siparişinize devam etmek için lütfen giriş yapın", {
         title: "Giriş Gerekli",
         message: "Giriş sayfasına yönlendiriliyorsunuz."
       });

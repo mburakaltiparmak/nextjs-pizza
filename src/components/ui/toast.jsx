@@ -3,35 +3,35 @@
 import React, { useEffect } from 'react';
 import { Check, X, AlertCircle, Info, ShoppingBag } from 'lucide-react';
 
-// Toast tiplerine göre stiller ve ikonlar - Proje renkleriyle uyumlu
+// Toast tiplerine göre stiller ve ikonlar - Beyaz arkaplan ile yüksek kontrast
 const toastConfig = {
   success: {
     icon: Check,
-    className: 'bg-gradient-to-r from-green-50 to-lightgray border border-green-300 text-green-800 shadow-lg',
+    className: 'bg-white border-2 border-green-400 text-green-800 shadow-xl',
     iconColor: 'text-green-600',
     iconBg: 'bg-green-100'
   },
   error: {
     icon: X,
-    className: 'bg-gradient-to-r from-red-50 to-lightgray border border-red text-red shadow-lg',
+    className: 'bg-white border-2 border-red text-red shadow-xl',
     iconColor: 'text-red',
     iconBg: 'bg-red-100'
   },
   warning: {
     icon: AlertCircle,
-    className: 'bg-gradient-to-r from-yellow-50 to-lightgray border border-yellow text-darkgray shadow-lg',
+    className: 'bg-white border-2 border-yellow text-darkgray shadow-xl',
     iconColor: 'text-yellow',
     iconBg: 'bg-yellow'
   },
   info: {
     icon: Info,
-    className: 'bg-gradient-to-r from-blue-50 to-lightgray border border-blue-300 text-blue-800 shadow-lg',
+    className: 'bg-white border-2 border-blue-400 text-blue-800 shadow-xl',
     iconColor: 'text-blue-600',
     iconBg: 'bg-blue-100'
   },
   cart: {
     icon: ShoppingBag,
-    className: 'bg-gradient-to-r from-yellow to-lightyellow border border-yellow text-red shadow-lg',
+    className: 'bg-gradient-to-r from-yellow to-lightyellow border-2 border-yellow text-red shadow-xl',
     iconColor: 'text-red',
     iconBg: 'bg-lightyellow'
   }
@@ -56,7 +56,7 @@ export const ToastItem = ({ toast, onRemove }) => {
       transform transition-all duration-300 ease-in-out
       animate-in slide-in-from-top-2 fade-in-0
       max-w-sm w-full font-Barlow backdrop-blur-sm
-      hover:scale-105 hover:shadow-xl
+      hover:scale-105 hover:shadow-2xl
       ${config.className}
     `}>
       {/* Ürün resmi veya ikon */}
@@ -134,12 +134,12 @@ export const ToastItem = ({ toast, onRemove }) => {
   );
 };
 
-// Toast Container - Konumlandırma güncellendi
+// Toast Container - Z-index artırıldı ve konumlandırma iyileştirildi
 export const ToastContainer = ({ toasts, onRemove }) => {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-6 right-6 z-50 flex flex-col gap-3 pointer-events-none max-w-sm">
+    <div className="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none max-w-sm">
       {toasts.map(toast => (
         <div key={toast.id} className="pointer-events-auto">
           <ToastItem toast={toast} onRemove={onRemove} />
