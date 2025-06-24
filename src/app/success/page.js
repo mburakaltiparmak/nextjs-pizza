@@ -185,8 +185,8 @@ export default function SuccessPage() {
           <div className="grid grid-cols-3 items-center w-full">
             <span className="flex flex-row items-center gap-1">
               <img
-                className="object-cover w-[48px]"
-                src={item.product?.img}
+                className="object-cover w-12"
+                src={item.product.img}
                 alt={item.product?.name || "Ürün"}
               />
               {/*düzelt */}

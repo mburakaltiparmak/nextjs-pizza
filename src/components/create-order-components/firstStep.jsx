@@ -5,11 +5,11 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { setUserData, setSelectedAddress } from "@/lib/store/actions/orderActions";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import AddressForm from "./addressForm";
 import AddressList from "./addressList";
-import GuestInfoForm from "./guestInfoForm"; // Import the new GuestInfoForm component
+import GuestInfoForm from "./guestInfoForm";
 
 const schema = z.object({
   fullname: z.string().min(1, { message: "İsim ve soyisim gereklidir" }),
@@ -17,7 +17,7 @@ const schema = z.object({
 
 const FirstStep = ({ setCurrentStep, setStep1 }) => {
   const dispatch = useAppDispatch();
-  const { toast } = useToast();
+  const { success, error, warning } = useToast();
   
   // Get user profile from redux store
   const userProfile = useAppSelector((state) => state.user.profile);
@@ -65,8 +65,6 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
 
   const fullname = watch("fullname");
   
-  
-  
   // İlerleme butonu aktif olması için isim ve adres kontrolü
   const isStep1Valid = fullname && (selectedAddressId || newAddress);
   
@@ -101,6 +99,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
     // Seçilen adresi Redux'a kaydet
     if (selectedAddress) {
       dispatch(setSelectedAddress(selectedAddress));
+      success("Adres seçildi");
       console.log(`Adres seçildi ve Redux'a kaydedildi: ID ${addressId}`, selectedAddress);
     }
   };
@@ -137,6 +136,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
       
       // Adresi Redux'a kaydet
       dispatch(setSelectedAddress(formattedAddress));
+      success("Adres başarıyla kaydedildi");
     } 
     // Eğer yeni bir adres ise (backend'e kaydedilmemiş veya misafir kullanıcı için)
     else {
@@ -148,9 +148,9 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
       // Adresi Redux'a da kaydet
       dispatch(setSelectedAddress(formattedAddress));
       
-      toast({
-        title: "Adres bilgileri alındı",
-        description: "Siparişiniz için kullanılacak."
+      success("Adres bilgileri alındı", {
+        title: "Adres kaydedildi",
+        message: "Siparişiniz için kullanılacak."
       });
     }
   };
@@ -159,20 +159,16 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
     try {
       // Misafir bilgilerini kontrol et
       if (isGuest && !isGuestDataValid) {
-        toast({
-          title: "Eksik bilgi",
-          description: "Lütfen tüm kişisel bilgilerinizi eksiksiz doldurun.",
-          variant: "destructive"
+        error("Lütfen tüm kişisel bilgilerinizi eksiksiz doldurun", {
+          title: "Eksik bilgi"
         });
         return;
       }
       
       // Adres bilgilerini kontrol et
       if (!selectedAddressId && !newAddress) {
-        toast({
-          title: "Adres eksik",
-          description: "Lütfen bir adres seçin veya yeni adres ekleyin.",
-          variant: "destructive"
+        warning("Lütfen bir adres seçin veya yeni adres ekleyin", {
+          title: "Adres eksik"
         });
         return;
       }
@@ -182,8 +178,6 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
       
       if (selectedAddressId) {
         addressData = addresses.find(addr => addr.id === selectedAddressId);
-        
-        
       } else if (newAddress) {
         addressData = newAddress;
       }
@@ -219,18 +213,15 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
       setStep1(true);
       setCurrentStep(2);
       
-      toast({
-        title: "Bilgiler kaydedildi",
-        description: isGuest ? 
-          "Misafir bilgileriniz ve adres bilgileriniz başarıyla kaydedildi." : 
-          "Kişisel bilgileriniz başarıyla kaydedildi."
+      success(isGuest ? 
+        "Misafir bilgileriniz ve adres bilgileriniz başarıyla kaydedildi" : 
+        "Kişisel bilgileriniz başarıyla kaydedildi", {
+        title: "Bilgiler kaydedildi"
       });
     } catch (error) {
       console.error("Adım 1 tamamlanırken hata:", error);
-      toast({
-        title: "Hata",
-        description: "Bilgiler kaydedilirken bir sorun oluştu.",
-        variant: "destructive"
+      error("Bilgiler kaydedilirken bir sorun oluştu", {
+        title: "Hata"
       });
     }
   };
@@ -252,9 +243,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
                 <div className="mb-4">
                   <div className="p-4 bg-green-50 border border-green-200 rounded-md">
                     <div className="flex items-center">
-                      <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
+                      <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
                       <h3 className="text-lg font-medium text-green-800">Bilgileriniz kaydedildi</h3>
                     </div>
                     <div className="mt-2 text-sm text-green-700">

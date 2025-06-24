@@ -1,83 +1,150 @@
 "use client";
-import * as React from "react"
-import * as ToastPrimitives from "@radix-ui/react-toast"
-import { cva } from "class-variance-authority";
-import { X } from "lucide-react"
 
-import { cn } from "@/lib/utils"
+import React, { useEffect } from 'react';
+import { Check, X, AlertCircle, Info, ShoppingBag } from 'lucide-react';
 
-const ToastProvider = ToastPrimitives.Provider
-
-const ToastViewport = React.forwardRef(({ className, ...props }, ref) => (
-  <ToastPrimitives.Viewport
-    ref={ref}
-    className={cn(
-      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-96",
-      className
-    )}
-    {...props} />
-))
-ToastViewport.displayName = ToastPrimitives.Viewport.displayName
-
-const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
-  {
-    variants: {
-      variant: {
-        default: "border bg-background text-foreground",
-        destructive:
-          "destructive group border-destructive bg-destructive text-destructive-foreground",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
+// Toast tiplerine göre stiller ve ikonlar - Şık ve tutarlı tasarım
+const toastConfig = {
+  success: {
+    icon: Check,
+    className: 'bg-gradient-to-r from-green-50 to-green-100 border border-green-200 text-green-800 shadow-lg',
+    iconColor: 'text-green-600',
+    iconBg: 'bg-green-100'
+  },
+  error: {
+    icon: X,
+    className: 'bg-gradient-to-r from-red-50 to-red-100 border border-red-200 text-red-800 shadow-lg',
+    iconColor: 'text-red-600',
+    iconBg: 'bg-red-100'
+  },
+  warning: {
+    icon: AlertCircle,
+    className: 'bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 text-amber-800 shadow-lg',
+    iconColor: 'text-amber-600',
+    iconBg: 'bg-amber-100'
+  },
+  info: {
+    icon: Info,
+    className: 'bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 text-blue-800 shadow-lg',
+    iconColor: 'text-blue-600',
+    iconBg: 'bg-blue-100'
+  },
+  cart: {
+    icon: ShoppingBag,
+    className: 'bg-gradient-to-r from-yellow-400 to-yellow-500 border border-yellow-300 text-red shadow-lg',
+    iconColor: 'text-red',
+    iconBg: 'bg-yellow-100'
   }
-)
+};
 
-const Toast = React.forwardRef(({ className, variant, ...props }, ref) => {
+// Toast bileşeni
+export const ToastItem = ({ toast, onRemove }) => {
+  const config = toastConfig[toast.type] || toastConfig.info;
+  const Icon = config.icon;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onRemove(toast.id);
+    }, toast.duration || 4000);
+
+    return () => clearTimeout(timer);
+  }, [toast, onRemove]);
+
   return (
-    (<ToastPrimitives.Root
-      ref={ref}
-      className={cn(toastVariants({ variant }), className)}
-      {...props} />)
+    <div className={`
+      relative flex items-start gap-4 p-4 rounded-xl border-2
+      transform transition-all duration-300 ease-in-out
+      animate-in slide-in-from-top-2 fade-in-0
+      max-w-sm w-full font-Barlow backdrop-blur-sm
+      hover:scale-105 hover:shadow-xl
+      ${config.className}
+    `}>
+      {/* Ürün resmi veya ikon */}
+      {toast.product?.img ? (
+        <div className="flex-shrink-0">
+          <div className="relative">
+            <img
+              src={toast.product.img}
+              alt={toast.product.name}
+              className="w-12 h-12 rounded-lg object-cover border-2 border-white shadow-md"
+            />
+            <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full ${config.iconBg} flex items-center justify-center border-2 border-white`}>
+              <ShoppingBag className={`w-3 h-3 ${config.iconColor}`} />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-shrink-0">
+          <div className={`w-12 h-12 rounded-xl ${config.iconBg} flex items-center justify-center border-2 border-white shadow-md`}>
+            <Icon className={`w-6 h-6 ${config.iconColor}`} />
+          </div>
+        </div>
+      )}
+
+      {/* İçerik */}
+      <div className="flex-1 min-w-0">
+        {toast.title && (
+          <p className="font-bold text-base leading-tight mb-1">
+            {toast.title}
+          </p>
+        )}
+        {toast.message && (
+          <p className="text-sm opacity-90 leading-relaxed">
+            {toast.message}
+          </p>
+        )}
+        {toast.product && !toast.message && (
+          <div>
+            <p className="font-bold text-base leading-tight mb-1">
+              Sepete Eklendi!
+            </p>
+            <p className="text-sm opacity-90">
+              <span className="font-semibold">{toast.product.name}</span> başarıyla eklendi
+            </p>
+          </div>
+        )}
+
+        {/* Sepete git butonu - sadece cart toastlarda */}
+        {toast.type === 'cart' && (
+          <button
+            onClick={() => {
+              // Sepet açma eventi
+              const event = new CustomEvent('open_floating_cart');
+              window.dispatchEvent(event);
+              onRemove(toast.id);
+            }}
+            className="mt-3 w-full py-2 bg-red text-yellow rounded-lg text-sm font-bold hover:bg-yellow hover:text-red transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+          >
+            <div className="flex items-center justify-center gap-2">
+              <ShoppingBag size={16} />
+              Sepete Git
+            </div>
+          </button>
+        )}
+      </div>
+
+      {/* Kapatma butonu */}
+      <button
+        onClick={() => onRemove(toast.id)}
+        className="flex-shrink-0 p-2 rounded-lg hover:bg-black hover:bg-opacity-10 transition-all duration-200 group"
+      >
+        <X className="w-4 h-4 opacity-60 group-hover:opacity-100 transition-opacity" />
+      </button>
+    </div>
   );
-})
-Toast.displayName = ToastPrimitives.Root.displayName
+};
 
-const ToastAction = React.forwardRef(({ className, ...props }, ref) => (
-  <ToastPrimitives.Action
-    ref={ref}
-    className={cn(
-      "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-muted/40 group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive",
-      className
-    )}
-    {...props} />
-))
-ToastAction.displayName = ToastPrimitives.Action.displayName
+// Toast Container - Konumlandırma güncellendi
+export const ToastContainer = ({ toasts, onRemove }) => {
+  if (toasts.length === 0) return null;
 
-const ToastClose = React.forwardRef(({ className, ...props }, ref) => (
-  <ToastPrimitives.Close
-    ref={ref}
-    className={cn(
-      "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
-      className
-    )}
-    toast-close=""
-    {...props}>
-    <X className="h-4 w-4" />
-  </ToastPrimitives.Close>
-))
-ToastClose.displayName = ToastPrimitives.Close.displayName
-
-const ToastTitle = React.forwardRef(({ className, ...props }, ref) => (
-  <ToastPrimitives.Title ref={ref} className={cn("text-sm font-semibold font-Barlow", className)} {...props} />
-))
-ToastTitle.displayName = ToastPrimitives.Title.displayName
-
-const ToastDescription = React.forwardRef(({ className, ...props }, ref) => (
-  <ToastPrimitives.Description ref={ref} className={cn("text-sm opacity-90", className)} {...props} />
-))
-ToastDescription.displayName = ToastPrimitives.Description.displayName
-
-export { ToastProvider, ToastViewport, Toast, ToastTitle, ToastDescription, ToastClose, ToastAction };
+  return (
+    <div className="fixed top-6 right-6 z-50 flex flex-col gap-3 pointer-events-none max-w-sm">
+      {toasts.map(toast => (
+        <div key={toast.id} className="pointer-events-auto">
+          <ToastItem toast={toast} onRemove={onRemove} />
+        </div>
+      ))}
+    </div>
+  );
+};

@@ -253,34 +253,23 @@ export const fetchGuestOrderDetail = (orderId, email) => async (dispatch) => {
   }
 };
 
-const createCustomPizzaProduct = async (pizzaData) => {
-  try {
-    const response = await instance.post("/product/custom-pizza", {
-      totalPrice: pizzaData.price,
-      customDetails: pizzaData.description,
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Custom pizza oluşturulamadı:", error);
-    throw error;
-  }
-};
+// orderActions.js - createOrder fonksiyonunun düzeltilmiş kısmı
 
 export const createOrder =
   ({ orderData, paymentData }) =>
   async (dispatch) => {
     dispatch(setLoading(true));
     try {
-      // Sipariş öğelerini hazırla
+      // Sipariş öğelerini hazırla - DÜZELTİLMİŞ KISIM
       const processedItems = orderData.items.map((item) => {
         return {
-          // Sadece gerekli ürün bilgilerini gönderiyoruz (ID ve kategori bilgisi olmadan)
+          // Mevcut ürünün ID'sini ve diğer bilgilerini gönder
           product: {
+            id: item.product.id,  // Backend'in ihtiyaç duyduğu ID
             name: item.product.name,
             price: item.product.price,
             image: item.product.img,
             description: item.product.description,
-            isCustom: isCustomProduct(item.product),
           },
           quantity: item.quantity,
           unitPrice: item.product.price,
@@ -319,7 +308,7 @@ export const createOrder =
         JSON.stringify(requestData, null, 2)
       );
 
-      // İsteği gönder - api prefix'ini doğru şekilde kullan
+      // İsteği gönder
       const response = await instance.post("/orders", requestData);
 
       if (!response.data || !response.data.id) {
@@ -335,7 +324,7 @@ export const createOrder =
       // Ödeme işlemini yap
       try {
         if (orderData.paymentMethod === "ONLINE_CREDIT_CARD" && paymentData) {
-          // Online kredi kartı ödemesi - api prefix'ini doğru şekilde kullan
+          // Online kredi kartı ödemesi
           const paymentEndpoint = `/orders/${orderId}/pay/card`;
 
           const paymentRequest = {
@@ -362,7 +351,7 @@ export const createOrder =
             }
           }
         } else if (orderData.paymentMethod === "CASH") {
-          // Nakit ödeme - api prefix'ini doğru şekilde kullan
+          // Nakit ödeme
           const paymentEndpoint = `/orders/${orderId}/pay/cash`;
 
           console.log(`Nakit ödeme işaretleniyor: ${paymentEndpoint}`);
@@ -395,11 +384,6 @@ export const createOrder =
       dispatch(setOrderFetchState(fetchStates.FETCHED)); // Loading state'ini kapat
       dispatch(setLoading(false));
 
-      /*
-    dispatch(clearCartAction());
-    saveCartToStorage([]); // localStorage'ı da temizle
-    */
-
       return response.data;
     } catch (err) {
       let errorMessage = "Sipariş oluşturulamadı";
@@ -419,21 +403,6 @@ export const createOrder =
     }
   };
 
-// Custom pizza kontrolü için yardımcı fonksiyon
-function isCustomProduct(product) {
-  try {
-    if (!product.description) return false;
-
-    const description =
-      typeof product.description === "string"
-        ? JSON.parse(product.description)
-        : product.description;
-
-    return description.isCustom === true;
-  } catch (e) {
-    return false;
-  }
-}
 // Cancel order
 export const cancelOrder = (orderId) => async (dispatch) => {
   dispatch(setLoading(true));

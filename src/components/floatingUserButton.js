@@ -272,7 +272,7 @@ const FloatingUserButton = () => {
           </div>
 
           {dropdownOpen && (
-            <div className="absolute left-0 mt-2 max-md:mt-8 max-md:text-sm w-56 bg-white rounded-md shadow-lg overflow-hidden z-20 font-Barlow">
+            <div className="fixed left-0 mt-2 max-md:mt-8 max-md:text-sm w-56 bg-white rounded-md shadow-lg overflow-hidden z-100 font-Barlow">
               <div className="py-2 border-b border-red">
                 <div className="px-4 py-2">
                   <div className="font-bold truncate font-Londrina_Solid text-red max-md:text-lg">

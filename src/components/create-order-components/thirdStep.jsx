@@ -368,114 +368,117 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
     return <SecondaryLoading text="Siparişiniz Alınıyor" size="fullPage" />;
   }
 
-  const submitOrder = async (formData) => {
-    console.log("Form verileri:", formData);
-    console.log("Adres bilgileri:", selectedAddress);
-    console.log("Sepet içeriği:", cartData);
-    console.log("Kullanıcı bilgileri:", userData);
+
+const submitOrder = async (formData) => {
+  console.log("Form verileri:", formData);
+  console.log("Adres bilgileri:", selectedAddress);
+  console.log("Sepet içeriği:", cartData);
+  console.log("Kullanıcı bilgileri:", userData);
+
+  try {
+    setStep3(true);
   
-    try {
-      setStep3(true);
+    toast({
+      title: "Siparişiniz alınıyor...",
+    });
     
-      toast({
-        title: "Siparişiniz alınıyor...",
-      });
+    // Adres bilgilerini kontrol et
+    if (!selectedAddress) {
+      throw new Error("Lütfen bir teslimat adresi seçin veya ekleyin.");
+    }
+    
+    // Sipariş verisini hazırla - DÜZELTİLMİŞ KISIM
+    const orderRequest = {
+      // Sepet öğeleri - ID'leri dahil et
+      items: cartData.map(item => ({
+        quantity: item.count,
+        product: {
+          id: item.product.id,  // Mevcut ürünün ID'si - ÖNEMLİ!
+          name: item.product.name,
+          price: item.product.price,
+          image: item.product.img,
+          description: item.product.description,
+        },
+        unitPrice: item.product.price
+      })),
       
-      // Adres bilgilerini kontrol et
-      if (!selectedAddress) {
-        throw new Error("Lütfen bir teslimat adresi seçin veya ekleyin.");
-      }
-      
-      // Sipariş verisini hazırla
-      const orderRequest = {
-        // Sepet öğeleri
-        items: cartData.map(item => ({
-          quantity: item.count,
-          product: {
-            name: item.product.name,
-            price: item.product.price,
-            image: item.product.img,
-            description: item.product.description,
-          },
-          unitPrice: item.product.price
-        })),
-        
-        // Ödeme bilgileri
-        paymentMethod: paymentMethod,
-        notes: formData.notes || ""
+      // Ödeme bilgileri
+      paymentMethod: paymentMethod,
+      notes: formData.notes || ""
+    };
+
+    // Adres bilgilerini ekle
+    // Kullanıcı giriş yapmış ve kayıtlı adresi seçilmiş
+    if (isAuthenticated && selectedAddress.id) {
+      orderRequest.addressId = selectedAddress.id;
+    }
+    // Yeni adres girilmiş
+    else {
+      // Backend'in beklediği formatta yeni adres bilgilerini gönder
+      orderRequest.newAddress = {
+        fullAddress: selectedAddress.fullAddress,
+        city: selectedAddress.city,
+        district: selectedAddress.district,
+        postalCode: selectedAddress.postalCode || "",
+        addressTitle: selectedAddress.addressTitle || "Yeni Adres",
+        phoneNumber: selectedAddress.phoneNumber || "",
+        recipientName: selectedAddress.recipientName || userData.fullname || "",
+        saveAddress: selectedAddress.saveAddress === true,
+        isDefault: selectedAddress.isDefault === true
       };
-        // Kullanıcı giriş yapmış ve kayıtlı adresi seçilmiş
-        if (isAuthenticated && selectedAddress.id) {
-          orderRequest.addressId = selectedAddress.id;
-        }
-        // Yeni adres girilmiş
-        else {
-          // Backend'in beklediği formatta yeni adres bilgilerini gönder
-          orderRequest.newAddress = {
-            fullAddress: selectedAddress.fullAddress,
-            city: selectedAddress.city,
-            district: selectedAddress.district,
-            postalCode: selectedAddress.postalCode || "",
-            addressTitle: selectedAddress.addressTitle || "Yeni Adres",
-            phoneNumber: selectedAddress.phoneNumber || "",
-            recipientName: selectedAddress.recipientName || userData.fullname || "",
-            saveAddress: selectedAddress.saveAddress === true,
-            isDefault: selectedAddress.isDefault === true
-          };
-        
-      }
-      
-      // Ödeme bilgileri (sadece online kart ödemesi için)
-      const paymentData = paymentMethod === "ONLINE_CREDIT_CARD" ? {
-        cardNumber: formData.cardNumber,
-        nameOnCard: formData.nameOnCard,
-        expirationMonth: formData.expirationMonth,
-        expirationYear: formData.expirationYear,
-        cvc: formData.cvc
-      } : null;
-      
-      console.log("Backend'e gönderilecek sipariş verisi:", JSON.stringify(orderRequest, null, 2));
-      
-      // Sipariş oluşturma işlemini çağır
-      const result = await dispatch(createOrder({
-        orderData: orderRequest,
-        paymentData: paymentData,
-      }));
-      
-      // Hata durumunu kontrol et
-      if (result.error) {
-        console.error("Sipariş oluşturma hatası:", result.error);
-        toast({
-          title: "Sipariş oluşturulurken bir hata oluştu.",
-          description: result.error,
-          variant: "destructive",
-        });
-        setStep3(false);
-        return;
-      }
-  
-      // Başarılı ise
-      toast({
-        title: "Siparişiniz başarıyla oluşturuldu!",
-        description: "Teşekkür ederiz, siparişiniz alındı."
-      });
-      
-      // Başarı sayfasına yönlendir
-      // Kısa bir gecikme ekleyerek toast mesajının görülmesini sağla
-      setTimeout(() => {
-        router.push("/success");
-      }, 1000);
-      
-    } catch (error) {
-      console.error("Sipariş oluşturma işlemi sırasında beklenmeyen bir hata oluştu:", error);
+    }
+    
+    // Ödeme bilgileri (sadece online kart ödemesi için)
+    const paymentData = paymentMethod === "ONLINE_CREDIT_CARD" ? {
+      cardNumber: formData.cardNumber,
+      nameOnCard: formData.nameOnCard,
+      expirationMonth: formData.expirationMonth,
+      expirationYear: formData.expirationYear,
+      cvc: formData.cvc
+    } : null;
+    
+    console.log("Backend'e gönderilecek sipariş verisi:", JSON.stringify(orderRequest, null, 2));
+    
+    // Sipariş oluşturma işlemini çağır
+    const result = await dispatch(createOrder({
+      orderData: orderRequest,
+      paymentData: paymentData,
+    }));
+    
+    // Hata durumunu kontrol et
+    if (result.error) {
+      console.error("Sipariş oluşturma hatası:", result.error);
       toast({
         title: "Sipariş oluşturulurken bir hata oluştu.",
-        description: error.message,
+        description: result.error,
         variant: "destructive",
       });
       setStep3(false);
+      return;
     }
-  };
+
+    // Başarılı ise
+    toast({
+      title: "Siparişiniz başarıyla oluşturuldu!",
+      description: "Teşekkür ederiz, siparişiniz alındı."
+    });
+    
+    // Başarı sayfasına yönlendir
+    // Kısa bir gecikme ekleyerek toast mesajının görülmesini sağla
+    setTimeout(() => {
+      router.push("/success");
+    }, 1000);
+    
+  } catch (error) {
+    console.error("Sipariş oluşturma işlemi sırasında beklenmeyen bir hata oluştu:", error);
+    toast({
+      title: "Sipariş oluşturulurken bir hata oluştu.",
+      description: error.message,
+      variant: "destructive",
+    });
+    setStep3(false);
+  }
+};
   
   const handleBack = () => {
     setCurrentStep(2);
