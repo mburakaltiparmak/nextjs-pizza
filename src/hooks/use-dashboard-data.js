@@ -5,8 +5,8 @@ import { useAppDispatch } from "@/lib/hooks";
 import { fetchDashboard } from "@/lib/store/actions/adminActions";
 import { fetchCategories } from "@/lib/store/actions/categoryActions";
 import { fetchAllUsers } from "@/lib/store/actions/adminActions";
-import { setModuleLoading } from "@/lib/store/actions/globalActions";
 import { handleApiError } from "@/lib/store/middleware/errorMiddleware";
+import { setModuleLoading } from "@/lib/store/actions/globalActions";
 
 export const useDashboardData = () => {
   const dispatch = useAppDispatch();
@@ -15,7 +15,7 @@ export const useDashboardData = () => {
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 3;
 
-  const loadDashboardData = useCallback(async () => {
+  const loadDashboardData = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     
@@ -24,12 +24,16 @@ export const useDashboardData = () => {
     dispatch(setModuleLoading('user', true));
 
     try {
-      try {
-        await dispatch(fetchDashboard());
+      // Ana dashboard endpoint'ini kullan
+      const result = await dispatch(fetchDashboard(forceRefresh));
+      
+      // Başarılı ise direkt dön
+      if (result && !result.error) {
         return { success: true };
-      } catch (dashboardError) {
-        console.warn("Dashboard API failed, falling back to individual calls");
       }
+
+      // Dashboard endpoint başarısız olduysa, fallback mekanizması
+      console.warn("Dashboard API failed, falling back to individual calls");
 
       const results = await Promise.allSettled([
         dispatch(fetchCategories()),
@@ -42,10 +46,10 @@ export const useDashboardData = () => {
         console.warn("Some dashboard data requests failed:", failures);
         
         if (failures.length < results.length) {
-          setError("Bazı veriler yüklenemedi");
+          setError("Bazı veriler yüklenemedi. Sayfa kısmi olarak yüklendi.");
           return { partial: true };
         } else {
-          throw new Error("Tüm veri istekleri başarısız");
+          throw new Error("Tüm veri istekleri başarısız oldu");
         }
       }
 
@@ -58,19 +62,36 @@ export const useDashboardData = () => {
         err.name === "NetworkError" ||
         !navigator.onLine;
 
+      // ✅ PROBLEM #2 ÇÖZÜMÜ: Daha yumuşak retry stratejisi
       if (isNetworkError && retryCount < MAX_RETRIES) {
         const nextRetry = retryCount + 1;
         setRetryCount(nextRetry);
 
-        const backoffTime = Math.min(Math.pow(2, retryCount) * 1000, 5000);
+        // Daha kullanıcı dostu backoff: 2s, 3s, 4s (eskiden 1s, 2s, 4s)
+        const backoffTime = Math.min(2000 + (retryCount * 1000), 5000);
+        
+        setError(`Bağlantı hatası. ${nextRetry}/${MAX_RETRIES} yeniden deneniyor... (${backoffTime/1000}s)`);
         
         await new Promise((resolve) => setTimeout(resolve, backoffTime));
-        return loadDashboardData();
+        return loadDashboardData(forceRefresh);
       }
 
+      // Retry limiti aşıldı veya network error değil
       const errorResult = handleApiError(err, dispatch, 'loadDashboardData');
-      setError(errorResult.error);
-      return { error: errorResult.error };
+      
+      // ✅ PROBLEM #5 ÇÖZÜMÜ: Detaylı hata mesajları
+      let detailedError = errorResult.error;
+      
+      if (isNetworkError) {
+        detailedError = `İnternet bağlantısı kurulamadı. Lütfen bağlantınızı kontrol edin ve tekrar deneyin. (${MAX_RETRIES} deneme tamamlandı)`;
+      } else if (err.response?.status === 403) {
+        detailedError = "Bu sayfayı görüntüleme yetkiniz bulunmuyor. Lütfen yönetici ile iletişime geçin.";
+      } else if (err.response?.status === 500) {
+        detailedError = "Sunucu hatası oluştu. Lütfen birkaç dakika sonra tekrar deneyin.";
+      }
+      
+      setError(detailedError);
+      return { error: detailedError };
     } finally {
       setLoading(false);
       dispatch(setModuleLoading('admin', false));
@@ -81,7 +102,8 @@ export const useDashboardData = () => {
 
   const retry = useCallback(() => {
     setRetryCount(0);
-    loadDashboardData();
+    setError(null);
+    loadDashboardData(true); // Force refresh
   }, [loadDashboardData]);
 
   return {
@@ -90,5 +112,6 @@ export const useDashboardData = () => {
     loadDashboardData,
     retry,
     retryCount,
+    maxRetries: MAX_RETRIES,
   };
 };

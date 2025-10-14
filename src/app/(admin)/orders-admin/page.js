@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { instance } from "@/lib/hooks";
 import { useRouter } from "next/navigation";
-import useAuthRoute from "@/hooks/useAuthRole";
+import useAuthRoute from "@/hooks/use-auth-role";
 import {
   Calendar,
   Clock,

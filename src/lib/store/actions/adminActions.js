@@ -1,7 +1,9 @@
+// src/lib/store/actions/adminActions.js
 import { adminActions } from "../reducers/adminReducer";
 import { setError, setLoading, setSuccess } from "./globalActions";
 import { instance } from "@/lib/hooks";
 import { fetchStates, userStatus } from "../constants";
+import { handleApiError } from "../middleware/errorMiddleware";
 
 export const setAllUsers = (users) => ({
   type: adminActions.SET_ALL_USERS,
@@ -38,6 +40,11 @@ export const setAdminError = (error) => ({
   payload: error,
 });
 
+// Cache mekanizması
+let dashboardCache = null;
+let dashboardCacheTimestamp = 0;
+const DASHBOARD_CACHE_DURATION = 60000; // 1 dakika
+
 // Tüm kullanıcıları getir
 export const fetchAllUsers = () => async (dispatch) => {
   dispatch(setAdminFetchState(fetchStates.FETCHING));
@@ -51,14 +58,7 @@ export const fetchAllUsers = () => async (dispatch) => {
     return response.data;
   } catch (err) {
     dispatch(setAdminFetchState(fetchStates.FAILED));
-
-    let errorMessage = "Kullanıcılar yüklenemedi";
-    if (err.response) {
-      errorMessage = err.response.data || errorMessage;
-    }
-
-    dispatch(setAdminError(errorMessage));
-    return { error: errorMessage };
+    return handleApiError(err, dispatch, 'fetchAllUsers');
   }
 };
 
@@ -75,88 +75,76 @@ export const fetchPendingUsers = () => async (dispatch) => {
     return response.data;
   } catch (err) {
     dispatch(setAdminFetchState(fetchStates.FAILED));
-
-    let errorMessage = "Bekleyen kullanıcılar yüklenemedi";
-    if (err.response) {
-      errorMessage = err.response.data || errorMessage;
-    }
-
-    dispatch(setAdminError(errorMessage));
-    return { error: errorMessage };
+    return handleApiError(err, dispatch, 'fetchPendingUsers');
   }
 };
 
-// Dashboard verilerini getir
-export const fetchDashboard = () => async (dispatch) => {
+// ✅ PROBLEM #1 & #19 ÇÖZÜMÜ: Dashboard verilerini optimize edilmiş şekilde getir
+export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
+  // Cache kontrolü
+  const now = Date.now();
+  if (!forceRefresh && dashboardCache && (now - dashboardCacheTimestamp) < DASHBOARD_CACHE_DURATION) {
+    dispatch(setDashboardData(dashboardCache));
+    dispatch(setAllUsers(dashboardCache.users || []));
+    dispatch(setAdminFetchState(fetchStates.FETCHED));
+    return dashboardCache;
+  }
+
   dispatch(setAdminFetchState(fetchStates.FETCHING));
 
   try {
-    // Dashboard bilgilerini toplamak için birden fazla API isteği yapabiliriz
-    const categoriesResponse = await instance.get("/category");
-    const usersResponse = await instance.get("/admin/users");
-    
-    // Kategori ve kullanıcı verilerini işle
-    const categories = categoriesResponse.data || [];
+    // ÇÖZÜM: Promise.all ile paralel istekler - performans artışı
+    const [dashboardResponse, usersResponse] = await Promise.all([
+      instance.get("/admin/dashboard"),
+      instance.get("/admin/users")
+    ]);
+
+    const dashboardStats = dashboardResponse.data;
     const users = usersResponse.data || [];
-    
-    // Ürün ve stok bilgilerini hesapla
-    let totalProducts = 0;
-    let totalStock = 0;
-    let categoryData = [];
-    
-    categories.forEach(category => {
-      if (category.products && Array.isArray(category.products)) {
-        const productCount = category.products.length;
-        totalProducts += productCount;
-        
-        let categoryStock = 0;
-        category.products.forEach(product => {
-          categoryStock += product.stock || 0;
-        });
-        
-        totalStock += categoryStock;
-        
-        // Kategori verilerini grafik için hazırla
-        categoryData.push({
-          name: category.name,
-          ürünSayısı: productCount,
-          stokMiktarı: categoryStock
-        });
-      }
-    });
-    
-    // Dashboard verilerini derle
+
+    // Backend'den gelen dashboard stats'i kullan
     const dashboardData = {
-      totalCategories: categories.length,
-      totalProducts,
-      totalStock,
+      totalCategories: dashboardStats.totalCategories || 0,
+      totalProducts: dashboardStats.totalProducts || 0,
+      totalStock: dashboardStats.totalStock || 0,
       totalUsers: users.length,
-      categoryData,
-      categories, // Tüm kategori verilerini de ekle
-      users // Tüm kullanıcı verilerini de ekle
+      categories: dashboardStats.categories || [],
+      users: users,
+      // Grafik için kategori verilerini hazırla
+      categoryData: (dashboardStats.categories || []).map(category => ({
+        name: category.name,
+        ürünSayısı: category.products?.length || 0,
+        stokMiktarı: category.products?.reduce((sum, p) => sum + (p.stock || 0), 0) || 0
+      }))
     };
-    
+
+    // Cache'e kaydet
+    dashboardCache = dashboardData;
+    dashboardCacheTimestamp = now;
+
     dispatch(setDashboardData(dashboardData));
-    dispatch(setAllUsers(users)); // Kullanıcı verilerini de Redux store'a ekle
+    dispatch(setAllUsers(users));
     dispatch(setAdminFetchState(fetchStates.FETCHED));
-    
+
     return dashboardData;
   } catch (err) {
     dispatch(setAdminFetchState(fetchStates.FAILED));
     
-    let errorMessage = "Dashboard verileri yüklenemedi";
-    console.error("Dashboard veri hatası:", err);
+    // Cache'i temizle
+    dashboardCache = null;
+    dashboardCacheTimestamp = 0;
     
-    if (err.response) {
-      errorMessage = err.response.data || errorMessage;
-    }
-    
-    dispatch(setAdminError(errorMessage));
-    return { error: errorMessage };
+    return handleApiError(err, dispatch, 'fetchDashboard');
   }
 };
 
-// Kullanıcı onayla - Backend'e uygun olarak POST metodu kullanıyoruz
+// Cache'i temizle - veri güncellemelerinde kullanılır
+export const clearDashboardCache = () => {
+  dashboardCache = null;
+  dashboardCacheTimestamp = 0;
+};
+
+// Kullanıcı onayla
 export const approveUser = (userId) => async (dispatch) => {
   dispatch(setLoading(true));
 
@@ -167,22 +155,17 @@ export const approveUser = (userId) => async (dispatch) => {
     dispatch(setLoading(false));
     dispatch(setSuccess("Kullanıcı başarıyla onaylandı"));
 
+    // Cache'i temizle
+    clearDashboardCache();
+
     return { success: true };
   } catch (err) {
-    let errorMessage = "Kullanıcı onaylanamadı";
-
-    if (err.response) {
-      errorMessage = err.response.data || errorMessage;
-    }
-
-    dispatch(setError(errorMessage));
     dispatch(setLoading(false));
-
-    return { error: errorMessage };
+    return handleApiError(err, dispatch, 'approveUser');
   }
 };
 
-// Kullanıcı reddet - Backend'e uygun olarak POST metodu kullanıyoruz
+// Kullanıcı reddet
 export const rejectUser = (userId) => async (dispatch) => {
   dispatch(setLoading(true));
 
@@ -191,48 +174,37 @@ export const rejectUser = (userId) => async (dispatch) => {
 
     dispatch(updateUserStatusInState(userId, userStatus.REJECTED));
     dispatch(setLoading(false));
-    dispatch(setSuccess("Kullanıcı başarıyla reddedildi"));
+    dispatch(setSuccess("Kullanıcı reddedildi"));
+
+    // Cache'i temizle
+    clearDashboardCache();
 
     return { success: true };
   } catch (err) {
-    let errorMessage = "Kullanıcı reddedilemedi";
-
-    if (err.response) {
-      errorMessage = err.response.data || errorMessage;
-    }
-
-    dispatch(setError(errorMessage));
     dispatch(setLoading(false));
-
-    return { error: errorMessage };
+    return handleApiError(err, dispatch, 'rejectUser');
   }
 };
 
-// Kullanıcı rolünü güncelle - Backend'e uygun olarak PUT metodu kullanıyoruz
+// Kullanıcı rolünü güncelle
 export const updateUserRole = (userId, role) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
-    // Backend PUT /api/admin/users/{id}/role?role=XXXX bekliyor
     await instance.put(`/admin/users/${userId}/role`, null, {
-      params: { role: role }
+      params: { role },
     });
 
     dispatch(updateUserRoleInState(userId, role));
     dispatch(setLoading(false));
-    dispatch(setSuccess("Kullanıcı rolü başarıyla güncellendi"));
+    dispatch(setSuccess("Kullanıcı rolü güncellendi"));
+
+    // Cache'i temizle
+    clearDashboardCache();
 
     return { success: true };
   } catch (err) {
-    let errorMessage = "Kullanıcı rolü güncellenemedi";
-
-    if (err.response) {
-      errorMessage = err.response.data || errorMessage;
-    }
-
-    dispatch(setError(errorMessage));
     dispatch(setLoading(false));
-
-    return { error: errorMessage };
+    return handleApiError(err, dispatch, 'updateUserRole');
   }
 };

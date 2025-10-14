@@ -7,7 +7,7 @@ import Loading from "../loading";
 import { usePathname, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { userRoles } from "@/lib/store/constants";
-import { useMobileDetection } from "@/hooks/useMobileDetection";
+import { useMobileDetection } from "@/hooks/use-mobile-detection";
 import { AdminLayoutProvider,useAdminLayout } from "@/contexts/AdminLayoutContext";
 
 function AdminLayoutContent({ children }) {

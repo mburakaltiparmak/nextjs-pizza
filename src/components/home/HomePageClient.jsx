@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAppSelector } from "@/lib/hooks";
 import useAuth from "@/hooks/use-auth";
 import Loading from "@/app/loading";
-import { useHomeData } from "@/lib/hooks/useHomeData";
+import { useHomeData } from "@/hooks/use-home-data";
 
 export default function HomePageClient({ children }) {
   const { loading: authLoading } = useAuth([], "/", false);
