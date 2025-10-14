@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { setModuleLoading } from "@/lib/store/actions/globalActions";
 
 export const useModuleLoading = (module) => {
   return useSelector(state => state.global.moduleLoading[module] || false);
@@ -95,8 +96,6 @@ export const useLoadingCount = (modules = null) => {
 };
 
 export const useAutoCleanupLoading = (module, dispatch) => {
-  const { useEffect } = require('react');
-  const { setModuleLoading } = require('../store/actions/globalActions');
   
   useEffect(() => {
     return () => {

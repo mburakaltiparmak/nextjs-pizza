@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import { Provider } from "react-redux";
 import { store } from "@/lib/store/store";
-import { AuthProvider } from "@/lib/context/authContext";
-import { ToastProvider } from "@/lib/providers/toast-provider";
-
+import { AuthProvider } from "./authProvider";
+import { ToastProvider } from "./toast-provider";
 export default function Providers({ children }) {
   const [isMounted, setIsMounted] = useState(false);
 

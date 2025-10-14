@@ -10,8 +10,7 @@ import {
 import FloatingCartButton from "@/components/floatingCartButton";
 import FloatingUserButton from "@/components/floatingUserButton";
 import ClientComponentWrapper from "./ClientComponentWrapper";
-import Providers from "./Providers";
-
+import Providers from "@/lib/providers/Providers";
 // Font tanımlamaları
 const barlow = Barlow({
   subsets: ["latin"],

@@ -2,8 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useAppDispatch } from "@/lib/hooks";
 import { logout } from "@/lib/store/actions/userActions";
-import { useAuthContext } from "@/lib/context/authContext"; // Context import
-
+import { useAuthContext } from "@/contexts";
 /**
  * Kimlik doğrulama, kullanıcı verisi ve yetkilendirme yönetimi için hook
  * Bu hook, geriye dönük uyumluluk için eski API'yi korur, ancak yeni AuthContext'i kullanır

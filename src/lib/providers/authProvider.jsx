@@ -1,47 +1,13 @@
-"use client";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-} from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { AuthContext } from "@/contexts";
+import { useAppDispatch, useAppSelector } from "../redux-hooks";
 import { useRouter } from "next/navigation";
-import {
-  checkAuthStatus,
-  fetchUserAddresses,
-  logout,
-  setEmail,
-  setToken,
-  setIsLogin,
-  setUserProfile,
-  setUserRole,
-  setUserStatus,
-} from "@/lib/store/actions/userActions";
-import { getSafeErrorMessage } from "@/lib/authErrorMessages";
-import { createDebouncedRequest } from "@/lib/utils/asyncUtils";
-// Supabase importları
-import { supabase, syncSupabaseUser } from "@/lib/supabase";
-// Yeni utility fonksiyonlarını import et
-import {
-  configureAuthHeaders,
-  enhancedSyncSupabaseUser,
-  extractSupabaseToken,
-  syncSupabaseTokenToSystem,
-} from "@/lib/supabaseSync";
-import { initializeAuth } from "@/lib/store/actions/initAuth";
-// Auth context oluşturma
-export const AuthContext = createContext(null);
+import { useCallback, useEffect, useRef, useState } from "react";
+import { configureAuthHeaders, enhancedSyncSupabaseUser, extractSupabaseToken, syncSupabaseTokenToSystem } from "../supabaseSync";
+import { supabase, syncSupabaseUser } from "../supabase";
+import { createDebouncedRequest } from "../utils/asyncUtils";
 
-/**
- * Auth Provider Component
- * @param {object} props - React props
- * @param {React.ReactNode} props.children - Child components
- */
 export function AuthProvider({ children }) {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [lastCheck, setLastCheck] = useState(0);
@@ -50,12 +16,12 @@ export function AuthProvider({ children }) {
   const mountedRef = useRef(true);
 
   // Redux state'inden kullanıcı bilgilerini al
-  const isLogin = useSelector((state) => state.user.isLogin);
-  const user = useSelector((state) => state.user.profile);
-  const role = useSelector((state) => state.user.role);
-  const addresses = useSelector((state) => state.user.addresses);
-  const error = useSelector((state) => state.user.error);
-  const token = useSelector((state) => state.user.token);
+  const isLogin = useAppSelector((state) => state.user.isLogin);
+  const user = useAppSelector((state) => state.user.profile);
+  const role = useAppSelector((state) => state.user.role);
+  const addresses = useAppSelector((state) => state.user.addresses);
+  const error = useAppSelector((state) => state.user.error);
+  const token = useAppSelector((state) => state.user.token);
 
   // Component unmount olduğunda işaretlemek için
   useEffect(() => {
@@ -475,89 +441,3 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 }
-
-// Mevcut hook tanımlamaları aynı kalıyor
-export const useAuthContext = (
-  allowedRoles = [],
-  redirectPath = "/",
-  requireAuth = true
-) => {
-  const context = useContext(AuthContext);
-  const router = useRouter();
-  const hasCheckedAuth = useRef(false);
-
-  // Context yoksa hata fırlat
-  if (!context) {
-    throw new Error("useAuthContext hook must be used within an AuthProvider");
-  }
-
-  // Auth yönlendirme kontrolü
-  useEffect(() => {
-    // Tekrarlayan kontrolleri önle
-    if (hasCheckedAuth.current) return;
-
-    // Yükleme sırasında bir şey yapma
-    if (context.loading) return;
-
-    const checkPermissions = async () => {
-      hasCheckedAuth.current = true;
-
-      // Giriş yapmamış ve giriş gerektiren rota ise
-      if (requireAuth && !context.isAuthenticated) {
-        router.push("/login");
-        return;
-      }
-
-      // Rol kontrolü
-      if (allowedRoles.length > 0 && !context.isAuthorized(allowedRoles)) {
-        router.push(redirectPath);
-        return;
-      }
-    };
-
-    checkPermissions();
-  }, [
-    context.isAuthenticated,
-    context.role,
-    context.loading,
-    router,
-    allowedRoles,
-    redirectPath,
-    requireAuth,
-    context.isAuthorized,
-  ]);
-
-  return {
-    ...context,
-    // Yetkilendirme durumu
-    isAuthorized:
-      !requireAuth ||
-      (context.isAuthenticated &&
-        (allowedRoles.length === 0 || context.isAuthorized(allowedRoles))),
-  };
-};
-
-/**
- * Basitleştirilmiş Auth Context Hook - sadece auth durumu ve yenileme için
- * @returns {Object} Basitleştirilmiş auth durumu
- */
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error("useAuth hook must be used within an AuthProvider");
-  }
-
-  // Sadece sık kullanılan özellikleri döndür - googleLogin eklendi
-  return {
-    isAuthenticated: context.isAuthenticated,
-    loading: context.loading,
-    user: context.user,
-    role: context.role,
-    refreshAuth: context.refreshAuth,
-    logout: context.logout,
-    googleLogin: context.googleLogin,
-  };
-};
-
-export default useAuthContext;
