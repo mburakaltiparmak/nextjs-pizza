@@ -5,44 +5,36 @@ export const useAppDispatch = useDispatch.withTypes();
 export const useAppSelector = useSelector.withTypes();
 export const useAppStore = useStore.withTypes();
 
-// API istekleri için sabitler - timeout azaltıldı
-const API_TIMEOUT = 10000; // 10 saniye - 30 saniyeden düşürüldü
-const API_BASE_URL = "https://pizza-backend.fly.dev/pizza/api";
+const API_TIMEOUT = 15000;
+const API_BASE_URL = "http://localhost:8080/pizza/api";
 
-// Axios instance oluştur - timeout ve optimizasyonlar ekle
 export const instance = axios.create({
   baseURL: API_BASE_URL,
-  //timeout: API_TIMEOUT,
-  // FormData için default Content-Type kaldırıldı
+  timeout: API_TIMEOUT,
 });
 
-// Kullanıcı işlemleri için ayrı bir instance
 export const userInstance = axios.create({
   baseURL: `${API_BASE_URL}/admin/users`,
-  //timeout: API_TIMEOUT,
+  timeout: API_TIMEOUT,
 });
 
-// Request interceptor - otomatik token ekleme VE Content-Type yönetimi
 instance.interceptors.request.use(
   (config) => {
-    // Development'ta log
     if (process.env.NODE_ENV === "development") {
       console.log(
         `🔷 API İsteği: ${config.method?.toUpperCase()} ${config.url}`
       );
     }
 
-    // Content-Type yönetimi - FormData için özel handling
     if (config.data instanceof FormData) {
-      // FormData için Content-Type'ı silme - browser otomatik boundary ekleyecek
       delete config.headers['Content-Type'];
-      console.log("🔍 FormData detected, removing Content-Type header");
-    } else {
-      // Normal JSON istekleri için
+      if (process.env.NODE_ENV === "development") {
+        console.log("🔍 FormData detected, removing Content-Type header");
+      }
+    } else if (config.data && typeof config.data === 'object') {
       config.headers['Content-Type'] = 'application/json';
     }
 
-    // Token'ı otomatik ekle
     if (typeof window !== "undefined") {
       const token =
         localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -58,7 +50,6 @@ instance.interceptors.request.use(
   }
 );
 
-// Response interceptor - hata yakalama
 instance.interceptors.response.use(
   (response) => {
     if (process.env.NODE_ENV === "development") {
@@ -84,7 +75,6 @@ instance.interceptors.response.use(
   }
 );
 
-// userInstance için aynı interceptor'ları uygula
 userInstance.interceptors.request.use(
   instance.interceptors.request.handlers[0].fulfilled,
   instance.interceptors.request.handlers[0].rejected

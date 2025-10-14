@@ -1,10 +1,19 @@
 // src/lib/store/actions/productActions.js
 
 import { instance } from "@/lib/hooks";
-import { setLoading, setError, setSuccess } from "./globalActions";
+import { setModuleLoading } from "./globalActions";
+import { handleApiError } from "../middleware/errorMiddleware";
 import { fetchStates } from "../constants";
-import { fetchCategories } from "./categoryActions";
 import { productActions } from "../reducers/productReducer";
+
+export const setCurrentProduct = (product) => ({
+  type: productActions.SET_CURRENT_PRODUCT,
+  payload: product,
+});
+
+export const clearCurrentProduct = () => ({
+  type: productActions.CLEAR_CURRENT_PRODUCT,
+});
 
 // Ürünleri getir - daha güvenilir hata yakalama ile
 export const fetchProducts = () => async (dispatch) => {
@@ -70,71 +79,39 @@ export const fetchProducts = () => async (dispatch) => {
   }
 };
 
-// Tek bir ürünü ID'ye göre getir - Sayfa yenilemesinde ürün detayı için
-// Düzeltilmiş aksiyon
-export const fetchProductById = (productId) => async (dispatch) => {
-  dispatch(setLoading(true));
-  dispatch({
-    type: productActions.setProductFetchState,
-    payload: fetchStates.FETCHING,
-  });
+export const fetchProductById = (productId) => async (dispatch, getState) => {
+  const state = getState();
+  
+  const existingProduct = state.product.products.find(
+    (p) => p.id.toString() === productId.toString()
+  );
+
+  if (existingProduct) {
+    dispatch(setCurrentProduct(existingProduct));
+    return existingProduct;
+  }
+
+  dispatch(setModuleLoading('product', true));
 
   try {
-    console.log("Ürün getiriliyor, ID:", productId);
-    // API isteğini yap
     const response = await instance.get(`/product/${productId}`);
 
-    // Yanıt kontrolü
     if (!response || !response.data) {
       throw new Error("Ürün detayı alınamadı");
     }
 
-    console.log("API'den gelen ürün verisi:", response.data);
-
-    // Sadece tek bir action dispatch edelim (daha basit ve güvenilir)
-    // API'den gelen ürünü doğrudan products array'ine ekleyelim
     dispatch({
       type: productActions.ADD_PRODUCT,
       payload: response.data,
     });
 
-    // Başarılı fetch state'i ayarla
-    dispatch({
-      type: productActions.setProductFetchState,
-      payload: fetchStates.FETCHED,
-    });
-
-    // Loading durumunu kapat
-    dispatch(setLoading(false));
+    dispatch(setCurrentProduct(response.data));
+    dispatch(setModuleLoading('product', false));
 
     return response.data;
   } catch (err) {
-    console.error("Ürün detayı getirme hatası:", err);
-
-    // Başarısız fetch state'i ayarla
-    dispatch({
-      type: productActions.setProductFetchState,
-      payload: fetchStates.FAILED,
-    });
-
-    // Hata mesajını oluştur
-    let errorMessage = "Ürün detayı yüklenirken bir hata oluştu";
-    if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
-    } else if (err.request) {
-      errorMessage =
-        "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
-    } else {
-      errorMessage = err.message || errorMessage;
-    }
-
-    // Hata mesajını ayarla
-    dispatch(setError(errorMessage));
-
-    // Loading durumunu kapat
-    dispatch(setLoading(false));
-
-    return { error: errorMessage };
+    dispatch(setModuleLoading('product', false));
+    return handleApiError(err, dispatch, 'fetchProductById');
   }
 };
 

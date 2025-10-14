@@ -1,31 +1,13 @@
+// src/lib/store/actions/categoryActions.js
 import { categoryActions } from "../reducers/categoryReducer";
-import { setError, setLoading, setSuccess } from "./globalActions";
-import { instance, useAppSelector } from "@/lib/hooks";
+import { setLoading, setSuccess } from "./globalActions";
+import { instance } from "@/lib/hooks";
 import { fetchStates } from "../constants";
+import { handleApiError } from "../middleware/errorMiddleware"; // ✅ Import
 
 export const setCategories = (categories) => ({
   type: categoryActions.SET_CATEGORIES,
   payload: categories,
-});
-  
-export const setSingleCategory = (category) => ({
-  type: categoryActions.SET_SINGLE_CATEGORY,
-  payload: category,
-});
-
-export const addCategory = (category) => ({
-  type: categoryActions.ADD_CATEGORY,
-  payload: category,
-});
-
-export const updateCategoryInState = (category) => ({
-  type: categoryActions.UPDATE_CATEGORY,
-  payload: category,
-});
-
-export const deleteCategoryFromState = (categoryId) => ({
-  type: categoryActions.DELETE_CATEGORY,
-  payload: categoryId,
 });
 
 export const setCategoryFetchState = (state) => ({
@@ -33,12 +15,7 @@ export const setCategoryFetchState = (state) => ({
   payload: state,
 });
 
-export const setCategoryError = (error) => ({
-  type: categoryActions.SET_ERROR,
-  payload: error,
-});
-
-// Tüm kategorileri getir
+// Tüm kategorileri getir - DÜZELTME ÖRNEĞİ
 export const fetchCategories = () => async (dispatch) => {
   dispatch(setCategoryFetchState(fetchStates.FETCHING));
 
@@ -51,18 +28,21 @@ export const fetchCategories = () => async (dispatch) => {
     return response.data;
   } catch (err) {
     dispatch(setCategoryFetchState(fetchStates.FAILED));
-
-    let errorMessage = "Kategoriler yüklenemedi";
-    if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
-    }
-
-    dispatch(setCategoryError(errorMessage));
-    return { error: errorMessage };
+    
+    // ✅ Merkezi error handler kullan - tek satır!
+    return handleApiError(err, dispatch, 'fetchCategories');
+    
+    // ❌ Eski yöntem - artık gerekli değil:
+    // let errorMessage = "Kategoriler yüklenemedi";
+    // if (err.response) {
+    //   errorMessage = err.response.data?.message || errorMessage;
+    // }
+    // dispatch(setCategoryError(errorMessage));
+    // return { error: errorMessage };
   }
 };
 
-// Basit kategori listesini getir (ürünler dahil değil)
+// Basit kategori listesini getir
 export const fetchSimpleCategories = () => async (dispatch) => {
   dispatch(setCategoryFetchState(fetchStates.FETCHING));
 
@@ -75,38 +55,9 @@ export const fetchSimpleCategories = () => async (dispatch) => {
     return response.data;
   } catch (err) {
     dispatch(setCategoryFetchState(fetchStates.FAILED));
-
-    let errorMessage = "Kategoriler yüklenemedi";
-    if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
-    }
-
-    dispatch(setCategoryError(errorMessage));
-    return { error: errorMessage };
-  }
-};
-
-// Belirli bir kategoriyi getir
-export const fetchCategoryById = (categoryId) => async (dispatch) => {
-  dispatch(setCategoryFetchState(fetchStates.FETCHING));
-
-  try {
-    const response = await instance.get(`/category/${categoryId}`);
-
-    dispatch(setSingleCategory(response.data));
-    dispatch(setCategoryFetchState(fetchStates.FETCHED));
-
-    return response.data;
-  } catch (err) {
-    dispatch(setCategoryFetchState(fetchStates.FAILED));
-
-    let errorMessage = "Kategori bilgileri yüklenemedi";
-    if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
-    }
-
-    dispatch(setCategoryError(errorMessage));
-    return { error: errorMessage };
+    
+    // ✅ Merkezi error handler
+    return handleApiError(err, dispatch, 'fetchSimpleCategories');
   }
 };
 
@@ -114,21 +65,15 @@ export const fetchCategoryById = (categoryId) => async (dispatch) => {
 export const createCategory = (categoryData) => async (dispatch) => {
   dispatch(setLoading(true));
   
-  
   try {
-    // FormData nesnesi oluştur
     const formData = new FormData();
     formData.append('name', categoryData.name);
     
     if (categoryData.image) {
       formData.append("image", categoryData.image);
     }
-    console.log("category form data",formData);
     
-    const response = await instance.post("/category", formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'}
-    });
+    const response = await instance.post("/category", formData);
 
     dispatch(addCategory(response.data));
     dispatch(setLoading(false));
@@ -136,84 +81,56 @@ export const createCategory = (categoryData) => async (dispatch) => {
 
     return response.data;
   } catch (err) {
-    let errorMessage = "Kategori eklenemedi";
-
-    if (err.response) {
-      console.error("Sunucu yanıtı:", err.response);
-      errorMessage = err.response.data?.message || errorMessage;
-    } else if (err.request) {
-      console.error("İstek gönderildi ama yanıt alınamadı:", err.request);
-      errorMessage = "Sunucudan yanıt alınamadı";
-    } else {
-      console.error("İstek oluşturulurken hata:", err.message);
-      errorMessage = err.message || errorMessage;
-    }
-
-    dispatch(setError(errorMessage));
     dispatch(setLoading(false));
-
-    return { error: errorMessage };
+    
+    // ✅ Merkezi error handler
+    return handleApiError(err, dispatch, 'createCategory');
   }
 };
 
 // Kategori güncelle
-export const updateCategory = (categoryId, categoryData) => async (dispatch) => {
+export const updateCategory = (id, categoryData) => async (dispatch) => {
   dispatch(setLoading(true));
-  
+
   try {
     const formData = new FormData();
-    formData.append('name', categoryData.name);
-    
-    if (categoryData.image) {
-      formData.append('image', categoryData.image);
+    formData.append("name", categoryData.name);
+
+    if (categoryData.image && categoryData.image instanceof File) {
+      formData.append("image", categoryData.image);
     }
+
+    const response = await instance.put(`/category/${id}`, formData);
+
+    dispatch(updateCategoryInState(response.data));
+    dispatch(setSuccess("Kategori başarıyla güncellendi"));
+    dispatch(setLoading(false));
+
+    return response.data;
+  } catch (err) {
+    dispatch(setLoading(false));
     
-    const response = await instance.put(`/category/${categoryId}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      }});
-
-      dispatch(updateCategoryInState(response.data));
-      dispatch(setLoading(false));
-      dispatch(setSuccess("Kategori başarıyla güncellendi"));
-
-      return response.data;
-    } catch (err) {
-      let errorMessage = "Kategori güncellenemedi";
-
-      if (err.response) {
-        errorMessage = err.response.data?.message || errorMessage;
-      }
-
-      dispatch(setError(errorMessage));
-      dispatch(setLoading(false));
-
-      return { error: errorMessage };
-    }
-  };
+    // ✅ Merkezi error handler
+    return handleApiError(err, dispatch, 'updateCategory');
+  }
+};
 
 // Kategori sil
-export const deleteCategory = (categoryId) => async (dispatch) => {
+export const deleteCategory = (id) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
-    await instance.delete(`/category/${categoryId}`);
+    await instance.delete(`/category/${id}`);
 
-    dispatch(deleteCategoryFromState(categoryId));
-    dispatch(setLoading(false));
+    dispatch(deleteCategoryFromState(id));
     dispatch(setSuccess("Kategori başarıyla silindi"));
+    dispatch(setLoading(false));
 
     return { success: true };
   } catch (err) {
-    let errorMessage = "Kategori silinemedi";
-
-    if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
-    }
-
-    dispatch(setError(errorMessage));
     dispatch(setLoading(false));
-
-    return { error: errorMessage };
+    
+    // ✅ Merkezi error handler
+    return handleApiError(err, dispatch, 'deleteCategory');
   }
 };
