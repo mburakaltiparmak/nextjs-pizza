@@ -1,6 +1,7 @@
-// src/components/dashboard/DashboardErrorBanner.jsx
+"use client";
+
+import { AlertTriangle, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw } from "lucide-react";
 
 export default function DashboardErrorBanner({ 
   error, 
@@ -8,46 +9,51 @@ export default function DashboardErrorBanner({
   retryCount, 
   maxRetries 
 }) {
-  if (!error) return null;
-
-  const isRetrying = retryCount > 0;
-  const canRetry = !maxRetries || retryCount < maxRetries;
+  const showRetryInfo = typeof retryCount === 'number' && typeof maxRetries === 'number';
+  const canRetry = !showRetryInfo || retryCount < maxRetries;
 
   return (
-    <div className="bg-red-50 text-red border border-red-200 p-4 rounded-lg shadow-sm">
-      <div className="flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+    <div className="bg-red/10 border-2 border-red rounded-xl p-6 mb-6">
+      <div className="flex items-start gap-4">
+        {/* Icon */}
+        <div className="flex-shrink-0">
+          <div className="w-12 h-12 rounded-full bg-red/20 flex items-center justify-center">
+            <AlertTriangle className="w-6 h-6 text-red" />
+          </div>
+        </div>
+
+        {/* Content */}
         <div className="flex-1">
-          <p className="font-Barlow font-semibold mb-1">
-            {isRetrying ? 'Yeniden deneniyor...' : 'Veri yüklenirken bir hata oluştu'}
-          </p>
-          <p className="font-Barlow text-sm mb-3">{error}</p>
+          <h3 className="text-lg font-semibold text-red mb-2 font-Quattrocento_Sans">
+            Veri Yükleme Hatası
+          </h3>
           
-          {/* Retry bilgisi */}
-          {isRetrying && maxRetries && (
-            <p className="font-Barlow text-xs mb-3 opacity-75">
-              Deneme: {retryCount}/{maxRetries}
+          <p className="text-darkgray mb-4 font-Barlow">
+            {error || "Dashboard verileri yüklenirken bir hata oluştu."}
+          </p>
+
+          {/* Retry Info */}
+          {showRetryInfo && (
+            <p className="text-sm text-gray mb-4 font-Barlow">
+              Deneme: {retryCount} / {maxRetries}
             </p>
           )}
 
-          {/* Retry butonu */}
-          {canRetry && !isRetrying && (
-            <Button 
-              onClick={onRetry} 
-              variant="outline" 
-              size="sm"
-              className="border-red text-red hover:bg-red hover:text-white transition-colors"
+          {/* Retry Button */}
+          {canRetry && onRetry && (
+            <Button
+              onClick={onRetry}
+              className="bg-red hover:bg-yellow hover:text-red text-white transition-colors duration-300 font-Barlow flex items-center gap-2"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCcw className="w-4 h-4" />
               Tekrar Dene
             </Button>
           )}
 
-          {/* Max retry mesajı */}
           {!canRetry && (
-            <div className="text-sm opacity-75">
-              <p>Maksimum deneme sayısına ulaşıldı. Lütfen sayfayı yenileyin veya daha sonra tekrar deneyin.</p>
-            </div>
+            <p className="text-sm text-gray font-Barlow italic">
+              Maksimum deneme sayısına ulaşıldı. Lütfen sayfayı yenileyin.
+            </p>
           )}
         </div>
       </div>

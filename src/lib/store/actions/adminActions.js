@@ -81,19 +81,21 @@ export const fetchPendingUsers = () => async (dispatch) => {
 
 // ✅ PROBLEM #1 & #19 ÇÖZÜMÜ: Dashboard verilerini optimize edilmiş şekilde getir
 export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
-  // Cache kontrolü
+  // ✅ Cache kontrolü
   const now = Date.now();
   if (!forceRefresh && dashboardCache && (now - dashboardCacheTimestamp) < DASHBOARD_CACHE_DURATION) {
+    console.log("✅ Dashboard Cache Hit - Returning cached data");
     dispatch(setDashboardData(dashboardCache));
     dispatch(setAllUsers(dashboardCache.users || []));
     dispatch(setAdminFetchState(fetchStates.FETCHED));
     return dashboardCache;
   }
 
+  console.log("🔄 Fetching fresh dashboard data...");
   dispatch(setAdminFetchState(fetchStates.FETCHING));
 
   try {
-    // ÇÖZÜM: Promise.all ile paralel istekler - performans artışı
+    // ✅ Parallel requests - Dashboard ve Users aynı anda
     const [dashboardResponse, usersResponse] = await Promise.all([
       instance.get("/admin/dashboard"),
       instance.get("/admin/users")
@@ -102,35 +104,75 @@ export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
     const dashboardStats = dashboardResponse.data;
     const users = usersResponse.data || [];
 
-    // Backend'den gelen dashboard stats'i kullan
+    console.log("📊 Backend Dashboard Response:", {
+      totalCategories: dashboardStats.totalCategories,
+      totalProducts: dashboardStats.totalProducts,
+      totalStock: dashboardStats.totalStock,
+      categoriesCount: dashboardStats.categories?.length || 0
+    });
+
+    // ✅ DÜZELTME: Backend'den gelen categories array'ini işle
+    const categories = dashboardStats.categories || [];
+    
+    // ✅ Her kategori için veri hazırla
+    const categoryData = categories.map(category => {
+      // Backend'den category.products array'i geliyor mu kontrol et
+      const products = category.products || [];
+      const productCount = products.length;
+      const stockTotal = products.reduce((sum, p) => sum + (p.stock || 0), 0);
+      
+      console.log(`📦 Category: ${category.name}`, { 
+        productCount, 
+        stockTotal,
+        hasProducts: products.length > 0 
+      });
+      
+      return {
+        name: category.name,
+        ürünSayısı: productCount,
+        stokMiktarı: stockTotal
+      };
+    });
+
+    // ✅ Dashboard data'yı hazırla
     const dashboardData = {
-      totalCategories: dashboardStats.totalCategories || 0,
+      // Backend'den gelen değerleri kullan
+      totalCategories: dashboardStats.totalCategories || categories.length || 0,
       totalProducts: dashboardStats.totalProducts || 0,
       totalStock: dashboardStats.totalStock || 0,
       totalUsers: users.length,
-      categories: dashboardStats.categories || [],
+      // Raw data
+      categories: categories,
       users: users,
-      // Grafik için kategori verilerini hazırla
-      categoryData: (dashboardStats.categories || []).map(category => ({
-        name: category.name,
-        ürünSayısı: category.products?.length || 0,
-        stokMiktarı: category.products?.reduce((sum, p) => sum + (p.stock || 0), 0) || 0
-      }))
+      // İşlenmiş kategori verileri (grafik ve tablo için)
+      categoryData: categoryData
     };
 
-    // Cache'e kaydet
+    console.log("✅ Prepared Dashboard Data:", {
+      totalCategories: dashboardData.totalCategories,
+      totalProducts: dashboardData.totalProducts,
+      totalStock: dashboardData.totalStock,
+      totalUsers: dashboardData.totalUsers,
+      categoryDataLength: dashboardData.categoryData.length,
+      categoryDataSample: dashboardData.categoryData[0]
+    });
+
+    // ✅ Cache'e kaydet
     dashboardCache = dashboardData;
     dashboardCacheTimestamp = now;
+    console.log(`📦 Dashboard cached for ${DASHBOARD_CACHE_DURATION/1000} seconds`);
 
+    // ✅ Redux'a kaydet
     dispatch(setDashboardData(dashboardData));
     dispatch(setAllUsers(users));
     dispatch(setAdminFetchState(fetchStates.FETCHED));
 
     return dashboardData;
   } catch (err) {
+    console.error("❌ Dashboard fetch error:", err);
     dispatch(setAdminFetchState(fetchStates.FAILED));
     
-    // Cache'i temizle
+    // ✅ Hata durumunda cache'i temizle
     dashboardCache = null;
     dashboardCacheTimestamp = 0;
     
@@ -142,6 +184,7 @@ export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
 export const clearDashboardCache = () => {
   dashboardCache = null;
   dashboardCacheTimestamp = 0;
+  console.log("🗑️ Dashboard cache cleared");
 };
 
 // Kullanıcı onayla
@@ -151,11 +194,11 @@ export const approveUser = (userId) => async (dispatch) => {
   try {
     await instance.post(`/admin/users/${userId}/approve`);
 
-    dispatch(updateUserStatusInState(userId, userStatus.ACTIVE));
+    dispatch(updateUserStatus(userId, userStatus.ACTIVE));
+    dispatch(setSuccess("Kullanıcı onaylandı"));
     dispatch(setLoading(false));
-    dispatch(setSuccess("Kullanıcı başarıyla onaylandı"));
 
-    // Cache'i temizle
+    // ✅ Dashboard cache'ini temizle (kullanıcı sayısı değişti)
     clearDashboardCache();
 
     return { success: true };
@@ -172,11 +215,11 @@ export const rejectUser = (userId) => async (dispatch) => {
   try {
     await instance.post(`/admin/users/${userId}/reject`);
 
-    dispatch(updateUserStatusInState(userId, userStatus.REJECTED));
-    dispatch(setLoading(false));
+    dispatch(updateUserStatus(userId, userStatus.REJECTED));
     dispatch(setSuccess("Kullanıcı reddedildi"));
+    dispatch(setLoading(false));
 
-    // Cache'i temizle
+    // ✅ Dashboard cache'ini temizle (kullanıcı sayısı değişti)
     clearDashboardCache();
 
     return { success: true };
@@ -192,14 +235,18 @@ export const updateUserRole = (userId, role) => async (dispatch) => {
 
   try {
     await instance.put(`/admin/users/${userId}/role`, null, {
-      params: { role },
+      params: { role }
     });
 
-    dispatch(updateUserRoleInState(userId, role));
-    dispatch(setLoading(false));
-    dispatch(setSuccess("Kullanıcı rolü güncellendi"));
+    dispatch({
+      type: adminActions.UPDATE_USER_ROLE,
+      payload: { userId, role }
+    });
 
-    // Cache'i temizle
+    dispatch(setSuccess("Kullanıcı rolü güncellendi"));
+    dispatch(setLoading(false));
+
+    // ✅ Dashboard cache'ini temizle (kullanıcı bilgisi değişti)
     clearDashboardCache();
 
     return { success: true };

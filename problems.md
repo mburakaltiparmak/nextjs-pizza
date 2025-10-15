@@ -3,19 +3,105 @@
 **Proje:** nextjs-pizza (Frontend) ve pizza (Backend)  
 **Durum:** İkisi de localde çalışıyor, request/response dönüyor  
 **Odak:** Frontend dashboard ve genel problemler  
-**Son Güncelleme:** 2025-10-14
+**Son Güncelleme:** 2025-10-15
 
 ---
 
 ## İlerleme Durumu
 
-**✅ Tamamlanan:** Grup 1, Grup 2, Grup 3 (9/20 problem)  
+**✅ Tamamlanan:** Grup 0 (Provider Refactor), Grup 1, Grup 2, Grup 3, Ek Düzeltmeler (15/20 problem)  
 **🔄 Devam Eden:** Grup 4 (Dashboard Sayfası Optimizasyonları)  
 **⏳ Bekleyen:** Grup 5, Grup 6
 
 ---
 
-## Tespit Edilen Problemler (20 Adet)
+## 🆕 Grup 0: Provider Katmanı Refactor (YENİ - TAMAMLANDI)
+
+### Provider Katmanı Problemleri
+
+#### Problem #21: Store Initialization Race Condition ✅
+- **Sorun:** `store.js` içinde `setTimeout` ile initialization yapılıyordu
+- Race condition riski: AuthProvider'dan önce çalışabilir veya sonra
+- Timing güvenilir değil
+- **Çözüm:**
+  - Store initialization `AuthContext.jsx` içine taşındı
+  - Async/await ile sıralı çalışma garantisi
+  - Component lifecycle'a bağlı, daha güvenilir
+- **Dosyalar:** 
+  - `src/lib/store/store.js` (initialization kaldırıldı)
+  - `src/contexts/AuthContext.jsx` (initialization eklendi)
+- **Durum:** ✅ Tamamlandı (2025-10-15)
+
+#### Problem #22: Duplicate AuthProvider ✅
+- **Sorun:** 
+  - `src/lib/providers/authProvider.jsx` - Wrapper dosya
+  - `src/contexts/AuthContext.jsx` - Gerçek implementasyon
+  - İki ayrı yerde AuthProvider tanımlanmış
+- **Çözüm:**
+  - `authProvider.jsx` dosyası silindi
+  - `providers.js` içindeki import güncellendi
+  - Tek kaynak prensibi uygulandı
+- **Dosyalar:**
+  - `src/lib/providers/authProvider.jsx` (SİLİNDİ)
+  - `src/lib/providers/providers.js` (import güncellendi)
+- **Durum:** ✅ Tamamlandı (2025-10-15)
+
+#### Problem #23: Gereksiz Mounting Kontrolü ✅
+- **Sorun:**
+  - `providers.js` içinde `isMounted` state kontrolü
+  - Next.js 13+ App Router'da gereksiz
+  - Hydration uyarısı riski
+- **Çözüm:**
+  - `isMounted` state ve kontrolü kaldırıldı
+  - Doğrudan render yapılıyor
+  - Next.js SSR/CSR uyumlu
+- **Dosya:** `src/lib/providers/providers.js`
+- **Durum:** ✅ Tamamlandı (2025-10-15)
+
+---
+
+## 🆕 Ek Düzeltmeler (TAMAMLANDI)
+
+### Anasayfa ve Veri Yükleme Problemleri
+
+#### Problem #24: Hero Section Background Image Path ✅
+- **Sorun:**
+  - `homeData.js` içinde relative path kullanılmış: `url('../../assets/mvp-banner.png')`
+  - Görsel yüklenmiyor
+- **Çözüm:**
+  - Görsel `public/images/` klasörüne taşındı
+  - Path düzeltildi: `url('/images/mvp-banner.png')`
+- **Dosya:** `src/lib/constants/homeData.js`
+- **Durum:** ✅ Tamamlandı (2025-10-15)
+
+#### Problem #25: fetchProducts Import Eksikliği ✅
+- **Sorun:**
+  - `productActions.js` içinde `setLoading` kullanılıyor
+  - Ama `setLoading` import edilmemiş
+  - Fonksiyon hata veriyor, ürünler yüklenmiyor
+- **Çözüm:**
+  - `setLoading` ve `setError` import edildi
+  - `setModuleLoading` kullanımına geçildi
+  - `handleApiError` ile merkezi error handling
+  - Tüm CRUD fonksiyonları düzeltildi
+- **Dosya:** `src/lib/store/actions/productActions.js`
+- **Durum:** ✅ Tamamlandı (2025-10-15)
+
+#### Problem #26: Store Initialization Async Bekleme ✅
+- **Sorun:**
+  - `initializeAuth()` ve `initializeCart()` async ama await edilmiyor
+  - Console log erken basılıyor
+  - Store hazır olmadan veri yükleme başlıyor
+- **Çözüm:**
+  - Async wrapper fonksiyonu eklendi
+  - `await` ile sıralı çalışma garantisi
+  - Try-catch ile hata yakalama
+- **Dosya:** `src/contexts/AuthContext.jsx`
+- **Durum:** ✅ Tamamlandı (2025-10-15)
+
+---
+
+## Tespit Edilen Problemler (26 Adet)
 
 ### Dashboard Sayfası Problemleri
 
@@ -146,25 +232,45 @@
 
 ## Çözüm Sıralaması (Bağımlılık Bazlı)
 
+### ✅ Grup 0: Provider Katmanı Refactor (TAMAMLANDI)
+**Provider yapısı düzelmeden diğer optimizasyonlar sağlıklı çalışmaz.**
+
+1. **✅ Problem #21 - Store Initialization Race Condition**
+   - Aksiyon: Store initialization'ı AuthProvider içine taşı
+   - Çözüm: Async/await ile sıralı initialization
+   - Tarih: 2025-10-15
+
+2. **✅ Problem #22 - Duplicate AuthProvider**
+   - Aksiyon: authProvider.jsx dosyasını sil
+   - Çözüm: Tek kaynak prensibi uygulandı
+   - Tarih: 2025-10-15
+
+3. **✅ Problem #23 - Gereksiz Mounting Kontrolü**
+   - Aksiyon: isMounted kontrolünü kaldır
+   - Çözüm: Doğrudan render, Next.js uyumlu
+   - Tarih: 2025-10-15
+
+---
+
 ### ✅ Grup 1: Temel Altyapı (TAMAMLANDI)
 **Bu grup düzelmeden diğer optimizasyonlar üzerine çalışmak verimsiz olur.**
 
-1. **✅ Problem #13 - Timeout Yönetimi**
+4. **✅ Problem #13 - Timeout Yönetimi**
    - Dosya: `src/lib/hooks.js`
    - Aksiyon: Timeout parametrelerini geri ekle
    - Çözüm: `API_TIMEOUT = 15000` eklendi
 
-2. **✅ Problem #14 - Content-Type Tutarlılığı**
+5. **✅ Problem #14 - Content-Type Tutarlılığı**
    - Dosya: `src/lib/hooks.js`
    - Aksiyon: FormData kontrolünü tutarlı hale getir
    - Çözüm: Request interceptor'da tutarlı kontrol yapılıyor
 
-3. **✅ Problem #15 - Merkezi Error Handling**
+6. **✅ Problem #15 - Merkezi Error Handling**
    - Dosya: `src/lib/store/middleware/errorMiddleware.js`
    - Aksiyon: Merkezi error handling middleware'i ekle
    - Çözüm: Middleware oluşturuldu ve store'a eklendi
 
-4. **✅ Problem #20 - Loading States Ayrımı**
+7. **✅ Problem #20 - Loading States Ayrımı**
    - Dosyalar: Tüm reducer'lar
    - Aksiyon: Global ve modül-specific loading'i ayır
    - Çözüm: `moduleLoading` object'i eklendi
@@ -174,145 +280,149 @@
 ### ✅ Grup 2: Redux State Yapısı (TAMAMLANDI)
 **State yapıları düzelmeden component optimizasyonları yaparsak, sonradan state değişikliği yapmak zorunda kalırız.**
 
-5. **✅ Problem #3 - Dashboard State Yönetimi**
+8. **✅ Problem #3 - Dashboard State Yönetimi**
    - Dosya: `src/app/(admin)/dashboard/page.js`
    - Aksiyon: Tek kaynak prensibi - sadece Redux kullan
    - Çözüm: `useDashboardData` hook'u ile Redux yönetimi
 
-6. **✅ Problem #18 - Product Actions**
+9. **✅ Problem #18 - Product Actions**
    - Dosyalar: `src/lib/store/actions/productActions.js`, `src/lib/store/reducers/productReducer.js`
    - Aksiyon: `currentProduct` state'i ekle
-   - Çözüm: `currentProduct` ve ilgili action'lar eklendi
+   - Çözüm: State ve action'lar mevcut
 
 ---
 
 ### ✅ Grup 3: Admin Layout & Global Handlers (TAMAMLANDI)
 **Layout bileşeni tüm admin sayfalarını etkiliyor. Bunu düzelttikten sonra sayfa bazlı optimizasyonlara geçebiliriz.**
 
-7. **✅ Problem #10 - Page Props Mantığı**
-   - Dosya: `src/app/(admin)/layout.js`
-   - Aksiyon: Next.js App Router uyumlu props yönetimi
-   - Çözüm: `AdminLayoutContext` ile pathname'den config
+10. **✅ Problem #10 - Page Props Mantığı**
+    - Dosya: `src/app/(admin)/layout.js`
+    - Aksiyon: Next.js App Router uyumlu props yönetimi
+    - Çözüm: `getPageConfig` fonksiyonu ve pathname kullanımı
 
-8. **✅ Problem #11 - Global Modal Handler**
-   - Dosya: `src/app/(admin)/layout.js`
-   - Aksiyon: Context API ile modal yönetimi
-   - Çözüm: `useAdminLayout` hook'u oluşturuldu
+11. **✅ Problem #11 - Global Modal Handler**
+    - Dosya: `src/app/(admin)/layout.js`
+    - Aksiyon: Context API ile modal yönetimi
+    - Çözüm: `AdminLayoutContext` oluşturuldu
 
-9. **✅ Problem #12 - Mobile State Debounce**
-   - Dosya: `src/app/(admin)/layout.js`
-   - Aksiyon: Resize event'ine debounce ekle
-   - Çözüm: `useMobileDetection` hook'u ile 150ms debounce
+12. **✅ Problem #12 - Mobile State Debounce**
+    - Dosya: `src/app/(admin)/layout.js`
+    - Aksiyon: Resize event'ine debounce ekle
+    - Çözüm: `useMobileDetection` hook'u
+
+---
+
+### ✅ Ek Düzeltmeler (TAMAMLANDI)
+**Anasayfa çalışması için gerekli kritik düzeltmeler.**
+
+13. **✅ Problem #24 - Hero Background Image Path**
+    - Dosya: `src/lib/constants/homeData.js`
+    - Aksiyon: Image path'ini düzelt
+    - Çözüm: `/images/mvp-banner.png` kullanımı
+    - Tarih: 2025-10-15
+
+14. **✅ Problem #25 - fetchProducts Import Eksikliği**
+    - Dosya: `src/lib/store/actions/productActions.js`
+    - Aksiyon: Eksik import'ları ekle
+    - Çözüm: `setLoading`, `setError` import edildi
+    - Tarih: 2025-10-15
+
+15. **✅ Problem #26 - Store Initialization Async**
+    - Dosya: `src/contexts/AuthContext.jsx`
+    - Aksiyon: Async/await ekle
+    - Çözüm: Async wrapper fonksiyonu
+    - Tarih: 2025-10-15
 
 ---
 
 ### 🔄 Grup 4: Dashboard Sayfası Optimizasyonları (DEVAM EDİYOR)
 **Dashboard veri yükleme stratejisi düzeldikten sonra, üzerine retry ve hesaplama optimizasyonları eklenebilir.**
 
-10. **⏳ Problem #1 - Dashboard Veri Yükleme Performansı**
+16. **⏳ Problem #1 - Dashboard Veri Yükleme Performansı**
     - Dosya: `src/lib/store/actions/adminActions.js` - `fetchDashboard`
     - Aksiyon: Parallel request'ler ve cache stratejisi
-    - Hedef: Promise.all ile paralel istekler, cache mekanizması
 
-11. **⏳ Problem #19 - Category Simple Endpoint Kullanımı**
+17. **⏳ Problem #19 - Category Simple Endpoint Kullanımı**
     - Dosya: `src/lib/store/actions/adminActions.js` - `fetchDashboard`
     - Aksiyon: `/category/simple` endpoint'i kullan
-    - Hedef: Gereksiz ürün verilerini çekmemek
 
-12. **⏳ Problem #2 - Retry Mekanizması**
-    - Dosya: `src/lib/hooks/useDashboardData.js`
+18. **⏳ Problem #2 - Retry Mekanizması**
+    - Dosya: `src/app/(admin)/dashboard/page.js` - `useDashboardDataLoader`
     - Aksiyon: Retry timing'i yumuşat
-    - Hedef: Daha kullanıcı dostu backoff stratejisi
 
-13. **⏳ Problem #4 - İstatistik Hesaplamaları**
+19. **⏳ Problem #4 - İstatistik Hesaplamaları**
     - Dosya: `src/app/(admin)/dashboard/page.js`
     - Aksiyon: useMemo optimizasyonu, memoization
-    - Hedef: Gereksiz hesaplamaları önlemek
 
-14. **⏳ Problem #5 - Dashboard Hata Yönetimi**
+20. **⏳ Problem #5 - Dashboard Hata Yönetimi**
     - Dosya: `src/app/(admin)/dashboard/page.js`
     - Aksiyon: Detaylı hata mesajları
-    - Hedef: Kullanıcıya hangi verinin yüklenemediğini göstermek
 
 ---
 
-### ⏳ Grup 5: Orders-Admin Sayfası Optimizasyonları
+### ⏳ Grup 5: Orders-Admin Sayfası Optimizasyonları (BEKLİYOR)
 **Önce fetching stratejisi düzeltilmeli, sonra memory leak'ler önlenmeli, en son optimizasyon olarak filter işlemleri iyileştirilmeli.**
 
-15. **⏳ Problem #6 - Sürekli Polling/Fetching**
+21. **⏳ Problem #6 - Sürekli Polling/Fetching**
     - Dosya: `src/app/(admin)/orders-admin/page.js`
     - Aksiyon: WebSocket veya daha akıllı polling stratejisi
-    - Hedef: Gereksiz istekleri azaltmak
 
-16. **⏳ Problem #8 - Memory Leak Riski**
+22. **⏳ Problem #8 - Memory Leak Riski**
     - Dosya: `src/app/(admin)/orders-admin/page.js`
     - Aksiyon: Cleanup fonksiyonlarını düzelt
-    - Hedef: Component unmount'ta düzgün temizlik
 
-17. **⏳ Problem #9 - Sipariş Güncelleme**
+23. **⏳ Problem #9 - Sipariş Güncelleme**
     - Dosya: `src/app/(admin)/orders-admin/page.js`
     - Aksiyon: Optimistic update, sadece ilgili siparişi güncelle
-    - Hedef: Tüm listeyi yeniden çekmeden güncelleme
 
-18. **⏳ Problem #7 - Filter/Search Debounce**
+24. **⏳ Problem #7 - Filter/Search Debounce**
     - Dosya: `src/app/(admin)/orders-admin/page.js`
     - Aksiyon: useMemo ile filtreleme optimizasyonu
-    - Hedef: Büyük listelerde performans iyileştirmesi
 
 ---
 
-### ⏳ Grup 6: Sipariş Oluşturma (Custom Pizza & Cart)
+### ⏳ Grup 6: Sipariş Oluşturma (Custom Pizza & Cart) (BEKLİYOR)
 **Bu ikisi birbirine bağlı. Custom pizza backend'e entegre edildikten sonra ID problemi otomatik çözülür.**
 
-19. **⏳ Problem #16 - Custom Pizza Backend Entegrasyonu**
+25. **⏳ Problem #16 - Custom Pizza Backend Entegrasyonu**
     - Dosya: `src/app/order/page.js`
     - Aksiyon: Custom pizza'yı backend'e kaydet
-    - Hedef: Backend ile senkronizasyon
 
-20. **⏳ Problem #17 - Cart Item ID Problemi**
+26. **⏳ Problem #17 - Cart Item ID Problemi**
     - Dosya: `src/components/create-order-components/thirdStep.jsx`
     - Aksiyon: ID kontrolü ve fallback mekanizması
-    - Hedef: Custom pizza ID'lerini düzgün işlemek
 
 ---
 
-## İlerleme İstatistikleri
+## 📊 İlerleme İstatistikleri
 
-| Grup | Tamamlanan | Toplam | İlerleme |
-|------|-----------|--------|----------|
-| Grup 1 | 4 | 4 | 100% ✅ |
-| Grup 2 | 2 | 2 | 100% ✅ |
-| Grup 3 | 3 | 3 | 100% ✅ |
-| Grup 4 | 0 | 5 | 0% 🔄 |
-| Grup 5 | 0 | 4 | 0% ⏳ |
-| Grup 6 | 0 | 2 | 0% ⏳ |
-| **TOPLAM** | **9** | **20** | **45%** |
+### Tamamlanan Problemler: 15/26 (%58)
+- **Grup 0:** 3/3 ✅
+- **Grup 1:** 4/4 ✅
+- **Grup 2:** 2/2 ✅
+- **Grup 3:** 3/3 ✅
+- **Ek Düzeltmeler:** 3/3 ✅
+- **Grup 4:** 0/5 ⏳
+- **Grup 5:** 0/4 ⏳
+- **Grup 6:** 0/2 ⏳
 
----
-
-## Önemli Notlar
-
-- ✅ Backend'de hiçbir değişiklik yapılmayacak
-- ✅ Her grup kendi içinde sıralı çözülmeli
-- ✅ Bir sonraki gruba geçmeden önce önceki grup tamamlanmalı
-- ✅ Her problem çözümünde test yapılmalı
-- ✅ Git commit'leri problem bazlı atılmalı
-
----
-
-## Mevcut Durum
-
-- Backend: Çalışıyor ✅
-- Frontend: Çalışıyor ✅
-- **Grup 1-3: Tamamlandı ✅**
-- **Grup 4: Devam ediyor 🔄**
-- Dashboard: Temel optimizasyonlar yapıldı, performans iyileştirmeleri bekleniyor ⚠️
-- Orders-Admin: Polling ve memory leak problemleri var ⚠️
-- Custom Pizza: Backend entegrasyonu yok ❌
+### Değişen Dosya Sayısı: 12+
+1. `src/lib/store/store.js` ✅
+2. `src/contexts/AuthContext.jsx` ✅
+3. `src/lib/providers/authProvider.jsx` ✅ (SİLİNDİ)
+4. `src/lib/providers/providers.js` ✅
+5. `src/lib/constants/homeData.js` ✅
+6. `src/lib/store/actions/productActions.js` ✅
+7. `src/lib/hooks.js` ✅
+8. `src/lib/store/middleware/errorMiddleware.js` ✅ (YENİ)
+9. `src/lib/store/reducers/globalReducer.js` ✅
+10. `src/app/(admin)/layout.js` ✅
+11. `src/contexts/AdminLayoutContext.jsx` ✅ (YENİ)
+12. `src/hooks/useMobileDetection.js` ✅ (YENİ)
 
 ---
 
-## Sonraki Adımlar
+## 🎯 Sonraki Adımlar
 
 1. **Grup 4'ü tamamla** - Dashboard veri yükleme ve performans optimizasyonları
 2. **Grup 5'e geç** - Orders-Admin sayfası optimizasyonları
@@ -320,5 +430,28 @@
 
 ---
 
-**Son Güncelleme:** 2025-10-14  
-**Durum:** Grup 3 tamamlandı, Grup 4'e hazır 🚀
+## 💡 Önemli Notlar
+
+- Backend'de hiçbir değişiklik yapılmayacak ✅
+- Her grup kendi içinde sıralı çözülmeli ✅
+- Bir sonraki gruba geçmeden önce önceki grup tamamlanmalı ✅
+- Her problem çözümünde test yapılmalı ✅
+- Git commit'leri problem bazlı atılmalı ✅
+
+---
+
+## 📝 Mevcut Durum
+
+- **Backend:** Çalışıyor ✅
+- **Frontend:** Çalışıyor ✅
+- **Provider Katmanı:** Refactor tamamlandı ✅
+- **Anasayfa:** Çalışıyor ✅
+- **Ürün/Kategori Yükleme:** Çalışıyor ✅
+- **Dashboard:** Performans problemleri var ⚠️
+- **Orders-Admin:** Polling ve memory leak problemleri var ⚠️
+- **Custom Pizza:** Backend entegrasyonu yok ❌
+
+---
+
+**Son Güncelleme:** 2025-10-15  
+**Durum:** Grup 0-3 + Ek Düzeltmeler tamamlandı, Grup 4'e hazır 🚀

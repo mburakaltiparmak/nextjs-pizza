@@ -3,7 +3,8 @@ import { categoryActions } from "../reducers/categoryReducer";
 import { setLoading, setSuccess } from "./globalActions";
 import { instance } from "@/lib/hooks";
 import { fetchStates } from "../constants";
-import { handleApiError } from "../middleware/errorMiddleware"; // ✅ Import
+import { handleApiError } from "../middleware/errorMiddleware";
+import cache from "@/lib/utils/cacheManager"; // ✅ Cache import
 
 export const setCategories = (categories) => ({
   type: categoryActions.SET_CATEGORIES,
@@ -15,8 +16,20 @@ export const setCategoryFetchState = (state) => ({
   payload: state,
 });
 
-// Tüm kategorileri getir - DÜZELTME ÖRNEĞİ
+/**
+ * ✅ Cache ile tüm kategorileri getir
+ */
 export const fetchCategories = () => async (dispatch) => {
+  const CACHE_KEY = 'categories_all';
+  
+  // ✅ Cache kontrolü
+  const cached = cache.get(CACHE_KEY);
+  if (cached) {
+    dispatch(setCategories(cached));
+    dispatch(setCategoryFetchState(fetchStates.FETCHED));
+    return cached;
+  }
+
   dispatch(setCategoryFetchState(fetchStates.FETCHING));
 
   try {
@@ -25,112 +38,124 @@ export const fetchCategories = () => async (dispatch) => {
     dispatch(setCategories(response.data));
     dispatch(setCategoryFetchState(fetchStates.FETCHED));
 
+    // ✅ Cache'e kaydet (5 dakika)
+    cache.set(CACHE_KEY, response.data);
+
     return response.data;
   } catch (err) {
     dispatch(setCategoryFetchState(fetchStates.FAILED));
-    
-    // ✅ Merkezi error handler kullan - tek satır!
     return handleApiError(err, dispatch, 'fetchCategories');
-    
-    // ❌ Eski yöntem - artık gerekli değil:
-    // let errorMessage = "Kategoriler yüklenemedi";
-    // if (err.response) {
-    //   errorMessage = err.response.data?.message || errorMessage;
-    // }
-    // dispatch(setCategoryError(errorMessage));
-    // return { error: errorMessage };
   }
 };
 
-// Basit kategori listesini getir
-export const fetchSimpleCategories = () => async (dispatch) => {
-  dispatch(setCategoryFetchState(fetchStates.FETCHING));
-
-  try {
-    const response = await instance.get("/category/simple");
-
-    dispatch(setCategories(response.data));
-    dispatch(setCategoryFetchState(fetchStates.FETCHED));
-
-    return response.data;
-  } catch (err) {
-    dispatch(setCategoryFetchState(fetchStates.FAILED));
-    
-    // ✅ Merkezi error handler
-    return handleApiError(err, dispatch, 'fetchSimpleCategories');
-  }
-};
-
-// Yeni kategori ekle
-export const createCategory = (categoryData) => async (dispatch) => {
+/**
+ * ✅ Yeni kategori oluştur (cache temizler)
+ */
+export const createCategory = (categoryData, token) => async (dispatch) => {
   dispatch(setLoading(true));
-  
+
   try {
     const formData = new FormData();
-    formData.append('name', categoryData.name);
     
-    if (categoryData.image) {
-      formData.append("image", categoryData.image);
+    if (categoryData.name) {
+      formData.append("name", categoryData.name);
     }
-    
-    const response = await instance.post("/category", formData);
 
-    dispatch(addCategory(response.data));
-    dispatch(setLoading(false));
+    if (categoryData.image && categoryData.image.file) {
+      formData.append("image", categoryData.image.file);
+    }
+
+    const response = await instance.post("/category", formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    dispatch({
+      type: categoryActions.ADD_CATEGORY,
+      payload: response.data,
+    });
+
     dispatch(setSuccess("Kategori başarıyla eklendi"));
+    dispatch(setLoading(false));
 
-    return response.data;
+    // ✅ Cache'i temizle - yeni veri eklendiği için
+    cache.clear('categories_all');
+    // Dashboard cache'ini de temizle
+    cache.clearPattern('dashboard');
+
+    return { success: true, data: response.data };
   } catch (err) {
     dispatch(setLoading(false));
-    
-    // ✅ Merkezi error handler
     return handleApiError(err, dispatch, 'createCategory');
   }
 };
 
-// Kategori güncelle
-export const updateCategory = (id, categoryData) => async (dispatch) => {
+/**
+ * ✅ Kategori güncelle (cache temizler)
+ */
+export const updateCategory = (categoryId, categoryData, token) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
     const formData = new FormData();
-    formData.append("name", categoryData.name);
-
-    if (categoryData.image && categoryData.image instanceof File) {
-      formData.append("image", categoryData.image);
+    
+    if (categoryData.name) {
+      formData.append("name", categoryData.name);
     }
 
-    const response = await instance.put(`/category/${id}`, formData);
+    if (categoryData.image && categoryData.image.file) {
+      formData.append("image", categoryData.image.file);
+    }
 
-    dispatch(updateCategoryInState(response.data));
+    const response = await instance.put(`/category/${categoryId}`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    dispatch({
+      type: categoryActions.UPDATE_CATEGORY,
+      payload: response.data,
+    });
+
     dispatch(setSuccess("Kategori başarıyla güncellendi"));
     dispatch(setLoading(false));
 
-    return response.data;
+    // ✅ Cache'i temizle
+    cache.clear('categories_all');
+    cache.clearPattern('dashboard');
+
+    return { success: true, data: response.data };
   } catch (err) {
     dispatch(setLoading(false));
-    
-    // ✅ Merkezi error handler
     return handleApiError(err, dispatch, 'updateCategory');
   }
 };
 
-// Kategori sil
-export const deleteCategory = (id) => async (dispatch) => {
+/**
+ * ✅ Kategori sil (cache temizler)
+ */
+export const deleteCategory = (categoryId) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
-    await instance.delete(`/category/${id}`);
+    await instance.delete(`/category/${categoryId}`);
 
-    dispatch(deleteCategoryFromState(id));
-    dispatch(setSuccess("Kategori başarıyla silindi"));
+    dispatch({
+      type: categoryActions.DELETE_CATEGORY,
+      payload: categoryId,
+    });
+
     dispatch(setLoading(false));
+
+    // ✅ Cache'i temizle
+    cache.clear('categories_all');
+    cache.clearPattern('dashboard');
 
     return { success: true };
   } catch (err) {
     dispatch(setLoading(false));
-    
-    // ✅ Merkezi error handler
     return handleApiError(err, dispatch, 'deleteCategory');
   }
 };
