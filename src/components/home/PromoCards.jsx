@@ -16,7 +16,7 @@ export default function PromoCards() {
         <div
           className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0 w-full max-md:w-80 bg-cover bg-center cursor-pointer hover:opacity-90 transition-opacity"
           style={{
-            backgroundImage: `url(${PROMO_CARDS[0].backgroundImage})`,
+            backgroundImage: `url(${PROMO_CARDS[0].backgroundImage.src})`,
           }}
           onClick={() => handleCardClick(PROMO_CARDS[0].productId)}
         >
@@ -36,7 +36,7 @@ export default function PromoCards() {
           <div
             className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0 bg-cover bg-center h-full w-80 cursor-pointer hover:opacity-90 transition-opacity"
             style={{
-              backgroundImage: `url(${PROMO_CARDS[1].backgroundImage})`,
+              backgroundImage: `url(${PROMO_CARDS[1].backgroundImage.src})`,
             }}
             onClick={() => handleCardClick(PROMO_CARDS[1].productId)}
           >
@@ -55,7 +55,7 @@ export default function PromoCards() {
           <div
             className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0 bg-cover bg-center h-full w-80 cursor-pointer hover:opacity-90 transition-opacity"
             style={{
-              backgroundImage: `url(${PROMO_CARDS[2].backgroundImage})`,
+              backgroundImage: `url(${PROMO_CARDS[2].backgroundImage.src})`,
             }}
             onClick={() => handleCardClick(PROMO_CARDS[2].productId)}
           >

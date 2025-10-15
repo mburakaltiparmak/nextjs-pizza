@@ -5,7 +5,7 @@ export default function HeroSection() {
   return (
     <div
       className="bg-cover bg-center h-screen w-full max-md:h-96"
-      style={{ backgroundImage: HERO_CONFIG.backgroundImage }}
+      style={{ backgroundImage: `url(${HERO_CONFIG.backgroundImage.src})` }}
     >
       <div className="flex flex-col justify-start items-center gap-4 mt-4">
         <div className="flex flex-col justify-between items-center gap-4 text-center">

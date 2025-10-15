@@ -15,67 +15,45 @@ export const clearCurrentProduct = () => ({
   type: productActions.CLEAR_CURRENT_PRODUCT,
 });
 
-// Ürünleri getir - daha güvenilir hata yakalama ile
 export const fetchProducts = () => async (dispatch) => {
-  // Önce loading durumlarını ayarla
-  dispatch(setLoading(true));
+  dispatch(setModuleLoading('product', true)); // ✅ Module loading kullan
   dispatch({
     type: productActions.setProductFetchState,
     payload: fetchStates.FETCHING,
   });
 
   try {
-    // API isteğini yap
     const response = await instance.get("/product");
 
-    // Yanıt kontrolü
     if (!response || !response.data) {
       throw new Error("Ürün verisi alınamadı");
     }
 
-    // Ürünleri store'a kaydet
     dispatch({
       type: productActions.setProducts,
       payload: response.data,
     });
 
-    // Başarılı fetch state'i ayarla
     dispatch({
       type: productActions.setProductFetchState,
       payload: fetchStates.FETCHED,
     });
 
-    // Loading durumunu kapat
-    dispatch(setLoading(false));
+    dispatch(setModuleLoading('product', false));
 
     return response.data;
   } catch (err) {
     console.error("Ürün getirme hatası:", err);
 
-    // Başarısız fetch state'i ayarla
     dispatch({
       type: productActions.setProductFetchState,
       payload: fetchStates.FAILED,
     });
 
-    // Hata mesajını oluştur
-    let errorMessage = "Ürünler yüklenirken bir hata oluştu";
-    if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
-    } else if (err.request) {
-      errorMessage =
-        "Sunucuya bağlanılamadı. Lütfen bağlantınızı kontrol edin.";
-    } else {
-      errorMessage = err.message || errorMessage;
-    }
-
-    // Hata mesajını ayarla
-    dispatch(setError(errorMessage));
-
-    // Loading durumunu kapat
-    dispatch(setLoading(false));
-
-    return { error: errorMessage };
+    dispatch(setModuleLoading('product', false));
+    
+    // Merkezi error handler kullan
+    return handleApiError(err, dispatch, 'fetchProducts');
   }
 };
 

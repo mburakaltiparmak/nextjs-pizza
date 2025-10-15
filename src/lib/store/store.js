@@ -7,8 +7,6 @@ import { adminReducer } from "./reducers/adminReducer";
 import { orderReducer } from "./reducers/orderReducer";
 import { globalReducer } from "./reducers/globalReducer";
 import { guestReducer } from "./reducers/guestReducer";
-import { initializeCart } from "./actions/orderActions";
-import { initializeAuth } from "./actions/initAuth";
 import { errorMiddleware } from "./middleware/errorMiddleware";
 
 export const store = configureStore({
@@ -27,11 +25,5 @@ export const store = configureStore({
       .concat(logger),
 });
 
-if (typeof window !== "undefined") {
-  setTimeout(() => {
-    store.dispatch(initializeAuth());
-    store.dispatch(initializeCart());
-  }, 0);
-}
 
 export default store;

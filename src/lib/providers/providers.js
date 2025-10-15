@@ -1,18 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Provider } from "react-redux";
 import { store } from "@/lib/store/store";
-import { AuthProvider } from "./authProvider";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "./toast-provider";
+
+
 export default function Providers({ children }) {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) return null;
 
   return (
     <Provider store={store}>

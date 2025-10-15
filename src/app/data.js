@@ -1,12 +1,11 @@
+
 import koreLogo from "../../assets/adv-aseets/icons/1.svg";
 import pizzaLogo from "../../assets/adv-aseets/icons/2.svg";
 import burgerLogo from "../../assets/adv-aseets/icons/3.svg";
 import kizartmaLogo from "../../assets/adv-aseets/icons/4.svg";
 import fastfoodLogo from "../../assets/adv-aseets/icons/5.svg";
 import gazliIcecekLogo from "../../assets/adv-aseets/icons/6.svg";
-import cardImg1 from "../../assets/adv-aseets/kart-1.png";
-import cardImg2 from "../../assets/adv-aseets/kart-2.png";
-import cardImg3 from "../../assets/adv-aseets/kart-3.png";
+
 import instaImg1 from "../../assets/adv-aseets/insta/li-0.png";
 import instaImg2 from "../../assets/adv-aseets/insta/li-1.png";
 import instaImg3 from "../../assets/adv-aseets/insta/li-2.png";
@@ -52,6 +51,7 @@ export const homeMenuBar = {
     hoverText: "Used shadcnUI & next.js",
   },
 };
+/*
 export const homeCards = [
   {
     text: "Özel Lezzetus",
@@ -69,6 +69,7 @@ export const homeCards = [
     background: cardImg3,
   },
 ];
+*/
 export const homeMenuLink = [
   {
     name: "Ramen",
