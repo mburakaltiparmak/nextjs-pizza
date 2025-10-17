@@ -1,5 +1,5 @@
 "use client";
-import FloatingCartButton from "@/components/floatingCartButton";
+import FloatingCartButton from "@/components/cart-button/floatingCartButton";
 import { useSelector } from "react-redux";
 
 export default function ClientComponentWrapper() {

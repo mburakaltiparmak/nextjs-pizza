@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import SecondaryLoading from "@/components/secondaryLoading";
-import FloatingCartButton from "@/components/floatingCartButton";
+import FloatingCartButton from "@/components/cart-button/floatingCartButton";
 
 export default function OrdersPage() {
   const router = useRouter();

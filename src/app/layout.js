@@ -7,8 +7,8 @@ import {
   Satisfy,
 } from "next/font/google";
 
-import FloatingCartButton from "@/components/floatingCartButton";
-import FloatingUserButton from "@/components/floatingUserButton";
+import FloatingCartButton from "@/components/cart-button/floatingCartButton";
+import FloatingUserButton from "@/components/user-button/floatingUserButton";
 import ClientComponentWrapper from "./ClientComponentWrapper";
 import Providers from "@/lib/providers/Providers";
 // Font tanımlamaları

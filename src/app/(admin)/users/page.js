@@ -42,9 +42,6 @@ import {
 } from "@/components/ui/select";
 import SecondaryLoading from "@/components/secondaryLoading";
 
-// Admin layout components
-import Navbar from "@/components/admin/navbar";
-
 const UsersPage = () => {
   const router = useRouter();
   const dispatch = useDispatch();
@@ -67,21 +64,82 @@ const UsersPage = () => {
 
   // Fetch users when component mounts
   useEffect(() => {
-    // Sadece bir kez çalışacak şekilde kullanıcıları getir
     if (initialLoad) {
+      console.log("👥 Fetching users data...");
       dispatch(fetchAllUsers());
       dispatch(fetchPendingUsers());
       setInitialLoad(false);
     }
   }, [dispatch, initialLoad]);
 
-  // Handle role change
-  const handleRoleChange = (userId, role) => {
-    dispatch(updateUserRole(userId, role)).then((result) => {
-      if (!result.error) {
-        setRoleDialogOpen(false);
-      }
-    });
+  // Show toast for success/error messages
+  useEffect(() => {
+    if (success) {
+      toast({
+        title: "Başarılı",
+        description: success,
+        variant: "default",
+      });
+    }
+  }, [success, toast]);
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Hata",
+        description: error,
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
+
+  // ✅ DÜZELTME: Handle approve user - async/await ile result kontrolü
+  const handleApproveUser = async (userId, userName) => {
+    console.log(`✅ Approving user: ${userName} (${userId})`);
+    
+    const result = await dispatch(approveUser(userId));
+    
+    if (result?.success) {
+      console.log(`✅ User approved successfully: ${userName}`);
+      // Kullanıcı listelerini yenile
+      await dispatch(fetchAllUsers());
+      await dispatch(fetchPendingUsers());
+    } else {
+      console.error(`❌ Failed to approve user: ${userName}`, result?.error);
+    }
+  };
+
+  // ✅ DÜZELTME: Handle reject user - async/await ile result kontrolü
+  const handleRejectUser = async (userId, userName) => {
+    console.log(`❌ Rejecting user: ${userName} (${userId})`);
+    
+    const result = await dispatch(rejectUser(userId));
+    
+    if (result?.success) {
+      console.log(`✅ User rejected successfully: ${userName}`);
+      // Kullanıcı listelerini yenile
+      await dispatch(fetchAllUsers());
+      await dispatch(fetchPendingUsers());
+    } else {
+      console.error(`❌ Failed to reject user: ${userName}`, result?.error);
+    }
+  };
+
+  // ✅ DÜZELTME: Handle role change - async/await ile result kontrolü
+  const handleRoleChange = async (userId, role) => {
+    console.log(`🔄 Changing role for user ${userId} to ${role}`);
+    
+    const result = await dispatch(updateUserRole(userId, role));
+    
+    if (result?.success) {
+      console.log(`✅ User role changed successfully`);
+      setRoleDialogOpen(false);
+      setSelectedUser(null);
+      // Kullanıcı listelerini yenile
+      await dispatch(fetchAllUsers());
+    } else {
+      console.error(`❌ Failed to change user role`, result?.error);
+    }
   };
 
   // Get status badge
@@ -164,13 +222,6 @@ const UsersPage = () => {
     }
   };
 
-  // Page props
-  UsersPage.props = {
-    title: "Kullanıcılar",
-    activePage: "users",
-    showAddButton: false,
-  };
-
   // Loading state
   if (
     adminFetchState === fetchStates.FETCHING &&
@@ -202,6 +253,11 @@ const UsersPage = () => {
               <TabsTrigger value="all-users" className="font-Barlow">
                 <Users size={16} className="mr-2" />
                 Tüm Kullanıcılar
+                {allUsers && allUsers.length > 0 && (
+                  <span className="ml-2 bg-gray-200 text-gray-700 text-xs font-bold px-2 py-1 rounded-full">
+                    {allUsers.length}
+                  </span>
+                )}
               </TabsTrigger>
               <TabsTrigger value="pending-users" className="font-Barlow">
                 <AlertTriangle size={16} className="mr-2" />
@@ -214,40 +270,26 @@ const UsersPage = () => {
               </TabsTrigger>
             </TabsList>
 
+            {/* ALL USERS TAB */}
             <TabsContent value="all-users" className="space-y-4">
               <div className="bg-white shadow rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow"
-                        >
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow">
                           Kullanıcı
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow"
-                        >
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow">
                           Durum
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow"
-                        >
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow">
                           Rol
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow"
-                        >
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow">
                           Son Giriş
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow"
-                        >
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow">
                           İşlemler
                         </th>
                       </tr>
@@ -255,7 +297,7 @@ const UsersPage = () => {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {allUsers && allUsers.length > 0 ? (
                         allUsers.map((user) => (
-                          <tr key={user.id}>
+                          <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
@@ -282,9 +324,7 @@ const UsersPage = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-Barlow">
                               {user.lastLogin
-                                ? new Date(user.lastLogin).toLocaleString(
-                                    "tr-TR"
-                                  )
+                                ? new Date(user.lastLogin).toLocaleString("tr-TR")
                                 : "Hiç giriş yapmadı"}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -292,30 +332,25 @@ const UsersPage = () => {
                                 {user.status === userStatus.PENDING && (
                                   <>
                                     <button
-                                      onClick={() =>
-                                        dispatch(approveUser(user.id))
-                                      }
-                                      className="text-green-600 hover:text-green-900"
+                                      onClick={() => handleApproveUser(user.id, `${user.name} ${user.surname}`)}
+                                      className="text-green-600 hover:text-green-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                       disabled={loading}
+                                      title="Kullanıcıyı Onayla"
                                     >
                                       <UserCheck size={18} />
                                     </button>
                                     <button
-                                      onClick={() =>
-                                        dispatch(rejectUser(user.id))
-                                      }
-                                      className="text-red-600 hover:text-red-900"
+                                      onClick={() => handleRejectUser(user.id, `${user.name} ${user.surname}`)}
+                                      className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                       disabled={loading}
+                                      title="Kullanıcıyı Reddet"
                                     >
                                       <UserX size={18} />
                                     </button>
                                   </>
                                 )}
                                 <AlertDialog
-                                  open={
-                                    roleDialogOpen &&
-                                    selectedUser?.id === user.id
-                                  }
+                                  open={roleDialogOpen && selectedUser?.id === user.id}
                                   onOpenChange={(open) => {
                                     setRoleDialogOpen(open);
                                     if (!open) setSelectedUser(null);
@@ -328,78 +363,46 @@ const UsersPage = () => {
                                         setSelectedRole(user.role);
                                         setRoleDialogOpen(true);
                                       }}
-                                      className="text-blue-600 hover:text-blue-900"
+                                      className="text-blue-600 hover:text-blue-900 transition-colors"
+                                      title="Rolü Değiştir"
                                     >
                                       <Shield size={18} />
                                     </button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent className="sm:max-w-md">
                                     <AlertDialogHeader>
-                                      <AlertDialogTitle>
-                                        Kullanıcı Rolünü Değiştir
-                                      </AlertDialogTitle>
+                                      <AlertDialogTitle>Kullanıcı Rolünü Değiştir</AlertDialogTitle>
                                       <AlertDialogDescription>
-                                        {user.name} {user.surname}{" "}
-                                        kullanıcısının rolünü değiştir
+                                        {user.name} {user.surname} kullanıcısının rolünü değiştir
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <div className="py-4">
                                       <div className="mb-4">
-                                        <p className="text-sm font-medium mb-2 font-Barlow">
-                                          Mevcut Rol
-                                        </p>
+                                        <p className="text-sm font-medium mb-2 font-Barlow">Mevcut Rol</p>
                                         {getRoleBadge(user.role)}
                                       </div>
                                       <div>
-                                        <p className="text-sm font-medium mb-2 font-Barlow">
-                                          Yeni Rol
-                                        </p>
-                                        <Select
-                                          value={selectedRole}
-                                          onValueChange={setSelectedRole}
-                                        >
+                                        <p className="text-sm font-medium mb-2 font-Barlow">Yeni Rol</p>
+                                        <Select value={selectedRole} onValueChange={setSelectedRole}>
                                           <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Rol seçin" />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            <SelectItem value={userRoles.ADMIN}>
-                                              Admin
-                                            </SelectItem>
-                                            <SelectItem
-                                              value={userRoles.PERSONAL}
-                                            >
-                                              Personel
-                                            </SelectItem>
-                                            <SelectItem
-                                              value={userRoles.CUSTOMER}
-                                            >
-                                              Müşteri
-                                            </SelectItem>
-                                            <SelectItem value={userRoles.GUEST}>
-                                              Misafir
-                                            </SelectItem>
+                                            <SelectItem value={userRoles.ADMIN}>Admin</SelectItem>
+                                            <SelectItem value={userRoles.PERSONAL}>Personel</SelectItem>
+                                            <SelectItem value={userRoles.CUSTOMER}>Müşteri</SelectItem>
+                                            <SelectItem value={userRoles.GUEST}>Misafir</SelectItem>
                                           </SelectContent>
                                         </Select>
                                       </div>
                                     </div>
                                     <AlertDialogFooter>
-                                      <AlertDialogCancel>
-                                        İptal
-                                      </AlertDialogCancel>
+                                      <AlertDialogCancel>İptal</AlertDialogCancel>
                                       <AlertDialogAction
-                                        disabled={
-                                          loading || selectedRole === user.role
-                                        }
-                                        onClick={() =>
-                                          handleRoleChange(
-                                            user.id,
-                                            selectedRole
-                                          )
-                                        }
+                                        disabled={loading || selectedRole === user.role}
+                                        onClick={() => handleRoleChange(user.id, selectedRole)}
                                       >
-                                        {loading
-                                          ? "Değiştiriliyor..."
-                                          : "Değiştir"}
+                                        {loading ? "Değiştiriliyor..." : "Değiştir"}
                                       </AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
@@ -410,10 +413,7 @@ const UsersPage = () => {
                         ))
                       ) : (
                         <tr>
-                          <td
-                            colSpan="5"
-                            className="px-6 py-4 text-center text-sm text-gray-500 font-Barlow"
-                          >
+                          <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500 font-Barlow">
                             {adminFetchState === fetchStates.FAILED
                               ? "Kullanıcı verileri yüklenirken bir hata oluştu"
                               : "Henüz kullanıcı bulunmamaktadır"}
@@ -426,34 +426,23 @@ const UsersPage = () => {
               </div>
             </TabsContent>
 
+            {/* PENDING USERS TAB */}
             <TabsContent value="pending-users" className="space-y-4">
               <div className="bg-white shadow rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow"
-                        >
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow">
                           Kullanıcı
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow"
-                        >
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow">
                           İletişim
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow"
-                        >
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow">
                           Kayıt Tarihi
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow"
-                        >
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider font-Barlow">
                           İşlemler
                         </th>
                       </tr>
@@ -461,7 +450,7 @@ const UsersPage = () => {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {pendingUsers && pendingUsers.length > 0 ? (
                         pendingUsers.map((user) => (
-                          <tr key={user.id}>
+                          <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <div className="flex-shrink-0 h-10 w-10 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -487,24 +476,22 @@ const UsersPage = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-Barlow">
                               {user.createdAt
-                                ? new Date(user.createdAt).toLocaleString(
-                                    "tr-TR"
-                                  )
+                                ? new Date(user.createdAt).toLocaleString("tr-TR")
                                 : "-"}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <div className="flex justify-end space-x-3">
                                 <button
-                                  onClick={() => dispatch(approveUser(user.id))}
-                                  className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                  onClick={() => handleApproveUser(user.id, `${user.name} ${user.surname}`)}
+                                  className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                   disabled={loading}
                                 >
                                   <UserCheck size={16} className="mr-1" />
                                   Onayla
                                 </button>
                                 <button
-                                  onClick={() => dispatch(rejectUser(user.id))}
-                                  className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                  onClick={() => handleRejectUser(user.id, `${user.name} ${user.surname}`)}
+                                  className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                   disabled={loading}
                                 >
                                   <UserX size={16} className="mr-1" />
@@ -516,10 +503,7 @@ const UsersPage = () => {
                         ))
                       ) : (
                         <tr>
-                          <td
-                            colSpan="4"
-                            className="px-6 py-4 text-center text-sm text-gray-500 font-Barlow"
-                          >
+                          <td colSpan="4" className="px-6 py-8 text-center text-sm text-gray-500 font-Barlow">
                             {adminFetchState === fetchStates.FAILED
                               ? "Kullanıcı verileri yüklenirken bir hata oluştu"
                               : "Onay bekleyen kullanıcı bulunmamaktadır"}
@@ -536,6 +520,13 @@ const UsersPage = () => {
       </div>
     </div>
   );
+};
+
+// Page props - Admin layout için
+UsersPage.props = {
+  title: "Kullanıcılar",
+  activePage: "users",
+  showAddButton: false,
 };
 
 export default UsersPage;

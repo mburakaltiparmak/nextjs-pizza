@@ -79,8 +79,11 @@ export const fetchPendingUsers = () => async (dispatch) => {
   }
 };
 
-// ✅ PROBLEM #1 & #19 ÇÖZÜMÜ: Dashboard verilerini optimize edilmiş şekilde getir
+// ✅ DÜZELTME: Dashboard verilerini backend'e uygun şekilde işle
 export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
+
+  //TO DO : fetchDashboard fonksiyonunu düzelt. Kategori ve ürün verilerini çekmesine gerek yok. Uygulama ilk render edildiğinde bu veriler zaten çekiliyor. Bunların cache kontrolü yapılmalı. Sadece dashboard istatistik verileri reduxtan çekilmeli. Request sayısını azalt. 
+
   // ✅ Cache kontrolü
   const now = Date.now();
   if (!forceRefresh && dashboardCache && (now - dashboardCacheTimestamp) < DASHBOARD_CACHE_DURATION) {
@@ -111,38 +114,62 @@ export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
       categoriesCount: dashboardStats.categories?.length || 0
     });
 
-    // ✅ DÜZELTME: Backend'den gelen categories array'ini işle
+    // ✅ Backend'den gelen veriyi kontrol et
     const categories = dashboardStats.categories || [];
     
-    // ✅ Her kategori için veri hazırla
-    const categoryData = categories.map(category => {
-      // Backend'den category.products array'i geliyor mu kontrol et
-      const products = category.products || [];
-      const productCount = products.length;
-      const stockTotal = products.reduce((sum, p) => sum + (p.stock || 0), 0);
+    let categoriesWithProducts = [];
+    
+    // Eğer kategoriler products içermiyorsa, /category endpoint'ini kullan
+    const hasProducts = categories.length > 0 && categories[0].products !== undefined;
+    
+    if (!hasProducts && categories.length > 0) {
+      console.log("⚠️ Categories don't include products, fetching from /category endpoint...");
       
-      console.log(`📦 Category: ${category.name}`, { 
-        productCount, 
-        stockTotal,
-        hasProducts: products.length > 0 
-      });
-      
-      return {
-        name: category.name,
-        ürünSayısı: productCount,
-        stokMiktarı: stockTotal
-      };
-    });
+      try {
+        const categoriesResponse = await instance.get("/category");
+        categoriesWithProducts = categoriesResponse.data;
+        console.log("✅ Fetched categories with products:", categoriesWithProducts);
+      } catch (catErr) {
+        console.error("❌ Failed to fetch categories with products:", catErr);
+        // Fallback: En azından kategori isimlerini göster
+        categoriesWithProducts = categories.map(cat => ({
+          ...cat,
+          products: [] // Boş products array
+        }));
+      }
+    } else {
+      categoriesWithProducts = categories;
+    }
+
+    console.log("📦 Categories with products:", categoriesWithProducts.length);
+    
+    // ✅ Her kategori için veri hazırla - products array'i şimdi var
+    const categoryData = categoriesWithProducts
+      .filter(category => category.name !== "Custom Pizza") // Custom pizza hariç
+      .map(category => {
+        const products = category.products || [];
+        const productCount = products.length;
+        const stockTotal = products.reduce((sum, p) => sum + (p.stock || 0), 0);
+        
+        return {
+          name: category.name,
+          ürünSayısı: productCount,
+          stokMiktarı: stockTotal
+        };
+      })
+      .filter(cat => cat.ürünSayısı > 0); // Sadece ürünü olan kategorileri göster
+
+    console.log("📊 Processed category data:", categoryData);
 
     // ✅ Dashboard data'yı hazırla
     const dashboardData = {
       // Backend'den gelen değerleri kullan
-      totalCategories: dashboardStats.totalCategories || categories.length || 0,
+      totalCategories: dashboardStats.totalCategories || categoriesWithProducts.length || 0,
       totalProducts: dashboardStats.totalProducts || 0,
       totalStock: dashboardStats.totalStock || 0,
       totalUsers: users.length,
       // Raw data
-      categories: categories,
+      categories: categoriesWithProducts,
       users: users,
       // İşlenmiş kategori verileri (grafik ve tablo için)
       categoryData: categoryData
@@ -154,7 +181,7 @@ export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
       totalStock: dashboardData.totalStock,
       totalUsers: dashboardData.totalUsers,
       categoryDataLength: dashboardData.categoryData.length,
-      categoryDataSample: dashboardData.categoryData[0]
+      sampleData: dashboardData.categoryData[0]
     });
 
     // ✅ Cache'e kaydet
@@ -180,52 +207,32 @@ export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
   }
 };
 
-// Cache'i temizle - veri güncellemelerinde kullanılır
+// Cache'i temizle - veri güncellemelerinde kullan
 export const clearDashboardCache = () => {
   dashboardCache = null;
   dashboardCacheTimestamp = 0;
   console.log("🗑️ Dashboard cache cleared");
 };
 
-// Kullanıcı onayla
-export const approveUser = (userId) => async (dispatch) => {
+// Kullanıcı durumunu güncelle
+export const updateUserStatus = (userId, status) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
-    await instance.post(`/admin/users/${userId}/approve`);
+    const endpoint = status === userStatus.APPROVED 
+      ? `/admin/users/${userId}/approve`
+      : `/admin/users/${userId}/reject`;
 
-    dispatch(updateUserStatus(userId, userStatus.ACTIVE));
-    dispatch(setSuccess("Kullanıcı onaylandı"));
+    const response = await instance.post(endpoint);
+
+    dispatch(updateUserStatusInState(userId, status));
+    dispatch(setSuccess(`Kullanıcı başarıyla ${status === userStatus.APPROVED ? 'onaylandı' : 'reddedildi'}`));
     dispatch(setLoading(false));
 
-    // ✅ Dashboard cache'ini temizle (kullanıcı sayısı değişti)
-    clearDashboardCache();
-
-    return { success: true };
+    return { success: true, data: response.data };
   } catch (err) {
     dispatch(setLoading(false));
-    return handleApiError(err, dispatch, 'approveUser');
-  }
-};
-
-// Kullanıcı reddet
-export const rejectUser = (userId) => async (dispatch) => {
-  dispatch(setLoading(true));
-
-  try {
-    await instance.post(`/admin/users/${userId}/reject`);
-
-    dispatch(updateUserStatus(userId, userStatus.REJECTED));
-    dispatch(setSuccess("Kullanıcı reddedildi"));
-    dispatch(setLoading(false));
-
-    // ✅ Dashboard cache'ini temizle (kullanıcı sayısı değişti)
-    clearDashboardCache();
-
-    return { success: true };
-  } catch (err) {
-    dispatch(setLoading(false));
-    return handleApiError(err, dispatch, 'rejectUser');
+    return handleApiError(err, dispatch, 'updateUserStatus');
   }
 };
 
@@ -234,22 +241,15 @@ export const updateUserRole = (userId, role) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
-    await instance.put(`/admin/users/${userId}/role`, null, {
+    const response = await instance.put(`/admin/users/${userId}/role`, null, {
       params: { role }
     });
 
-    dispatch({
-      type: adminActions.UPDATE_USER_ROLE,
-      payload: { userId, role }
-    });
-
-    dispatch(setSuccess("Kullanıcı rolü güncellendi"));
+    dispatch(updateUserRoleInState(userId, role));
+    dispatch(setSuccess("Kullanıcı rolü başarıyla güncellendi"));
     dispatch(setLoading(false));
 
-    // ✅ Dashboard cache'ini temizle (kullanıcı bilgisi değişti)
-    clearDashboardCache();
-
-    return { success: true };
+    return { success: true, data: response.data };
   } catch (err) {
     dispatch(setLoading(false));
     return handleApiError(err, dispatch, 'updateUserRole');

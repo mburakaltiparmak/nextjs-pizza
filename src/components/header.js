@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import FloatingUserButton from "./floatingUserButton";
+import FloatingUserButton from "./user-button/floatingUserButton";
 
 const Header = () => {
   return (
