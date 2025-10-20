@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { instance } from "@/lib/hooks";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import useAuthRoute from "@/hooks/use-auth-role";
 import {
@@ -15,11 +14,10 @@ import {
   MapPin,
   Eye,
   RefreshCcw,
-  Badge,
+  Badge as BadgeIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectItem,
@@ -34,560 +32,531 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// Custom Hooks
+import { useOrdersManager } from "@/hooks/use-orders-manager";
+import { useOrderActions } from "@/hooks/use-order-actions";
+import { useOrderFilters } from "@/hooks/use-order-filters";
+
+/**
+ * Orders Admin Page - Optimize edilmiş versiyon
+ * - Smart polling (30s interval)
+ * - Memory leak koruması
+ * - Optimistic updates
+ * - useMemo filtreleme
+ */
 const OrdersPage = () => {
-  // Yetkilendirme kontrolü
+  // Auth
   const { isAuthorized } = useAuthRoute(["ADMIN", "PERSONAL"], "/");
   const router = useRouter();
-  const { toast } = useToast();
 
-  // State tanımlamaları
-  const [orders, setOrders] = useState([]);
-  const [filteredOrders, setFilteredOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("ALL");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  // Modal state
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Ref'ler
-  const initialFetchDone = useRef(false);
-  const currentRequestRef = useRef(null);
-  const lastFetchTime = useRef(0);
-  const mountedRef = useRef(true);
+  // Custom Hooks
+  const {
+    orders,
+    loading,
+    isRefreshing,
+    lastUpdateTime,
+    refreshOrders,
+    updateOrderLocally,
+  } = useOrdersManager();
 
-  // Component unmount takibi
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-      // Aktif istekleri iptal et
-      if (currentRequestRef.current) {
-        currentRequestRef.current.abort();
-      }
-    };
-  }, []);
+  const {
+    isUpdating,
+    selectedOrder,
+    updateOrderStatus,
+    cancelOrder,
+    fetchOrderDetail,
+    clearSelectedOrder,
+  } = useOrderActions({
+    onSuccess: () => refreshOrders(), // Sipariş güncellenince yenile
+    updateOrderLocally,
+  });
 
-  const fetchOrders = useCallback(async (force = false) => {
-    // Son fetch'ten 5 saniye geçmemişse ve zorlanmadıysa iptal et
-    const now = Date.now();
-    if (!force && now - lastFetchTime.current < 5000) {
-      console.log("Son fetch çok yakın zamanda yapıldı, atlanıyor");
-      return;
+  const {
+    statusFilter,
+    searchTerm,
+    filteredOrders,
+    filterStats,
+    handleStatusChange,
+    handleSearchChange,
+    resetFilters,
+  } = useOrderFilters(orders);
+
+  // Order detail modal
+  const handleShowDetail = async (orderId) => {
+    const order = await fetchOrderDetail(orderId);
+    if (order) {
+      setIsDetailOpen(true);
     }
+  };
 
-    // Önceki isteği iptal et
-    if (currentRequestRef.current) {
-      currentRequestRef.current.abort();
-    }
+  const handleCloseDetail = () => {
+    setIsDetailOpen(false);
+    clearSelectedOrder();
+  };
 
-    // Yeni AbortController oluştur
-    const abortController = new AbortController();
-    currentRequestRef.current = abortController;
-
-    setLoading(true);
-    try {
-      const response = await instance.get("/orders", {
-        //timeout: 15000, // 15 saniye timeout
-        //signal: abortController.signal,
-      });
-
-      if (!mountedRef.current) return;
-      console.log("orders", response.data);
-      setOrders(response.data);
-      setFilteredOrders(response.data);
-
-      lastFetchTime.current = now;
-    } catch (error) {
-      if (!mountedRef.current) return;
-
-      // İptal edilen istekleri sayma
-      if (error.name !== "AbortError" && error.name !== "CanceledError") {
-        console.error("Siparişler yüklenirken hata oluştu:", error);
-        toast({
-          title: "Hata",
-          description: "Siparişler yüklenemedi",
-          variant: "destructive",
-        });
-      }
-    } finally {
-      if (mountedRef.current) {
-        setLoading(false);
-      }
-      currentRequestRef.current = null;
-    }
-  }, []); // toast bağımlılığını kaldırdık
-
-  // Optimize edilmiş filterOrders
-  const filterOrders = useCallback(() => {
-    if (!orders.length) {
-      setFilteredOrders([]);
-      return;
-    }
-
-    let result = orders;
-
-    // Durum filtresi
-    if (filter !== "ALL") {
-      result = result.filter((order) => order.orderStatus === filter);
-    }
-
-    // Arama filtresi
-    if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase().trim();
-      result = result.filter((order) => {
-        // Sipariş ID'sinde arama
-        if (order.id && order.id.toString().includes(searchTerm)) return true;
-
-        // Kullanıcı bilgilerinde arama
-        if (order.user) {
-          const userFields = [
-            order.user.name,
-            order.user.surname,
-            order.user.email,
-            order.user.phoneNumber,
-          ].filter(Boolean);
-
-          if (
-            userFields.some((field) =>
-              field.toLowerCase().includes(searchLower)
-            )
-          )
-            return true;
-        }
-
-        // Adres bilgilerinde arama
-        if (order.deliveryAddress) {
-          const addressFields = [
-            order.deliveryAddress.fullAddress,
-            order.deliveryAddress.city,
-            order.deliveryAddress.district,
-          ].filter(Boolean);
-
-          if (
-            addressFields.some((field) =>
-              field.toLowerCase().includes(searchLower)
-            )
-          )
-            return true;
-        }
-
-        return false;
-      });
-    }
-
-    setFilteredOrders(result);
-  }, [orders, filter, searchTerm]);
-
-  // İlk yükleme - sadece bir kez
-  useEffect(() => {
-    if (isAuthorized && !initialFetchDone.current) {
-      initialFetchDone.current = true;
-      fetchOrders();
-    }
-  }, [isAuthorized, fetchOrders]);
-
-  // Filtre değişikliklerini dinle - debounced
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      filterOrders();
-    }, 300); // 300ms debounce
-
-    return () => clearTimeout(timeoutId);
-  }, [filter, searchTerm, orders, filterOrders]);
-
-  // Optimize edilmiş sipariş durumu güncelleme
-  const updateOrderStatus = useCallback(
-    async (orderId, newStatus) => {
-      if (isUpdating) return; // Zaten bir güncelleme devam ediyorsa
-
-      setIsUpdating(true);
-      try {
-        await instance.put(
-          `/orders/${orderId}/status?status=${newStatus}`,
-          null,
-          {
-            // timeout: 5000, // 5 saniye timeout
-          }
-        );
-
-        // Siparişleri yeniden yükle
-        await fetchOrders(true); // Force refresh
-
-        // Detay görünümünü güncelle
-        if (selectedOrder && selectedOrder.id === orderId) {
-          try {
-            const updatedOrder = await instance.get(`/orders/${orderId}`, {
-              //timeout: 5000,
-            });
-            setSelectedOrder(updatedOrder.data);
-          } catch (detailError) {
-            console.error("Sipariş detayı güncellenirken hata:", detailError);
-          }
-        }
-
-        toast({
-          title: "Başarılı",
-          description: "Sipariş durumu güncellendi",
-        });
-      } catch (error) {
-        console.error("Sipariş durumu güncellenirken hata oluştu:", error);
-        toast({
-          title: "Hata",
-          description: "Sipariş durumu güncellenemedi",
-          variant: "destructive",
-        });
-      } finally {
-        setIsUpdating(false);
-      }
-    },
-    [isUpdating, fetchOrders, selectedOrder, toast]
-  );
-
-  // Optimize edilmiş sipariş iptal etme
-  const cancelOrder = useCallback(
-    async (orderId) => {
-      if (isUpdating) return;
-
-      if (!confirm("Bu siparişi iptal etmek istediğinizden emin misiniz?")) {
-        return;
-      }
-
-      setIsUpdating(true);
-      try {
-        await instance.post(`/orders/${orderId}/cancel`, null, {
-          //timeout: 5000,
-        });
-
-        await fetchOrders(true); // Force refresh
-
-        if (selectedOrder && selectedOrder.id === orderId) {
-          try {
-            const updatedOrder = await instance.get(`/orders/${orderId}`, {
-              //timeout: 5000,
-            });
-            setSelectedOrder(updatedOrder.data);
-          } catch (detailError) {
-            console.error("Sipariş detayı güncellenirken hata:", detailError);
-          }
-        }
-
-        toast({
-          title: "Başarılı",
-          description: "Sipariş iptal edildi",
-        });
-      } catch (error) {
-        console.error("Sipariş iptal edilirken hata oluştu:", error);
-        toast({
-          title: "Hata",
-          description: "Sipariş iptal edilemedi",
-          variant: "destructive",
-        });
-      } finally {
-        setIsUpdating(false);
-      }
-    },
-    [isUpdating, fetchOrders, selectedOrder, toast]
-  );
-
-  // Optimize edilmiş sipariş detayı gösterme
-  const showOrderDetail = useCallback(
-    async (orderId) => {
-      try {
-        const response = await instance.get(`/orders/${orderId}`, {
-          // timeout: 5000,
-        });
-        setSelectedOrder(response.data);
-        setIsDetailOpen(true);
-      } catch (error) {
-        console.error("Sipariş detayı yüklenirken hata oluştu:", error);
-        toast({
-          title: "Hata",
-          description: "Sipariş detayı yüklenemedi",
-          variant: "destructive",
-        });
-      }
-    },
-    [toast]
-  );
-
-  // Yenile butonu için optimize edilmiş handler
-  const handleRefresh = useCallback(() => {
-    fetchOrders(true); // Force refresh
-  }, [fetchOrders]);
-
-  // Helper fonksiyonlar - bu kısım aynı kalacak
+  // Helper functions
   const getStatusBadge = (status) => {
-    switch (status) {
-      case "PENDING":
-        return { color: "bg-yellow-500", text: "Beklemede" };
-      case "CONFIRMED":
-        return { color: "bg-blue-500", text: "Onaylandı" };
-      case "PREPARING":
-        return { color: "bg-purple-500", text: "Hazırlanıyor" };
-      case "SHIPPED":
-        return { color: "bg-indigo-500", text: "Yolda" };
-      case "DELIVERED":
-        return { color: "bg-green-500", text: "Teslim Edildi" };
-      case "CANCELLED":
-        return { color: "bg-red-500", text: "İptal Edildi" };
-      default:
-        return { color: "bg-gray-500", text: status };
-    }
+    const badges = {
+      PENDING: { color: "bg-yellow-500", text: "Beklemede" },
+      CONFIRMED: { color: "bg-blue-500", text: "Onaylandı" },
+      PREPARING: { color: "bg-purple-500", text: "Hazırlanıyor" },
+      SHIPPED: { color: "bg-indigo-500", text: "Yolda" },
+      DELIVERED: { color: "bg-green-500", text: "Teslim Edildi" },
+      CANCELLED: { color: "bg-red-500", text: "İptal Edildi" },
+    };
+    return badges[status] || { color: "bg-gray-500", text: status };
   };
 
   const getPaymentStatusBadge = (status) => {
-    switch (status) {
-      case "PENDING":
-        return { color: "bg-yellow-500", text: "Beklemede" };
-      case "SUCCESS":
-        return { color: "bg-green-500", text: "Başarılı" };
-      case "FAILED":
-        return { color: "bg-red-500", text: "Başarısız" };
-      default:
-        return { color: "bg-gray-500", text: status };
-    }
+    const badges = {
+      PENDING: { color: "bg-yellow-500", text: "Beklemede" },
+      PAID: { color: "bg-green-500", text: "Ödendi" },
+      FAILED: { color: "bg-red-500", text: "Başarısız" },
+      REFUNDED: { color: "bg-gray-500", text: "İade Edildi" },
+    };
+    return badges[status] || { color: "bg-gray-500", text: status };
   };
 
-  const getPaymentMethodText = (method) => {
-    switch (method) {
-      case "ONLINE_CREDIT_CARD":
-        return "Online Kredi Kartı";
-      case "CREDIT_CARD":
-        return "Kapıda Kredi Kartı";
-      case "CASH":
-        return "Kapıda Nakit";
-      default:
-        return method;
-    }
-  };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    return new Intl.DateTimeFormat("tr-TR", {
-      year: "numeric",
-      month: "2-digit",
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("tr-TR", {
       day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    }).format(date);
+    });
   };
 
-  // Yetkisiz erişim durumunda
+  // Loading state
   if (!isAuthorized) {
     return null;
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Siparişler yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Siparişler</h1>
-        <Button
-          onClick={handleRefresh}
-          variant="outline"
-          disabled={loading}
-          className="flex items-center gap-2"
-        >
-          <RefreshCcw size={16} className={loading ? "animate-spin" : ""} />
-          Yenile
-        </Button>
-      </div>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Siparişler</h1>
+              <p className="text-sm text-gray-500 mt-1">
+                Toplam {filterStats.total} sipariş
+                {lastUpdateTime && (
+                  <span className="ml-2">
+                    • Son güncelleme: {formatDate(lastUpdateTime)}
+                  </span>
+                )}
+              </p>
+            </div>
+            <Button
+              onClick={refreshOrders}
+              disabled={isRefreshing}
+              className="flex items-center gap-2"
+            >
+              <RefreshCcw
+                className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
+              />
+              {isRefreshing ? "Yenileniyor..." : "Yenile"}
+            </Button>
+          </div>
 
-      {/* Filtreler */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-        <div className="flex items-center gap-2">
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-44">
-              <SelectValue placeholder="Durum Filtresi" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Tüm Siparişler</SelectItem>
-              <SelectItem value="PENDING">Beklemede</SelectItem>
-              <SelectItem value="CONFIRMED">Onaylandı</SelectItem>
-              <SelectItem value="PREPARING">Hazırlanıyor</SelectItem>
-              <SelectItem value="SHIPPED">Yolda</SelectItem>
-              <SelectItem value="DELIVERED">Teslim Edildi</SelectItem>
-              <SelectItem value="CANCELLED">İptal Edildi</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Filters */}
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Status Filter */}
+            <Select value={statusFilter} onValueChange={handleStatusChange}>
+              <SelectTrigger className="w-full md:w-48">
+                <SelectValue placeholder="Durum Filtrele" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">
+                  Tümü ({filterStats.total})
+                </SelectItem>
+                <SelectItem value="PENDING">
+                  Beklemede ({filterStats.pending})
+                </SelectItem>
+                <SelectItem value="CONFIRMED">
+                  Onaylandı ({filterStats.confirmed})
+                </SelectItem>
+                <SelectItem value="PREPARING">
+                  Hazırlanıyor ({filterStats.preparing})
+                </SelectItem>
+                <SelectItem value="SHIPPED">
+                  Yolda ({filterStats.shipped})
+                </SelectItem>
+                <SelectItem value="DELIVERED">
+                  Teslim Edildi ({filterStats.delivered})
+                </SelectItem>
+                <SelectItem value="CANCELLED">
+                  İptal Edildi ({filterStats.cancelled})
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Sipariş No, Kullanıcı veya Adres Ara..."
+                value={searchTerm}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Reset Filters */}
+            {(statusFilter !== "ALL" || searchTerm) && (
+              <Button variant="outline" onClick={resetFilters}>
+                Filtreleri Temizle
+              </Button>
+            )}
+          </div>
+
+          {/* Filter Results Info */}
+          {filteredOrders.length !== filterStats.total && (
+            <p className="text-sm text-gray-600 mt-3">
+              {filteredOrders.length} sipariş gösteriliyor (
+              {filterStats.total} siparişten)
+            </p>
+          )}
         </div>
 
-        <div className="relative">
-          <Search
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            size={18}
-          />
-          <Input
-            type="text"
-            className="pl-10 pr-4 py-2 w-full sm:w-[300px]"
-            placeholder="Sipariş ara (ID, müşteri, adres...)"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
+        {/* Orders Grid */}
+        {filteredOrders.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+            <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Sipariş Bulunamadı
+            </h3>
+            <p className="text-gray-500">
+              {statusFilter !== "ALL" || searchTerm
+                ? "Arama kriterlerinizle eşleşen sipariş bulunamadı."
+                : "Henüz hiç sipariş yok."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredOrders.map((order) => {
+              const statusBadge = getStatusBadge(order.status);
+              const paymentBadge = getPaymentStatusBadge(order.paymentStatus);
 
-      {/* Sipariş Tablosu */}
-      {loading ? (
-        <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red"></div>
-        </div>
-      ) : filteredOrders.length === 0 ? (
-        <div className="text-center py-10 text-gray-500">
-          <ShoppingBag className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-          <p className="text-lg font-medium">Gösterilecek sipariş bulunamadı</p>
-          <p className="text-sm">Filtre ayarlarını değiştirmeyi deneyin</p>
-        </div>
-      ) : (
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full">
-            <caption className="text-sm text-gray-500 p-2">
-              Toplam {filteredOrders.length} sipariş
-            </caption>
-            <thead>
-              <tr className="border-b">
-                <th className="p-2 text-left w-[80px]">ID</th>
-                <th className="p-2 text-left">Müşteri</th>
-                <th className="p-2 text-left">Tarih</th>
-                <th className="p-2 text-right">Tutar</th>
-                <th className="p-2 text-left">Durum</th>
-                <th className="p-2 text-left">Ödeme</th>
-                <th className="p-2 text-right">İşlem</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.map((order) => (
-                <tr key={order.id} className="border-b hover:bg-gray-50">
-                  <td className="p-2 font-medium">{order.id}</td>
-                  <td className="p-2">
-                    {order.deliveryAddress ? (
-                      <div className="flex flex-col">
-                        <span>{order.deliveryAddress.recipientName}</span>
-                        <span className="text-xs text-gray-500">
-                          {order.deliveryAddress.phoneNumber}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-gray-500">Misafir Siparişi</span>
-                    )}
-                  </td>
-                  <td className="p-2">{formatDate(order.orderDate)}</td>
-                  <td className="p-2 text-right">
-                    {order.totalAmount ? (
-                      <span className="font-semibold">
-                        {order.totalAmount.toFixed(2)} ₺
+              return (
+                <div
+                  key={order.id}
+                  className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-6"
+                >
+                  {/* Header */}
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <p className="text-sm text-gray-500">Sipariş No</p>
+                      <p className="font-semibold text-gray-900">
+                        #{order.id}
+                      </p>
+                    </div>
+                    <span
+                      className={`${statusBadge.color} text-white text-xs px-3 py-1 rounded-full`}
+                    >
+                      {statusBadge.text}
+                    </span>
+                  </div>
+
+                  {/* Customer */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-700">
+                      {order.user?.name || order.user?.username || "Bilinmiyor"}
+                    </span>
+                  </div>
+
+                  {/* Address */}
+                  {order.address && (
+                    <div className="flex items-start gap-2 mb-3">
+                      <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <span className="text-sm text-gray-600 line-clamp-2">
+                        {order.address}
                       </span>
-                    ) : (
-                      "N/A"
-                    )}
-                  </td>
-                  <td className="p-2">
-                    <Badge
-                      className={`${
-                        getStatusBadge(order.orderStatus).color
-                      } text-white`}
+                    </div>
+                  )}
+
+                  {/* Date */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-600">
+                      {formatDate(order.createdAt)}
+                    </span>
+                  </div>
+
+                  {/* Total Price */}
+                  <div className="flex items-center gap-2 mb-4 pb-4 border-b">
+                    <DollarSign className="w-4 h-4 text-gray-400" />
+                    <span className="text-lg font-bold text-gray-900">
+                      {order.totalPrice?.toFixed(2)} ₺
+                    </span>
+                    <span
+                      className={`${paymentBadge.color} text-white text-xs px-2 py-0.5 rounded ml-auto`}
                     >
-                      {getStatusBadge(order.orderStatus).text}
-                    </Badge>
-                  </td>
-                  <td className="p-2">
-                    {order.payment ? (
-                      <div className="flex flex-col">
-                        <Badge
-                          className={`mb-1 ${
-                            getPaymentStatusBadge(order.payment.paymentStatus)
-                              .color
-                          } text-white`}
-                        >
-                          {
-                            getPaymentStatusBadge(order.payment.paymentStatus)
-                              .text
-                          }
-                        </Badge>
-                        <span className="text-xs text-gray-500">
-                          {getPaymentMethodText(order.payment.paymentMethod)}
-                        </span>
-                      </div>
-                    ) : (
-                      "N/A"
-                    )}
-                  </td>
-                  <td className="p-2 text-right">
+                      {paymentBadge.text}
+                    </span>
+                  </div>
+
+                  {/* Items Count */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <Package className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-600">
+                      {order.orderItems?.length || 0} ürün
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
                     <Button
-                      variant="secondary"
+                      variant="outline"
                       size="sm"
-                      className="mr-2"
-                      onClick={() => showOrderDetail(order.id)}
+                      onClick={() => handleShowDetail(order.id)}
+                      className="flex-1"
                     >
-                      <Eye size={16} className="mr-1" />
+                      <Eye className="w-4 h-4 mr-2" />
                       Detay
                     </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                    {order.status !== "CANCELLED" &&
+                      order.status !== "DELIVERED" && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => cancelOrder(order.id)}
+                          disabled={isUpdating}
+                        >
+                          İptal
+                        </Button>
+                      )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-      {/* Modal kısmı aynı kalacak - sadece fonksiyon çağrılarını güncelledik */}
-      <AlertDialog
-        open={isDetailOpen}
-        onOpenChange={(open) => {
-          setIsDetailOpen(open);
-          if (!open) setSelectedOrder(null);
-        }}
-      >
-        <AlertDialogContent className="max-w-3xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Sipariş Detayı #{selectedOrder?.id}
-            </AlertDialogTitle>
-          </AlertDialogHeader>
+        {/* Order Detail Modal */}
+        <AlertDialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+          <AlertDialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex justify-between items-center">
+                <span>Sipariş Detayı #{selectedOrder?.id}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCloseDetail}
+                  className="h-8 w-8 p-0"
+                >
+                  ✕
+                </Button>
+              </AlertDialogTitle>
+            </AlertDialogHeader>
 
-          {selectedOrder && (
-            <div className="mt-4">
-              {/* Modal içeriği aynı kalacak - sadece işlem butonlarını güncelle */}
-              <div className="flex flex-wrap justify-end gap-3 mt-6">
-                {/* Durum Güncelleme */}
-                {selectedOrder.orderStatus !== "CANCELLED" && (
-                  <Select
-                    value={selectedOrder.orderStatus}
-                    onValueChange={(value) =>
-                      updateOrderStatus(selectedOrder.id, value)
-                    }
-                    disabled={isUpdating}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Durum Güncelle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PENDING">Beklemede</SelectItem>
-                      <SelectItem value="CONFIRMED">Onaylandı</SelectItem>
-                      <SelectItem value="PREPARING">Hazırlanıyor</SelectItem>
-                      <SelectItem value="SHIPPED">Yolda</SelectItem>
-                      <SelectItem value="DELIVERED">Teslim Edildi</SelectItem>
-                    </SelectContent>
-                  </Select>
+            {selectedOrder && (
+              <div className="space-y-6">
+                {/* Status & Payment */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm text-gray-500 mb-2">
+                      Sipariş Durumu
+                    </p>
+                    <Select
+                      value={selectedOrder.status}
+                      onValueChange={(newStatus) =>
+                        updateOrderStatus(selectedOrder.id, newStatus)
+                      }
+                      disabled={isUpdating}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PENDING">Beklemede</SelectItem>
+                        <SelectItem value="CONFIRMED">Onaylandı</SelectItem>
+                        <SelectItem value="PREPARING">Hazırlanıyor</SelectItem>
+                        <SelectItem value="SHIPPED">Yolda</SelectItem>
+                        <SelectItem value="DELIVERED">
+                          Teslim Edildi
+                        </SelectItem>
+                        <SelectItem value="CANCELLED">İptal Edildi</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm text-gray-500 mb-2">Ödeme Durumu</p>
+                    <span
+                      className={`${
+                        getPaymentStatusBadge(selectedOrder.paymentStatus).color
+                      } text-white text-sm px-4 py-2 rounded-lg inline-block`}
+                    >
+                      {
+                        getPaymentStatusBadge(selectedOrder.paymentStatus).text
+                      }
+                    </span>
+                  </div>
+                </div>
+
+                {/* Customer Info */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    Müşteri Bilgileri
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <p>
+                      <span className="text-gray-500">Ad Soyad:</span>{" "}
+                      <span className="font-medium">
+                        {selectedOrder.user?.name ||
+                          selectedOrder.user?.username ||
+                          "Bilinmiyor"}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-gray-500">Email:</span>{" "}
+                      <span className="font-medium">
+                        {selectedOrder.user?.email || "Belirtilmemiş"}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-gray-500">Telefon:</span>{" "}
+                      <span className="font-medium">
+                        {selectedOrder.user?.phoneNumber || "Belirtilmemiş"}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Address */}
+                {selectedOrder.address && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <MapPin className="w-5 h-5" />
+                      Teslimat Adresi
+                    </h3>
+                    <p className="text-sm text-gray-700">
+                      {selectedOrder.address}
+                    </p>
+                  </div>
                 )}
 
-                {/* İptal Butonu */}
-                {["PENDING", "CONFIRMED"].includes(
-                  selectedOrder.orderStatus
-                ) && (
-                  <Button
-                    variant="destructive"
-                    onClick={() => cancelOrder(selectedOrder.id)}
-                    disabled={isUpdating}
-                  >
-                    {isUpdating ? "İşleniyor..." : "Siparişi İptal Et"}
+                {/* Order Items */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Package className="w-5 h-5" />
+                    Sipariş İçeriği
+                  </h3>
+                  <div className="space-y-3">
+                    {selectedOrder.orderItems?.map((item, index) => (
+                      <div
+                        key={index}
+                        className="bg-white rounded-lg p-3 flex justify-between items-center"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">
+                            {item.product?.name || "Ürün"}
+                          </p>
+                          {item.customizations && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Özelleştirmeler: {item.customizations}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right ml-4">
+                          <p className="text-sm text-gray-500">
+                            {item.quantity} adet
+                          </p>
+                          <p className="font-semibold text-gray-900">
+                            {(item.price * item.quantity).toFixed(2)} ₺
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Totals */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Ara Toplam</span>
+                      <span className="font-medium">
+                        {selectedOrder.totalPrice?.toFixed(2)} ₺
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Teslimat</span>
+                      <span className="font-medium">0.00 ₺</span>
+                    </div>
+                    <div className="border-t pt-2 flex justify-between">
+                      <span className="font-semibold text-gray-900">
+                        Toplam
+                      </span>
+                      <span className="font-bold text-lg text-gray-900">
+                        {selectedOrder.totalPrice?.toFixed(2)} ₺
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dates */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Calendar className="w-4 h-4" />
+                    <span>
+                      Oluşturulma: {formatDate(selectedOrder.createdAt)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Clock className="w-4 h-4" />
+                    <span>
+                      Güncelleme: {formatDate(selectedOrder.updatedAt)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 justify-end pt-4 border-t">
+                  <Button variant="outline" onClick={handleCloseDetail}>
+                    Kapat
                   </Button>
-                )}
+                  {selectedOrder.status !== "CANCELLED" &&
+                    selectedOrder.status !== "DELIVERED" && (
+                      <Button
+                        variant="destructive"
+                        onClick={() => {
+                          cancelOrder(selectedOrder.id);
+                          handleCloseDetail();
+                        }}
+                        disabled={isUpdating}
+                      >
+                        Siparişi İptal Et
+                      </Button>
+                    )}
+                </div>
               </div>
-            </div>
-          )}
-        </AlertDialogContent>
-      </AlertDialog>
+            )}
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   );
 };

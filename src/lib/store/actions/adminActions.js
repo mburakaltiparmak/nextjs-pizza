@@ -79,91 +79,71 @@ export const fetchPendingUsers = () => async (dispatch) => {
   }
 };
 
-// ✅ ÇÖZÜM: Backend'den ayrı ayrı gelen verileri birleştir
+// ✅ OPTIMIZED: Backend DTO endpoint'ini kullan
 export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
   // ✅ Cache kontrolü
   const now = Date.now();
   if (!forceRefresh && dashboardCache && (now - dashboardCacheTimestamp) < DASHBOARD_CACHE_DURATION) {
     console.log("✅ Dashboard Cache Hit - Returning cached data");
     dispatch(setDashboardData(dashboardCache));
-    dispatch(setAllUsers(dashboardCache.users || []));
     dispatch(setAdminFetchState(fetchStates.FETCHED));
     return dashboardCache;
   }
 
-  console.log("🔄 Fetching fresh dashboard data...");
+  console.log("🔄 Fetching dashboard data from optimized DTO endpoint...");
   dispatch(setAdminFetchState(fetchStates.FETCHING));
 
   try {
-    // ✅ 3 paralel istek: categories + products + users
-    const [categoriesResponse, productsResponse, usersResponse] = await Promise.all([
-      instance.get("/category"),
-      instance.get("/product"),
-      instance.get("/admin/users")
-    ]);
+    // ✅ Tek istek - Backend DTO ile her şeyi gönderiyor
+    const response = await instance.get("/admin/dashboard");
+    const dto = response.data;
 
-    const categories = categoriesResponse.data || [];
-    const allProducts = productsResponse.data || [];
-    const users = usersResponse.data || [];
-
-    console.log("📊 Backend Responses:", {
-      categoriesCount: categories.length,
-      productsCount: allProducts.length,
-      usersCount: users.length
+    console.log("📊 Backend DTO Response:", {
+      totalCategories: dto.totalCategories,
+      totalProducts: dto.totalProducts,
+      totalStock: dto.totalStock,
+      totalUsers: dto.totalUsers,
+      categoriesCount: dto.categories?.length || 0
     });
 
-    // ✅ Kategorileri ürünlerle eşleştir
-    const categoriesWithProducts = categories.map(category => {
-      // Bu kategoriye ait ürünleri filtrele
-      const categoryProducts = allProducts.filter(
-        product => product.categoryId === category.id
-      );
+    // ✅ DTO'dan categories array'ini al (products dahil)
+    const categories = dto.categories || [];
 
+    // ✅ CUSTOM_BASE kategorisini filtrele
+    const filteredCategories = categories.filter(
+      cat => cat.name !== "CUSTOM_BASE"
+    );
+
+    // ✅ Frontend için categoryData hazırla (DTO'da zaten hesaplanmış)
+    const categoryData = filteredCategories.map(category => {
       console.log(`📦 Category "${category.name}":`, {
-        id: category.id,
-        productCount: categoryProducts.length
+        productCount: category.productCount, // ✅ Backend'den hazır
+        totalStock: category.totalStock      // ✅ Backend'den hazır
       });
 
       return {
-        ...category,
-        products: categoryProducts
-      };
-    });
-
-    // ✅ Custom Pizza kategorisini çıkar
-    const filteredCategories = categoriesWithProducts.filter(
-      cat => cat.name !== "Custom Pizza"
-    );
-
-    // ✅ Dashboard için kategori verilerini hazırla
-    const categoryData = filteredCategories.map(category => {
-      const products = category.products || [];
-      const productCount = products.length;
-      const stockTotal = products.reduce((sum, p) => sum + (p.stock || 0), 0);
-
-      return {
         name: category.name,
-        ürünSayısı: productCount,
-        stokMiktarı: stockTotal
+        ürünSayısı: category.productCount || 0,  // ✅ Backend'den hazır
+        stokMiktarı: category.totalStock || 0     // ✅ Backend'den hazır
       };
-    }).filter(cat => cat.ürünSayısı > 0); // Sadece ürünü olan kategoriler
+    }).filter(cat => cat.ürünSayısı > 0); // Boş kategorileri filtrele
 
     console.log("📊 Processed Category Data:", categoryData);
 
-    // ✅ Toplam değerleri hesapla
-    const totalProducts = allProducts.length;
-    const totalStock = allProducts.reduce((sum, p) => sum + (p.stock || 0), 0);
-    const totalCategories = filteredCategories.length;
-
-    // ✅ Dashboard data'yı hazırla
+    // ✅ Dashboard state'i oluştur
     const dashboardData = {
-      totalCategories,
-      totalProducts,
-      totalStock,
-      totalUsers: users.length,
-      categories: categoriesWithProducts,
-      users: users,
-      categoryData: categoryData
+      // DTO'dan direkt değerler
+      totalCategories: filteredCategories.length, // CUSTOM_BASE hariç
+      totalProducts: dto.totalProducts || 0,
+      totalStock: dto.totalStock || 0,
+      totalUsers: dto.totalUsers || 0,
+      
+      // Processed data
+      categoryData: categoryData,
+      
+      // Raw data (gerekirse kullanılabilir)
+      categories: filteredCategories,
+      recentProducts: dto.recentProducts || []
     };
 
     console.log("✅ Final Dashboard Data:", {
@@ -182,7 +162,6 @@ export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
 
     // ✅ Redux'a kaydet
     dispatch(setDashboardData(dashboardData));
-    dispatch(setAllUsers(users));
     dispatch(setAdminFetchState(fetchStates.FETCHED));
 
     return dashboardData;
@@ -216,9 +195,7 @@ export const approveUser = (userId) => async (dispatch) => {
     dispatch(setSuccess("Kullanıcı onaylandı"));
     dispatch(setLoading(false));
 
-    // ✅ Dashboard cache'ini temizle (kullanıcı sayısı değişti)
     clearDashboardCache();
-
     return { success: true };
   } catch (err) {
     dispatch(setLoading(false));
@@ -237,9 +214,7 @@ export const rejectUser = (userId) => async (dispatch) => {
     dispatch(setSuccess("Kullanıcı reddedildi"));
     dispatch(setLoading(false));
 
-    // ✅ Dashboard cache'ini temizle (kullanıcı sayısı değişti)
     clearDashboardCache();
-
     return { success: true };
   } catch (err) {
     dispatch(setLoading(false));
@@ -260,9 +235,7 @@ export const updateUserRole = (userId, role) => async (dispatch) => {
     dispatch(setSuccess("Kullanıcı rolü güncellendi"));
     dispatch(setLoading(false));
 
-    // ✅ Dashboard cache'ini temizle (kullanıcı bilgisi değişti)
     clearDashboardCache();
-
     return { success: true };
   } catch (err) {
     dispatch(setLoading(false));

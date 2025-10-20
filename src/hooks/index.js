@@ -7,3 +7,6 @@ export * from './use-module-loading';
 export { useLoginForm } from './use-login-form';
 export { useForgotPassword } from './use-forgot-password';
 export { useUserButton } from './use-user-button';
+export { useOrdersManager } from './use-orders-manager';
+export { useOrderActions } from './use-order-actions';
+export { useOrderFilters } from './use-order-filters';
