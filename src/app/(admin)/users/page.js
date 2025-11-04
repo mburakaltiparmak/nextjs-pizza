@@ -73,6 +73,7 @@ const UsersPage = () => {
   }, [dispatch, initialLoad]);
 
   // Show toast for success/error messages
+  /*
   useEffect(() => {
     if (success) {
       toast({
@@ -83,6 +84,7 @@ const UsersPage = () => {
     }
   }, [success, toast]);
 
+  */
   useEffect(() => {
     if (error) {
       toast({
