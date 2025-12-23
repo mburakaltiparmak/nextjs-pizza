@@ -95,7 +95,7 @@ Pizza Restoranı web uygulaması aşağıdaki özellikleri sunar:
    ```
 3. Ortam değişkenlerini ayarlayın (`.env.local` dosyası oluşturun):
    ```
-   NEXT_PUBLIC_API_URL=http://localhost:8080
+   NEXT_PUBLIC_API_URL=https://api.burakaltiparmak.site
    NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
    ```
 4. Geliştirme ortamını başlatın:

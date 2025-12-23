@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/lib/context/authContext";
+import { useAuth } from "@/contexts/AuthContext";
 import Loading from "@/app/loading";
 import Link from "next/link";
 import SecondaryLoading from "@/components/secondaryLoading";

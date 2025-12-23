@@ -6,7 +6,7 @@ export const useAppSelector = useSelector.withTypes();
 export const useAppStore = useStore.withTypes();
 
 const API_TIMEOUT = 15000;
-const API_BASE_URL = "http://localhost:8080/pizza/api";
+const API_BASE_URL = "https://api.burakaltiparmak.site/pizza/api";
 
 export const instance = axios.create({
   baseURL: API_BASE_URL,
