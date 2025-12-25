@@ -14,21 +14,22 @@ let lastTokenValidationTime = 0;
 const TOKEN_VALIDATION_INTERVAL = 10 * 60 * 1000; // 10 dakika
 
 export const AuthService = {
-  // Token ve kullanıcı verilerini sakla
-  storeAuthData: (token, email, rememberMe) => {
+  // Token ve kullanıcı verilerini sakla - refreshToken desteği eklendi
+  storeAuthData: (accessToken, refreshToken, email, rememberMe) => {
     const storage = rememberMe ? localStorage : sessionStorage;
-    storage.setItem("token", token);
+    storage.setItem("accessToken", accessToken);
+    storage.setItem("refreshToken", refreshToken);
     storage.setItem("userEmail", email);
     localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
-    instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    instance.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
 
     // Token önbelleğini güncelle
-    if (token) {
+    if (accessToken) {
       isTokenValid = true;
       lastTokenValidationTime = Date.now();
     }
 
-    return { token, email, rememberMe };
+    return { accessToken, refreshToken, email, rememberMe };
   },
 
   // Token ve kullanıcı verilerini al
@@ -37,13 +38,14 @@ export const AuthService = {
     const storage = rememberMe ? localStorage : sessionStorage;
 
     return {
-      token: storage.getItem("token"),
+      accessToken: storage.getItem("accessToken"),
+      refreshToken: storage.getItem("refreshToken"),
       email: storage.getItem("userEmail"),
       rememberMe: rememberMe,
     };
   },
 
-  // Email ve şifre ile giriş
+  // Email ve şifre ile giriş - yeni response formatı
   login: async (email, password, rememberMe) => {
     try {
       const response = await instance.post(
@@ -57,15 +59,18 @@ export const AuthService = {
         }
       );
 
-      if (response.data && response.data.token) {
+      // Backend'den accessToken, refreshToken ve user objesi gelir
+      if (response.data && response.data.accessToken) {
+        const { accessToken, refreshToken, user } = response.data;
         AuthService.storeAuthData(
-          response.data.token,
-          response.data.email || email,
+          accessToken,
+          refreshToken,
+          user?.email || email,
           rememberMe
         );
-        return response.data;
+        return { ...response.data, accessToken, refreshToken, user };
       }
-      throw new Error("Token alınamadı");
+      throw new Error("Access token alınamadı");
     } catch (error) {
       throw error;
     }
@@ -94,51 +99,24 @@ export const AuthService = {
     return data;
   },
 
-  // Token doğrulama - önbellek ile optimize edilmiş
+  // Token doğrulama - profil fetch ile yapılır
+  // Token geçerliliği refresh mekanizması tarafından otomatik yönetilir
   validateToken: async (token, force = false) => {
-    // Önbellek kontrolü
-    const now = Date.now();
-    if (
-      !force &&
-      isTokenValid &&
-      now - lastTokenValidationTime < TOKEN_VALIDATION_INTERVAL
-    ) {
-      return { valid: true };
+    // Token varsa geçerli kabul et, refresh mekanizması geçersiz tokenları yönetir
+    if (!token) {
+      return { valid: false };
     }
 
+    // Basit bir kontrol: profil bilgisini çekmeyi dene
     try {
-      // Eğer token Supabase'den geliyorsa
-      if (token && token.startsWith("sbx_")) {
-        // Supabase session kontrolü
-        const { data: session } = await supabase.auth.getSession();
-        const result = {
-          valid: !!session,
-          email: session?.user?.email,
-          role: "CUSTOMER",
-        };
-
-        if (result.valid) {
-          isTokenValid = true;
-          lastTokenValidationTime = now;
-        }
-
-        return result;
-      } else {
-        // Backend JWT token doğrulama
-        const response = await instance.post("/auth/validate-token", null, {
-          headers: { Authorization: `Bearer ${token}` },
-          //timeout: 5000,
-        });
-
-        if (response.data && response.data.valid) {
-          isTokenValid = true;
-          lastTokenValidationTime = now;
-        }
-
-        return response.data;
-      }
+      const profile = await AuthService.fetchUserProfile(force);
+      return {
+        valid: true,
+        email: profile.email,
+        role: profile.role,
+      };
     } catch (error) {
-      isTokenValid = false;
+      // Profil çekilemezse token geçersiz
       return { valid: false };
     }
   },
@@ -174,7 +152,7 @@ export const AuthService = {
   // Email doğrulama
   verifyEmail: async (token) => {
     try {
-      const response = await instance.get(`/auth/verify?token=${token}`, {
+      const response = await instance.get(`/auth/verify-email?token=${token}`, {
         //timeout: 8000,
       });
       return { success: true, data: response.data };

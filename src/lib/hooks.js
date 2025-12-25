@@ -36,8 +36,9 @@ instance.interceptors.request.use(
     }
 
     if (typeof window !== "undefined") {
+      // accessToken kullan (yeni backend formatı)
       const token =
-        localStorage.getItem("token") || sessionStorage.getItem("token");
+        localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
       if (token && !config.headers.Authorization) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -50,6 +51,21 @@ instance.interceptors.request.use(
   }
 );
 
+// Response interceptor - refresh token desteği ile
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 instance.interceptors.response.use(
   (response) => {
     if (process.env.NODE_ENV === "development") {
@@ -57,7 +73,10 @@ instance.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Development logging
     if (process.env.NODE_ENV === "development") {
       if (error.name === "AbortError" || error.name === "CanceledError") {
         console.log(`🚫 API İsteği İptal Edildi: ${error.config?.url}`);
@@ -68,6 +87,72 @@ instance.interceptors.response.use(
           `❌ API Hatası: ${error.config?.url}`,
           error.response?.data || error.message
         );
+      }
+    }
+
+    // 401 hatası ve refresh token varsa token yenilemeyi dene
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // Zaten token yenileme işlemi devam ediyorsa kuyruğa ekle
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(token => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return instance(originalRequest);
+          })
+          .catch(err => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const rememberMe = localStorage.getItem("rememberMe") === "true";
+      const storage = rememberMe ? localStorage : sessionStorage;
+      const refreshToken = storage.getItem("refreshToken");
+
+      if (!refreshToken) {
+        // Refresh token yoksa logout
+        isRefreshing = false;
+        if (typeof window !== "undefined") {
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      }
+
+      try {
+        // Refresh token ile yeni access token al
+        const response = await axios.post(
+          `${API_BASE_URL}/auth/refresh-token`,
+          { refreshToken },
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+
+        const { accessToken } = response.data;
+
+        // Yeni token'ı kaydet
+        storage.setItem("accessToken", accessToken);
+        instance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+
+        // Kuyrukta bekleyen istekleri işle
+        processQueue(null, accessToken);
+
+        // Orijinal isteği yeni token ile tekrar dene
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return instance(originalRequest);
+      } catch (refreshError) {
+        // Refresh token süresi dolmuş, logout
+        processQueue(refreshError, null);
+        if (typeof window !== "undefined") {
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.href = '/login';
+        }
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 

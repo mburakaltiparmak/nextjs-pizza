@@ -1,50 +1,24 @@
 "use client";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  deleteCategory,
-  fetchCategories,
-  createCategory,
-  updateCategory,
-} from "@/lib/store/actions/categoryActions";
+import { useAdminLayout } from "@/contexts/AdminLayoutContext";
+import { deleteCategory } from "@/lib/store/actions/categoryActions";
+import { fetchDashboard, clearDashboardCache } from "@/lib/store/actions/adminActions";
 import { setSuccess } from "@/lib/store/actions/globalActions";
 import { fetchStates } from "@/lib/store/constants";
-import { useToast } from "@/hooks/use-toast";
-
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 
 // Components
-import { ConfirmationModal, Modal } from "@/components/admin/modal";
+import { ConfirmationModal } from "@/components/admin/modal";
 import { SearchBar } from "@/components/admin/searchAndFilter";
-import ImageUpload from "@/components/admin/imageUpload";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import SecondaryLoading from "@/components/secondaryLoading";
-import Image from "next/image";
-import { SquarePen, Trash2 } from "lucide-react";
-
-//Form validation schema
-const formSchema = z.object({
-  name: z.string().min(3, "Kategori adı en az 3 karakter olmalıdır."),
-  image: z.any().optional(),
-  preview: z.any().optional(),
-});
+import { CategoryTableRow } from "@/components/admin/category/CategoryTableRow";
+import { CategoryFormModal } from "@/components/admin/category/CategoryFormModal";
 
 const CategoryPage = () => {
   const router = useRouter();
   const dispatch = useDispatch();
-  const { toast } = useToast();
+  const { registerModal } = useAdminLayout();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -53,87 +27,36 @@ const CategoryPage = () => {
   const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [dataFetchAttempted, setDataFetchAttempted] = useState(false);
 
-  // Redux state
-  const categories = useSelector((state) => state.category.categories);
-  const categoryFetchState = useSelector((state) => state.category.fetchState);
-  const loading = useSelector((state) => state.global.loading);
-  const error = useSelector((state) => state.global.error);
-  const success = useSelector((state) => state.global.success);
-  const token = useSelector((state) => state.user.token);
+  // Redux state - dashboard data'dan kategorileri çek
+  const dashboardData = useSelector((state) => state.admin.dashboardData);
+  const adminFetchState = useSelector((state) => state.admin.fetchState);
 
-  // Initialize form
-  const form = useForm({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      image: null,
-      preview: null,
-    },
-  });
+  // Dashboard data'dan categories array'ini al
+  const categories = dashboardData?.categories || [];
 
-  // Kategorileri yükle
+  // Dashboard verisi yükle
   useEffect(() => {
-    if (categoryFetchState === fetchStates.NOT_FETCHED && !dataFetchAttempted) {
+    if (adminFetchState === fetchStates.NOT_FETCHED && !dataFetchAttempted) {
       setDataFetchAttempted(true);
-      dispatch(fetchCategories());
+      dispatch(fetchDashboard());
     }
-  }, [dispatch, categoryFetchState, dataFetchAttempted]);
+  }, [dispatch, adminFetchState, dataFetchAttempted]);
 
-  const openModal = useCallback(
-    (category = null) => {
-      if (category) {
-        setEditingCategory(category);
-        form.reset({
-          name: category.name,
-          image: null,
-          preview: category.img,
-        });
-      } else {
-        setEditingCategory(null);
-        form.reset({
-          name: "",
-          image: null,
-          preview: null,
-        });
-      }
-      setModalOpen(true);
-    },
-    [form]
-  );
+  const openModal = (category = null) => {
+    setEditingCategory(category);
+    setModalOpen(true);
+  };
 
-  // DOM element effector'ını da güncelleyin
+  // Register modal with AdminLayoutContext
   useEffect(() => {
-    if (typeof document !== "undefined") {
-      const pageElement = document.getElementById("admin-page-component");
-      if (pageElement) {
-        pageElement.openModal = openModal;
-      }
-    }
-  }, [openModal]);
+    registerModal(openModal);
+  }, [registerModal]);
 
   const closeModal = () => {
     setModalOpen(false);
     setEditingCategory(null);
-    form.reset({
-      name: "",
-      image: null,
-      preview: null,
-    });
-  };
-
-  const handleImageChange = (imageData) => {
-    if (imageData && imageData.file) {
-      form.setValue("image", imageData.file);
-      form.setValue("preview", imageData.preview);
-    }
-  };
-
-  const handleImageError = (errorMessage) => {
-    toast({
-      title: "Hata",
-      description: errorMessage,
-      variant: "destructive",
-    });
+    // Modal kapatıldıktan sonra verileri yenile
+    dispatch(fetchDashboard(true)); // force refresh
   };
 
   const openDeleteModal = (category) => {
@@ -146,62 +69,19 @@ const CategoryPage = () => {
     setDeleteModalOpen(false);
   };
 
-  const onSubmit = async (data) => {
-    try {
-      const categoryData = {
-        name: data.name,
-        image: data.image,
-      };
-
-      let result;
-
-      if (editingCategory) {
-        // Kategori güncelleme
-        result = await dispatch(
-          updateCategory(editingCategory.id, categoryData, token)
-        );
-        if (!result.error) {
-          dispatch(
-            setSuccess(`"${data.name}" kategorisi başarıyla güncellendi`)
-          );
-          closeModal();
-        }
-      } else {
-        // Yeni kategori ekleme
-        result = await dispatch(createCategory(categoryData, token));
-        if (!result.error) {
-          dispatch(
-            setSuccess(`"${data.name}" kategorisi başarıyla oluşturuldu`)
-          );
-          closeModal();
-        }
-      }
-    } catch (err) {
-      console.error("Kategori işlemi sırasında hata:", err);
-    }
-  };
-
   const handleDelete = async () => {
     if (!categoryToDelete) return;
 
     try {
-      // Check if category has products before deletion
-      if (categoryToDelete.products && categoryToDelete.products.length > 0) {
-        if (
-          !window.confirm(
-            `Bu kategori ${categoryToDelete.products.length} ürün içeriyor. Silmek istediğinize emin misiniz?`
-          )
-        ) {
-          return;
-        }
-      }
-
       const result = await dispatch(deleteCategory(categoryToDelete.id));
 
       if (!result.error) {
         dispatch(
           setSuccess(`"${categoryToDelete.name}" kategorisi başarıyla silindi`)
         );
+        // Cache'i temizle ve dashboard'u yenile
+        clearDashboardCache();
+        dispatch(fetchDashboard(true));
         closeDeleteModal();
       }
     } catch (err) {
@@ -214,38 +94,23 @@ const CategoryPage = () => {
     if (!categories || !Array.isArray(categories)) return [];
 
     return categories.filter((category) => {
-      // Kategori adı yoksa veya geçersizse filtreleme işleminden geçirme
       if (!category || !category.name || typeof category.name !== "string") {
         return false;
       }
       return category.name.toLowerCase().includes(searchTerm.toLowerCase());
     });
   }, [categories, searchTerm]);
-  console.log("filtered categories", filteredCategories);
 
-  // Admin layout için props tanımlama
-  CategoryPage.props = {
-    title: "Kategoriler",
-    activePage: "category",
-    showAddButton: true,
-    addButtonText: "Yeni Kategori",
-    onAddButtonClick: () => {
-      if (window.openAdminModal) {
-        window.openAdminModal();
-      } else {
-        openModal(); // Fallback olarak kendi modalımızı açalım
-      }
-    },
-  };
+
 
   // Yükleniyor durumu
-  if (categoryFetchState === fetchStates.FETCHING) {
+  if (adminFetchState === fetchStates.FETCHING) {
     return <SecondaryLoading size="fullPage" />;
   }
 
   return (
     <div>
-      {/* Arama ve Filtreleme */}
+      {/* Arama */}
       <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex items-center border border-lightgray">
         <SearchBar
           value={searchTerm}
@@ -254,146 +119,57 @@ const CategoryPage = () => {
         />
       </div>
 
-      {/* Kategori Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredCategories.map((category) => (
-          <div
-            key={category.id}
-            className="bg-white rounded-xl shadow-sm border-2 border-lightgray overflow-hidden group"
-          >
-            <div className="relative flex items-center justify-center h-36 overflow-hidden bg-gray-100">
-              <Image
-                src={category.img}
-                alt={category ? category.name : "food category"}
-                width={64}
-                height={64}
-                className="w-16 object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                <div className="flex space-x-2">
+      {/* Tablo */}
+      <div className="bg-white rounded-xl shadow-sm border border-lightgray overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-lightgray/50">
+            <tr className="border-b border-lightgray2">
+              <th className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Quattrocento_Sans">
+                Kategori Adı
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Quattrocento_Sans">
+                Ürün Sayısı
+              </th>
+              <th className="px-6 py-4 text-right text-sm font-bold text-darkgray font-Quattrocento_Sans">
+                İşlemler
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredCategories.length > 0 ? (
+              filteredCategories.map((category) => (
+                <CategoryTableRow
+                  key={category.id}
+                  category={category}
+                  onEdit={() => openModal(category)}
+                  onDelete={() => openDeleteModal(category)}
+                />
+              ))
+            ) : (
+              <tr>
+                <td colSpan="3" className="px-6 py-12 text-center">
+                  <p className="text-gray font-Barlow mb-4">
+                    Herhangi bir kategori bulunamadı.
+                  </p>
                   <button
-                    onClick={() => openModal(category)}
-                    className="p-2 bg-white rounded-full hover:bg-lightgray2 transition-colors"
+                    onClick={() => openModal()}
+                    className="px-4 py-2 bg-red text-lightgray rounded-lg hover:bg-yellow hover:text-red transition-colors font-Barlow"
                   >
-                    <SquarePen size={16} className="text-blue-600" />
+                    Yeni Kategori Ekle
                   </button>
-                  <button
-                    onClick={() => openDeleteModal(category)}
-                    className="p-2 bg-white rounded-full hover:bg-lightgray2 transition-colors"
-                  >
-                    <Trash2 size={16} className="text-red" />
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="p-4">
-              <h3 className="font-medium text-darkgray text-lg font-Quattrocento_Sans">
-                {category.name}
-              </h3>
-              {category.products && (
-                <p className="text-sm text-gray mt-1 font-Barlow">
-                  {category.products.length} ürün
-                </p>
-              )}
-            </div>
-          </div>
-        ))}
-
-        {filteredCategories.length === 0 &&
-          categoryFetchState !== fetchStates.FETCHING && (
-            <div className="col-span-full text-center py-10">
-              <p className="text-gray font-Barlow">
-                Herhangi bir kategori bulunamadı.
-              </p>
-              <button
-                onClick={() => openModal()}
-                className="mt-4 px-4 py-2 bg-red text-lightgray rounded-lg hover:bg-yellow hover:text-red transition-colors font-Barlow"
-              >
-                Yeni Kategori Ekle
-              </button>
-            </div>
-          )}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Kategori Ekleme/Düzenleme Modal */}
-      <Modal
-        isOpen={modalOpen}
+      <CategoryFormModal
+        open={modalOpen}
         onClose={closeModal}
-        title={editingCategory ? "Kategori Düzenle" : "Yeni Kategori Ekle"}
-        footer={
-          <div className="flex flex-row items-center justify-between space-x-2 p-4">
-            <Button
-              type="button"
-              className="border-gray text-lightgray hover:bg-gray hover:border-darkgray hover:text-lightgray font-Barlow"
-              onClick={closeModal}
-              disabled={loading}
-            >
-              İptal
-            </Button>
-            <Button
-              type="submit"
-              className="bg-red text-lightgray hover:bg-yellow hover:text-red font-Barlow"
-              disabled={loading}
-              onClick={form.handleSubmit(onSubmit)}
-            >
-              {loading
-                ? "İşleniyor..."
-                : editingCategory
-                ? "Güncelle"
-                : "Kaydet"}
-            </Button>
-          </div>
-        }
-      >
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-4"
-          >
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
-                    <p className="text-darkgray">Kategori Adı</p>
-                    <p className="text-red pl-1">*</p>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      className="w-full p-2 border border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-red focus:border-transparent font-Barlow"
-                      placeholder="Kategori adını girin"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-xs font-semibold text-red" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="image"
-              render={({ field: { onChange, value, ...rest } }) => (
-                <FormItem className="">
-                  <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
-                    <p className="text-darkgray">Kategori Logo</p>
-                    <p className="text-red pl-1">*</p>
-                  </FormLabel>
-                  <FormControl>
-                    <ImageUpload
-                      preview={form.getValues("preview")}
-                      onChange={handleImageChange}
-                      onError={handleImageError}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-xs font-semibold text-red" />
-                </FormItem>
-              )}
-            />
-          </form>
-        </Form>
-      </Modal>
+        editingCategory={editingCategory}
+      />
 
       {/* Silme Onay Modalı */}
       <ConfirmationModal
@@ -403,8 +179,8 @@ const CategoryPage = () => {
         title="Kategoriyi Sil"
         message={`${categoryToDelete?.name} kategorisini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
         warning={
-          categoryToDelete?.products?.length > 0
-            ? `Bu kategori ${categoryToDelete.products.length} ürün içeriyor. Kategoriyi silmek bu ürünleri de etkileyebilir.`
+          categoryToDelete?.productCount > 0
+            ? `Bu kategori ${categoryToDelete.productCount} ürün içeriyor. Kategoriyi silmek bu ürünleri de etkileyebilir.`
             : null
         }
       />
@@ -413,3 +189,4 @@ const CategoryPage = () => {
 };
 
 export default CategoryPage;
+

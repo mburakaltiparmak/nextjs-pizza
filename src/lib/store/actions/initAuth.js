@@ -16,19 +16,26 @@ export const initializeAuth = () => async (dispatch) => {
     // Tarayıcı tarafında çalışıyoruz, devam edebiliriz
     const rememberMe = localStorage.getItem("rememberMe") === "true";
     const storage = rememberMe ? localStorage : sessionStorage;
-    let token = storage.getItem("token");
 
-    // 2. Eğer token yoksa, Supabase token'ını kontrol et
+    // Backend'in yeni formatı: accessToken ve refreshToken
+    let token = storage.getItem("accessToken");
+
+    // 2. Eğer accessToken yoksa, eski token formatını kontrol et (backward compatibility)
+    if (!token) {
+      token = storage.getItem("token");
+    }
+
+    // 3. Eğer hala token yoksa, Supabase token'ını kontrol et
     if (!token) {
       token = extractSupabaseToken();
 
       // Supabase token varsa localStorage'a kaydet
       if (token) {
-        storage.setItem("token", token);
+        storage.setItem("accessToken", token);
       }
     }
 
-    // 3. Token varsa Redux store'a yükle ve header'ları ayarla
+    // 4. Token varsa Redux store'a yükle ve header'ları ayarla
     if (token) {
       // Redux store'a token bilgisini yükle
       dispatch(setToken(token));

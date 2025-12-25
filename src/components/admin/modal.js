@@ -9,13 +9,42 @@ export const Modal = ({ isOpen, onClose, title, children, footer }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center font-Barlow">
-      <div className="flex flex-col justify-between bg-white rounded-lg shadow-lg h-fit w-2/5 max-md:w-96 mx-4">
-        <div className="p-4 border-b">
-          <h3 className="text-xl font-semibold text-gray">{title}</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-black bg-opacity-50">
+      <div
+        className="absolute inset-0 md:hidden"
+        onClick={onClose}
+      />
+
+      {/* Modal Content - Full screen on mobile, dialog on desktop */}
+      <div className="relative bg-white w-full h-full md:h-auto md:max-h-[90vh] md:max-w-2xl md:rounded-xl shadow-xl flex flex-col font-Barlow">
+        {/* Header */}
+        <div className="p-4 md:p-6 border-b flex-shrink-0 flex items-center justify-between">
+          <h3 className="text-lg md:text-xl font-semibold text-gray font-Quattrocento_Sans">{title}</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors ml-4"
+          >
+            <svg
+              className="w-5 h-5 md:w-6 md:h-6"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-        <div className="p-4">{children}</div>
-        {footer && <div className="border-t flex space-x-3">{footer}</div>}
+
+        {/* Body - Scrollable */}
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
+          {children}
+        </div>
+
+        {/* Footer */}
+        {footer && <div className="border-t flex space-x-3 flex-shrink-0">{footer}</div>}
       </div>
     </div>
   );

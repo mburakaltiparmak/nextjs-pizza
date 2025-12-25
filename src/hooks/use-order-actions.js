@@ -36,15 +36,15 @@ export const useOrderActions = ({ onSuccess, updateOrderLocally }) => {
       setIsUpdating(true);
 
       // Optimistic update (önce local state'i güncelle)
-      const previousStatus = selectedOrder?.status;
-      updateOrderLocally(orderId, { status: newStatus });
+      const previousStatus = selectedOrder?.orderStatus;
+      updateOrderLocally(orderId, { orderStatus: newStatus });
       if (selectedOrder?.id === orderId) {
-        setSelectedOrder((prev) => ({ ...prev, status: newStatus }));
+        setSelectedOrder((prev) => ({ ...prev, orderStatus: newStatus }));
       }
 
       try {
         console.log(`🔄 Updating order ${orderId} status to ${newStatus}`);
-        await instance.put(
+        await instance.patch(
           `/orders/${orderId}/status?status=${newStatus}`,
           null,
           {
@@ -70,9 +70,9 @@ export const useOrderActions = ({ onSuccess, updateOrderLocally }) => {
         console.error("❌ Update order status error:", error);
 
         // Rollback optimistic update
-        updateOrderLocally(orderId, { status: previousStatus });
+        updateOrderLocally(orderId, { orderStatus: previousStatus });
         if (selectedOrder?.id === orderId) {
-          setSelectedOrder((prev) => ({ ...prev, status: previousStatus }));
+          setSelectedOrder((prev) => ({ ...prev, orderStatus: previousStatus }));
         }
 
         toast({
@@ -110,14 +110,14 @@ export const useOrderActions = ({ onSuccess, updateOrderLocally }) => {
       setIsUpdating(true);
 
       // Optimistic update
-      const previousStatus = selectedOrder?.status;
-      updateOrderLocally(orderId, { status: "CANCELLED" });
+      const previousStatus = selectedOrder?.orderStatus;
+      updateOrderLocally(orderId, { orderStatus: "CANCELLED" });
       if (selectedOrder?.id === orderId) {
-        setSelectedOrder((prev) => ({ ...prev, status: "CANCELLED" }));
+        setSelectedOrder((prev) => ({ ...prev, orderStatus: "CANCELLED" }));
       }
 
       try {
-        console.log(`🔄 Cancelling order ${orderId}`);
+        console.log(`❌ Cancelling order ${orderId}`);
         await instance.post(`/orders/${orderId}/cancel`, null, {
           // timeout: 5000,
         });
@@ -139,9 +139,9 @@ export const useOrderActions = ({ onSuccess, updateOrderLocally }) => {
         console.error("❌ Cancel order error:", error);
 
         // Rollback
-        updateOrderLocally(orderId, { status: previousStatus });
+        updateOrderLocally(orderId, { orderStatus: previousStatus });
         if (selectedOrder?.id === orderId) {
-          setSelectedOrder((prev) => ({ ...prev, status: previousStatus }));
+          setSelectedOrder((prev) => ({ ...prev, orderStatus: previousStatus }));
         }
 
         toast({
@@ -165,7 +165,7 @@ export const useOrderActions = ({ onSuccess, updateOrderLocally }) => {
   const fetchOrderDetail = useCallback(
     async (orderId) => {
       try {
-        console.log(`📄 Fetching order detail: ${orderId}`);
+        console.log(`� Fetching order details for ID: ${orderId}`);
         const response = await instance.get(`/orders/${orderId}`, {
           // timeout: 5000,
         });

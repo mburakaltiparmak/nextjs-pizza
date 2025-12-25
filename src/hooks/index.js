@@ -10,3 +10,7 @@ export { useUserButton } from './use-user-button';
 export { useOrdersManager } from './use-orders-manager';
 export { useOrderActions } from './use-order-actions';
 export { useOrderFilters } from './use-order-filters';
+export { useUsersManager } from './use-users-manager';
+export { useUserActions } from './use-user-actions';
+export { useProductsManager } from './use-products-manager';
+export { useProductActions } from './use-product-actions';

@@ -1,4 +1,3 @@
-// src/components/floatingUserButton.js
 "use client";
 import React from "react";
 import { useUserButton } from "@/hooks/use-user-button";
@@ -9,7 +8,7 @@ import useAuth from "@/hooks/use-auth";
 
 const FloatingUserButton = () => {
   const { loading: authLoading } = useAuth([], "/", false);
-  
+
   const {
     isLogin,
     userEmail,

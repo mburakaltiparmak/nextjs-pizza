@@ -24,10 +24,10 @@ const addressSchema = z.object({
   isDefault: z.boolean().optional()
 });
 
-const AddressForm = ({ 
-  onSubmit, 
-  isGuest = false, 
-  initialData = {}, 
+const AddressForm = ({
+  onSubmit,
+  isGuest = false,
+  initialData = {},
   submitText = "Adresi Kaydet",
   existingAddressId = null
 }) => {
@@ -69,21 +69,21 @@ const AddressForm = ({
           id: null,
           saveAddress: false
         });
-        
+
         success("Adres bilgileri alındı", {
           title: "Adres Kaydedildi",
           message: "Siparişiniz için kullanılacak."
         });
-        
+
         return;
       }
-      
+
       // Kayıtlı kullanıcı için adres kaydetme
       if (isAuthenticated && data.saveAddress) {
         setIsSaving(true);
-        
+
         const isNewAddress = !existingAddressId;
-        
+
         try {
           let response;
           const addressPayload = {
@@ -102,16 +102,16 @@ const AddressForm = ({
           } else {
             response = await instance.put(`user/addresses/${existingAddressId}`, addressPayload);
           }
-        
+
           setIsSaving(false);
-        
+
           if (response.data) {
             onSubmit({
               ...data,
               id: isNewAddress ? response.data.id : existingAddressId,
               saveAddress: false
             });
-          
+
             success(isNewAddress ? "Adres başarıyla kaydedildi" : "Adres başarıyla güncellendi", {
               title: "İşlem Başarılı",
               message: data.isDefault ? "Varsayılan adresiniz olarak ayarlandı." : ""
@@ -120,11 +120,11 @@ const AddressForm = ({
         } catch (apiError) {
           setIsSaving(false);
           console.error("Adres kaydedilirken hata:", apiError);
-          
+
           error(apiError.response?.data?.message || "Adres kaydedilemedi", {
             title: "Hata"
           });
-          
+
           onSubmit(data);
         }
       } else {
@@ -133,11 +133,11 @@ const AddressForm = ({
     } catch (error) {
       setIsSaving(false);
       console.error("Adres işleminde hata:", error);
-      
+
       error("Lütfen daha sonra tekrar deneyin", {
         title: "Adres kaydedilemedi"
       });
-      
+
       onSubmit(data);
     }
   };
@@ -153,7 +153,7 @@ const AddressForm = ({
           <User className="w-5 h-5 text-red" />
           Alıcı Bilgileri
         </h4>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="lg:col-span-2">
             <Label htmlFor="recipientName" className="text-base font-semibold text-darkgray mb-2 block">
@@ -331,15 +331,15 @@ const AddressForm = ({
             <Save className="w-5 h-5 text-red" />
             Kaydetme Seçenekleri
           </h4>
-          
+
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <Controller
                 name="saveAddress"
                 control={control}
                 render={({ field }) => (
-                  <Checkbox 
-                    id="saveAddress" 
+                  <Checkbox
+                    id="saveAddress"
                     checked={field.value}
                     onCheckedChange={field.onChange}
                     className="w-5 h-5"
@@ -357,8 +357,8 @@ const AddressForm = ({
                   name="isDefault"
                   control={control}
                   render={({ field }) => (
-                    <Checkbox 
-                      id="isDefault" 
+                    <Checkbox
+                      id="isDefault"
                       checked={field.value}
                       onCheckedChange={field.onChange}
                       className="w-5 h-5"

@@ -159,21 +159,90 @@ export const useOrdersManager = () => {
     );
   }, []);
 
-  // Initial fetch + Polling setup
+  // Initial fetch only (polling disabled to avoid rate limit issues)
   useEffect(() => {
-    fetchOrders(true, false); // İlk yükleme
-    startPolling();
+    // İlk yükleme - sadece bir kere çalışmalı
+    const initialFetch = async () => {
+      // Throttle kontrolü
+      const now = Date.now();
+      const timeSinceLastFetch = now - lastFetchTimeRef.current;
 
-    return () => {
-      mountedRef.current = false;
-      stopPolling();
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+      if (timeSinceLastFetch < MIN_FETCH_INTERVAL) {
+        console.log(
+          `⏭️ Initial fetch throttled (${Math.round(timeSinceLastFetch / 1000)}s)`
+        );
+        return;
+      }
+
+      // Yeni AbortController
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+
+      setLoading(true);
+
+      try {
+        console.log("🔄 Initial fetch - loading orders...");
+        const response = await instance.get("/orders/admin/paged", { // Changed to paged endpoint
+          params: {
+            size: 1000, // Large size to get all orders
+            sort: "orderDate,desc"
+          },
+          signal: abortController.signal,
+        });
+
+        if (!mountedRef.current) return;
+
+        const ordersData = response.data.content || []; // Extract content
+        setOrders(ordersData);
+        setLastUpdateTime(new Date());
+        lastFetchTimeRef.current = now;
+        initialFetchDoneRef.current = true;
+
+        console.log(`✅ Initial orders loaded: ${ordersData.length} items`);
+      } catch (error) {
+        if (!mountedRef.current) return;
+
+        // Abort veya cancel hataları sessizce geç
+        if (error.name === "AbortError" || error.name === "CanceledError") {
+          console.log("⏹️ Initial fetch aborted");
+          return;
+        }
+
+        console.error("❌ Initial fetch error:", error);
+        toast({
+          title: "Hata",
+          description: "Siparişler yüklenirken bir sorun oluştu",
+          variant: "destructive",
+        });
+      } finally {
+        if (mountedRef.current) {
+          setLoading(false);
+        }
+        abortControllerRef.current = null;
       }
     };
-  }, [fetchOrders, startPolling, stopPolling]);
 
-  // Sayfa görünürlük kontrolü (tab değişince polling durdur/başlat)
+    initialFetch();
+
+    // Cleanup
+    return () => {
+      console.log("🧹 Cleanup: unmounting useOrdersManager");
+      mountedRef.current = false;
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - run only once on mount
+
+  // Page visibility polling disabled (prevents rate limit issues)
+  // Users can manually refresh if needed
+  /*
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -191,6 +260,7 @@ export const useOrdersManager = () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [stopPolling, startPolling, fetchOrders]);
+  */
 
   return {
     orders,

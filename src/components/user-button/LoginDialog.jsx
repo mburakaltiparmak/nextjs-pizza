@@ -39,29 +39,29 @@ export const LoginDialog = ({
         </button>
       </AlertDialogTrigger>
 
-      <AlertDialogContent className="max-w-md max-md:max-w-[95vw] max-md:mx-2">
+      <AlertDialogContent className="max-w-md max-md:max-w-[95vw] max-md:mx-2 bg-white/95 backdrop-blur-sm border-2 border-yellow rounded-2xl shadow-2xl">
         <div className="relative">
           <button
             onClick={() => setLoginOpen(false)}
-            className="absolute right-0 top-0 p-2 hover:bg-lightgray rounded-full transition-colors"
+            className="absolute -right-2 -top-2 p-2 hover:bg-lightgray rounded-full transition-colors group"
             aria-label="Kapat"
           >
-            <X size={20} className="text-darkgray" />
+            <X size={20} className="text-gray group-hover:text-red transition-colors" />
           </button>
 
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-bold text-red font-Londrina_Solid">
+            <AlertDialogTitle className="text-3xl font-bold text-red font-Barlow text-center border-b-2 border-lightgray2 pb-4">
               Giriş Yap
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-darkgray">
+            <AlertDialogDescription className="text-darkgray font-Barlow text-center mt-2 text-base">
               Hesabınıza giriş yaparak siparişlerinizi takip edebilir ve özel
               avantajlardan yararlanabilirsiniz.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <div className="space-y-6 mt-6">
+          <div className="space-y-6 mt-6 font-Barlow">
             {errorMessage && (
-              <div className="bg-red-50 border border-red text-red px-4 py-3 rounded-lg text-sm">
+              <div className="bg-red/10 border border-red text-red px-4 py-3 rounded-xl text-sm font-medium flex items-center justify-center">
                 {errorMessage}
               </div>
             )}
@@ -70,7 +70,7 @@ export const LoginDialog = ({
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-semibold text-darkgray mb-2"
+                  className="block text-sm font-bold text-darkgray mb-2 ml-1"
                 >
                   E-posta Adresi
                 </label>
@@ -82,7 +82,7 @@ export const LoginDialog = ({
                     setEmail(e.target.value);
                     handleInputChange();
                   }}
-                  className="w-full px-4 py-3 border-2 border-lightgray rounded-lg focus:ring-2 focus:ring-yellow focus:border-yellow transition-all text-darkgray"
+                  className="w-full px-4 py-3 border-2 border-lightgray2 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow focus:border-yellow transition-all text-darkgray placeholder-gray bg-lightgray/50 hover:bg-white"
                   placeholder="ornek@email.com"
                 />
               </div>
@@ -90,7 +90,7 @@ export const LoginDialog = ({
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-sm font-semibold text-darkgray mb-2"
+                  className="block text-sm font-bold text-darkgray mb-2 ml-1"
                 >
                   Şifre
                 </label>
@@ -102,7 +102,7 @@ export const LoginDialog = ({
                     setPassword(e.target.value);
                     handleInputChange();
                   }}
-                  className="w-full px-4 py-3 border-2 border-lightgray rounded-lg focus:ring-2 focus:ring-yellow focus:border-yellow transition-all text-darkgray"
+                  className="w-full px-4 py-3 border-2 border-lightgray2 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow focus:border-yellow transition-all text-darkgray placeholder-gray bg-lightgray/50 hover:bg-white"
                   placeholder="••••••••"
                 />
               </div>
@@ -113,13 +113,13 @@ export const LoginDialog = ({
                 <input
                   id="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-lightgray text-red focus:ring-yellow"
+                  className="h-4 w-4 rounded border-lightgray2 text-red focus:ring-yellow"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                 />
                 <label
                   htmlFor="remember-me"
-                  className="ml-2 block text-sm font-semibold text-darkgray"
+                  className="ml-2 block text-sm font-medium text-gray hover:text-darkgray cursor-pointer transition-colors"
                 >
                   Beni Hatırla
                 </label>
@@ -128,39 +128,44 @@ export const LoginDialog = ({
                 <button
                   type="button"
                   onClick={onForgotPassword}
-                  className="font-semibold text-red hover:text-darkred transition-colors"
+                  className="font-semibold text-red hover:text-yellow transition-colors"
                 >
                   Şifremi Unuttum
                 </button>
               </div>
             </div>
 
-            <div className="flex flex-col space-y-3">
+            <div className="flex flex-col space-y-3 pt-2">
               <button
                 onClick={handleLogin}
                 disabled={loading}
-                className={`w-full py-3 px-4 rounded-lg font-bold text-white transition-all duration-200 ${
-                  loading
-                    ? "bg-gray cursor-not-allowed opacity-60"
-                    : "bg-red hover:bg-darkred shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95"
-                }`}
+                className={`w-full py-3.5 px-4 rounded-xl font-bold font-Barlow text-lg text-white transition-all duration-300 ${loading
+                  ? "bg-gray cursor-not-allowed opacity-60"
+                  : "bg-red hover:bg-yellow hover:text-red shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+                  }`}
               >
                 {loading ? (
-                  <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2">
                     <SecondaryLoading size="medium" />
+                    <span>Giriş Yapılıyor...</span>
                   </div>
                 ) : (
                   "Giriş Yap"
                 )}
               </button>
 
+              <div className="relative flex items-center justify-center my-4">
+                <div className="border-t border-lightgray2 w-full absolute"></div>
+                <span className="px-3 text-gray text-sm font-medium relative z-10">veya</span>
+              </div>
+
               <button
                 onClick={handleGoogleLogin}
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-lg font-bold bg-green-600 hover:bg-green-700 text-white border-2 border-lightgray2 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95 flex items-center justify-center"
+                className="w-full py-3 px-4 rounded-xl font-bold font-Barlow bg-white hover:bg-gray-50 text-darkgray border-2 border-lightgray2 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 group"
               >
                 <svg
-                  className="w-7 h-7 bg-white rounded-full mr-2"
+                  className="w-6 h-6 bg-transparent"
                   viewBox="0 0 24 24"
                 >
                   <path
@@ -180,7 +185,7 @@ export const LoginDialog = ({
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                Google ile Giriş Yap
+                <span className="group-hover:text-darkgray transition-colors">Google ile Devam Et</span>
               </button>
             </div>
           </div>
@@ -188,4 +193,5 @@ export const LoginDialog = ({
       </AlertDialogContent>
     </AlertDialog>
   );
+
 };

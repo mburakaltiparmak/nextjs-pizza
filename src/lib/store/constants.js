@@ -1,4 +1,5 @@
-export const API_BASE_URL = "https://api.burakaltiparmak.site";
+// Backend API base URL with /pizza/api prefix
+export const API_BASE_URL = "https://api.burakaltiparmak.site/pizza/api";
 
 export const fetchStates = {
   NOT_FETCHED: "NOT_FETCHED",

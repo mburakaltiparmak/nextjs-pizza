@@ -31,7 +31,7 @@ export const UserDropdown = ({
       </div>
 
       {dropdownOpen && (
-        <div className="fixed left-0 mt-2 max-md:mt-8 max-md:text-sm w-56 bg-white rounded-md shadow-lg overflow-hidden z-100 font-Barlow">
+        <div className="fixed left-4 mt-2 max-md:mt-8 max-md:text-sm w-56 bg-white rounded-md shadow-lg overflow-hidden z-50 font-Barlow">
           {/* User Info Header */}
           <div className="py-2 border-b border-red">
             <div className="px-4 py-2">
@@ -74,9 +74,8 @@ export const UserDropdown = ({
           {/* Logout */}
           <div className="py-1 border-t border-red">
             <div
-              className={`px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-red text-sm max-md:text-xs ${
-                isLoggingOut ? "opacity-70 cursor-not-allowed" : ""
-              }`}
+              className={`px-4 py-2 hover:bg-lightgray cursor-pointer flex items-center text-red text-sm max-md:text-xs ${isLoggingOut ? "opacity-70 cursor-not-allowed" : ""
+                }`}
               onClick={!isLoggingOut ? handleLogout : undefined}
             >
               <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />

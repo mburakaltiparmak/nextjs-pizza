@@ -23,15 +23,25 @@ export const fetchProducts = () => async (dispatch) => {
   });
 
   try {
-    const response = await instance.get("/product");
+    // Backend pagination endpoint kullan
+    const response = await instance.get("/product/paged", {
+      params: {
+        page: 0,
+        size: 100, // Tüm ürünleri almak için büyük bir sayfa boyutu
+        sort: "id,desc"
+      }
+    });
 
     if (!response || !response.data) {
       throw new Error("Ürün verisi alınamadı");
     }
 
+    // Paginated response'dan content'i çıkar
+    const products = response.data.content || response.data;
+
     dispatch({
       type: productActions.setProducts,
-      payload: response.data,
+      payload: products,
     });
 
     dispatch({
@@ -41,7 +51,7 @@ export const fetchProducts = () => async (dispatch) => {
 
     dispatch(setModuleLoading('product', false));
 
-    return response.data;
+    return products;
   } catch (err) {
     console.error("Ürün getirme hatası:", err);
 
@@ -51,7 +61,7 @@ export const fetchProducts = () => async (dispatch) => {
     });
 
     dispatch(setModuleLoading('product', false));
-    
+
     // Merkezi error handler kullan
     return handleApiError(err, dispatch, 'fetchProducts');
   }
@@ -59,7 +69,7 @@ export const fetchProducts = () => async (dispatch) => {
 
 export const fetchProductById = (productId) => async (dispatch, getState) => {
   const state = getState();
-  
+
   const existingProduct = state.product.products.find(
     (p) => p.id.toString() === productId.toString()
   );
@@ -106,18 +116,25 @@ export const fetchProductsByCategory = (categoryId) => async (dispatch) => {
   });
 
   try {
-    // Kategori ID'sine göre API isteği yap
-    // Not: Backend'de böyle bir endpoint varsa kullanılabilir
-    // Backend'de yoksa client-side filtreleme tercih edilebilir
-    const response = await instance.get(`/product?categoryId=${categoryId}`);
+    // Backend'in pagination endpoint'ini kullan: /product/category/{id}/paged
+    const response = await instance.get(`/product/category/${categoryId}/paged`, {
+      params: {
+        page: 0,
+        size: 100, // Tüm ürünleri almak için büyük bir sayfa boyutu
+        sort: "id,desc"
+      }
+    });
 
     if (!response || !response.data) {
       throw new Error("Kategori ürünleri alınamadı");
     }
 
+    // Paginated response'dan content'i çıkar
+    const products = response.data.content || response.data;
+
     dispatch({
       type: productActions.setProducts,
-      payload: response.data,
+      payload: products,
     });
 
     dispatch({
@@ -127,7 +144,7 @@ export const fetchProductsByCategory = (categoryId) => async (dispatch) => {
 
     dispatch(setLoading(false));
 
-    return response.data;
+    return products;
   } catch (err) {
     console.error("Kategori ürünleri getirme hatası:", err);
 
@@ -164,7 +181,7 @@ export const createProduct = (productData, token) => async (dispatch) => {
     formData.append("stock", productData.stock.toString());
     formData.append("price", productData.price.toString());
     formData.append("categoryId", productData.categoryId.toString());
-    
+
     // Resim dosyasını ekle
     if (productData.image && productData.image instanceof File) {
       formData.append("image", productData.image);
@@ -201,7 +218,7 @@ export const createProduct = (productData, token) => async (dispatch) => {
     return response.data;
   } catch (err) {
     console.error("❌ Product creation error:", err);
-    
+
     if (err.response) {
       console.error("📨 Error details:", {
         status: err.response.status,
@@ -209,7 +226,7 @@ export const createProduct = (productData, token) => async (dispatch) => {
         headers: err.response.headers
       });
     }
-    
+
     let errorMessage = "Ürün oluşturulamadı";
 
     if (err.response) {
@@ -274,7 +291,7 @@ export const updateProduct = (id, productData, token) => async (dispatch) => {
     return response.data;
   } catch (err) {
     console.error("❌ Product update error:", err);
-    
+
     let errorMessage = "Ürün güncellenemedi";
 
     if (err.response) {

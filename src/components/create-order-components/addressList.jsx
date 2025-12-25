@@ -6,10 +6,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Check, Trash2, MapPin, Star, SquarePen, Plus, Loader2, AlertCircle } from "lucide-react";
 import AddressForm from "./addressForm";
 
-const AddressList = ({ 
+const AddressList = ({
   onSelectAddress,
-  handleAddressSubmit, 
-  selectedAddressId = null, 
+  handleAddressSubmit,
+  selectedAddressId = null,
   onAddNewAddress,
   fullname = "",
   isAuthenticated = false
@@ -31,7 +31,7 @@ const AddressList = ({
       setLoading(true);
       setFetchError(false);
       const response = await instance.get("/user/addresses");
-      
+
       if (response.data && Array.isArray(response.data)) {
         setAddresses(response.data);
       } else {
@@ -111,18 +111,18 @@ const AddressList = ({
             <div className="bg-yellow rounded-full p-4 w-16 h-16 mx-auto flex items-center justify-center">
               <MapPin className="w-8 h-8 text-red" />
             </div>
-            
+
             <div className="space-y-2">
               <h3 className="text-xl font-bold text-darkgray">
                 {fetchError ? "Adreslerinize Erişilemiyor" : "Kayıtlı Adres Bulunamadı"}
               </h3>
               <p className="text-gray">
-                {fetchError 
-                  ? "Lütfen yeni bir adres ekleyerek devam edin." 
+                {fetchError
+                  ? "Lütfen yeni bir adres ekleyerek devam edin."
                   : "Hızlı teslimat için ilk adresinizi ekleyin."}
               </p>
             </div>
-            
+
             {fetchError && (
               <div className="flex items-center justify-center gap-2 text-red bg-red-50 py-2 px-4 rounded-lg border border-red-200">
                 <AlertCircle className="w-4 h-4" />
@@ -131,7 +131,7 @@ const AddressList = ({
             )}
           </div>
         </div>
-        
+
         <button
           onClick={onAddNewAddress}
           className="inline-flex items-center gap-3 px-8 py-4 bg-yellow text-red font-bold rounded-xl hover:bg-red hover:text-yellow transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
@@ -154,7 +154,7 @@ const AddressList = ({
         <AddressForm
           onSubmit={handleEditFormSubmit}
           submitText="Adresi Güncelle"
-          initialData={{ 
+          initialData={{
             fullAddress: editingAddress.fullAddress,
             city: editingAddress.city,
             district: editingAddress.district,
@@ -186,33 +186,29 @@ const AddressList = ({
         {addresses.map((address) => (
           <div
             key={address.id}
-            className={`group relative border-2 rounded-2xl p-6 cursor-pointer transition-all duration-300 transform hover:scale-102 hover:shadow-lg ${
-              selectedAddressId === address.id 
-                ? "border-red bg-gradient-to-r from-yellow to-lightyellow shadow-lg scale-102" 
-                : "border-lightgray2 bg-white hover:border-yellow"
-            }`}
+            className={`group relative border-2 rounded-2xl p-6 cursor-pointer transition-all duration-300 transform hover:scale-102 hover:shadow-lg ${selectedAddressId === address.id
+              ? "border-red bg-gradient-to-r from-yellow to-lightyellow shadow-lg scale-102"
+              : "border-lightgray2 bg-white hover:border-yellow"
+              }`}
             onClick={() => onSelectAddress(address.id)}
           >
             {/* Header */}
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg border-2 ${
-                  selectedAddressId === address.id 
-                    ? "bg-red border-red" 
-                    : "bg-yellow border-yellow"
-                }`}>
-                  <MapPin className={`w-5 h-5 ${
-                    selectedAddressId === address.id ? "text-yellow" : "text-red"
-                  }`} />
-                </div>
-                
-                <div>
-                  <h4 className={`font-bold text-lg ${
-                    selectedAddressId === address.id ? "text-red" : "text-darkgray"
+                <div className={`p-2 rounded-lg border-2 ${selectedAddressId === address.id
+                  ? "bg-red border-red"
+                  : "bg-yellow border-yellow"
                   }`}>
+                  <MapPin className={`w-5 h-5 ${selectedAddressId === address.id ? "text-yellow" : "text-red"
+                    }`} />
+                </div>
+
+                <div>
+                  <h4 className={`font-bold text-lg ${selectedAddressId === address.id ? "text-red" : "text-darkgray"
+                    }`}>
                     {address.addressTitle || `Adres ${address.id}`}
                   </h4>
-                  
+
                   {address.isDefault && (
                     <div className="flex items-center gap-1 mt-1">
                       <Star className="w-4 h-4 text-red fill-current" />
@@ -241,7 +237,7 @@ const AddressList = ({
                     )}
                   </button>
                 )}
-                
+
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -252,7 +248,7 @@ const AddressList = ({
                 >
                   <SquarePen className="w-4 h-4" />
                 </button>
-                
+
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -272,9 +268,8 @@ const AddressList = ({
             </div>
 
             {/* Address Details */}
-            <div className={`space-y-2 text-sm ${
-              selectedAddressId === address.id ? "text-red" : "text-gray"
-            }`}>
+            <div className={`space-y-2 text-sm ${selectedAddressId === address.id ? "text-red" : "text-gray"
+              }`}>
               <p className="font-semibold text-base">{address.recipientName}</p>
               <p className="leading-relaxed">{address.fullAddress}</p>
               <div className="flex flex-wrap gap-4">
