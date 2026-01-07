@@ -12,7 +12,6 @@ const FloatingUserButton = () => {
   const {
     isLogin,
     userEmail,
-    isClient,
     dropdownOpen,
     setDropdownOpen,
     isLoggingOut,
@@ -23,11 +22,6 @@ const FloatingUserButton = () => {
     handleNavigation,
     router,
   } = useUserButton();
-
-  // SSR hydration fix: İlk render'da boş container döndür
-  if (!isClient) {
-    return <div className="relative"></div>;
-  }
 
   // Auth loading state
   if (authLoading) {

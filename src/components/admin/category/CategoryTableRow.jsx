@@ -5,18 +5,26 @@ import { SquarePen, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const CategoryTableRow = ({ category, onEdit, onDelete }) => {
+    console.log("category", category);
     return (
         <tr className="border-b border-lightgray2 hover:bg-lightgray/30 transition-colors">
             <td className="px-6 py-4">
                 <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-lg bg-lightgray flex items-center justify-center overflow-hidden">
-                        <Image
+                        {category.img ? <Image
                             src={category.img}
                             alt={category.name}
                             width={48}
                             height={48}
                             className="object-cover"
-                        />
+                        /> : <Image
+                            src="https://www.freeiconspng.com/uploads/no-image-icon-15.png"
+                            alt={category.name}
+                            width={48}
+                            height={48}
+                            className="object-cover"
+                        />}
+
                     </div>
                     <span className="font-medium text-darkgray font-Quattrocento_Sans">
                         {category.name}

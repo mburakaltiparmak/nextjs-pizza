@@ -50,7 +50,7 @@ const LogoutButton = ({ collapsed, onLogoutStart }) => {
 
       // Kullanıcıyı login sayfasına yönlendir
       setTimeout(() => {
-        router.push("/login");
+        router.push("/");
       }, 100);
     } catch (error) {
       console.error("Çıkış yapma hatası:", error);
@@ -62,9 +62,8 @@ const LogoutButton = ({ collapsed, onLogoutStart }) => {
     <button
       onClick={handleLogout}
       disabled={isLoggingOut}
-      className={`flex items-center w-full p-3 rounded-lg text-white hover:bg-yellow hover:text-black border border-red font-medium ${
-        isLoggingOut ? "opacity-70 cursor-not-allowed" : ""
-      }`}
+      className={`flex items-center w-full p-3 rounded-lg text-white hover:bg-yellow hover:text-black border border-red font-medium ${isLoggingOut ? "opacity-70 cursor-not-allowed" : ""
+        }`}
     >
       <LogOut className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />
       {!collapsed && (
@@ -221,12 +220,10 @@ const Sidebar = ({ activePage = "dashboard" }) => {
       <div
         id="sidebar-container"
         className={`bg-red text-white transition-all duration-300 ease-in-out 
-          ${
-            isMobile
-              ? `fixed inset-y-0 left-0 z-40 w-48 ${
-                  mobileOpen ? "translate-x-0" : "-translate-x-full"
-                }`
-              : collapsed
+          ${isMobile
+            ? `fixed inset-y-0 left-0 z-40 w-48 ${mobileOpen ? "translate-x-0" : "-translate-x-full"
+            }`
+            : collapsed
               ? "w-20"
               : "w-48"
           }`}
@@ -262,13 +259,11 @@ const Sidebar = ({ activePage = "dashboard" }) => {
                 <button
                   onClick={() => navigateTo(item.path)}
                   disabled={isNavigating}
-                  className={`flex flex-row gap-1 items-center justify-start rounded-xl p-3  w-full ${
-                    activePage === item.id
+                  className={`flex flex-row gap-1 items-center justify-start rounded-xl p-3  w-full ${activePage === item.id
                       ? "bg-yellow text-black"
                       : "text-white hover:bg-yellow hover:text-black"
-                  } border border-red font-medium ${
-                    isNavigating ? "opacity-70 cursor-not-allowed" : ""
-                  }`}
+                    } border border-red font-medium ${isNavigating ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
                 >
                   <span>{item.icon}</span>
                   {(!collapsed || (isMobile && mobileOpen)) && (

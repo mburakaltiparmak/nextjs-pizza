@@ -23,6 +23,16 @@ const nextConfig = {
         hostname: "res.cloudinary.com",
         pathname: "/**",
       },
+      {
+        protocol: "http",
+        hostname: "wwww.freeiconspng.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "www.freeiconspng.com",
+        pathname: "/**",
+      },
     ],
   },
   webpack: (config) => {

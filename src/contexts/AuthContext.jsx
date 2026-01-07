@@ -60,24 +60,24 @@ export function AuthProvider({ children }) {
   const error = useSelector((state) => state.user.error);
   const token = useSelector((state) => state.user.token);
 
-useEffect(() => {
-  if (!storeInitializedRef.current && typeof window !== "undefined") {
-    const initStore = async () => {
-      storeInitializedRef.current = true;
-      console.log("🔄 Store initialization başlatıldı...");
-      
-      try {
-        await dispatch(initializeAuth());
-        await dispatch(initializeCart());
-        console.log("✅ Store initialization tamamlandı");
-      } catch (error) {
-        console.error("❌ Store initialization hatası:", error);
-      }
-    };
-    
-    initStore();
-  }
-}, [dispatch]);
+  useEffect(() => {
+    if (!storeInitializedRef.current && typeof window !== "undefined") {
+      const initStore = async () => {
+        storeInitializedRef.current = true;
+        console.log("🔄 Store initialization başlatıldı...");
+
+        try {
+          await dispatch(initializeAuth());
+          await dispatch(initializeCart());
+          console.log("✅ Store initialization tamamlandı");
+        } catch (error) {
+          console.error("❌ Store initialization hatası:", error);
+        }
+      };
+
+      initStore();
+    }
+  }, [dispatch]);
 
   // Component unmount olduğunda işaretlemek için
   useEffect(() => {
@@ -271,7 +271,7 @@ useEffect(() => {
       // Supabase localStorage token'ını da manuel olarak temizle
       localStorage.removeItem("sb-nslkxjzddnjpouzkevii-auth-token");
 
-      router.push("/login");
+      router.push("/");
     } catch (error) {
       console.error("Çıkış yapma hatası:", error);
     }
@@ -333,7 +333,7 @@ export const useAuthContext = (
       hasCheckedAuth.current = true;
 
       if (requireAuth && !context.isAuthenticated) {
-        router.push("/login");
+        router.push("/?login=true");
         return;
       }
 
