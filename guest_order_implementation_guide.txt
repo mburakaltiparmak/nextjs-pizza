@@ -1,0 +1,1392 @@
+# Misafir Sipariş Sistemi - Implementasyon Rehberi
+
+**Proje:** nextjs-pizza (Frontend) ve pizza (Backend)  
+**Durum:** Backend fully implemented ✅ | Frontend partially implemented ⚠️  
+**Tarih:** 2025-01-07
+
+---
+
+## 📋 İçindekiler
+
+1. [Backend Özellikleri (Mevcut)](#backend-özellikleri)
+2. [Frontend Mevcut Durum](#frontend-mevcut-durum)
+3. [Eksik/Hatalı Özellikler](#eksik-hatalı-özellikler)
+4. [İyileştirme Planı](#iyileştirme-planı)
+5. [Implementation Guide](#implementation-guide)
+
+---
+
+## 🎯 Backend Özellikleri (Mevcut)
+
+Backend **tam olarak** misafir sipariş işlevini destekliyor:
+
+### Endpoint: `POST /api/orders`
+- **Authentication:** Optional (misafir siparişler için token gerektirmez)
+- **Rate Limit:** 50 requests/minute
+
+### Request Format (Misafir Sipariş):
+
+```json
+{
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 2
+    }
+  ],
+  "newAddress": {
+    "addressTitle": "Home",
+    "fullAddress": "123 Main St, Apt 4B",
+    "city": "Istanbul",
+    "district": "Kadikoy",
+    "postalCode": "34710",
+    "phoneNumber": "+905551234567",
+    "recipientName": "John Doe",
+    "email": "guest@example.com"  // MİSAFİR İÇİN ZORUNLU
+  },
+  "paymentMethod": "CASH",
+  "notes": "Ring doorbell"
+}
+```
+
+### Backend Validation (OrderValidator.java):
+
+```java
+// Misafir sipariş validasyonları
+private void validateGuestAddress(DeliveryAddressRequest address) {
+    // Email zorunlu
+    if (address.getEmail() == null || address.getEmail().trim().isEmpty()) {
+        throw new ValidationException("Misafir siparişi için email adresi gereklidir");
+    }
+
+    // Alıcı adı zorunlu
+    if (address.getRecipientName() == null || address.getRecipientName().trim().isEmpty()) {
+        throw new ValidationException("Misafir siparişi için alıcı adı gereklidir");
+    }
+
+    // Telefon zorunlu
+    if (address.getPhoneNumber() == null || address.getPhoneNumber().trim().isEmpty()) {
+        throw new ValidationException("Misafir siparişi için telefon numarası gereklidir");
+    }
+}
+```
+
+### Backend Features:
+✅ Giriş yapmadan sipariş verebilme  
+✅ Misafir bilgileri (name, surname, email, phone) kaydı  
+✅ Adres bilgileri validasyonu  
+✅ Email ile sipariş sorgulama  
+✅ Email ile sipariş iptali  
+✅ Order entity'de `orderRole` (GUEST/CUSTOMER) ayırımı  
+✅ `guestEmail` field'ı ile misafir takibi  
+
+---
+
+## 🔍 Frontend Mevcut Durum
+
+Frontend'de **kısmi implementasyon** var ancak bazı problemler mevcut:
+
+### Mevcut Özellikler:
+
+#### 1. Guest Redux State
+**Dosya:** `src/lib/store/reducers/guestReducer.js`
+
+```javascript
+const initialState = {
+  name: "",
+  surname: "",
+  email: "",
+  phoneNumber: "",
+  address: null,
+  isGuestInfoSubmitted: false,
+};
+```
+
+#### 2. Guest Info Form
+**Dosya:** `src/components/create-order-components/firstStep.jsx`
+
+- Misafir bilgileri formu var
+- GuestInfoForm component'i render ediliyor
+- Validasyon mevcut
+
+#### 3. Order Creation
+**Dosya:** `src/components/create-order-components/thirdStep.jsx`
+
+```javascript
+// Backend'e gönderilecek format:
+orderRequest.newAddress = {
+  fullAddress: selectedAddress.fullAddress,
+  city: selectedAddress.city,
+  district: selectedAddress.district,
+  postalCode: selectedAddress.postalCode || "",
+  addressTitle: selectedAddress.addressTitle || "Yeni Adres",
+  phoneNumber: selectedAddress.phoneNumber || "",
+  recipientName: selectedAddress.recipientName || userData.fullname || "",
+  saveAddress: selectedAddress.saveAddress === true,
+  isDefault: selectedAddress.isDefault === true
+};
+```
+
+---
+
+## ❌ Eksik/Hatalı Özellikler
+
+### Problem #1: Email Field'ı Eksik ⚠️
+**Kritik Seviye:** HIGH  
+**Dosyalar:** 
+- `src/components/create-order-components/thirdStep.jsx`
+- `src/components/create-order-components/firstStep.jsx`
+
+**Mevcut Durum:**
+```javascript
+// Backend'e gönderilen newAddress
+orderRequest.newAddress = {
+  fullAddress: selectedAddress.fullAddress,
+  city: selectedAddress.city,
+  district: selectedAddress.district,
+  postalCode: selectedAddress.postalCode || "",
+  addressTitle: selectedAddress.addressTitle || "Yeni Adres",
+  phoneNumber: selectedAddress.phoneNumber || "",
+  recipientName: selectedAddress.recipientName || userData.fullname || "",
+  saveAddress: selectedAddress.saveAddress === true,
+  isDefault: selectedAddress.isDefault === true
+  // EMAIL EKSİK! ❌
+};
+```
+
+**Problem:**
+- Backend `email` field'ını zorunlu tutuyormuş ama frontend göndermiyormuş
+- Bu misafir sipariş oluşturmayı engelliyor
+
+**Beklenen:**
+```javascript
+orderRequest.newAddress = {
+  // ... existing fields ...
+  email: guestData.email, // Misafir email'i ekle
+};
+```
+
+---
+
+### Problem #2: Role/Guest Kontrolü Tutarsız ⚠️
+**Kritik Seviye:** MEDIUM  
+**Dosya:** `src/app/create-order/page.js`
+
+**Mevcut Durum:**
+```javascript
+// Kullanıcı giriş kontrolü
+if (!role || (!isLogin && role !== "GUEST")) {
+  redirectToLogin();
+  return;
+}
+```
+
+**Problem:**
+- `role === "GUEST"` kontrolü var ama bu role nasıl set ediliyor?
+- Guest kullanıcılar için role atama mantığı belirsiz
+- Backend'e token gönderilmeden nasıl çalışıyor?
+
+**Çözüm:**
+Misafir kullanıcılar için role kontrolünü kaldır veya farklı bir mantık kullan.
+
+---
+
+### Problem #3: Guest Info Persistence ⚠️
+**Kritik Seviye:** LOW  
+**Dosya:** `src/lib/store/reducers/guestReducer.js`
+
+**Problem:**
+- Misafir bilgileri sadece Redux state'te tutuluyor
+- Sayfa yenilenince kaybolabiliyor
+- Local storage backup'ı yok
+
+**Çözüm:**
+Misafir bilgilerini localStorage'a da kaydet (sepet gibi).
+
+---
+
+### Problem #4: Guest Order Tracking ⚠️
+**Kritik Seviye:** MEDIUM  
+**Dosyalar:** 
+- `src/app/success/page.js`
+- `src/lib/store/actions/orderActions.js`
+
+**Mevcut:**
+```javascript
+// Misafir sipariş detayını getir
+export const fetchGuestOrderDetail = (orderId, email) => async (dispatch) => {
+  const response = await instance.get(`/orders/${orderId}`, {
+    params: { email },
+  });
+  // ...
+};
+```
+
+**Problem:**
+- Backend'de bu endpoint tam olarak implement edilmiş mi?
+- Success sayfasında misafir email ile sipariş gösterme mantığı eksik
+
+---
+
+### Problem #5: Order Creation Flow ⚠️
+**Kritik Seviye:** HIGH  
+**Dosya:** `src/lib/store/actions/orderActions.js`
+
+**Mevcut:**
+```javascript
+export const createOrder = ({ orderData, paymentData }) => async (dispatch) => {
+  // ...
+  const requestData = {
+    items: processedItems,
+    paymentMethod: orderData.paymentMethod,
+    notes: orderData.notes || "",
+  };
+
+  // Adres bilgilerini ekle
+  if (orderData.addressId) {
+    requestData.addressId = orderData.addressId;
+  } else if (orderData.newAddress) {
+    requestData.newAddress = {
+      fullAddress: orderData.newAddress.fullAddress,
+      city: orderData.newAddress.city,
+      district: orderData.newAddress.district,
+      postalCode: orderData.newAddress.postalCode || "",
+      addressTitle: orderData.newAddress.addressTitle || "",
+      phoneNumber: orderData.newAddress.phoneNumber || "",
+      recipientName: orderData.newAddress.recipientName || "",
+      saveAddress: orderData.newAddress.saveAddress === true,
+      isDefault: orderData.newAddress.isDefault === true,
+      // EMAIL EKSİK! ❌
+    };
+  }
+  
+  const response = await instance.post("/orders", requestData);
+  // ...
+};
+```
+
+**Problem:**
+- Email field'ı backend'e gönderilmiyor
+- Misafir siparişleri başarısız oluyor
+
+---
+
+## 🎯 İyileştirme Planı
+
+### Faz 1: Kritik Düzeltmeler (2-3 saat)
+1. Email field'ını backend request'ine ekle
+2. Guest email validasyonunu frontend'e ekle
+3. Order creation flow'u test et
+
+### Faz 2: Flow İyileştirmeleri (2-3 saat)
+4. Guest role kontrolünü düzelt
+5. Guest info persistence ekle (localStorage)
+6. Error handling iyileştir
+
+### Faz 3: UX İyileştirmeleri (2-3 saat)
+7. Guest order tracking sayfası
+8. Email ile sipariş sorgulama UI
+9. Success page misafir desteği
+
+### Faz 4: Testing & Polish (1-2 saat)
+10. End-to-end test
+11. Edge case handling
+12. Documentation
+
+**Toplam Tahmini Süre:** 7-11 saat
+
+---
+
+## 📝 Implementation Guide
+
+### STEP 1: Email Field'ını Ekle (Kritik - 30 dakika)
+
+#### 1.1. firstStep.jsx - Email'i Address'e Ekle
+
+**Dosya:** `src/components/create-order-components/firstStep.jsx`
+
+**Değişiklik 1: handleAddressSubmit fonksiyonu**
+
+```javascript
+// MEVCUT KOD - Satır ~200
+const handleAddressSubmit = (addressData) => {
+  try {
+    // ... existing code ...
+    
+    // Kullanıcı verilerini hazırla
+    const userData = {
+      fullname: isGuest ? `${guestData.name} ${guestData.surname}` : fullname,
+      addressId: selectedAddressId || null,
+      address: selectedAddressId === null ? addressData : null,
+      isGuestOrder: isGuest
+    };
+    
+    // Eğer misafir siparişi ise guest bilgilerini ekle
+    if (isGuest) {
+      userData.guestName = guestData.name;
+      userData.guestSurname = guestData.surname;
+      userData.guestEmail = guestData.email;
+      userData.guestPhone = guestData.phoneNumber;
+    }
+    
+    // Redux'a kullanıcı verilerini kaydet
+    dispatch(setUserData(userData));
+    
+    // Seçilen adresi ayrıca Redux state'ine kaydet
+    if (addressData) {
+      dispatch(setSelectedAddress(addressData));
+    }
+    
+    // ... rest of code
+  } catch (error) {
+    // ... error handling
+  }
+};
+```
+
+**YENİ KOD - Email field'ını adrese ekle:**
+
+```javascript
+const handleAddressSubmit = (addressData) => {
+  try {
+    // ... existing code ...
+    
+    // NEW: Misafir siparişi ise adrese email ekle
+    if (isGuest && guestData.email) {
+      addressData.email = guestData.email; // ✅ EMAIL EKLEME
+    }
+    
+    // Kullanıcı verilerini hazırla
+    const userData = {
+      fullname: isGuest ? `${guestData.name} ${guestData.surname}` : fullname,
+      addressId: selectedAddressId || null,
+      address: selectedAddressId === null ? addressData : null,
+      isGuestOrder: isGuest
+    };
+    
+    // Eğer misafir siparişi ise guest bilgilerini ekle
+    if (isGuest) {
+      userData.guestName = guestData.name;
+      userData.guestSurname = guestData.surname;
+      userData.guestEmail = guestData.email;
+      userData.guestPhone = guestData.phoneNumber;
+    }
+    
+    // Redux'a kullanıcı verilerini kaydet
+    dispatch(setUserData(userData));
+    
+    // Seçilen adresi Redux state'ine kaydet
+    if (addressData) {
+      dispatch(setSelectedAddress(addressData));
+    }
+    
+    // ... rest of code
+  } catch (error) {
+    // ... error handling
+  }
+};
+```
+
+---
+
+#### 1.2. thirdStep.jsx - Email'i Backend Request'ine Ekle
+
+**Dosya:** `src/components/create-order-components/thirdStep.jsx`
+
+**Değişiklik: onSubmit handler - newAddress kısmı**
+
+```javascript
+// MEVCUT KOD - Satır ~140
+// Yeni adres girilmiş
+else {
+  // Backend'in beklediği formatta yeni adres bilgilerini gönder
+  orderRequest.newAddress = {
+    fullAddress: selectedAddress.fullAddress,
+    city: selectedAddress.city,
+    district: selectedAddress.district,
+    postalCode: selectedAddress.postalCode || "",
+    addressTitle: selectedAddress.addressTitle || "Yeni Adres",
+    phoneNumber: selectedAddress.phoneNumber || "",
+    recipientName: selectedAddress.recipientName || userData.fullname || "",
+    saveAddress: selectedAddress.saveAddress === true,
+    isDefault: selectedAddress.isDefault === true
+    // EMAIL EKSİK! ❌
+  };
+}
+```
+
+**YENİ KOD:**
+
+```javascript
+// Yeni adres girilmiş
+else {
+  // Backend'in beklediği formatta yeni adres bilgilerini gönder
+  orderRequest.newAddress = {
+    fullAddress: selectedAddress.fullAddress,
+    city: selectedAddress.city,
+    district: selectedAddress.district,
+    postalCode: selectedAddress.postalCode || "",
+    addressTitle: selectedAddress.addressTitle || "Yeni Adres",
+    phoneNumber: selectedAddress.phoneNumber || "",
+    recipientName: selectedAddress.recipientName || userData.fullname || "",
+    saveAddress: selectedAddress.saveAddress === true,
+    isDefault: selectedAddress.isDefault === true,
+    
+    // NEW: Misafir siparişi için email ekle
+    email: isGuest && guestData?.email 
+      ? guestData.email 
+      : selectedAddress.email || userData.guestEmail || null  // ✅ EMAIL EKLEME
+  };
+  
+  console.log("New address with email:", orderRequest.newAddress);
+}
+```
+
+---
+
+#### 1.3. orderActions.js - Email Field'ını Backend'e Gönder
+
+**Dosya:** `src/lib/store/actions/orderActions.js`
+
+**Değişiklik: createOrder action**
+
+```javascript
+// MEVCUT KOD - Satır ~250
+else if (orderData.newAddress) {
+  // Backend AddressDto formatına uygun şekilde yeni adres ekle
+  requestData.newAddress = {
+    fullAddress: orderData.newAddress.fullAddress,
+    city: orderData.newAddress.city,
+    district: orderData.newAddress.district,
+    postalCode: orderData.newAddress.postalCode || "",
+    addressTitle: orderData.newAddress.addressTitle || "",
+    phoneNumber: orderData.newAddress.phoneNumber || "",
+    recipientName: orderData.newAddress.recipientName || "",
+    saveAddress: orderData.newAddress.saveAddress === true,
+    isDefault: orderData.newAddress.isDefault === true,
+    // EMAIL EKSİK! ❌
+  };
+  console.log("Yeni adres kullanılıyor:", requestData.newAddress);
+}
+```
+
+**YENİ KOD:**
+
+```javascript
+else if (orderData.newAddress) {
+  // Backend AddressDto formatına uygun şekilde yeni adres ekle
+  requestData.newAddress = {
+    fullAddress: orderData.newAddress.fullAddress,
+    city: orderData.newAddress.city,
+    district: orderData.newAddress.district,
+    postalCode: orderData.newAddress.postalCode || "",
+    addressTitle: orderData.newAddress.addressTitle || "",
+    phoneNumber: orderData.newAddress.phoneNumber || "",
+    recipientName: orderData.newAddress.recipientName || "",
+    saveAddress: orderData.newAddress.saveAddress === true,
+    isDefault: orderData.newAddress.isDefault === true,
+    
+    // NEW: Email field'ı ekle (misafir siparişler için zorunlu)
+    email: orderData.newAddress.email || null  // ✅ EMAIL EKLEME
+  };
+  
+  console.log("Yeni adres kullanılıyor (email dahil):", requestData.newAddress);
+  
+  // NEW: Misafir siparişi validasyonu
+  if (!requestData.newAddress.email) {
+    console.warn("⚠️ Misafir siparişi için email eksik olabilir!");
+  }
+}
+```
+
+---
+
+### STEP 2: Guest Role Kontrolünü Düzelt (1 saat)
+
+**Problem:** `role === "GUEST"` kontrolü var ama guest kullanıcılar için role set edilmiyor.
+
+**Çözüm:** Misafir modunu belirlemek için farklı bir yaklaşım kullan.
+
+#### 2.1. Guest Mode State'i Ekle
+
+**Dosya:** Yeni `src/lib/store/reducers/appReducer.js` veya global reducer
+
+```javascript
+const initialState = {
+  isGuestMode: false,  // Misafir modu flag'i
+  // ... other global state
+};
+
+export const appActions = {
+  SET_GUEST_MODE: "SET_GUEST_MODE",
+};
+
+export const setGuestMode = (isGuest) => ({
+  type: appActions.SET_GUEST_MODE,
+  payload: isGuest,
+});
+
+// Reducer
+case appActions.SET_GUEST_MODE:
+  return {
+    ...state,
+    isGuestMode: action.payload,
+  };
+```
+
+#### 2.2. Create Order Page'i Güncelle
+
+**Dosya:** `src/app/create-order/page.js`
+
+**MEVCUT:**
+```javascript
+// Kullanıcı giriş kontrolü - hem role hem isLogin kontrol et
+// Guest kullanıcılar (role === "GUEST") sipariş verebilir
+if (!role || (!isLogin && role !== "GUEST")) {
+  redirectToLogin();
+  return;
+}
+```
+
+**YENİ:**
+```javascript
+// NEW: Misafir modu flag'ini kontrol et
+const isGuestMode = useAppSelector((state) => state.app?.isGuestMode);
+
+// Kullanıcı giriş kontrolü
+// Misafir modunda ise veya kullanıcı giriş yapmışsa devam et
+if (!isLogin && !isGuestMode) {
+  redirectToLogin();
+  return;
+}
+```
+
+#### 2.3. Login Page'de "Misafir Olarak Devam Et" Butonu
+
+**Dosya:** `src/app/login/page.js` (veya login component'i)
+
+```javascript
+import { setGuestMode } from '@/lib/store/actions/appActions';
+
+function LoginPage() {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  
+  const handleGuestCheckout = () => {
+    // Misafir modunu aktif et
+    dispatch(setGuestMode(true));
+    
+    // Sipariş sayfasına yönlendir
+    router.push('/create-order');
+  };
+  
+  return (
+    <div>
+      {/* Login formu */}
+      
+      <Separator className="my-6" />
+      
+      <div className="text-center">
+        <p className="text-gray mb-4">Hesabınız yok mu?</p>
+        <button
+          onClick={handleGuestCheckout}
+          className="w-full px-4 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+        >
+          Misafir Olarak Devam Et
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+### STEP 3: Guest Info Persistence (45 dakika)
+
+**Problem:** Misafir bilgileri sayfa yenilenince kayboluyor.
+
+**Çözüm:** localStorage ile persist et.
+
+#### 3.1. Guest Storage Utility
+
+**Yeni Dosya:** `src/lib/utils/guestStorage.js`
+
+```javascript
+const GUEST_INFO_KEY = 'guest_order_info';
+
+export const saveGuestInfo = (guestInfo) => {
+  try {
+    localStorage.setItem(GUEST_INFO_KEY, JSON.stringify(guestInfo));
+    console.log('Guest info saved to localStorage');
+  } catch (error) {
+    console.error('Failed to save guest info:', error);
+  }
+};
+
+export const loadGuestInfo = () => {
+  try {
+    const saved = localStorage.getItem(GUEST_INFO_KEY);
+    return saved ? JSON.parse(saved) : null;
+  } catch (error) {
+    console.error('Failed to load guest info:', error);
+    return null;
+  }
+};
+
+export const clearGuestInfo = () => {
+  try {
+    localStorage.removeItem(GUEST_INFO_KEY);
+    console.log('Guest info cleared from localStorage');
+  } catch (error) {
+    console.error('Failed to clear guest info:', error);
+  }
+};
+```
+
+#### 3.2. Guest Reducer'a Persist Ekle
+
+**Dosya:** `src/lib/store/reducers/guestReducer.js`
+
+```javascript
+import { saveGuestInfo, loadGuestInfo, clearGuestInfo } from '@/lib/utils/guestStorage';
+
+// Initial state - localStorage'dan yükle
+const savedGuestInfo = loadGuestInfo();
+const initialState = savedGuestInfo || {
+  name: "",
+  surname: "",
+  email: "",
+  phoneNumber: "",
+  address: null,
+  isGuestInfoSubmitted: false,
+};
+
+// Action types
+export const guestActions = {
+  SET_GUEST_INFO: "SET_GUEST_INFO",
+  SET_GUEST_ADDRESS: "SET_GUEST_ADDRESS",
+  SET_GUEST_INFO_SUBMITTED: "SET_GUEST_INFO_SUBMITTED",
+  CLEAR_GUEST_DATA: "CLEAR_GUEST_DATA",
+};
+
+// Actions
+export const setGuestInfo = (info) => {
+  saveGuestInfo(info); // ✅ Persist to localStorage
+  return {
+    type: guestActions.SET_GUEST_INFO,
+    payload: info,
+  };
+};
+
+export const clearGuestData = () => {
+  clearGuestInfo(); // ✅ Clear from localStorage
+  return {
+    type: guestActions.CLEAR_GUEST_DATA,
+  };
+};
+
+// Reducer
+export default function guestReducer(state = initialState, action) {
+  switch (action.type) {
+    case guestActions.SET_GUEST_INFO:
+      const updatedInfo = { ...state, ...action.payload };
+      saveGuestInfo(updatedInfo); // ✅ Save on every update
+      return updatedInfo;
+      
+    case guestActions.SET_GUEST_ADDRESS:
+      const withAddress = { ...state, address: action.payload };
+      saveGuestInfo(withAddress); // ✅ Save address too
+      return withAddress;
+      
+    case guestActions.SET_GUEST_INFO_SUBMITTED:
+      const submitted = { ...state, isGuestInfoSubmitted: action.payload };
+      saveGuestInfo(submitted);
+      return submitted;
+      
+    case guestActions.CLEAR_GUEST_DATA:
+      clearGuestInfo(); // ✅ Clear storage
+      return {
+        name: "",
+        surname: "",
+        email: "",
+        phoneNumber: "",
+        address: null,
+        isGuestInfoSubmitted: false,
+      };
+      
+    default:
+      return state;
+  }
+}
+```
+
+#### 3.3. Success Page'de Guest Info Temizle
+
+**Dosya:** `src/app/success/page.js`
+
+```javascript
+import { clearGuestData } from '@/lib/store/actions/guestActions';
+import { setGuestMode } from '@/lib/store/actions/appActions';
+
+export default function SuccessPage() {
+  const dispatch = useAppDispatch();
+  const isGuestMode = useAppSelector((state) => state.app?.isGuestMode);
+  
+  useEffect(() => {
+    // Sipariş tamamlandı, misafir bilgilerini temizle
+    if (isGuestMode) {
+      dispatch(clearGuestData());
+      dispatch(setGuestMode(false));
+      console.log('Guest info cleared after successful order');
+    }
+    
+    // ... existing cart clear code
+  }, [isGuestMode, dispatch]);
+  
+  // ... rest of component
+}
+```
+
+---
+
+### STEP 4: Guest Order Tracking (2 saat)
+
+**Feature:** Misafir kullanıcılar email ile siparişlerini sorgulayabilmeli.
+
+#### 4.1. Order Tracking Page
+
+**Yeni Dosya:** `src/app/track-order/page.js`
+
+```javascript
+'use client';
+
+import { useState } from 'react';
+import { useAppDispatch } from '@/lib/hooks';
+import { fetchGuestOrderDetail } from '@/lib/store/actions/orderActions';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Search } from 'lucide-react';
+
+export default function TrackOrderPage() {
+  const [orderId, setOrderId] = useState('');
+  const [email, setEmail] = useState('');
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  const dispatch = useAppDispatch();
+  
+  const handleTrackOrder = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setOrder(null);
+    
+    try {
+      const result = await dispatch(fetchGuestOrderDetail(orderId, email));
+      
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setOrder(result);
+      }
+    } catch (err) {
+      setError('Sipariş bulunamadı. Lütfen bilgilerinizi kontrol edin.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return (
+    <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Siparişimi Takip Et
+            </h1>
+            <p className="text-gray-600">
+              Sipariş numaranız ve email adresinizle siparişinizi sorgulayın
+            </p>
+          </div>
+          
+          <form onSubmit={handleTrackOrder} className="space-y-6">
+            <div>
+              <Label htmlFor="orderId">Sipariş Numarası</Label>
+              <Input
+                id="orderId"
+                type="number"
+                placeholder="Örn: 12345"
+                value={orderId}
+                onChange={(e) => setOrderId(e.target.value)}
+                required
+                className="mt-2"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="email">Email Adresi</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="ornek@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="mt-2"
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Sipariş verirken kullandığınız email adresi
+              </p>
+            </div>
+            
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-800 text-sm">{error}</p>
+              </div>
+            )}
+            
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full"
+            >
+              <Search className="w-4 h-4 mr-2" />
+              {loading ? 'Sorgulanıyor...' : 'Siparişi Sorgula'}
+            </Button>
+          </form>
+          
+          {order && (
+            <div className="mt-8 p-6 bg-gray-50 rounded-xl">
+              <h2 className="text-xl font-bold mb-4">Sipariş Detayları</h2>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Sipariş No:</span>
+                  <span className="font-medium">{order.id}</span>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Durum:</span>
+                  <span className={`font-medium ${getStatusColor(order.orderStatus)}`}>
+                    {getStatusText(order.orderStatus)}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Toplam:</span>
+                  <span className="font-bold text-lg">
+                    {order.totalAmount.toFixed(2)} ₺
+                  </span>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Tarih:</span>
+                  <span className="font-medium">
+                    {new Date(order.orderDate).toLocaleString('tr-TR')}
+                  </span>
+                </div>
+                
+                {order.deliveryAddress && (
+                  <div className="pt-4 border-t">
+                    <p className="text-gray-600 mb-2">Teslimat Adresi:</p>
+                    <p className="font-medium">
+                      {order.deliveryAddress.recipientName}
+                    </p>
+                    <p className="text-gray-700">
+                      {order.deliveryAddress.fullAddress}
+                    </p>
+                    <p className="text-gray-700">
+                      {order.deliveryAddress.district}, {order.deliveryAddress.city}
+                    </p>
+                  </div>
+                )}
+                
+                {order.items && order.items.length > 0 && (
+                  <div className="pt-4 border-t">
+                    <p className="text-gray-600 mb-3">Ürünler:</p>
+                    <div className="space-y-2">
+                      {order.items.map((item, index) => (
+                        <div key={index} className="flex justify-between text-sm">
+                          <span>
+                            {item.quantity}x {item.productName || item.product?.name}
+                          </span>
+                          <span className="font-medium">
+                            {item.subtotal?.toFixed(2)} ₺
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Helper functions
+function getStatusColor(status) {
+  switch (status) {
+    case 'PENDING': return 'text-yellow-600';
+    case 'CONFIRMED': return 'text-blue-600';
+    case 'PREPARING': return 'text-orange-600';
+    case 'ON_DELIVERY': return 'text-purple-600';
+    case 'DELIVERED': return 'text-green-600';
+    case 'CANCELLED': return 'text-red-600';
+    default: return 'text-gray-600';
+  }
+}
+
+function getStatusText(status) {
+  const statusMap = {
+    'PENDING': 'Beklemede',
+    'CONFIRMED': 'Onaylandı',
+    'PREPARING': 'Hazırlanıyor',
+    'ON_DELIVERY': 'Yolda',
+    'DELIVERED': 'Teslim Edildi',
+    'CANCELLED': 'İptal Edildi',
+  };
+  return statusMap[status] || status;
+}
+```
+
+#### 4.2. Navigation'a Link Ekle
+
+**Dosya:** `src/components/layout/header.jsx` (veya navigation component)
+
+```javascript
+<nav>
+  {/* ... existing nav items */}
+  
+  <Link href="/track-order" className="text-gray-700 hover:text-primary">
+    Siparişimi Takip Et
+  </Link>
+</nav>
+```
+
+---
+
+### STEP 5: Success Page Misafir Desteği (1 saat)
+
+**Problem:** Success page misafir kullanıcılar için düzgün çalışmıyor.
+
+#### 5.1. Success Page Güncellemeleri
+
+**Dosya:** `src/app/success/page.js`
+
+**Ekle:**
+```javascript
+const isGuestMode = useAppSelector((state) => state.app?.isGuestMode);
+const guestData = useAppSelector((state) => state.guest);
+
+// Misafir veya normal kullanıcı bilgisi - FİX
+const getCustomerInfo = () => {
+  if (isGuestMode && guestData) {
+    return `${guestData.name} ${guestData.surname}`;
+  } else if (userData && userData.fullname) {
+    return userData.fullname;
+  } else if (selectedAddress && selectedAddress.recipientName) {
+    return selectedAddress.recipientName;
+  }
+  return "Misafir Kullanıcı";
+};
+
+// Misafir için email göster
+const getCustomerEmail = () => {
+  if (isGuestMode && guestData) {
+    return guestData.email;
+  } else if (userData && userData.guestEmail) {
+    return userData.guestEmail;
+  }
+  return null;
+};
+```
+
+**Display:**
+```javascript
+<div className="flex flex-col justify-start gap-4 bg-yellow text-red rounded-lg w-full font-Barlow py-4 px-6">
+  {/* Müşteri Bilgileri */}
+  <div className="flex flex-row gap-2">
+    <p className="font-medium">Müşteri:</p>
+    <p className="font-light">{getCustomerInfo()}</p>
+  </div>
+  
+  {/* Misafir Email - Sipariş Takibi İçin */}
+  {isGuestMode && getCustomerEmail() && (
+    <div className="flex flex-col gap-2 p-3 bg-red text-yellow rounded-lg">
+      <p className="text-sm font-medium">📧 Sipariş Takibi</p>
+      <p className="text-xs">
+        Siparişinizi <span className="font-bold">{getCustomerEmail()}</span> email
+        adresi ve sipariş numarası ile takip edebilirsiniz.
+      </p>
+      <button
+        onClick={() => router.push('/track-order')}
+        className="mt-2 px-3 py-1 bg-yellow text-red text-sm rounded hover:bg-yellow/90"
+      >
+        Siparişimi Takip Et
+      </button>
+    </div>
+  )}
+  
+  {/* ... rest of order details */}
+</div>
+```
+
+---
+
+### STEP 6: Error Handling & Validation (1 saat)
+
+#### 6.1. Frontend Validation
+
+**Dosya:** `src/components/create-order-components/GuestInfoForm.jsx`
+
+Email validation ekle:
+```javascript
+const emailSchema = z.string()
+  .email("Geçerli bir email adresi girin")
+  .min(5, "Email en az 5 karakter olmalı")
+  .max(100, "Email çok uzun");
+
+const phoneSchema = z.string()
+  .min(10, "Telefon numarası en az 10 karakter olmalı")
+  .regex(/^[0-9+() -]+$/, "Geçerli bir telefon numarası girin");
+```
+
+#### 6.2. Order Creation Error Handling
+
+**Dosya:** `src/components/create-order-components/thirdStep.jsx`
+
+```javascript
+// Sipariş oluşturma hatası
+if (result.error) {
+  console.error("Sipariş oluşturma hatası:", result.error);
+  
+  // Özel hata mesajları
+  let errorMessage = result.error;
+  
+  if (result.error.includes("email")) {
+    errorMessage = "Email adresi eksik veya geçersiz. Lütfen bilgilerinizi kontrol edin.";
+  } else if (result.error.includes("address")) {
+    errorMessage = "Adres bilgileri eksik. Lütfen adres bilgilerinizi ekleyin.";
+  } else if (result.error.includes("phone")) {
+    errorMessage = "Telefon numarası eksik veya geçersiz.";
+  }
+  
+  toast({
+    title: "Sipariş oluşturulamadı",
+    description: errorMessage,
+    variant: "destructive",
+  });
+  
+  setStep3(false);
+  
+  // Misafir kullanıcıysa ilk adıma geri gönder
+  if (isGuest) {
+    setCurrentStep(1);
+  }
+  
+  return;
+}
+```
+
+---
+
+## 🧪 Testing Checklist
+
+### Manual Testing
+
+#### Test Case 1: Misafir Sipariş Oluşturma (Happy Path)
+```
+1. ✅ Ana sayfadan ürün ekle
+2. ✅ Sepete git
+3. ✅ "Sipariş Ver" tıkla
+4. ✅ Login sayfasında "Misafir Olarak Devam Et" tıkla
+5. ✅ Misafir bilgilerini doldur (name, surname, email, phone)
+6. ✅ Adres bilgilerini doldur
+7. ✅ Ödeme yöntemini seç
+8. ✅ Siparişi tamamla
+9. ✅ Success page'de sipariş detaylarını gör
+10. ✅ Email ve sipariş no ile takip et
+```
+
+#### Test Case 2: Email Validasyonu
+```
+1. ✅ Geçersiz email formatı dene (hata vermeli)
+2. ✅ Email olmadan sipariş vermeye çalış (backend hata vermeli)
+3. ✅ Çok kısa email dene (frontend hata vermeli)
+```
+
+#### Test Case 3: Persistence
+```
+1. ✅ Misafir bilgilerini doldur
+2. ✅ Sayfayı yenile
+3. ✅ Bilgilerin kalıp kalmadığını kontrol et (localStorage)
+4. ✅ Sipariş tamamlandıktan sonra bilgilerin temizlendiğini kontrol et
+```
+
+#### Test Case 4: Order Tracking
+```
+1. ✅ /track-order sayfasına git
+2. ✅ Sipariş no ve email ile sorgula
+3. ✅ Sipariş detaylarını görüntüle
+4. ✅ Yanlış email dene (hata vermeli)
+5. ✅ Olmayan sipariş no dene (hata vermeli)
+```
+
+#### Test Case 5: Error Scenarios
+```
+1. ✅ Backend kapalıyken sipariş vermeye çalış
+2. ✅ Eksik adres bilgisi ile devam et
+3. ✅ Stokta olmayan ürün ile sipariş ver
+4. ✅ Network error simüle et
+```
+
+### Automated Testing (Optional)
+
+```javascript
+// cypress/e2e/guest-order.cy.js
+describe('Guest Order Flow', () => {
+  it('should create order as guest', () => {
+    cy.visit('/');
+    cy.get('[data-testid="product-card"]').first().click();
+    cy.get('[data-testid="add-to-cart"]').click();
+    cy.get('[data-testid="cart-button"]').click();
+    cy.get('[data-testid="checkout-button"]').click();
+    
+    // Login page
+    cy.get('[data-testid="guest-checkout"]').click();
+    
+    // Guest info
+    cy.get('#name').type('Test');
+    cy.get('#surname').type('User');
+    cy.get('#email').type('test@example.com');
+    cy.get('#phoneNumber').type('+905551234567');
+    cy.get('[data-testid="submit-guest-info"]').click();
+    
+    // Address
+    cy.get('#fullAddress').type('Test Address 123');
+    cy.get('#city').type('Istanbul');
+    cy.get('#district').type('Kadikoy');
+    cy.get('[data-testid="submit-address"]').click();
+    
+    // Payment
+    cy.get('[data-testid="payment-method-cash"]').click();
+    cy.get('[data-testid="complete-order"]').click();
+    
+    // Success
+    cy.url().should('include', '/success');
+    cy.contains('Sipariş Alındı').should('be.visible');
+  });
+});
+```
+
+---
+
+## 📊 Monitoring & Debugging
+
+### Console Logs
+
+Önemli noktalarda log ekle:
+
+```javascript
+// firstStep.jsx
+console.log('✅ Guest info submitted:', guestData);
+console.log('✅ Address submitted with email:', addressData);
+
+// thirdStep.jsx
+console.log('📦 Order request:', orderRequest);
+console.log('📧 Guest email in newAddress:', orderRequest.newAddress?.email);
+
+// orderActions.js
+console.log('🚀 Sending order to backend:', requestData);
+console.log('✅ Order created successfully:', response.data);
+```
+
+### Error Tracking
+
+```javascript
+// Log all order creation errors
+try {
+  // ... order creation
+} catch (error) {
+  console.error('❌ Order creation failed:', {
+    message: error.message,
+    response: error.response?.data,
+    requestData: requestData,
+  });
+  
+  // Optional: Send to error tracking service
+  // logToSentry(error, { context: 'guest-order-creation' });
+}
+```
+
+---
+
+## 🎯 Success Criteria
+
+### Functional Requirements
+✅ Kullanıcı giriş yapmadan sipariş verebilmeli  
+✅ Email, name, surname, phone number zorunlu olmalı  
+✅ Adres bilgileri email ile birlikte backend'e gönderilmeli  
+✅ Sipariş başarılı olmalı (backend 200 dönmeli)  
+✅ Success page misafir kullanıcı için doğru bilgileri göstermeli  
+✅ Email ile sipariş takibi yapılabilmeli  
+
+### Non-Functional Requirements
+✅ Misafir bilgileri localStorage'da persist edilmeli  
+✅ Sayfa yenilendiğinde bilgiler kaybolmamalı  
+✅ Sipariş tamamlandıktan sonra misafir bilgileri temizlenmeli  
+✅ Form validasyonları çalışmalı  
+✅ Error handling düzgün olmalı  
+✅ UX akışı sorunsuz olmalı  
+
+---
+
+## 🚀 Deployment Checklist
+
+### Pre-Deploy
+- [ ] Tüm console.log'ları production-safe hale getir
+- [ ] Error messages user-friendly olsun
+- [ ] Email formatı backend ile uyumlu olsun
+- [ ] Test all edge cases
+- [ ] Code review
+
+### Deploy
+- [ ] Frontend deploy et
+- [ ] Smoke test yap
+- [ ] Guest order flow'u production'da test et
+- [ ] Monitor error rates
+
+### Post-Deploy
+- [ ] Analytics ekle (guest order conversion rate)
+- [ ] User feedback topla
+- [ ] Performance metrics izle
+
+---
+
+## 📚 Documentation
+
+### Backend API Documentation
+Backend endpoint: `POST /api/orders`
+
+**Request (Guest Order):**
+```json
+{
+  "items": [{"productId": 1, "quantity": 2}],
+  "newAddress": {
+    "fullAddress": "...",
+    "city": "...",
+    "district": "...",
+    "postalCode": "...",
+    "phoneNumber": "...",
+    "recipientName": "...",
+    "email": "guest@example.com"  // REQUIRED for guests
+  },
+  "paymentMethod": "CASH",
+  "notes": ""
+}
+```
+
+**Response:**
+```json
+{
+  "id": 42,
+  "orderDate": "2025-01-07T10:30:00",
+  "orderStatus": "PENDING",
+  "totalAmount": 150.00,
+  "deliveryAddress": { /* address details */ },
+  "items": [ /* order items */ ]
+}
+```
+
+### Frontend Flow Documentation
+
+```
+Guest Order Flow:
+1. User adds products to cart
+2. User clicks "Checkout"
+3. Redirected to login page
+4. User clicks "Continue as Guest"
+5. isGuestMode = true in Redux
+6. User fills guest info form (name, surname, email, phone)
+7. Guest info saved to Redux + localStorage
+8. User fills address form
+9. Address includes email from guest info
+10. User selects payment method
+11. Order request sent to backend with newAddress.email
+12. Success page shows order details
+13. Guest info cleared from Redux + localStorage
+14. User can track order with email + order ID
+```
+
+---
+
+## 🎨 UI/UX Improvements (Optional)
+
+### 1. Guest Banner
+```javascript
+// Show banner on homepage for guest users
+{!isLogin && (
+  <div className="bg-yellow text-red px-4 py-2 text-center">
+    💡 Giriş yapmadan da sipariş verebilirsiniz!
+  </div>
+)}
+```
+
+### 2. Progress Indicator
+```javascript
+// Show where user is in guest flow
+<div className="flex items-center justify-center mb-6">
+  <span className={step >= 1 ? 'text-primary' : 'text-gray'}>1. Bilgiler</span>
+  <ChevronRight className="mx-2" />
+  <span className={step >= 2 ? 'text-primary' : 'text-gray'}>2. Adres</span>
+  <ChevronRight className="mx-2" />
+  <span className={step >= 3 ? 'text-primary' : 'text-gray'}>3. Ödeme</span>
+</div>
+```
+
+### 3. Email Reminder
+```javascript
+// Remind user about email on success page
+<div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+  <p className="text-blue-800 text-sm">
+    💌 <strong>{guestEmail}</strong> adresine sipariş onay emaili gönderdik!
+  </p>
+</div>
+```
+
+---
+
+**Son Güncelleme:** 2025-01-07  
+**Durum:** Implementation guide hazır  
+**Tahmini Süre:** 7-11 saat  
+**Öncelik:** HIGH (Core feature)
+
+---
+
+## 🔗 İlgili Dosyalar
+
+### Frontend:
+- `src/components/create-order-components/firstStep.jsx`
+- `src/components/create-order-components/secondStep.jsx`
+- `src/components/create-order-components/thirdStep.jsx`
+- `src/lib/store/reducers/guestReducer.js`
+- `src/lib/store/actions/orderActions.js`
+- `src/app/create-order/page.js`
+- `src/app/success/page.js`
+
+### Backend:
+- `src/main/java/com/example/pizza/controller/OrderRestController.java`
+- `src/main/java/com/example/pizza/logic/validator/OrderValidator.java`
+- `src/main/java/com/example/pizza/service/order/OrderServiceImpl.java`
+- `src/main/java/com/example/pizza/entity/order/Order.java`
+
+---
+
+End of Document

@@ -1,5 +1,8 @@
 // lib/store/actions/userActions.js
-import { instance, userInstance } from "@/lib/hooks";
+import { instance } from "@/lib/hooks";
+import { getTokenExpiration } from "@/lib/utils/tokenUtils";
+import { setTokens, clearTokens, getAccessToken, getRefreshToken, getRememberMe, setRememberMe as setRememberMeStorage } from "@/lib/utils/tokenStorage";
+import { tokenRefreshManager } from "@/lib/utils/tokenRefreshManager";
 import { setError, setLoading, setSuccess } from "./globalActions";
 import { fetchStates } from "../constants";
 import { initializeAuth } from "./initAuth";
@@ -21,6 +24,7 @@ export const userActions = {
   UPDATE_USER_ADDRESS: "UPDATE_USER_ADDRESS",
   REMOVE_USER_ADDRESS: "REMOVE_USER_ADDRESS",
   SET_DEFAULT_ADDRESS: "SET_DEFAULT_ADDRESS",
+  SET_TOKEN_EXPIRATION: "SET_TOKEN_EXPIRATION",
 };
 
 export const setEmail = (email) => ({
@@ -28,10 +32,13 @@ export const setEmail = (email) => ({
   payload: email,
 });
 
-export const setRememberMe = (rememberMe) => ({
-  type: userActions.SET_REMEMBER_ME,
-  payload: rememberMe,
-});
+export const setRememberMe = (rememberMe) => {
+  setRememberMeStorage(rememberMe);
+  return {
+    type: userActions.SET_REMEMBER_ME,
+    payload: rememberMe,
+  };
+};
 
 export const setIsLogin = (isLogin) => ({
   type: userActions.SET_IS_LOGIN,
@@ -97,22 +104,13 @@ export const setDefaultAddress = (addressId) => ({
   payload: addressId,
 });
 
-// Token depolama fonksiyonları - refreshToken desteği eklendi
-const storeToken = (accessToken, refreshToken, email, rememberMe) => {
-  // rememberMe true ise localStorage, değilse sessionStorage kullan
-  const storage = rememberMe ? localStorage : sessionStorage;
+export const setTokenExpiration = (expiresAt, expiresIn) => ({
+  type: userActions.SET_TOKEN_EXPIRATION,
+  payload: { expiresAt, expiresIn },
+});
 
-  // Access token ve refresh token'ı kaydet
-  storage.setItem("accessToken", accessToken);
-  storage.setItem("refreshToken", refreshToken);
-  storage.setItem("userEmail", email);
-
-  // "Beni hatırla" tercihini kaydet
-  localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
-
-  // Authorization header'ı güncelle
-  instance.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
-};
+// Token depolama fonksiyonu artık tokenStorage.js içinde
+// const storeToken = ... kaldırıldı
 
 // Login işlemi - yeni backend response formatı için güncellendi
 export const login = (formData) => async (dispatch) => {
@@ -157,12 +155,20 @@ export const login = (formData) => async (dispatch) => {
     }
 
     // Access token, refresh token ve email bilgilerini storage'a kaydet
-    storeToken(
+    setTokens(
       accessToken,
       refreshToken,
       user?.email || formData.username,
       formData.rememberMe
     );
+
+    instance.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+
+    // Expire bilgisini kaydet
+    const expiresAt = getTokenExpiration(accessToken);
+    // Backend expiresIn dönebilir, dönmezse hesaptan
+    const expiresIn = response.data.expiresIn || (expiresAt ? Math.floor((expiresAt - Date.now()) / 1000) : null);
+    dispatch(setTokenExpiration(expiresAt, expiresIn));
 
     dispatch(setLoading(false));
     dispatch(setSuccess("Giriş başarılı"));
@@ -194,8 +200,8 @@ export const initiateGoogleLogin = () => async () => {
     console.log("Geri dönüş URL'i kaydedildi:", returnUrl);
 
     // Beni Hatırla tercihini geçici olarak sakla
-    const rememberMe = localStorage.getItem("rememberMe") === "true";
-    localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
+    const rememberMe = getRememberMe();
+    setRememberMeStorage(rememberMe);
     console.log("RememberMe durumu kaydedildi:", rememberMe);
 
     // Supabase OAuth başlat - callback sayfasına yönlendirecek
@@ -226,7 +232,13 @@ export const handleOAuthCallback =
         dispatch(setRememberMe(rememberMe));
 
         // Token bilgisini kaydet
-        storeToken(token, "", rememberMe);
+        setTokens(token, "", "", rememberMe);
+        instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+        // Expire bilgisini kaydet
+        const expiresAt = getTokenExpiration(token);
+        const expiresIn = expiresAt ? Math.floor((expiresAt - Date.now()) / 1000) : null;
+        dispatch(setTokenExpiration(expiresAt, expiresIn));
 
         // Kullanıcı profilini getir - bu token'ın geçerliliğini de doğrular
         try {
@@ -251,9 +263,7 @@ export const handleOAuthCallback =
 export const logout = () => async (dispatch) => {
   try {
     // Backend'e logout isteği gönder
-    const rememberMe = localStorage.getItem("rememberMe") === "true";
-    const storage = rememberMe ? localStorage : sessionStorage;
-    const refreshToken = storage.getItem("refreshToken");
+    const refreshToken = getRefreshToken();
 
     if (refreshToken) {
       try {
@@ -265,23 +275,8 @@ export const logout = () => async (dispatch) => {
     }
 
     // Tüm depolamaları temizle
-    if (typeof window !== "undefined") {
-      // localStorage'dan temizle (access ve refresh token)
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("userEmail");
-
-      // Supabase token'ını da temizle
-      localStorage.removeItem("sb-nslkxjzddnjpouzkevii-auth-token");
-
-      // sessionStorage'dan temizle
-      sessionStorage.removeItem("accessToken");
-      sessionStorage.removeItem("refreshToken");
-      sessionStorage.removeItem("userEmail");
-
-      // "Beni hatırla" tercihini koru, ama default false yap
-      localStorage.setItem("rememberMe", "false");
-    }
+    clearTokens();
+    tokenRefreshManager.reset();
 
     // Axios header'larını temizle
     if (
@@ -301,15 +296,8 @@ export const logout = () => async (dispatch) => {
 
     // Hata olsa bile temizlik yapmaya çalış
     try {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("userEmail");
-        localStorage.removeItem("sb-nslkxjzddnjpouzkevii-auth-token");
-        sessionStorage.removeItem("accessToken");
-        sessionStorage.removeItem("refreshToken");
-        sessionStorage.removeItem("userEmail");
-      }
+      clearTokens();
+      tokenRefreshManager.reset();
       dispatch(clearUserData());
     } catch (cleanupError) {
       console.error("Logout temizleme hatası:", cleanupError);
@@ -345,12 +333,8 @@ export const checkAuthStatus = () => async (dispatch) => {
 
     authCheckPromise = (async () => {
       try {
-        // Önce local storage'da accessToken var mı kontrol et
-        const storage =
-          localStorage.getItem("rememberMe") === "true"
-            ? localStorage
-            : sessionStorage;
-        const token = storage.getItem("accessToken") || storage.getItem("token"); // Backward compatibility
+        // Unified token storage
+        const token = getAccessToken();
 
         if (!token) {
           console.log("Token bulunamadı, oturum sonlandırılıyor");
@@ -364,7 +348,7 @@ export const checkAuthStatus = () => async (dispatch) => {
 
         // Oturum durumunu güncelle
         dispatch(setIsLogin(true));
-        dispatch(setRememberMe(localStorage.getItem("rememberMe") === "true"));
+        dispatch(setRememberMe(getRememberMe()));
 
         // OAuth callback'te profil yüklemesini atla
         if (window.location.pathname.includes("/oauth2/callback")) {
@@ -616,9 +600,8 @@ export const updateUserProfile = (userData) => async (dispatch) => {
       dispatch(setEmail(updatedUserData.email));
 
       // Local storage'daki email'i de güncelle
-      const rememberMe = localStorage.getItem("rememberMe") === "true";
-      const storage = rememberMe ? localStorage : sessionStorage;
-      storage.setItem("userEmail", updatedUserData.email);
+      const rememberMe = getRememberMe();
+      setTokens(user.token, getRefreshToken(), updatedUserData.email, rememberMe);
     }
 
     dispatch(setLoading(false));

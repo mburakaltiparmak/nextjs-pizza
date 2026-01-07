@@ -16,7 +16,9 @@ export const userActions = {
   ADD_USER_ADDRESS: "ADD_USER_ADDRESS",
   UPDATE_USER_ADDRESS: "UPDATE_USER_ADDRESS",
   REMOVE_USER_ADDRESS: "REMOVE_USER_ADDRESS",
-  SET_DEFAULT_ADDRESS: "SET_DEFAULT_ADDRESS"
+  SET_DEFAULT_ADDRESS: "SET_DEFAULT_ADDRESS",
+  // Token expiration
+  SET_TOKEN_EXPIRATION: "SET_TOKEN_EXPIRATION",
 };
 
 const initialState = {
@@ -29,7 +31,9 @@ const initialState = {
   role: null, // ADMIN, PERSONAL, CUSTOMER, GUEST
   authProvider: null, // "email", "google", "apple" vb.
   fetchState: fetchStates.NOT_FETCHED,
-  addresses: [] // Kullanıcının kayıtlı adresleri
+  addresses: [], // Kullanıcının kayıtlı adresleri
+  tokenExpiresAt: null, // Token bitiş zamanı (ms)
+  tokenExpiresIn: null, // Token bitiş süresi (saniye)
 };
 
 export const userReducer = (state = initialState, action) => {
@@ -38,7 +42,7 @@ export const userReducer = (state = initialState, action) => {
       return {
         ...state,
         email: action.payload
-        
+
       };
     case userActions.SET_REMEMBER_ME:
       return {
@@ -84,36 +88,36 @@ export const userReducer = (state = initialState, action) => {
       return {
         ...initialState
       };
-      
+
     // Adres yönetimi için yeni reducer case'leri
     case userActions.SET_USER_ADDRESSES:
       return {
         ...state,
         addresses: action.payload
       };
-    
+
     case userActions.ADD_USER_ADDRESS:
       return {
         ...state,
         addresses: [...state.addresses, action.payload]
       };
-    
+
     case userActions.UPDATE_USER_ADDRESS:
       return {
         ...state,
-        addresses: state.addresses.map(address => 
+        addresses: state.addresses.map(address =>
           address.id === action.payload.id ? action.payload : address
         )
       };
-    
+
     case userActions.REMOVE_USER_ADDRESS:
       return {
         ...state,
-        addresses: state.addresses.filter(address => 
+        addresses: state.addresses.filter(address =>
           address.id !== action.payload
         )
       };
-    
+
     case userActions.SET_DEFAULT_ADDRESS:
       return {
         ...state,
@@ -122,7 +126,14 @@ export const userReducer = (state = initialState, action) => {
           isDefault: address.id === action.payload
         }))
       };
-    
+
+    case userActions.SET_TOKEN_EXPIRATION:
+      return {
+        ...state,
+        tokenExpiresAt: action.payload.expiresAt,
+        tokenExpiresIn: action.payload.expiresIn,
+      };
+
     default:
       return state;
   }

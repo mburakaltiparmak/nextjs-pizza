@@ -25,14 +25,11 @@ import { createDebouncedRequest } from "@/lib/utils/asyncUtils";
 // Supabase importları
 import { supabase, syncSupabaseUser } from "@/lib/supabase";
 // Yeni utility fonksiyonlarını import et
-import {
-  configureAuthHeaders,
-  enhancedSyncSupabaseUser,
-  extractSupabaseToken,
-  syncSupabaseTokenToSystem,
-} from "@/lib/supabaseSync";
+// Supabase sync importları kaldırıldı
+
 import { initializeAuth } from "@/lib/store/actions/initAuth";
 import { initializeCart } from "@/lib/store/actions/orderActions";
+import { startTokenRefreshMonitor, stopTokenRefreshMonitor } from "@/lib/utils/tokenRefresh";
 
 // Auth context oluşturma
 export const AuthContext = createContext(null);
@@ -92,7 +89,7 @@ export function AuthProvider({ children }) {
     if (!mountedRef.current) return;
 
     // Önce mevcut Supabase token'ını kontrol et ve sisteme senkronize et
-    syncSupabaseTokenToSystem();
+    // syncSupabaseTokenToSystem(); // Kaldırıldı
 
     // Supabase auth değişikliklerini dinle
     const {
@@ -107,15 +104,22 @@ export function AuthProvider({ children }) {
           setLoading(true);
 
           // Supabase token'ını sistem token'ına da senkronize et
-          const rememberMe = localStorage.getItem("rememberMe") === "true";
-          const storage = rememberMe ? localStorage : sessionStorage;
+          // const rememberMe = localStorage.getItem("rememberMe") === "true";
+          // const storage = rememberMe ? localStorage : sessionStorage;
 
-          // Token'ı kaydet
-          const supabaseToken = session.access_token;
-          storage.setItem("token", supabaseToken);
+          // // Token'ı kaydet
+          // const supabaseToken = session.access_token;
+          // storage.setItem("token", supabaseToken);
 
           // Kullanıcı bilgilerini güncelle
-          await enhancedSyncSupabaseUser(session, dispatch);
+          // await enhancedSyncSupabaseUser(session, dispatch);
+
+          // NOT: Supabase artık ana auth mekanizması değil veya logic actionlara taşındı.
+          // Login işlemi userActions.js üzerinden yapılmalı.
+          // Buradaki otomatik sync mantığı unified storage ile çakışabilir.
+          // Şimdilik sadece log basıyoruz.
+
+          console.log("Supabase ile giriş yapıldı (Sync devredışı)");
 
           console.log("Kullanıcı bilgileri senkronize edildi");
         } catch (error) {
@@ -222,16 +226,28 @@ export function AuthProvider({ children }) {
     }
   }, [checkAuth]);
 
-  // Periyodik yenileme
+  // Periyodik yenileme (Eski yöntem - artık tokenRefresh.js kullanılıyor)
+  // useEffect(() => {
+  //   if (!isLogin || !token) return;
+  //   const interval = setInterval(() => {
+  //     checkAuth();
+  //   }, 15 * 60 * 1000); 
+  //   return () => clearInterval(interval);
+  // }, [isLogin, token, checkAuth]);
+
+  // Yeni Token Refresh Monitor Entegrasyonu
   useEffect(() => {
-    if (!isLogin || !token) return;
+    if (isLogin && token) {
+      console.log('Token refresh monitor başlatılıyor');
+      startTokenRefreshMonitor();
+    } else {
+      stopTokenRefreshMonitor();
+    }
 
-    const interval = setInterval(() => {
-      checkAuth();
-    }, 15 * 60 * 1000); // 15 dakikada bir
-
-    return () => clearInterval(interval);
-  }, [isLogin, token, checkAuth]);
+    return () => {
+      stopTokenRefreshMonitor();
+    };
+  }, [isLogin, token]);
 
   // Debounced yenileme fonksiyonu
   const debouncedAuthCheck = useCallback(

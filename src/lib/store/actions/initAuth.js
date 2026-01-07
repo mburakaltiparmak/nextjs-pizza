@@ -1,6 +1,7 @@
-import { setToken, setIsLogin, setEmail } from "./userActions";
+import { setToken, setIsLogin, setEmail, setTokenExpiration } from "./userActions";
 import { instance } from "@/lib/hooks";
-import { extractSupabaseToken } from "@/lib/supabaseSync";
+import { getAccessToken, getUserEmail } from "@/lib/utils/tokenStorage";
+import { getTokenExpiration } from "@/lib/utils/tokenUtils";
 
 // Uygulama başlangıcında token'ı Redux'a yükle
 export const initializeAuth = () => async (dispatch) => {
@@ -14,26 +15,9 @@ export const initializeAuth = () => async (dispatch) => {
     }
 
     // Tarayıcı tarafında çalışıyoruz, devam edebiliriz
-    const rememberMe = localStorage.getItem("rememberMe") === "true";
-    const storage = rememberMe ? localStorage : sessionStorage;
 
-    // Backend'in yeni formatı: accessToken ve refreshToken
-    let token = storage.getItem("accessToken");
-
-    // 2. Eğer accessToken yoksa, eski token formatını kontrol et (backward compatibility)
-    if (!token) {
-      token = storage.getItem("token");
-    }
-
-    // 3. Eğer hala token yoksa, Supabase token'ını kontrol et
-    if (!token) {
-      token = extractSupabaseToken();
-
-      // Supabase token varsa localStorage'a kaydet
-      if (token) {
-        storage.setItem("accessToken", token);
-      }
-    }
+    // Unified token storage kullanımı
+    const token = getAccessToken();
 
     // 4. Token varsa Redux store'a yükle ve header'ları ayarla
     if (token) {
@@ -45,10 +29,15 @@ export const initializeAuth = () => async (dispatch) => {
       instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
       // Email bilgisini de yükle (eğer varsa)
-      const email = storage.getItem("userEmail");
+      const email = getUserEmail();
       if (email) {
         dispatch(setEmail(email));
       }
+
+      // Token bitiş süresini yükle
+      const expiresAt = getTokenExpiration(token);
+      const expiresIn = expiresAt ? Math.floor((expiresAt - Date.now()) / 1000) : null;
+      dispatch(setTokenExpiration(expiresAt, expiresIn));
 
       console.log(
         "💾 Auth bilgileri başlatıldı, token:",

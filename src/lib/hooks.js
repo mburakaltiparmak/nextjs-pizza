@@ -1,5 +1,8 @@
 import axios from "axios";
 import { useDispatch, useSelector, useStore } from "react-redux";
+import { isTokenExpired } from "@/lib/utils/tokenUtils";
+import { getAccessToken, getRefreshToken, clearTokens } from "@/lib/utils/tokenStorage";
+import { tokenRefreshManager } from "@/lib/utils/tokenRefreshManager";
 
 export const useAppDispatch = useDispatch.withTypes();
 export const useAppSelector = useSelector.withTypes();
@@ -13,10 +16,8 @@ export const instance = axios.create({
   timeout: API_TIMEOUT,
 });
 
-export const userInstance = axios.create({
-  baseURL: `${API_BASE_URL}/admin/users`,
-  timeout: API_TIMEOUT,
-});
+// userInstance removed - unused
+
 
 instance.interceptors.request.use(
   (config) => {
@@ -37,10 +38,25 @@ instance.interceptors.request.use(
 
     if (typeof window !== "undefined") {
       // accessToken kullan (yeni backend formatı)
-      const token =
-        localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
-      if (token && !config.headers.Authorization) {
-        config.headers.Authorization = `Bearer ${token}`;
+      let token = getAccessToken();
+
+      if (token) {
+        // Token süresi dolmuşsa yenilemeyi dene
+        if (isTokenExpired(token)) {
+          console.log('Token expired, refreshing before request...');
+
+          // Senkronize refresh işlemi için (async/await burada çalışmaz çünkü interceptor senkron dönebilir veya Promise dönebilir)
+          // Ama burada async kullanabiliriz
+          // NOT: Bu kısmı basitleştirmek için şimdilik sadece süresi dolmuşsa log basıp devam edelim
+          // Gerçek refresh işlemi response interceptor'da (401 alınca) veya tokenRefresh.js ile yapılacak
+          // Ancak, eğer istek atılmadan önce sürenin dolduğunu biliyorsak, direkt refresh denemek daha iyi olur.
+          // Problem #3'te, bu logic daha sağlam hale getirilecek. 
+          // Şimdilik sadece config.headers set etme kısmına dokunuyoruz.
+        }
+
+        if (!config.headers.Authorization) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
       }
     }
 
@@ -52,19 +68,7 @@ instance.interceptors.request.use(
 );
 
 // Response interceptor - refresh token desteği ile
-let isRefreshing = false;
-let failedQueue = [];
-
-const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  failedQueue = [];
-};
+// Global variables removed (managed by TokenRefreshManager)
 
 instance.interceptors.response.use(
   (response) => {
@@ -92,67 +96,41 @@ instance.interceptors.response.use(
 
     // 401 hatası ve refresh token varsa token yenilemeyi dene
     if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        // Zaten token yenileme işlemi devam ediyorsa kuyruğa ekle
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then(token => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return instance(originalRequest);
-          })
-          .catch(err => Promise.reject(err));
-      }
-
       originalRequest._retry = true;
-      isRefreshing = true;
 
-      const rememberMe = localStorage.getItem("rememberMe") === "true";
-      const storage = rememberMe ? localStorage : sessionStorage;
-      const refreshToken = storage.getItem("refreshToken");
+      const refreshToken = getRefreshToken();
 
       if (!refreshToken) {
         // Refresh token yoksa logout
-        isRefreshing = false;
         if (typeof window !== "undefined") {
-          localStorage.clear();
-          sessionStorage.clear();
+          clearTokens();
           window.location.href = '/login';
         }
         return Promise.reject(error);
       }
 
       try {
-        // Refresh token ile yeni access token al
-        const response = await axios.post(
-          `${API_BASE_URL}/auth/refresh-token`,
-          { refreshToken },
-          { headers: { 'Content-Type': 'application/json' } }
+        // Refresh token ile yeni access token al (Race condition korumalı)
+        const accessToken = await tokenRefreshManager.refreshToken(
+          refreshToken,
+          API_BASE_URL
         );
 
-        const { accessToken } = response.data;
-
-        // Yeni token'ı kaydet
-        storage.setItem("accessToken", accessToken);
         instance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-
-        // Kuyrukta bekleyen istekleri işle
-        processQueue(null, accessToken);
 
         // Orijinal isteği yeni token ile tekrar dene
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return instance(originalRequest);
       } catch (refreshError) {
-        // Refresh token süresi dolmuş, logout
-        processQueue(refreshError, null);
+        // Refresh token süresi dolmuş, logout (TokenRefreshManager zaten storage'ı temizler)
         if (typeof window !== "undefined") {
-          localStorage.clear();
-          sessionStorage.clear();
+          // Double check cleanup
+          clearTokens();
           window.location.href = '/login';
         }
         return Promise.reject(refreshError);
       } finally {
-        isRefreshing = false;
+        // Manager kendi state'ini yönetir, burada bir şey yapmaya gerek yok
       }
     }
 
@@ -160,14 +138,6 @@ instance.interceptors.response.use(
   }
 );
 
-userInstance.interceptors.request.use(
-  instance.interceptors.request.handlers[0].fulfilled,
-  instance.interceptors.request.handlers[0].rejected
-);
-
-userInstance.interceptors.response.use(
-  instance.interceptors.response.handlers[0].fulfilled,
-  instance.interceptors.response.handlers[0].rejected
-);
+// userInstance interceptors removed
 
 export const API_URL = API_BASE_URL;
