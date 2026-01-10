@@ -8,6 +8,7 @@ import { clearCartAction, saveCartToStorage, setSelectedAddress } from "@/lib/st
 import Loading from "../loading";
 import NotFound from "../not-found";
 import { Home } from "lucide-react";
+import { clearGuestData } from "@/lib/store/reducers/guestReducer";
 
 export default function SuccessPage() {
   const router = useRouter();
@@ -27,20 +28,34 @@ export default function SuccessPage() {
 
   // Misafir kullanıcı kontrolü
   const role = useAppSelector((state) => state.user.role);
-  const isGuest = role === "GUEST";
+  const isGuestMode = useAppSelector((state) => state.app?.isGuestMode);
+  const isGuest = role === "GUEST" || isGuestMode;
   const guestData = useAppSelector((state) => state.guest);
-
   const [latestOrder, setLatestOrder] = useState(null);
   const [addressLoading, setAddressLoading] = useState(false);
 
+  const getCustomerEmail = () => {
+    if ((isGuest || isGuestMode) && guestData) {
+      return guestData.email;
+    } else if (userData && userData.guestEmail) {
+      return userData.guestEmail;
+    }
+    return null;
+  };
+
   useEffect(() => {
+    // Clear guest info after successful order
+    if (isGuestMode) {
+      dispatch(clearGuestData());
+    }
+
     // Sayfa başarıyla render edildi, sepeti temizle
     if (!loading && !error) {
       console.log("Success sayfası yüklendi, sepet temizleniyor...");
       dispatch(clearCartAction());
       saveCartToStorage([]);
     }
-  }, [dispatch,loading,error]); 
+  }, [dispatch, loading, error, isGuestMode]);
 
   // Eğer adres ID'si varsa ve adres nesnesi yoksa, adresi API'den getir
   useEffect(() => {
@@ -186,7 +201,7 @@ export default function SuccessPage() {
             <span className="flex flex-row items-center gap-1">
               <img
                 className="object-cover w-12"
-                src={item.product.img}
+                src={item.product?.img || "/assets/images/fe/pizza-icon.png"}
                 alt={item.product?.name || "Ürün"}
               />
               {/*düzelt */}
@@ -397,7 +412,6 @@ export default function SuccessPage() {
           </div>
           <Separator orientation="horizontal" className="bg-red" />
 
-          {/* Order Status */}
           <div className="py-2">
             <div className="">
               <span className="font-semibold bg-red text-yellow px-3 py-1 rounded-full text-sm">
@@ -405,6 +419,23 @@ export default function SuccessPage() {
               </span>
             </div>
           </div>
+
+          {/* Guest Email - Order Tracking Info */}
+          {getCustomerEmail() && (
+            <div className="flex flex-col gap-2 p-3 bg-red text-yellow rounded-lg mt-2 border-t border-yellow/20 pt-4">
+              <p className="text-sm font-medium">📧 Sipariş Takibi</p>
+              <p className="text-xs">
+                Siparişinizi <span className="font-bold">{getCustomerEmail()}</span> email
+                adresi ve sipariş numarası ile takip edebilirsiniz.
+              </p>
+              <button
+                onClick={() => router.push('/track-order')}
+                className="mt-2 px-3 py-1 bg-yellow text-red text-sm font-bold rounded hover:bg-yellow/90 transition-colors w-full sm:w-auto"
+              >
+                Siparişimi Takip Et
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Anasayfaya Git Butonu */}

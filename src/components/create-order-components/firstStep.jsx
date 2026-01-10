@@ -18,23 +18,25 @@ const schema = z.object({
 const FirstStep = ({ setCurrentStep, setStep1 }) => {
   const dispatch = useAppDispatch();
   const { success, error, warning } = useToast();
-  
+
   // Get user profile from redux store
   const userProfile = useAppSelector((state) => state.user.profile);
   const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
   const role = useAppSelector((state) => state.user.role);
-  const isGuest = role === "GUEST";
-  
+  const isGuestMode = useAppSelector((state) => state.app?.isGuestMode);
+  // Kullanıcı giriş yapmamışsa otomatik olarak misafir sayılır
+  const isGuest = role === "GUEST" || isGuestMode || !isAuthenticated;
+
   // Get guest data from redux store if role is GUEST
   const guestData = useAppSelector((state) => state.guest);
-  
+
   // Mevcut adresleri redux'tan al (AddressList bunları kullanacak)
   const addresses = useAppSelector((state) => state.user.addresses || []);
-  
+
   const [newAddress, setNewAddress] = useState(null);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
-  
+
   const {
     register,
     handleSubmit,
@@ -64,22 +66,22 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
   }, [userProfile, guestData, isGuest, setValue]);
 
   const fullname = watch("fullname");
-  
+
   // İlerleme butonu aktif olması için isim ve adres kontrolü
   const isStep1Valid = fullname && (selectedAddressId || newAddress);
-  
+
   // Guests need additional validation for email and phone
   const isGuestDataValid = !isGuest || (
-    guestData && 
-    guestData.name && 
-    guestData.surname && 
-    guestData.email && 
+    guestData &&
+    guestData.name &&
+    guestData.surname &&
+    guestData.email &&
     guestData.phoneNumber
   );
-  
+
   // Guest info form submit durumunu izlemek için
   const [guestInfoSubmitted, setGuestInfoSubmitted] = useState(false);
-  
+
   // Guest bilgileri submit edildiğinde
   useEffect(() => {
     if (isGuest && guestData.name && guestData.surname && guestData.email && guestData.phoneNumber) {
@@ -91,11 +93,11 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
   const handleAddressSelect = (addressId) => {
     // ID'ye göre adres nesnesini bul
     const selectedAddress = addresses.find(addr => addr.id === addressId);
-    
+
     setSelectedAddressId(addressId);
     setShowNewAddressForm(false);
     setNewAddress(null);
-    
+
     // Seçilen adresi Redux'a kaydet
     if (selectedAddress) {
       dispatch(setSelectedAddress(selectedAddress));
@@ -113,7 +115,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
   // Adres formu gönderimi
   const handleAddressSubmit = (addressData) => {
     console.log("Adres form verisi:", addressData);
-    
+
     // Adres verisini standart formata dönüştür
     const formattedAddress = {
       id: addressData.id || null,
@@ -126,28 +128,33 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
       recipientName: addressData.recipientName || fullname,
       isDefault: addressData.isDefault || false
     };
-    
+
     // Eğer adres backend'e kaydedilmiş ve bir ID aldıysa
     if (formattedAddress.id) {
       // Listeden seçilen adres olarak işaretle
       setSelectedAddressId(formattedAddress.id);
       setNewAddress(null);
       setShowNewAddressForm(false);
-      
+
       // Adresi Redux'a kaydet
       dispatch(setSelectedAddress(formattedAddress));
       success("Adres başarıyla kaydedildi");
-    } 
+    }
     // Eğer yeni bir adres ise (backend'e kaydedilmemiş veya misafir kullanıcı için)
     else {
+      // Misafir siparişi ise ve guest email varsa adrese ekle
+      if (isGuest && guestData && guestData.email) {
+        formattedAddress.email = guestData.email;
+      }
+
       // Adresi state'e kaydet
       setNewAddress(formattedAddress);
       setSelectedAddressId(null);
       setShowNewAddressForm(false);
-      
+
       // Adresi Redux'a da kaydet
       dispatch(setSelectedAddress(formattedAddress));
-      
+
       success("Adres bilgileri alındı", {
         title: "Adres kaydedildi",
         message: "Siparişiniz için kullanılacak."
@@ -164,7 +171,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
         });
         return;
       }
-      
+
       // Adres bilgilerini kontrol et
       if (!selectedAddressId && !newAddress) {
         warning("Lütfen bir adres seçin veya yeni adres ekleyin", {
@@ -175,15 +182,21 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
 
       // Seçilen adresi bul
       let addressData = null;
-      
+
       if (selectedAddressId) {
         addressData = addresses.find(addr => addr.id === selectedAddressId);
       } else if (newAddress) {
         addressData = newAddress;
       }
 
+      // FIX: Misafir emailini adrese ekle (Eğer ilk başta eklenmediyse)
+      if (isGuest && addressData && guestData?.email) {
+        console.log("Adrese misafir emaili ekleniyor:", guestData.email);
+        addressData = { ...addressData, email: guestData.email };
+      }
+
       console.log("Seçilen adres:", addressData);
-      
+
       // Kullanıcı verileri objesi oluştur
       const userData = {
         fullname,
@@ -192,7 +205,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
         newAddress: selectedAddressId ? null : addressData, // Misafir kullanıcılar için yeni adres olarak işaretle
         isGuestOrder: isGuest
       };
-      
+
       // Eğer misafir siparişi ise guest bilgilerini ekle
       if (isGuest) {
         userData.guestName = guestData.name;
@@ -200,21 +213,21 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
         userData.guestEmail = guestData.email;
         userData.guestPhone = guestData.phoneNumber;
       }
-      
+
       // Redux'a kullanıcı verilerini kaydet
       dispatch(setUserData(userData));
-      
+
       // Seçilen adresi ayrıca Redux state'ine kaydet
       if (addressData) {
         dispatch(setSelectedAddress(addressData));
       }
-      
+
       // Adım 1 tamamlandı, sonraki adıma geç
       setStep1(true);
       setCurrentStep(2);
-      
-      success(isGuest ? 
-        "Misafir bilgileriniz ve adres bilgileriniz başarıyla kaydedildi" : 
+
+      success(isGuest ?
+        "Misafir bilgileriniz ve adres bilgileriniz başarıyla kaydedildi" :
         "Kişisel bilgileriniz başarıyla kaydedildi", {
         title: "Bilgiler kaydedildi"
       });
@@ -236,7 +249,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
             bilgilere ihtiyacımız var.
           </p>
         </div>
-        
+
         <div className="space-y-8">
           {/* Misafir modunda ise Misafir bilgileri formunu göster */}
           {isGuest ? (
@@ -263,7 +276,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
                       <p className="mt-1">{guestData.phoneNumber}</p>
                     </div>
                   </div>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setGuestInfoSubmitted(false)}
                     className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
@@ -291,7 +304,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
               )}
             </div>
           )}
-          
+
           <div className="space-y-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-yellow rounded-full p-2">
@@ -299,7 +312,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
               </div>
               <h3 className="text-xl lg:text-2xl font-bold text-darkgray">Teslimat Adresi</h3>
             </div>
-            
+
             {/* Adres Listesi veya Form */}
             {!showNewAddressForm ? (
               <div>
@@ -318,11 +331,11 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
                   <div className="text-center space-y-6">
                     <div className="bg-gradient-to-r from-lightgray to-lightgray2 rounded-xl p-6">
                       <p className="text-gray text-base mb-6 leading-relaxed">
-                        {newAddress ? 
-                          "✅ Adres bilgileriniz alındı. Düzenlemek için yeni adres ekleyebilirsiniz." : 
+                        {newAddress ?
+                          "✅ Adres bilgileriniz alındı. Düzenlemek için yeni adres ekleyebilirsiniz." :
                           "📍 Siparişinizin teslim edileceği adresi belirtin."}
                       </p>
-                      
+
                       {newAddress && (
                         <div className="mb-6 p-4 bg-white rounded-xl border-2 border-yellow shadow-md">
                           <div className="text-left space-y-2">
@@ -335,7 +348,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
                           </div>
                         </div>
                       )}
-                      
+
                       <button
                         type="button"
                         onClick={handleAddNewClick}
@@ -346,7 +359,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
                       </button>
                     </div>
                   </div>
-                )}  
+                )}
               </div>
             ) : (
               <div className="bg-gradient-to-r from-lightgray to-lightgray2 rounded-xl p-6 border border-lightgray2">
@@ -354,10 +367,10 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
                   <Plus className="w-6 h-6 text-red" />
                   Yeni Adres Ekle
                 </h4>
-                <AddressForm 
+                <AddressForm
                   onSubmit={handleAddressSubmit}
                   submitText="Adresi Kaydet"
-                  initialData={{ 
+                  initialData={{
                     saveAddress: isAuthenticated && !isGuest,
                     recipientName: fullname || ""
                   }}
@@ -375,18 +388,17 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
           </div>
         </div>
       </div>
-      
+
       <div className="px-6 lg:px-8 py-6 bg-gradient-to-r from-lightgray to-lightgray2 border-t border-lightgray2">
         <div className="flex justify-end">
           <button
             type="button"
             onClick={handleSubmit(onSubmit)}
             disabled={!isStep1Valid}
-            className={`inline-flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${
-              isStep1Valid 
-                ? "bg-yellow text-red hover:bg-red hover:text-yellow hover:scale-105 hover:shadow-xl border-2 border-transparent hover:border-yellow" 
-                : "bg-gray text-lightgray cursor-not-allowed opacity-60"
-            }`}
+            className={`inline-flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${isStep1Valid
+              ? "bg-yellow text-red hover:bg-red hover:text-yellow hover:scale-105 hover:shadow-xl border-2 border-transparent hover:border-yellow"
+              : "bg-gray text-lightgray cursor-not-allowed opacity-60"
+              }`}
           >
             İLERLE
             <ChevronRight className="w-6 h-6" />

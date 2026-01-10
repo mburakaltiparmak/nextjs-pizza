@@ -291,8 +291,15 @@ export const createOrder =
             recipientName: orderData.newAddress.recipientName || "",
             saveAddress: orderData.newAddress.saveAddress === true,
             isDefault: orderData.newAddress.isDefault === true,
+            // Backend için email alanı - Misafir kullanıcılar için zorunlu
+            email: orderData.newAddress.email || null,
           };
           console.log("Yeni adres kullanılıyor:", requestData.newAddress);
+
+          // NEW: Log warning if email is missing for potential guest order
+          if (!requestData.newAddress.email) {
+            console.warn("⚠️ Warning: Email is missing in newAddress - guest order may fail!");
+          }
         }
 
         console.log(
@@ -315,49 +322,28 @@ export const createOrder =
 
         // Ödeme işlemini yap
         try {
-          if (orderData.paymentMethod === "CREDIT_CARD" && paymentData) {
-            // Online kredi kartı ödemesi
-            const paymentEndpoint = `/orders/${orderId}/pay/card`;
+          if (orderData.paymentMethod === "ONLINE_CREDIT_CARD") {
+            // Online kredi kartı ödemesi (Iyzico Hosted Checkout Başlatma)
+            const paymentEndpoint = `/payment/checkout/init/${orderId}`;
 
-            const paymentRequest = {
-              cardNumber: paymentData.cardNumber,
-              nameOnCard: paymentData.nameOnCard,
-              expirationMonth: paymentData.expirationMonth,
-              expirationYear: paymentData.expirationYear,
-              cvc: paymentData.cvc,
-            };
+            console.log(`Iyzico ödeme sayfası başlatılıyor: ${paymentEndpoint}`);
+            const initResponse = await instance.post(paymentEndpoint);
 
-            console.log(`Kredi kartı ödemesi yapılıyor: ${paymentEndpoint}`);
-            const paymentResponse = await instance.post(
-              paymentEndpoint,
-              paymentRequest
-            );
+            const { status, paymentPageUrl, errorMessage } = initResponse.data;
 
-            // Ödeme bilgilerini de Redux'a ekle
-            if (paymentResponse && paymentResponse.data) {
-              const updatedOrderResponse = await instance.get(
-                `/orders/${orderId}`
-              );
-              if (updatedOrderResponse && updatedOrderResponse.data) {
-                dispatch(setOrderDetail(updatedOrderResponse.data));
-              }
+            if (status === "PENDING_CHECKOUT" && paymentPageUrl) {
+              console.log("Ödeme sayfası URL'i alındı, yönlendiriliyor: " + paymentPageUrl);
+
+              // Kullanıcıyı Iyzico ödeme sayfasına yönlendir
+              window.location.href = paymentPageUrl;
+              return; // İşlemi burada kes, yönlendirme yapılacak
+            } else {
+              throw new Error(errorMessage || "Ödeme sayfası oluşturulamadı.");
             }
           } else if (orderData.paymentMethod === "CASH") {
-            // Nakit ödeme
-            const paymentEndpoint = `/orders/${orderId}/pay/cash`;
-
-            console.log(`Nakit ödeme işaretleniyor: ${paymentEndpoint}`);
-            const paymentResponse = await instance.post(paymentEndpoint);
-
-            // Ödeme sonrası sipariş bilgilerini güncelle
-            if (paymentResponse && paymentResponse.data) {
-              const updatedOrderResponse = await instance.get(
-                `/orders/${orderId}`
-              );
-              if (updatedOrderResponse && updatedOrderResponse.data) {
-                dispatch(setOrderDetail(updatedOrderResponse.data));
-              }
-            }
+            console.log("Nakit ödeme seçildi via createOrder");
+            // No extra API call needed.
+            // Order is already created with paymentStatus='PENDING' (which is correct for Cash on Delivery)
           } else if (orderData.paymentMethod === "ONLINE") {
             // Iyzico online ödeme için
             console.log("Online ödeme (Iyzico) seçildi");

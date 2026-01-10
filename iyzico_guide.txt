@@ -1,0 +1,44 @@
+Iyzico Payment Integration Guide (Frontend) - Hosted Checkout Form (SECURE)
+This guide provides instructions for implementing Iyzico payment using the Hosted Payment Page. This is the most secure method as no card details touch your frontend or backend directly.
+
+1. The Flow
+Frontend: User clicks "Pay with Credit Card".
+Frontend: Calls Backend /api/payment/checkout/init/{orderId}.
+Backend: Returns a URL (paymentPageUrl).
+Frontend: Redirects user (window.location.href = ...).
+Iyzico: User fills card details + 3DS on Iyzico's secure page.
+Callback: User is redirected back to your site (Success/Failure) via Backend callback.
+2. API Endpoint
+Initialize Hosted Payment
+URL: POST /api/payment/checkout/init/{orderId}
+Auth: Public (Guest allowed).
+Payload: None (Order details are already on server).
+Response: PaymentResponse JSON
+status: "PENDING_CHECKOUT"
+paymentPageUrl: "https://sandbox-payment-page.iyzipay.com/..."
+token: "token-xxx"
+3. Implementation Steps
+Step A: Initiate Payment (Frontend)
+// orderActions.js or Component
+async function handlePayment(orderId) {
+    try {
+        const response = await instance.post(`/payment/checkout/init/${orderId}`);
+        const { status, paymentPageUrl } = response.data;
+        if (status === "PENDING_CHECKOUT" && paymentPageUrl) {
+           // Redirect the user to Iyzico
+           window.location.href = paymentPageUrl;
+        } else {
+           console.error("Payment init failed", response.data);
+           // Show error toast
+        }
+    } catch (error) {
+        console.error("Error initiating payment", error);
+         // Show error toast
+    }
+}
+Step B: Success/Failure Handling
+After payment, Iyzico redirects the user BACK to your specific callback endpoint. You likely need a frontend route to show success.
+
+Success URL: You defined this as IYZICO_CALLBACK_URL in env.
+Backend handles the callback and should ideally redirect the user to a Frontend Success Page, e.g., https://your-frontend.com/order/success?orderId=123.
+Note: Ensure your IYZICO_CALLBACK_URL in backend env points to the backend callback handler (/api/payment/3ds/callback), which then handles the logic and final redirect.

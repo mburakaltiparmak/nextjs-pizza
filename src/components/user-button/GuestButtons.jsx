@@ -10,10 +10,13 @@ import { useLoginForm } from "@/hooks/use-login-form";
 import { useSignupForm } from "@/hooks/use-signup-form";
 import { useForgotPassword } from "@/hooks/use-forgot-password";
 import useAuth from "@/hooks/use-auth";
+import { useAppDispatch } from "@/lib/hooks";
+import { setGuestMode } from "@/lib/store/actions/appActions";
 
 export const GuestButtons = ({ router }) => {
   const searchParams = useSearchParams();
   const { loading: authLoading, refreshAuth } = useAuth([], "/", false);
+  const dispatch = useAppDispatch();
 
   const [loginOpen, setLoginOpen] = React.useState(false);
   const [signupOpen, setSignupOpen] = React.useState(false);
@@ -55,6 +58,12 @@ export const GuestButtons = ({ router }) => {
     setLoginOpen(true);
   };
 
+  const handleGuestCheckout = () => {
+    dispatch(setGuestMode(true));
+    setLoginOpen(false);
+    router.push("/create-order");
+  };
+
   // Auto-open login/signup modal if query param is present
   React.useEffect(() => {
     if (searchParams.get("login") === "true") {
@@ -70,6 +79,7 @@ export const GuestButtons = ({ router }) => {
       <LoginDialog
         loginOpen={loginOpen}
         setLoginOpen={setLoginOpen}
+        onGuestCheckout={handleGuestCheckout}
         email={loginForm.email}
         setEmail={loginForm.setEmail}
         password={loginForm.password}

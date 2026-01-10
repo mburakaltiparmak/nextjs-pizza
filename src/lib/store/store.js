@@ -7,6 +7,7 @@ import { adminReducer } from "./reducers/adminReducer";
 import { orderReducer } from "./reducers/orderReducer";
 import { globalReducer } from "./reducers/globalReducer";
 import { guestReducer } from "./reducers/guestReducer";
+import appReducer from "./reducers/appReducer";
 import { errorMiddleware } from "./middleware/errorMiddleware";
 
 export const store = configureStore({
@@ -18,6 +19,7 @@ export const store = configureStore({
     order: orderReducer,
     guest: guestReducer,
     global: globalReducer,
+    app: appReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()

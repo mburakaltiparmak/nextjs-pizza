@@ -22,7 +22,8 @@ const Page = () => {
   const cart = useAppSelector((state) => state.order.cart);
   const role = useAppSelector((state) => state.user.role);
   const isLogin = useAppSelector((state) => state.user.isLogin);
-  
+  const isGuestMode = useAppSelector((state) => state.app?.isGuestMode);
+
   // Hydration ve yönlendirme için gerekli durumlar
   const [isClient, setIsClient] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -44,26 +45,14 @@ const Page = () => {
         title: "Yönlendirme",
         message: "Anasayfaya yönlendiriliyorsunuz."
       });
-      
+
       setTimeout(() => {
         router.push("/");
       }, 1500);
     }
   }, [isRedirecting, router, warning]);
 
-  const redirectToLogin = useCallback(() => {
-    if (!isRedirecting) {
-      setIsRedirecting(true);
-      error("Siparişinize devam etmek için lütfen giriş yapın", {
-        title: "Giriş Gerekli",
-        message: "Giriş sayfasına yönlendiriliyorsunuz."
-      });
-      
-      setTimeout(() => {
-        router.push("/login");
-      }, 1500);
-    }
-  }, [isRedirecting, router, warning]);
+
 
   // İstemci tarafında kontroller - ayrı useEffect
   useEffect(() => {
@@ -75,14 +64,7 @@ const Page = () => {
       return;
     }
 
-    // Kullanıcı giriş kontrolü - hem role hem isLogin kontrol et
-    // Guest kullanıcılar (role === "GUEST") sipariş verebilir
-    if (!role || (!isLogin && role !== "GUEST")) {
-      redirectToLogin();
-      return;
-    }
-
-  }, [isClient, cart, role, isLogin, isRedirecting, redirectToHome, redirectToLogin]);
+  }, [isClient, cart, isRedirecting, redirectToHome]);
 
   // Define steps
   const steps = [
@@ -145,9 +127,7 @@ const Page = () => {
     return <Loading />; // Yönlendirme effect'i çalışacak
   }
 
-  if (!role || (!isLogin && role !== "GUEST")) {
-    return <Loading />; // Yönlendirme effect'i çalışacak
-  }
+
 
   return (
     <div className="min-h-screen bg-lightgray">
@@ -170,13 +150,12 @@ const Page = () => {
               {steps.map((step) => (
                 <div key={step.id} className="flex flex-col items-center">
                   <div
-                    className={`flex items-center justify-center w-12 h-12 rounded-full z-10 transition-all duration-300 shadow-lg ${
-                      step.completed
-                        ? "bg-gradient-to-r from-yellow to-lightyellow text-red border-2 border-yellow ring-4 ring-yellow ring-opacity-30"
-                        : step.id === currentStep
+                    className={`flex items-center justify-center w-12 h-12 rounded-full z-10 transition-all duration-300 shadow-lg ${step.completed
+                      ? "bg-gradient-to-r from-yellow to-lightyellow text-red border-2 border-yellow ring-4 ring-yellow ring-opacity-30"
+                      : step.id === currentStep
                         ? "bg-gradient-to-r from-red to-darkred border-2 border-red text-yellow ring-4 ring-red ring-opacity-30"
                         : "bg-white border-2 border-lightgray2 text-gray shadow-md"
-                    }`}
+                      }`}
                   >
                     {step.completed ? (
                       <Check className="w-6 h-6 font-bold" />
@@ -185,13 +164,12 @@ const Page = () => {
                     )}
                   </div>
                   <span
-                    className={`mt-3 text-sm font-semibold transition-colors duration-300 ${
-                      step.completed
-                        ? "text-red"
-                        : step.id === currentStep
+                    className={`mt-3 text-sm font-semibold transition-colors duration-300 ${step.completed
+                      ? "text-red"
+                      : step.id === currentStep
                         ? "text-red"
                         : "text-gray"
-                    }`}
+                      }`}
                   >
                     {step.title}
                   </span>
@@ -204,7 +182,7 @@ const Page = () => {
         {/* Content */}
         <div className="mb-8">{displaySteps()}</div>
 
-        
+
       </div>
       <Footer />
     </div>

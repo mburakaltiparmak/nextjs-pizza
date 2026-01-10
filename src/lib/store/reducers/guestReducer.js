@@ -1,9 +1,28 @@
-const initialState = {
+import { saveGuestInfo, loadGuestInfo, clearGuestInfo } from '@/lib/utils/guestStorage';
+
+// Load from localStorage on init
+const savedGuestInfo = loadGuestInfo();
+const initialState = savedGuestInfo || {
     name: "",
     surname: "",
     email: "",
     phoneNumber: "",
     address: null // Adres bilgilerini tutacak
+};
+
+// Save to localStorage on every update
+export const setGuestInfo = (info) => {
+    return {
+        type: guestActions.SET_GUEST_INFO,
+        payload: info,
+    };
+};
+
+// Clear from localStorage on logout
+export const clearGuestData = () => {
+    return {
+        type: guestActions.CLEAR_GUEST_DATA,
+    };
 };
 
 export const guestActions = {
@@ -12,7 +31,8 @@ export const guestActions = {
     SET_GUEST_EMAIL: "SET_GUEST_EMAIL",
     SET_GUEST_PHONE: "SET_GUEST_PHONE",
     SET_GUEST_ADDRESS: "SET_GUEST_ADDRESS",
-    CLEAR_GUEST_DATA: "CLEAR_GUEST_DATA"
+    CLEAR_GUEST_DATA: "CLEAR_GUEST_DATA",
+    SET_GUEST_INFO: "SET_GUEST_INFO"
 };
 
 export const guestReducer = (state = initialState, action) => {
@@ -42,8 +62,18 @@ export const guestReducer = (state = initialState, action) => {
                 ...state,
                 address: action.payload,
             };
+        case guestActions.SET_GUEST_INFO:
+            saveGuestInfo(action.payload);
+            return action.payload;
         case guestActions.CLEAR_GUEST_DATA:
-            return initialState;
+            clearGuestInfo();
+            return {
+                name: "",
+                surname: "",
+                email: "",
+                phoneNumber: "",
+                address: null
+            };
         default:
             return state;
     }

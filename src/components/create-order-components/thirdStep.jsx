@@ -20,11 +20,11 @@ const OnlineCardPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control
       <div className="p-6">
         <h2 className="text-xl font-semibold mb-2 text-gray-800">Online Ödeme Bilgileri</h2>
         <p className="text-gray-500 text-sm mb-6">
-          Siparişinizi tamamlamak için kart bilgilerinize ihtiyacımız var.
+          Güvenli ödeme işlemi için kart bilgilerinizi giriniz.
         </p>
-        
+
         <div className="space-y-6">
-          {/* Mevcut form alanları */}
+          {/* Kart Numarası */}
           <Controller
             name="cardNumber"
             control={control}
@@ -48,8 +48,8 @@ const OnlineCardPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control
               </div>
             )}
           />
-          
-          {/* Diğer form alanları - değişmiyor */}
+
+          {/* Kart İsim */}
           <Controller
             name="nameOnCard"
             control={control}
@@ -70,7 +70,7 @@ const OnlineCardPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control
               </div>
             )}
           />
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="expiration-date" className="block text-sm font-medium text-gray-700 mb-1">
@@ -94,7 +94,7 @@ const OnlineCardPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control
                     </select>
                   )}
                 />
-                
+
                 <Controller
                   name="expirationYear"
                   control={control}
@@ -119,7 +119,7 @@ const OnlineCardPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control
                 </p>
               )}
             </div>
-            
+
             <Controller
               name="cvc"
               control={control}
@@ -163,7 +163,7 @@ const OnlineCardPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control
           />
         </div>
       </div>
-      
+
       <div className="px-6 py-4 bg-gray-50 flex justify-between">
         <button
           type="button"
@@ -173,40 +173,44 @@ const OnlineCardPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control
           <ChevronLeft className="w-5 h-5" />
           GERİ
         </button>
-        
+
         <button
           type="submit"
           disabled={isSubmitting}
           className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md bg-yellow text-red hover:bg-red hover:text-yellow border border-transparent hover:border-yellow"
         >
-          SİPARİŞİ TAMAMLA
+          ÖDEMEYİ TAMAMLA
         </button>
       </div>
     </form>
   );
 };
 
+
 // Diğer ödeme yöntemleri için component - Sadece not alanı
 const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, paymentMethod }) => {
   // Ödeme yöntemine göre başlık ve açıklama
   const getPaymentTitle = () => {
-    switch(paymentMethod) {
+    switch (paymentMethod) {
       case "CREDIT_CARD": return "Kapıda Kredi Kartı";
+      case "ONLINE_CREDIT_CARD": return "Online Kredi Kartı (Güvenli Ödeme Sayfası)";
       case "CASH": return "Kapıda Nakit Ödeme";
       case "GIFT_CARD": return "Hediye Kartı ile Ödeme";
       default: return "Ödeme Bilgileri";
     }
   };
-  
+
   const getPaymentDescription = () => {
-    switch(paymentMethod) {
-      case "CREDIT_CARD": 
+    switch (paymentMethod) {
+      case "CREDIT_CARD":
         return "Siparişiniz teslim edilirken kredi kartı ile ödeme yapabilirsiniz.";
-      case "CASH": 
+      case "ONLINE_CREDIT_CARD":
+        return "Siparişinizi tamamlamak için güvenli ödeme sayfasına yönlendirileceksiniz.";
+      case "CASH":
         return "Siparişiniz teslim edilirken nakit ödeme yapabilirsiniz.";
-      case "GIFT_CARD": 
+      case "GIFT_CARD":
         return "Siparişiniz teslim edilirken hediye kartı ile ödeme yapabilirsiniz.";
-      default: 
+      default:
         return "Siparişiniz teslim edilirken ödeme yapabilirsiniz.";
     }
   };
@@ -216,7 +220,7 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
   const selectedAddress = useAppSelector((state) => state.order.selectedAddress);
   const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
   const role = useAppSelector((state) => state.user.role);
-  
+
   console.log("userData", userData);
   console.log("selectedAddress", selectedAddress);
 
@@ -241,7 +245,7 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
         </div>
       );
     }
-    
+
     // Kullanıcı giriş yapmış ve sadece addressId varsa
     if (isAuthenticated && userData?.addressId) {
       return (
@@ -254,7 +258,7 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
         </div>
       );
     }
-    
+
     return null;
   };
 
@@ -265,7 +269,7 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
         <p className="text-gray-500 text-sm mb-6">
           {getPaymentDescription()}
         </p>
-        
+
         <div className="space-y-6">
           {/* Sipariş Notu Alanı */}
           <Controller
@@ -286,12 +290,12 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
               </div>
             )}
           />
-          
+
           {/* Teslimat Bilgileri Özeti */}
           {renderDeliveryInfo()}
         </div>
       </div>
-      
+
       <div className="px-6 py-4 bg-gray-50 flex justify-between">
         <button
           type="button"
@@ -301,7 +305,7 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
           <ChevronLeft className="w-5 h-5" />
           GERİ
         </button>
-        
+
         <button
           type="submit"
           disabled={isSubmitting}
@@ -326,9 +330,11 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   const paymentMethod = useAppSelector((state) => state.order.paymentMethod);
   const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
   const role = useAppSelector((state) => state.user.role);
-  
+
   // Misafir bilgilerini al
-  
+  const isGuest = role === "GUEST";
+  const guestData = useAppSelector((state) => state.guest);
+
   // Online kart ödemesi için validation schema
   const onlineCardSchema = z.object({
     cardNumber: z.string().min(16, { message: "Kredi Kartı numarası 16 haneli olmalıdır." }),
@@ -338,14 +344,15 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
     cvc: z.string().min(3, { message: "CVC 3 haneli olmalıdır." }),
     notes: z.string().optional()
   });
-  
+
   // Diğer ödeme yöntemleri için basit schema
   const otherPaymentSchema = z.object({
     notes: z.string().optional()
   });
-  
+
   // Ödeme yöntemine göre schema seç
-  const formSchema = paymentMethod === "ONLINE_CREDIT_CARD" ? onlineCardSchema : otherPaymentSchema;
+  // ONLINE_CREDIT_CARD artık Iyzico Hosted Checkout kullandığı için form bilgisi gerektirmez
+  const formSchema = otherPaymentSchema;
 
   const {
     control,
@@ -369,133 +376,126 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   }
 
 
-const submitOrder = async (formData) => {
-  console.log("Form verileri:", formData);
-  console.log("Adres bilgileri:", selectedAddress);
-  console.log("Sepet içeriği:", cartData);
-  console.log("Kullanıcı bilgileri:", userData);
+  const submitOrder = async (formData) => {
+    // console.log("Form verileri:", formData);
+    console.log("Adres bilgileri:", selectedAddress);
+    console.log("Sepet içeriği:", cartData);
+    console.log("Kullanıcı bilgileri:", userData);
 
-  try {
-    setStep3(true);
-  
-    toast({
-      title: "Siparişiniz alınıyor...",
-    });
-    
-    // Adres bilgilerini kontrol et
-    if (!selectedAddress) {
-      throw new Error("Lütfen bir teslimat adresi seçin veya ekleyin.");
-    }
-    
-    // Sipariş verisini hazırla - DÜZELTİLMİŞ KISIM
-    const orderRequest = {
-      // Sepet öğeleri - ID'leri dahil et
-      items: cartData.map(item => ({
-        quantity: item.count,
-        product: {
-          id: item.product.id,  // Mevcut ürünün ID'si - ÖNEMLİ!
-          name: item.product.name,
-          price: item.product.price,
-          image: item.product.img,
-          description: item.product.description,
-        },
-        unitPrice: item.product.price
-      })),
-      
-      // Ödeme bilgileri
-      paymentMethod: paymentMethod,
-      notes: formData.notes || ""
-    };
+    try {
+      setStep3(true);
 
-    // Adres bilgilerini ekle
-    // Kullanıcı giriş yapmış ve kayıtlı adresi seçilmiş
-    if (isAuthenticated && selectedAddress.id) {
-      orderRequest.addressId = selectedAddress.id;
-    }
-    // Yeni adres girilmiş
-    else {
-      // Backend'in beklediği formatta yeni adres bilgilerini gönder
-      orderRequest.newAddress = {
-        fullAddress: selectedAddress.fullAddress,
-        city: selectedAddress.city,
-        district: selectedAddress.district,
-        postalCode: selectedAddress.postalCode || "",
-        addressTitle: selectedAddress.addressTitle || "Yeni Adres",
-        phoneNumber: selectedAddress.phoneNumber || "",
-        recipientName: selectedAddress.recipientName || userData.fullname || "",
-        saveAddress: selectedAddress.saveAddress === true,
-        isDefault: selectedAddress.isDefault === true
+      toast({
+        title: "Siparişiniz alınıyor...",
+      });
+
+      // Adres bilgilerini kontrol et
+      if (!selectedAddress) {
+        throw new Error("Lütfen bir teslimat adresi seçin veya ekleyin.");
+      }
+
+      // Sipariş verisini hazırla - DÜZELTİLMİŞ KISIM
+      const orderRequest = {
+        // Sepet öğeleri - ID'leri dahil et
+        items: cartData.map(item => ({
+          quantity: item.count,
+          product: {
+            id: item.product.id,  // Mevcut ürünün ID'si - ÖNEMLİ!
+            name: item.product.name,
+            price: item.product.price,
+            image: item.product.img,
+            description: item.product.description,
+          },
+          unitPrice: item.product.price
+        })),
+
+        // Ödeme bilgileri
+        paymentMethod: paymentMethod,
+        notes: formData.notes || ""
       };
-    }
-    
-    // Ödeme bilgileri (sadece online kart ödemesi için)
-    const paymentData = paymentMethod === "ONLINE_CREDIT_CARD" ? {
-      cardNumber: formData.cardNumber,
-      nameOnCard: formData.nameOnCard,
-      expirationMonth: formData.expirationMonth,
-      expirationYear: formData.expirationYear,
-      cvc: formData.cvc
-    } : null;
-    
-    console.log("Backend'e gönderilecek sipariş verisi:", JSON.stringify(orderRequest, null, 2));
-    
-    // Sipariş oluşturma işlemini çağır
-    const result = await dispatch(createOrder({
-      orderData: orderRequest,
-      paymentData: paymentData,
-    }));
-    
-    // Hata durumunu kontrol et
-    if (result.error) {
-      console.error("Sipariş oluşturma hatası:", result.error);
+
+      // Adres bilgilerini ekle
+      // Kullanıcı giriş yapmış ve kayıtlı adresi seçilmiş
+      if (isAuthenticated && selectedAddress.id) {
+        orderRequest.addressId = selectedAddress.id;
+      }
+      // Yeni adres girilmiş
+      else {
+        // Backend'in beklediği formatta yeni adres bilgilerini gönder
+        orderRequest.newAddress = {
+          fullAddress: selectedAddress.fullAddress,
+          city: selectedAddress.city,
+          district: selectedAddress.district,
+          postalCode: selectedAddress.postalCode || "",
+          addressTitle: selectedAddress.addressTitle || "Yeni Adres",
+          phoneNumber: selectedAddress.phoneNumber || "",
+          recipientName: selectedAddress.recipientName || userData.fullname || "",
+          saveAddress: selectedAddress.saveAddress === true,
+          isDefault: selectedAddress.isDefault === true,
+          // Backend için email alanı - Misafir kullanıcılar için zorunlu
+          email: isGuest && guestData?.email
+            ? guestData.email
+            : selectedAddress.email || userData.guestEmail || null
+        };
+      }
+
+      // Ödeme bilgileri (sadece online kart ödemesi için)
+      // Iyzico Hosted Checkout için kart bilgisi gönderilmez, null set ediyoruz.
+      const paymentData = null;
+
+      console.log("Backend'e gönderilecek sipariş verisi:", JSON.stringify(orderRequest, null, 2));
+
+      // Sipariş oluşturma işlemini çağır
+      const result = await dispatch(createOrder({
+        orderData: orderRequest,
+        paymentData: paymentData,
+      }));
+
+      // Hata durumunu kontrol et
+      if (result.error) {
+        console.error("Sipariş oluşturma hatası:", result.error);
+        toast({
+          title: "Sipariş oluşturulurken bir hata oluştu.",
+          description: result.error,
+          variant: "destructive",
+        });
+        setStep3(false);
+        return;
+      }
+
+      // Başarılı ise
+      toast({
+        title: "Siparişiniz başarıyla oluşturuldu!",
+        description: "Teşekkür ederiz, siparişiniz alındı."
+      });
+
+      // Başarı sayfasına yönlendir
+      // Kısa bir gecikme ekleyerek toast mesajının görülmesini sağla
+      setTimeout(() => {
+        router.push("/success");
+      }, 1000);
+
+    } catch (error) {
+      console.error("Sipariş oluşturma işlemi sırasında beklenmeyen bir hata oluştu:", error);
       toast({
         title: "Sipariş oluşturulurken bir hata oluştu.",
-        description: result.error,
+        description: error.message,
         variant: "destructive",
       });
       setStep3(false);
-      return;
     }
+  };
 
-    // Başarılı ise
-    toast({
-      title: "Siparişiniz başarıyla oluşturuldu!",
-      description: "Teşekkür ederiz, siparişiniz alındı."
-    });
-    
-    // Başarı sayfasına yönlendir
-    // Kısa bir gecikme ekleyerek toast mesajının görülmesini sağla
-    setTimeout(() => {
-      router.push("/success");
-    }, 1000);
-    
-  } catch (error) {
-    console.error("Sipariş oluşturma işlemi sırasında beklenmeyen bir hata oluştu:", error);
-    toast({
-      title: "Sipariş oluşturulurken bir hata oluştu.",
-      description: error.message,
-      variant: "destructive",
-    });
-    setStep3(false);
-  }
-};
-  
   const handleBack = () => {
     setCurrentStep(2);
     setStep3(false);
   };
 
   // Ödeme yöntemine göre farklı component göster
-  return paymentMethod === "ONLINE_CREDIT_CARD" ? (
-    <OnlineCardPaymentForm 
-      onSubmit={handleSubmit(submitOrder)}
-      onBack={handleBack}
-      isSubmitting={isSubmitting}
-      errors={errors}
-      control={control}
-    />
-  ) : (
-    <OtherPaymentForm 
+  // Ödeme yöntemine göre farklı component göster
+  // ONLINE_CREDIT_CARD için de OtherPaymentForm (bilgilendirme mesajı ile) kullanılır
+  return (
+    <OtherPaymentForm
       onSubmit={handleSubmit(submitOrder)}
       onBack={handleBack}
       isSubmitting={isSubmitting}

@@ -31,6 +31,7 @@ export const LoginDialog = ({
   loading,
   onForgotPassword,
   onSignupClick,
+  onGuestCheckout,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -237,6 +238,17 @@ export const LoginDialog = ({
                   />
                 </svg>
                 Google ile Giriş Yap
+              </button>
+
+              {/* Guest Checkout Button */}
+              <button
+                type="button"
+                onClick={onGuestCheckout}
+                disabled={loading}
+                className="w-full py-2.5 px-4 rounded-lg font-bold bg-gray-100 text-darkgray border-2 border-lightgray2 transition-all duration-200 font-Barlow shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95 flex items-center justify-center text-sm hover:bg-gray-200"
+              >
+                <FontAwesomeIcon icon={faUser} className="mr-2 opacity-50" />
+                Misafir Olarak Devam Et
               </button>
             </form>
 

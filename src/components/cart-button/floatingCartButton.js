@@ -1,4 +1,3 @@
-// src/components/floatingCartButton.js
 "use client";
 import React from "react";
 import { useCartButton } from "@/hooks/use-cart-button";
@@ -19,10 +18,7 @@ const FloatingCartButton = () => {
     handleRemoveItem,
   } = useCartButton();
 
-  // SSR hydration fix: İlk render'da boş container döndür
-  if (!isClient) {
-    return <div className="fixed top-2 right-4"></div>;
-  }
+
 
   return (
     <CartDialog
