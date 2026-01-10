@@ -19,7 +19,7 @@ export const clearCurrentProduct = () => ({
 export const fetchProducts = () => async (dispatch) => {
   dispatch(setModuleLoading('product', true)); // ✅ Module loading kullan
   dispatch({
-    type: productActions.setProductFetchState,
+    type: productActions.SET_FETCH_STATE,
     payload: fetchStates.FETCHING,
   });
 
@@ -41,12 +41,12 @@ export const fetchProducts = () => async (dispatch) => {
     const products = response.data.content || response.data;
 
     dispatch({
-      type: productActions.setProducts,
+      type: productActions.SET_PRODUCTS,
       payload: products,
     });
 
     dispatch({
-      type: productActions.setProductFetchState,
+      type: productActions.SET_FETCH_STATE,
       payload: fetchStates.FETCHED,
     });
 
@@ -57,7 +57,7 @@ export const fetchProducts = () => async (dispatch) => {
     console.error("Ürün getirme hatası:", err);
 
     dispatch({
-      type: productActions.setProductFetchState,
+      type: productActions.SET_FETCH_STATE,
       payload: fetchStates.FAILED,
     });
 

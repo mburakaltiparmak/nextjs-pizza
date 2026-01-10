@@ -31,7 +31,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import Image from "next/image";
-import headImg from "@/assets/adv-aseets/adv-form-banner.png";
+const headImg = "/assets/adv-aseets/adv-form-banner.png";
 import { items } from "@/app/data"; // Updated import path
 import { useRouter } from "next/navigation";
 import { addToCart } from "@/lib/store/actions/orderActions";

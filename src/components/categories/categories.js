@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { HoverCard, HoverCardTrigger } from "../ui/hover-card";
 import Products from "../products/products";
-import allLogo from "@/assets/adv-aseets/icons/all-logo.png";
+const allLogo = "/assets/adv-aseets/icons/all-logo.png";
 import { fetchCategories } from "@/lib/store/actions/categoryActions";
 import { fetchProducts } from "@/lib/store/actions/productActions";
 import { LoadingSpinner } from "../ui/LoadingSpinner";
@@ -71,7 +71,7 @@ const Categories = () => {
           className={`btn-secondary ${selectedCategoryId === null ? "bg-yellow text-red font-bold" : ""
             }`}
         >
-          <img className="h-9 w-fit object-cover" src={allLogo.src} alt="all" />
+          <img className="h-9 w-fit object-cover" src={allLogo} alt="all" />
           <HoverCard>
             <HoverCardTrigger>Hepsi</HoverCardTrigger>
           </HoverCard>

@@ -12,9 +12,10 @@ import {
 import { faCopyright } from "@fortawesome/free-regular-svg-icons";
 
 // Adjusting imports for new location
-import locationLogo from "@/assets/adv-aseets/icons/icon-1.png";
-import mailLogo from "@/assets/adv-aseets/icons/icon-2.png";
-import phoneLogo from "@/assets/adv-aseets/icons/icon-3.png";
+// Assets moved to public folder
+const locationLogo = "/assets/adv-aseets/icons/icon-1.png";
+const mailLogo = "/assets/adv-aseets/icons/icon-2.png";
+const phoneLogo = "/assets/adv-aseets/icons/icon-3.png";
 import { footerInstaPhoto } from "@/app/data";
 import InstagramGallery from "@/components/ui/instagramGallery";
 
@@ -23,7 +24,7 @@ const IconWithText = ({ src, alt, text }) => (
         <div className="bg-red rounded-full p-2 flex items-center justify-center min-w-10 min-h-10">
             <Image
                 width={20}
-                height="auto"
+                height={20}
                 alt={alt}
                 src={src}
                 className="object-contain"
