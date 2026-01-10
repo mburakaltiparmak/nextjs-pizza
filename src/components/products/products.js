@@ -2,11 +2,11 @@
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { addToCart } from "@/lib/store/actions/orderActions";
 import { useMemo } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/useToast";
 import RatingStars from "../admin/ratingStars";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import SecondaryLoading from "../secondaryLoading";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ShoppingCart } from "lucide-react";
 
 const Products = ({ categoryFilter = "" }) => {
@@ -45,7 +45,7 @@ const Products = ({ categoryFilter = "" }) => {
 
   // Ürünler yüklenene kadar loading göster
   if (globalLoading || !products) {
-    return <SecondaryLoading size="small" />;
+    return <LoadingSpinner size="small" />;
   }
 
   // Ürün bulunamadı durumu
@@ -137,10 +137,9 @@ const Products = ({ categoryFilter = "" }) => {
                     onClick={(e) => handleAddToCart(item, e)}
                     disabled={item.stock === 0}
                     className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 font-Barlow flex items-center gap-2
-                      ${
-                        item.stock === 0
-                          ? "bg-red text-white cursor-not-allowed"
-                          : "bg-yellow text-red hover:bg-red hover:text-yellow hover:scale-105 active:scale-95"
+                      ${item.stock === 0
+                        ? "bg-red text-white cursor-not-allowed"
+                        : "bg-yellow text-red hover:bg-red hover:text-yellow hover:scale-105 active:scale-95"
                       }`}
                   >
                     <ShoppingCart size={16} />

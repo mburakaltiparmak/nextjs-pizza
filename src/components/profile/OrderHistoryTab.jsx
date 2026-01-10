@@ -15,7 +15,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import SecondaryLoading from "@/components/secondaryLoading";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 export const OrderHistoryTab = () => {
     const dispatch = useDispatch();
@@ -64,7 +64,7 @@ export const OrderHistoryTab = () => {
     };
 
     if (loading) {
-        return <SecondaryLoading size="fullPage" />;
+        return <LoadingSpinner size="fullPage" />;
     }
 
     if (!orders || orders.length === 0) {

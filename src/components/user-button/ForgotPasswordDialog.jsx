@@ -9,7 +9,7 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
-import SecondaryLoading from "@/components/secondaryLoading";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 export const ForgotPasswordDialog = ({
   forgotPasswordOpen,
@@ -96,15 +96,14 @@ export const ForgotPasswordDialog = ({
                 <button
                   onClick={handleForgotPassword}
                   disabled={loading}
-                  className={`w-full py-3 px-4 rounded-lg font-bold text-white transition-all duration-200 ${
-                    loading
+                  className={`w-full py-3 px-4 rounded-lg font-bold text-white transition-all duration-200 ${loading
                       ? "bg-gray cursor-not-allowed opacity-60"
                       : "bg-red hover:bg-darkred shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95"
-                  }`}
+                    }`}
                 >
                   {loading ? (
                     <div className="flex items-center justify-center">
-                      <SecondaryLoading size="medium" />
+                      <LoadingSpinner size="medium" />
                     </div>
                   ) : (
                     "Şifre Sıfırlama Bağlantısı Gönder"

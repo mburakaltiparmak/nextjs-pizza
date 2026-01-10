@@ -6,7 +6,7 @@ import { createCategory, updateCategory } from "@/lib/store/actions/categoryActi
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/useToast";
 import { Modal } from "@/components/admin/modal";
 import ImageUpload from "@/components/admin/imageUpload";
 import {

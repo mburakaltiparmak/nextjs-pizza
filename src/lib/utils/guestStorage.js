@@ -1,6 +1,7 @@
 const GUEST_INFO_KEY = 'guest_order_info';
 
 export const saveGuestInfo = (guestInfo) => {
+    if (typeof window === 'undefined') return;
     try {
         localStorage.setItem(GUEST_INFO_KEY, JSON.stringify(guestInfo));
         console.log('Guest info saved to localStorage');
@@ -10,6 +11,7 @@ export const saveGuestInfo = (guestInfo) => {
 };
 
 export const loadGuestInfo = () => {
+    if (typeof window === 'undefined') return null;
     try {
         const saved = localStorage.getItem(GUEST_INFO_KEY);
         return saved ? JSON.parse(saved) : null;
@@ -20,6 +22,7 @@ export const loadGuestInfo = () => {
 };
 
 export const clearGuestInfo = () => {
+    if (typeof window === 'undefined') return;
     try {
         localStorage.removeItem(GUEST_INFO_KEY);
         console.log('Guest info cleared from localStorage');

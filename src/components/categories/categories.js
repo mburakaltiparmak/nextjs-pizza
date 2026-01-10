@@ -4,11 +4,10 @@ import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { HoverCard, HoverCardTrigger } from "../ui/hover-card";
 import Products from "../products/products";
-import allLogo from "../../../assets/adv-aseets/icons/all-logo.png";
+import allLogo from "@/assets/adv-aseets/icons/all-logo.png";
 import { fetchCategories } from "@/lib/store/actions/categoryActions";
 import { fetchProducts } from "@/lib/store/actions/productActions";
-import SecondaryLoading from "../secondaryLoading";
-
+import { LoadingSpinner } from "../ui/LoadingSpinner";
 const Categories = () => {
   const dispatch = useAppDispatch();
 
@@ -58,7 +57,7 @@ const Categories = () => {
 
   // Veriler yüklenene kadar loading göster
   if (isLoading || !categories || categories.length === 0) {
-    return <SecondaryLoading size="small" />;
+    return <LoadingSpinner size="small" />;
   }
 
   return (
@@ -69,9 +68,8 @@ const Categories = () => {
       <div className="flex flex-row justify-center flex-wrap items-center gap-2 mt-4 max-lg:grid max-xl:grid-cols-4 max-md:grid-cols-2 max-md:place-items-center max-md:gap-4">
         <button
           onClick={(e) => handleAllOfThem(e)}
-          className={`btn-secondary ${
-            selectedCategoryId === null ? "bg-yellow text-red font-bold" : ""
-          }`}
+          className={`btn-secondary ${selectedCategoryId === null ? "bg-yellow text-red font-bold" : ""
+            }`}
         >
           <img className="h-9 w-fit object-cover" src={allLogo.src} alt="all" />
           <HoverCard>
@@ -83,11 +81,10 @@ const Categories = () => {
           <button
             key={item.id}
             onClick={(e) => handleCategory(item.id, e)}
-            className={`btn-secondary ${
-              selectedCategoryId === item.id
-                ? "bg-yellow text-red font-bold"
-                : ""
-            }`}
+            className={`btn-secondary ${selectedCategoryId === item.id
+              ? "bg-yellow text-red font-bold"
+              : ""
+              }`}
           >
             <img
               className="h-9 w-fit object-cover"

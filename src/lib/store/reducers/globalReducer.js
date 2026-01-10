@@ -1,12 +1,13 @@
-export const globalActions = {
-  SET_LOADING: "SET_LOADING",
-  SET_MODULE_LOADING: "SET_MODULE_LOADING",
-  SET_ERROR: "SET_ERROR",
-  SET_SUCCESS: "SET_SUCCESS",
-  CLEAR_MESSAGES: "CLEAR_MESSAGES",
-  CLEAR_ERROR: "CLEAR_ERROR",
-  CLEAR_SUCCESS: "CLEAR_SUCCESS",
-};
+import {
+  SET_LOADING,
+  SET_MODULE_LOADING,
+  SET_ERROR,
+  SET_SUCCESS,
+  CLEAR_MESSAGES,
+  CLEAR_ERROR,
+  CLEAR_SUCCESS,
+  SET_INITIALIZED
+} from '../actions/globalActions';
 
 const globalInitialState = {
   loading: false,
@@ -19,17 +20,18 @@ const globalInitialState = {
   },
   error: null,
   success: null,
+  initialized: false
 };
 
 export const globalReducer = (state = globalInitialState, action) => {
   switch (action.type) {
-    case globalActions.SET_LOADING:
+    case SET_LOADING:
       return {
         ...state,
         loading: action.payload,
       };
 
-    case globalActions.SET_MODULE_LOADING:
+    case SET_MODULE_LOADING:
       return {
         ...state,
         moduleLoading: {
@@ -38,37 +40,43 @@ export const globalReducer = (state = globalInitialState, action) => {
         },
       };
 
-    case globalActions.SET_ERROR:
+    case SET_ERROR:
       return {
         ...state,
         error: action.payload,
         success: null,
       };
 
-    case globalActions.SET_SUCCESS:
+    case SET_SUCCESS:
       return {
         ...state,
         success: action.payload,
         error: null,
       };
 
-    case globalActions.CLEAR_MESSAGES:
+    case CLEAR_MESSAGES:
       return {
         ...state,
         error: null,
         success: null,
       };
 
-    case globalActions.CLEAR_ERROR:
+    case CLEAR_ERROR:
       return {
         ...state,
         error: null,
       };
 
-    case globalActions.CLEAR_SUCCESS:
+    case CLEAR_SUCCESS:
       return {
         ...state,
         success: null,
+      };
+
+    case SET_INITIALIZED:
+      return {
+        ...state,
+        initialized: action.payload
       };
 
     default:

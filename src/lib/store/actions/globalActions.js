@@ -1,37 +1,52 @@
-import { globalActions } from "../reducers/globalReducer";
+// Action Types
+export const SET_LOADING = 'SET_LOADING';
+export const SET_MODULE_LOADING = 'SET_MODULE_LOADING';
+export const SET_ERROR = 'SET_ERROR';
+export const SET_SUCCESS = 'SET_SUCCESS';
+export const CLEAR_MESSAGES = 'CLEAR_MESSAGES';
+export const CLEAR_ERROR = 'CLEAR_ERROR';
+export const CLEAR_SUCCESS = 'CLEAR_SUCCESS';
+export const SET_INITIALIZED = 'SET_INITIALIZED'; // As per refactoring guide
 
+// Action Creators
 export const setLoading = (isLoading) => ({
-  type: globalActions.SET_LOADING,
+  type: SET_LOADING,
   payload: isLoading,
 });
 
 export const setModuleLoading = (module, isLoading) => ({
-  type: globalActions.SET_MODULE_LOADING,
+  type: SET_MODULE_LOADING,
   payload: { module, loading: isLoading },
 });
 
 export const setError = (error) => ({
-  type: globalActions.SET_ERROR,
+  type: SET_ERROR,
   payload: error,
 });
 
 export const setSuccess = (message) => ({
-  type: globalActions.SET_SUCCESS,
+  type: SET_SUCCESS,
   payload: message,
 });
 
 export const clearMessages = () => ({
-  type: globalActions.CLEAR_MESSAGES,
+  type: CLEAR_MESSAGES,
 });
 
 export const clearError = () => ({
-  type: globalActions.CLEAR_ERROR,
+  type: CLEAR_ERROR,
 });
 
 export const clearSuccess = () => ({
-  type: globalActions.CLEAR_SUCCESS,
+  type: CLEAR_SUCCESS,
 });
 
+export const setInitialized = (initialized) => ({
+  type: SET_INITIALIZED,
+  payload: initialized
+});
+
+// Selectors
 export const selectModuleLoading = (state, module) => {
   return state.global.moduleLoading[module] || false;
 };

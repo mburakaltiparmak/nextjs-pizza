@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useCartButton } from "@/hooks/use-cart-button";
+import { useCartButton } from "@/lib/hooks/useCartButton";
 import { CartDialog } from "./CartDialog";
 
 const FloatingCartButton = () => {

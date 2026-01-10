@@ -1,4 +1,3 @@
-// app/layout.js
 import "./globals.css";
 import {
   Barlow,
@@ -6,12 +5,8 @@ import {
   Quattrocento,
   Satisfy,
 } from "next/font/google";
-
-import FloatingCartButton from "@/components/cart-button/floatingCartButton";
-import FloatingUserButton from "@/components/user-button/floatingUserButton";
-import ClientComponentWrapper from "./ClientComponentWrapper";
 import Providers from "@/lib/providers/Providers";
-// Font tanımlamaları
+
 const barlow = Barlow({
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -40,7 +35,6 @@ const londrina = Londrina_Solid({
   display: "swap",
 });
 
-// Font sınıflarını global olarak tanımlama
 export const fontClasses = `${barlow.variable} ${quattrocento.variable} ${satisfy.variable} ${londrina.variable}`;
 
 export const metadata = {
@@ -54,7 +48,6 @@ export default function RootLayout({ children }) {
       <body>
         <Providers>
           {children}
-          <ClientComponentWrapper />
         </Providers>
       </body>
     </html>

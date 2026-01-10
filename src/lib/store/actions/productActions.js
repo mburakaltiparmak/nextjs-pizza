@@ -5,6 +5,7 @@ import { setModuleLoading } from "./globalActions";
 import { handleApiError } from "../middleware/errorMiddleware";
 import { fetchStates } from "../constants";
 import { productActions } from "../reducers/productReducer";
+import cache from "@/lib/utils/cacheManager";
 
 export const setCurrentProduct = (product) => ({
   type: productActions.SET_CURRENT_PRODUCT,
@@ -133,12 +134,12 @@ export const fetchProductsByCategory = (categoryId) => async (dispatch) => {
     const products = response.data.content || response.data;
 
     dispatch({
-      type: productActions.setProducts,
+      type: productActions.SET_PRODUCTS,
       payload: products,
     });
 
     dispatch({
-      type: productActions.setProductFetchState,
+      type: productActions.SET_FETCH_STATE,
       payload: fetchStates.FETCHED,
     });
 
@@ -149,7 +150,7 @@ export const fetchProductsByCategory = (categoryId) => async (dispatch) => {
     console.error("Kategori ürünleri getirme hatası:", err);
 
     dispatch({
-      type: productActions.setProductFetchState,
+      type: productActions.SET_FETCH_STATE,
       payload: fetchStates.FAILED,
     });
 
@@ -214,6 +215,9 @@ export const createProduct = (productData, token) => async (dispatch) => {
     await Promise.all([dispatch(fetchCategories()), dispatch(fetchProducts())]);
     dispatch(setSuccess("Ürün başarıyla oluşturuldu"));
     dispatch(setLoading(false));
+
+    // Clear dashboard cache as product counts changed
+    cache.clearPattern('dashboard');
 
     return response.data;
   } catch (err) {
@@ -288,6 +292,9 @@ export const updateProduct = (id, productData, token) => async (dispatch) => {
     dispatch(setSuccess("Ürün başarıyla güncellendi"));
     dispatch(setLoading(false));
 
+    // Clear dashboard and products cache
+    cache.clearPattern('dashboard');
+
     return response.data;
   } catch (err) {
     console.error("❌ Product update error:", err);
@@ -326,6 +333,10 @@ export const deleteProduct = (id, token) => async (dispatch) => {
 
     dispatch(setSuccess("Ürün başarıyla silindi"));
     dispatch(setLoading(false));
+
+    // Clear dashboard cache
+    cache.clearPattern('dashboard');
+
 
     return response.data;
   } catch (err) {

@@ -1,0 +1,140 @@
+"use client";
+
+import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useAppDispatch } from '@/lib/store/hooks';
+import { fetchGuestOrderDetail } from '@/lib/store/actions/orderActions';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Search } from 'lucide-react';
+// Header and Footer are provided by the layout
+
+export default function TrackOrderClient() {
+    const searchParams = useSearchParams();
+    const [orderId, setOrderId] = useState(searchParams.get('id') || '');
+    const [email, setEmail] = useState('');
+    const [order, setOrder] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const dispatch = useAppDispatch();
+
+    const handleTrackOrder = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        setOrder(null);
+
+        try {
+            const result = await dispatch(fetchGuestOrderDetail(orderId, email));
+
+            if (result.error) {
+                setError(result.error);
+            } else {
+                setOrder(result);
+            }
+        } catch (err) {
+            setError('Sipariş bulunamadı. Lütfen bilgilerinizi kontrol edin.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex-grow py-12 px-4 font-Barlow min-h-screen bg-lightgray">
+            <div className="max-w-2xl mx-auto">
+                <div className="bg-white rounded-2xl shadow-xl p-8">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-bold text-darkgray mb-2">
+                            Siparişimi Takip Et
+                        </h1>
+                        <p className="text-gray">
+                            Sipariş numaranız ve email adresinizle siparişinizi sorgulayın
+                        </p>
+                    </div>
+
+                    <form onSubmit={handleTrackOrder} className="space-y-6">
+                        <div>
+                            <Label htmlFor="orderId" className="text-darkgray font-medium">Sipariş Numarası</Label>
+                            <Input
+                                id="orderId"
+                                type="text"
+                                placeholder="Örn: 12345 veya CHECKOUT_..."
+                                value={orderId}
+                                onChange={(e) => setOrderId(e.target.value)}
+                                required
+                                className="mt-2"
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="email" className="text-darkgray font-medium">Email Adresi</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="ornek@email.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                className="mt-2"
+                            />
+                            <p className="text-sm text-gray mt-1">
+                                Sipariş verirken kullandığınız email adresi
+                            </p>
+                        </div>
+
+                        {error && (
+                            <div className="p-4 bg-red/10 border border-red/20 rounded-lg">
+                                <p className="text-red text-sm font-medium">{error}</p>
+                            </div>
+                        )}
+
+                        <Button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-yellow text-red hover:bg-red hover:text-yellow font-bold text-lg h-12"
+                        >
+                            <Search className="w-5 h-5 mr-2" />
+                            {loading ? 'Sorgulanıyor...' : 'Siparişi Sorgula'}
+                        </Button>
+                    </form>
+
+                    {order && (
+                        <div className="mt-8 p-6 bg-gray/5 rounded-xl border border-lightgray2">
+                            <h2 className="text-xl font-bold mb-4 text-darkgray">Sipariş Detayları</h2>
+
+                            <div className="space-y-3">
+                                <div className="flex justify-between border-b border-lightgray2 pb-2">
+                                    <span className="text-gray">Sipariş No:</span>
+                                    <span className="font-medium text-darkgray">{order.id}</span>
+                                </div>
+
+                                <div className="flex justify-between border-b border-lightgray2 pb-2">
+                                    <span className="text-gray">Durum:</span>
+                                    <span className="font-medium text-green-600">
+                                        {order.orderStatus}
+                                    </span>
+                                </div>
+
+                                <div className="flex justify-between border-b border-lightgray2 pb-2">
+                                    <span className="text-gray">Toplam:</span>
+                                    <span className="font-bold text-lg text-red">
+                                        {order.totalAmount?.toFixed(2)} ₺
+                                    </span>
+                                </div>
+
+                                <div className="flex justify-between">
+                                    <span className="text-gray">Tarih:</span>
+                                    <span className="font-medium text-darkgray">
+                                        {new Date(order.orderDate).toLocaleString('tr-TR')}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}

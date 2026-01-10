@@ -1,14 +1,14 @@
 import { fetchStates } from "../constants";
 
 export const productActions = {
-  setProducts: "SET_PRODUCTS",
+  SET_PRODUCTS: "SET_PRODUCTS",
   ADD_PRODUCT: "ADD_PRODUCT",
   UPDATE_PRODUCT: "UPDATE_PRODUCT",
   DELETE_PRODUCT: "DELETE_PRODUCT",
   SET_CURRENT_PRODUCT: "SET_CURRENT_PRODUCT",
   CLEAR_CURRENT_PRODUCT: "CLEAR_CURRENT_PRODUCT",
   SET_SELECTED_CATEGORY: "SET_SELECTED_CATEGORY",
-  setProductFetchState: "SET_PRODUCT_FETCH_STATE",
+  SET_FETCH_STATE: "SET_PRODUCT_FETCH_STATE",
   SET_ERROR: "SET_PRODUCT_ERROR",
 };
 
@@ -23,7 +23,7 @@ const productInitialState = {
 
 export const productReducer = (state = productInitialState, action) => {
   switch (action.type) {
-    case productActions.setProducts:
+    case productActions.SET_PRODUCTS:
       return {
         ...state,
         products: action.payload,
@@ -90,7 +90,7 @@ export const productReducer = (state = productInitialState, action) => {
         selectedCategory: action.payload,
       };
 
-    case productActions.setProductFetchState:
+    case productActions.SET_FETCH_STATE:
       return {
         ...state,
         fetchState: action.payload,

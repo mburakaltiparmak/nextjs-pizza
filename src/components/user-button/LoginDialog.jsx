@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash, faUser, faLock } from "@fortawesome/free-solid-svg-icons";
-import SecondaryLoading from "@/components/secondaryLoading";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import Link from "next/link";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
@@ -192,7 +192,7 @@ export const LoginDialog = ({
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
-                    <SecondaryLoading size="small" />
+                    <LoadingSpinner size="small" />
                     <span className="ml-2">Giriş yapılıyor...</span>
                   </div>
                 ) : (

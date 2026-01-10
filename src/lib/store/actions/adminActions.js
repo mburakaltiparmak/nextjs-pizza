@@ -4,6 +4,7 @@ import { setError, setLoading, setSuccess } from "./globalActions";
 import { instance } from "@/lib/hooks";
 import { fetchStates, userStatus } from "../constants";
 import { handleApiError } from "../middleware/errorMiddleware";
+import cache from "@/lib/utils/cacheManager";
 
 export const setAllUsers = (users) => ({
   type: adminActions.SET_ALL_USERS,
@@ -40,10 +41,9 @@ export const setAdminError = (error) => ({
   payload: error,
 });
 
-// Cache mekanizması
-let dashboardCache = null;
-let dashboardCacheTimestamp = 0;
-const DASHBOARD_CACHE_DURATION = 60000; // 1 dakika
+// Cache keys
+const DASHBOARD_CACHE_KEY = 'dashboard_data';
+
 
 // Tüm kullanıcıları getir
 export const fetchAllUsers = () => async (dispatch) => {
@@ -51,7 +51,7 @@ export const fetchAllUsers = () => async (dispatch) => {
 
   try {
     const response = await instance.get("/admin/users");
-    
+
     dispatch(setAllUsers(response.data));
     dispatch(setAdminFetchState(fetchStates.FETCHED));
 
@@ -82,12 +82,14 @@ export const fetchPendingUsers = () => async (dispatch) => {
 // ✅ OPTIMIZED: Backend DTO endpoint'ini kullan
 export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
   // ✅ Cache kontrolü
-  const now = Date.now();
-  if (!forceRefresh && dashboardCache && (now - dashboardCacheTimestamp) < DASHBOARD_CACHE_DURATION) {
-    console.log("✅ Dashboard Cache Hit - Returning cached data");
-    dispatch(setDashboardData(dashboardCache));
-    dispatch(setAdminFetchState(fetchStates.FETCHED));
-    return dashboardCache;
+  if (!forceRefresh) {
+    const cachedData = cache.get(DASHBOARD_CACHE_KEY);
+    if (cachedData) {
+      console.log("✅ Dashboard Cache Hit - Returning cached data");
+      dispatch(setDashboardData(cachedData));
+      dispatch(setAdminFetchState(fetchStates.FETCHED));
+      return cachedData;
+    }
   }
 
   console.log("🔄 Fetching dashboard data from optimized DTO endpoint...");
@@ -137,10 +139,10 @@ export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
       totalProducts: dto.totalProducts || 0,
       totalStock: dto.totalStock || 0,
       totalUsers: dto.totalUsers || 0,
-      
+
       // Processed data
       categoryData: categoryData,
-      
+
       // Raw data (gerekirse kullanılabilir)
       categories: filteredCategories,
       recentProducts: dto.recentProducts || []
@@ -155,10 +157,8 @@ export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
       sampleCategory: dashboardData.categoryData[0]
     });
 
-    // ✅ Cache'e kaydet
-    dashboardCache = dashboardData;
-    dashboardCacheTimestamp = now;
-    console.log(`📦 Dashboard cached for ${DASHBOARD_CACHE_DURATION/1000} seconds`);
+    // ✅ Cache'e kaydet (1 dakika)
+    cache.set(DASHBOARD_CACHE_KEY, dashboardData, 60000);
 
     // ✅ Redux'a kaydet
     dispatch(setDashboardData(dashboardData));
@@ -168,19 +168,17 @@ export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
   } catch (err) {
     console.error("❌ Dashboard fetch error:", err);
     dispatch(setAdminFetchState(fetchStates.FAILED));
-    
+
     // ✅ Hata durumunda cache'i temizle
-    dashboardCache = null;
-    dashboardCacheTimestamp = 0;
-    
+    cache.clear(DASHBOARD_CACHE_KEY);
+
     return handleApiError(err, dispatch, 'fetchDashboard');
   }
 };
 
 // Cache'i temizle - veri güncellemelerinde kullan
 export const clearDashboardCache = () => {
-  dashboardCache = null;
-  dashboardCacheTimestamp = 0;
+  cache.clear(DASHBOARD_CACHE_KEY);
   console.log("🗑️ Dashboard cache cleared");
 };
 

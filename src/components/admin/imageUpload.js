@@ -2,7 +2,7 @@
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { setError, setLoading } from "@/lib/store/actions/globalActions";
 import { useState, useEffect } from "react";
-import SecondaryLoading from "../secondaryLoading";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 const ImageUpload = ({ preview, onChange }) => {
   // State for tracking loading and errors
@@ -37,7 +37,7 @@ const ImageUpload = ({ preview, onChange }) => {
       file.size,
       "bytes"
     );
-    
+
     // Create preview URL
     const previewUrl = URL.createObjectURL(file);
     setLocalPreview(previewUrl);
@@ -64,7 +64,7 @@ const ImageUpload = ({ preview, onChange }) => {
       <div className="mt-1 flex flex-col items-center">
         <label className="flex flex-col items-center p-4 bg-white rounded-lg border border-gray border-dashed cursor-pointer hover:bg-lightgray">
           {loading ? (
-            <SecondaryLoading />
+            <LoadingSpinner size="small" />
           ) : localPreview ? (
             <div className={`relative `}>
               <img

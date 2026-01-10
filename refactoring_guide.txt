@@ -1,0 +1,2061 @@
+================================================================================
+NEXT.JS PIZZA FRONTEND REFACTORING GUIDE FOR AI AGENT
+================================================================================
+
+PROJECT CONTEXT
+---------------
+- Current State: Working Next.js 15 App Router application with Redux state management
+- Backend: Spring Boot REST API (running locally, no changes allowed)
+- Goal: Restructure frontend to follow Next.js best practices based on switch-high-tech reference project
+- Constraint: No backend modifications, maintain all existing functionality, stay with JavaScript (no TypeScript migration)
+- Redux Pattern: Action-Reducer pattern (NOT Redux Toolkit slices)
+- Component Pattern: Server/Client component separation with page-based organization
+
+================================================================================
+REFERENCE ARCHITECTURE ANALYSIS (switch-high-tech)
+================================================================================
+
+DIRECTORY STRUCTURE PRINCIPLES
+-------------------------------
+src/app/
+├── (admin)/          # Route group for admin pages
+├── (public)/         # Route group for public pages
+├── _components/      # Shared components (not routable)
+├── _lib/            # Utilities, hooks (not routable)
+└── api/             # API routes
+
+KEY PATTERNS OBSERVED
+---------------------
+1. Route Groups: Use parentheses for logical grouping without affecting URL structure
+2. Private Folders: Prefix with underscore (_) for non-routable shared code
+3. Server/Client Separation: Clear distinction between server and client components
+4. Colocation: Keep page-specific components near their pages
+5. Component Organization: Page-specific components in dedicated folders
+
+================================================================================
+TARGET DIRECTORY STRUCTURE FOR NEXTJS-PIZZA
+================================================================================
+
+src/
+├── app/
+│   ├── (public)/                        # Public-facing pages (customer)
+│   │   ├── layout.jsx                  # Public layout wrapper
+│   │   ├── page.jsx                    # Homepage (SERVER)
+│   │   ├── menu/
+│   │   │   ├── page.jsx                # Menu page (SERVER)
+│   │   │   └── MenuClient.jsx          # Menu client component
+│   │   ├── order/
+│   │   │   ├── page.jsx                # Order page (SERVER)
+│   │   │   └── OrderClient.jsx         # Order client component
+│   │   ├── login/
+│   │   │   ├── page.jsx                # Login page (SERVER)
+│   │   │   └── LoginClient.jsx         # Login client component
+│   │   └── register/
+│   │       ├── page.jsx                # Register page (SERVER)
+│   │       └── RegisterClient.jsx      # Register client component
+│   │
+│   ├── (admin)/                         # Admin dashboard pages
+│   │   ├── layout.jsx                  # Admin layout with sidebar (CLIENT)
+│   │   ├── dashboard/
+│   │   │   ├── page.jsx                # Dashboard page (SERVER)
+│   │   │   └── DashboardClient.jsx     # Dashboard client component
+│   │   ├── orders-admin/
+│   │   │   ├── page.jsx                # Orders page (SERVER)
+│   │   │   └── OrdersAdminClient.jsx   # Orders client component
+│   │   ├── categories/
+│   │   │   ├── page.jsx                # Categories page (SERVER)
+│   │   │   └── CategoriesClient.jsx    # Categories client component
+│   │   ├── products/
+│   │   │   ├── page.jsx                # Products page (SERVER)
+│   │   │   └── ProductsClient.jsx      # Products client component
+│   │   └── users/
+│   │       ├── page.jsx                # Users page (SERVER)
+│   │       └── UsersClient.jsx         # Users client component
+│   │
+│   ├── layout.jsx                       # Root layout
+│   ├── error.jsx                        # Error boundary
+│   ├── loading.jsx                      # Loading UI
+│   └── not-found.jsx                    # 404 page
+│
+├── components/                          # All components organized by page/feature
+│   ├── home/                           # Homepage components (CLIENT)
+│   │   ├── Hero.jsx
+│   │   ├── FeaturedProducts.jsx
+│   │   └── CategoryShowcase.jsx
+│   │
+│   ├── menu/                           # Menu page components (CLIENT)
+│   │   ├── CategoryFilter.jsx
+│   │   ├── ProductCard.jsx
+│   │   └── ProductModal.jsx
+│   │
+│   ├── order/                          # Order page components (CLIENT)
+│   │   ├── CartSummary.jsx
+│   │   ├── CustomPizzaBuilder.jsx
+│   │   ├── FirstStep.jsx
+│   │   ├── SecondStep.jsx
+│   │   └── ThirdStep.jsx
+│   │
+│   ├── dashboard/                      # Dashboard page components (CLIENT)
+│   │   ├── StatsCard.jsx
+│   │   ├── RevenueChart.jsx
+│   │   └── RecentOrders.jsx
+│   │
+│   ├── orders-admin/                   # Orders admin page components (CLIENT)
+│   │   ├── OrderTable.jsx
+│   │   ├── OrderFilters.jsx
+│   │   └── StatusBadge.jsx
+│   │
+│   ├── categories/                     # Categories page components (CLIENT)
+│   │   ├── CategoryList.jsx
+│   │   └── CategoryForm.jsx
+│   │
+│   ├── products/                       # Products page components (CLIENT)
+│   │   ├── ProductList.jsx
+│   │   └── ProductForm.jsx
+│   │
+│   ├── users/                          # Users page components (CLIENT)
+│   │   ├── UserList.jsx
+│   │   └── UserForm.jsx
+│   │
+│   ├── ui/                             # Generic reusable UI components (CLIENT)
+│   │   ├── Button.jsx
+│   │   ├── Input.jsx
+│   │   ├── Modal.jsx
+│   │   ├── Card.jsx
+│   │   └── LoadingSpinner.jsx
+│   │
+│   ├── layout/                         # Layout-related components (CLIENT)
+│   │   ├── Header.jsx
+│   │   ├── Footer.jsx
+│   │   ├── Sidebar.jsx
+│   │   └── AdminSidebar.jsx
+│   │
+│   └── forms/                          # Form components (CLIENT)
+│       ├── LoginForm.jsx
+│       └── RegisterForm.jsx
+│
+├── lib/                                # Core utilities
+│   ├── api/                            # API client configuration
+│   │   ├── axios-instance.js          # Axios setup with interceptors
+│   │   └── endpoints.js               # API endpoint constants
+│   │
+│   ├── hooks/                          # Custom React hooks
+│   │   ├── useAuth.js
+│   │   ├── useCart.js
+│   │   ├── useDebounce.js
+│   │   ├── useIsMobile.js
+│   │   └── useDashboardDataLoader.js
+│   │
+│   ├── store/                          # Redux store (ACTION-REDUCER pattern)
+│   │   ├── index.js                   # Store configuration
+│   │   ├── actions/                   # Redux actions
+│   │   │   ├── authActions.js
+│   │   │   ├── cartActions.js
+│   │   │   ├── productActions.js
+│   │   │   ├── orderActions.js
+│   │   │   ├── categoryActions.js
+│   │   │   └── adminActions.js
+│   │   ├── reducers/                  # Redux reducers
+│   │   │   ├── authReducer.js
+│   │   │   ├── cartReducer.js
+│   │   │   ├── productReducer.js
+│   │   │   ├── orderReducer.js
+│   │   │   ├── categoryReducer.js
+│   │   │   ├── adminReducer.js
+│   │   │   ├── globalReducer.js
+│   │   │   └── index.js              # combineReducers
+│   │   └── middleware/
+│   │       └── errorMiddleware.js
+│   │
+│   └── utils/                          # Utility functions
+│       ├── formatters.js              # Date, currency formatters
+│       ├── validators.js              # Form validation
+│       └── constants.js               # App constants
+│
+├── public/                             # Static assets
+│   ├── images/
+│   └── icons/
+│
+└── styles/                             # Global styles
+    └── globals.css
+
+================================================================================
+SERVER VS CLIENT COMPONENT STRATEGY
+================================================================================
+
+SERVER COMPONENTS (DEFAULT)
+----------------------------
+All page.jsx files are SERVER components by default
+
+Example - app/(public)/menu/page.jsx (SERVER COMPONENT):
+---------------------------------------------------------
+// NO "use client" directive
+
+export default async function MenuPage() {
+  // Can fetch data on server if needed (optional)
+  // const categories = await fetchCategoriesFromAPI();
+  
+  // Pass to client component
+  return <MenuClient />;
+}
+
+Benefits of Server Components:
+- Can fetch data on server (optional, we mostly use Redux)
+- Reduced JavaScript bundle size
+- Better SEO
+- Faster initial page load
+
+CLIENT COMPONENTS
+-----------------
+All interactive components need "use client" directive
+
+Example - app/(public)/menu/MenuClient.jsx (CLIENT COMPONENT):
+---------------------------------------------------------------
+"use client";
+
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProducts } from '@/lib/store/actions/productActions';
+
+export default function MenuClient() {
+  const dispatch = useDispatch();
+  const products = useSelector(state => state.products.products);
+  
+  useEffect(() => {
+    dispatch(fetchProducts());
+  }, [dispatch]);
+  
+  return (
+    <div>
+      {/* Interactive UI */}
+    </div>
+  );
+}
+
+When to use Client Components:
+- Need React hooks (useState, useEffect, useReducer)
+- Need Redux (useSelector, useDispatch)
+- Need event handlers (onClick, onChange)
+- Need browser APIs (window, localStorage)
+- Need interactivity
+
+COMPONENT ORGANIZATION PATTERN
+-------------------------------
+app/(public)/menu/
+├── page.jsx              # SERVER component (minimal, just returns MenuClient)
+└── MenuClient.jsx        # CLIENT component (all logic, Redux, hooks)
+
+components/menu/          # All sub-components (CLIENT)
+├── CategoryFilter.jsx    # "use client"
+├── ProductCard.jsx       # "use client"
+└── ProductModal.jsx      # "use client"
+
+SHARED COMPONENTS
+-----------------
+All components in /components folder are CLIENT components
+
+Example - components/ui/Button.jsx:
+------------------------------------
+"use client";  // Always add this
+
+export function Button({ children, onClick, ...props }) {
+  return (
+    <button onClick={onClick} {...props}>
+      {children}
+    </button>
+  );
+}
+
+================================================================================
+REDUX STORE STRUCTURE (ACTION-REDUCER PATTERN)
+================================================================================
+
+STORE CONFIGURATION
+-------------------
+// lib/store/index.js
+import { createStore, applyMiddleware } from 'redux';
+import { thunk } from 'redux-thunk';
+import { composeWithDevTools } from '@redux-devtools/extension';
+import rootReducer from './reducers';
+import errorMiddleware from './middleware/errorMiddleware';
+
+const middleware = [thunk, errorMiddleware];
+
+const store = createStore(
+  rootReducer,
+  composeWithDevTools(applyMiddleware(...middleware))
+);
+
+export default store;
+
+ACTION STRUCTURE
+----------------
+// lib/store/actions/productActions.js
+
+// Action Types
+export const FETCH_PRODUCTS_REQUEST = 'FETCH_PRODUCTS_REQUEST';
+export const FETCH_PRODUCTS_SUCCESS = 'FETCH_PRODUCTS_SUCCESS';
+export const FETCH_PRODUCTS_FAILURE = 'FETCH_PRODUCTS_FAILURE';
+
+export const FETCH_PRODUCT_BY_ID_REQUEST = 'FETCH_PRODUCT_BY_ID_REQUEST';
+export const FETCH_PRODUCT_BY_ID_SUCCESS = 'FETCH_PRODUCT_BY_ID_SUCCESS';
+export const FETCH_PRODUCT_BY_ID_FAILURE = 'FETCH_PRODUCT_BY_ID_FAILURE';
+
+export const SET_CURRENT_PRODUCT = 'SET_CURRENT_PRODUCT';
+export const CLEAR_CURRENT_PRODUCT = 'CLEAR_CURRENT_PRODUCT';
+
+// Action Creators (Thunks)
+export const fetchProducts = () => async (dispatch) => {
+  dispatch({ type: FETCH_PRODUCTS_REQUEST });
+  
+  try {
+    const response = await api.get('/products');
+    dispatch({ 
+      type: FETCH_PRODUCTS_SUCCESS, 
+      payload: response.data 
+    });
+  } catch (error) {
+    dispatch({ 
+      type: FETCH_PRODUCTS_FAILURE, 
+      payload: error.response?.data?.message || 'Failed to fetch products' 
+    });
+  }
+};
+
+export const fetchProductById = (id) => async (dispatch) => {
+  dispatch({ type: FETCH_PRODUCT_BY_ID_REQUEST });
+  
+  try {
+    const response = await api.get(`/products/${id}`);
+    dispatch({ 
+      type: FETCH_PRODUCT_BY_ID_SUCCESS, 
+      payload: response.data 
+    });
+    dispatch({ 
+      type: SET_CURRENT_PRODUCT, 
+      payload: response.data 
+    });
+  } catch (error) {
+    dispatch({ 
+      type: FETCH_PRODUCT_BY_ID_FAILURE, 
+      payload: error.response?.data?.message || 'Failed to fetch product' 
+    });
+  }
+};
+
+export const setCurrentProduct = (product) => ({
+  type: SET_CURRENT_PRODUCT,
+  payload: product
+});
+
+export const clearCurrentProduct = () => ({
+  type: CLEAR_CURRENT_PRODUCT
+});
+
+REDUCER STRUCTURE
+-----------------
+// lib/store/reducers/productReducer.js
+import {
+  FETCH_PRODUCTS_REQUEST,
+  FETCH_PRODUCTS_SUCCESS,
+  FETCH_PRODUCTS_FAILURE,
+  FETCH_PRODUCT_BY_ID_REQUEST,
+  FETCH_PRODUCT_BY_ID_SUCCESS,
+  FETCH_PRODUCT_BY_ID_FAILURE,
+  SET_CURRENT_PRODUCT,
+  CLEAR_CURRENT_PRODUCT
+} from '../actions/productActions';
+
+const initialState = {
+  products: [],
+  currentProduct: null,  // New: for Problem #18
+  loading: false,
+  error: null
+};
+
+export default function productReducer(state = initialState, action) {
+  switch (action.type) {
+    case FETCH_PRODUCTS_REQUEST:
+    case FETCH_PRODUCT_BY_ID_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null
+      };
+      
+    case FETCH_PRODUCTS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        products: action.payload,
+        error: null
+      };
+      
+    case FETCH_PRODUCT_BY_ID_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        error: null
+      };
+      
+    case SET_CURRENT_PRODUCT:
+      return {
+        ...state,
+        currentProduct: action.payload
+      };
+      
+    case CLEAR_CURRENT_PRODUCT:
+      return {
+        ...state,
+        currentProduct: null
+      };
+      
+    case FETCH_PRODUCTS_FAILURE:
+    case FETCH_PRODUCT_BY_ID_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload
+      };
+      
+    default:
+      return state;
+  }
+}
+
+GLOBAL REDUCER (for Problem #20)
+---------------------------------
+// lib/store/reducers/globalReducer.js
+const SET_GLOBAL_LOADING = 'SET_GLOBAL_LOADING';
+const SET_GLOBAL_ERROR = 'SET_GLOBAL_ERROR';
+const CLEAR_GLOBAL_ERROR = 'CLEAR_GLOBAL_ERROR';
+const SET_INITIALIZED = 'SET_INITIALIZED';
+
+const initialState = {
+  globalLoading: false,  // App-wide loading overlay
+  globalError: null,
+  initialized: false
+};
+
+export default function globalReducer(state = initialState, action) {
+  switch (action.type) {
+    case SET_GLOBAL_LOADING:
+      return {
+        ...state,
+        globalLoading: action.payload
+      };
+      
+    case SET_GLOBAL_ERROR:
+      return {
+        ...state,
+        globalError: action.payload
+      };
+      
+    case CLEAR_GLOBAL_ERROR:
+      return {
+        ...state,
+        globalError: null
+      };
+      
+    case SET_INITIALIZED:
+      return {
+        ...state,
+        initialized: action.payload
+      };
+      
+    default:
+      return state;
+  }
+}
+
+// Action creators
+export const setGlobalLoading = (loading) => ({
+  type: SET_GLOBAL_LOADING,
+  payload: loading
+});
+
+export const setGlobalError = (error) => ({
+  type: SET_GLOBAL_ERROR,
+  payload: error
+});
+
+export const clearGlobalError = () => ({
+  type: CLEAR_GLOBAL_ERROR
+});
+
+export const setInitialized = (initialized) => ({
+  type: SET_INITIALIZED,
+  payload: initialized
+});
+
+ROOT REDUCER
+------------
+// lib/store/reducers/index.js
+import { combineReducers } from 'redux';
+import authReducer from './authReducer';
+import cartReducer from './cartReducer';
+import productReducer from './productReducer';
+import orderReducer from './orderReducer';
+import categoryReducer from './categoryReducer';
+import adminReducer from './adminReducer';
+import globalReducer from './globalReducer';
+
+const rootReducer = combineReducers({
+  auth: authReducer,
+  cart: cartReducer,
+  products: productReducer,
+  orders: orderReducer,
+  categories: categoryReducer,
+  admin: adminReducer,
+  global: globalReducer
+});
+
+export default rootReducer;
+
+================================================================================
+MIGRATION STRATEGY
+================================================================================
+
+PHASE 1: SETUP NEW STRUCTURE (FOUNDATION)
+------------------------------------------
+Goal: Create new directory structure without breaking existing app
+
+Steps:
+1. Create new directory structure in parallel with existing code
+2. Keep existing /src/app/ structure intact temporarily
+3. Set up new folder structure:
+   - /src/app/(public)/
+   - /src/app/(admin)/
+   - /src/components/ (organized by page/feature)
+   - /src/lib/
+
+Migration Checklist:
+[ ] Create route groups: (public) and (admin)
+[ ] Create new components/ folder with page-based subfolders
+[ ] Create new lib/ folder structure
+[ ] Create lib/store/actions/ folder
+[ ] Create lib/store/reducers/ folder
+[ ] Keep old structure intact for now
+
+================================================================================
+
+PHASE 2: MIGRATE CORE INFRASTRUCTURE
+-------------------------------------
+Goal: Move foundational code (Redux, API client, hooks) to new structure
+
+Priority Order (based on dependency chain):
+
+2.1. API CLIENT (lib/api/)
+---------------------------
+- Move src/lib/hooks.js → lib/api/axios-instance.js
+- Extract endpoint URLs → lib/api/endpoints.js
+- Keep existing interceptors and auth logic
+- FIX Problem #13: Add timeout configuration back
+- FIX Problem #14: Standardize FormData Content-Type handling
+
+Example - lib/api/axios-instance.js:
+-------------------------------------
+import axios from 'axios';
+
+export const instance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
+  timeout: 30000,  // Problem #13: Add back timeout
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor
+instance.interceptors.request.use(
+  (config) => {
+    // Problem #14: Consistent FormData handling
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+    
+    // Add auth token if exists
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor
+instance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Handle unauthorized
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export const userInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
+  timeout: 30000,  // Problem #13: Add back timeout
+});
+
+2.2. REDUX STORE (lib/store/)
+------------------------------
+- Keep ACTION-REDUCER pattern (NOT slices)
+- Move all actions from src/lib/store/actions/ → lib/store/actions/
+- Move all reducers from src/lib/store/reducers/ → lib/store/reducers/
+- FIX Problem #15: Create centralized error middleware
+- FIX Problem #20: Create separate global reducer for app-wide state
+- Keep existing state structure for compatibility
+
+Example - lib/store/middleware/errorMiddleware.js (Problem #15):
+-----------------------------------------------------------------
+const errorMiddleware = (store) => (next) => (action) => {
+  // Check if action has error
+  if (action.type.endsWith('_FAILURE') || action.error) {
+    const errorMessage = action.payload || action.error?.message || 'An error occurred';
+    
+    console.error('Redux Error:', action.type, errorMessage);
+    
+    // Optionally dispatch to global error state
+    store.dispatch({
+      type: 'SET_GLOBAL_ERROR',
+      payload: errorMessage
+    });
+    
+    // You can add toast notification here if you have a toast library
+    // toast.error(errorMessage);
+  }
+  
+  return next(action);
+};
+
+export default errorMiddleware;
+
+2.3. CUSTOM HOOKS (lib/hooks/)
+-------------------------------
+- Move and refactor hooks from various files
+- Create organized hooks: useAuth.js, useCart.js, etc.
+- FIX Problem #7: Add useDebounce.js for filter optimizations
+- Create useDashboardDataLoader.js hook
+
+Example - lib/hooks/useDebounce.js (Problem #7):
+-------------------------------------------------
+import { useState, useEffect } from 'react';
+
+export function useDebounce(value, delay = 300) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+2.4. UTILITY FUNCTIONS (lib/utils/)
+------------------------------------
+- Extract utility functions from components
+- Create formatters.js, validators.js, constants.js
+- Organize reusable helper functions
+
+Migration Checklist for Phase 2:
+[ ] Set up axios instance with proper timeout (Problem #13)
+[ ] Configure FormData handling correctly (Problem #14)
+[ ] Create error middleware for centralized error handling (Problem #15)
+[ ] Create global reducer for app-wide state (Problem #20)
+[ ] Move all action files to lib/store/actions/
+[ ] Move all reducer files to lib/store/reducers/
+[ ] Create combineReducers in lib/store/reducers/index.js
+[ ] Update store configuration
+[ ] Create useDebounce hook (for Problem #7)
+[ ] Organize all custom hooks
+[ ] Extract utility functions
+
+================================================================================
+
+PHASE 3: MIGRATE SHARED COMPONENTS
+-----------------------------------
+Goal: Move reusable UI components to new components/ structure
+
+Component Organization Strategy:
+components/
+├── ui/              # Generic reusable components (Button, Input, Modal, etc.)
+├── layout/          # Layout components (Header, Footer, Sidebar)
+├── forms/           # Shared form components
+└── [page-name]/     # Page-specific components
+
+ALL COMPONENTS NEED "use client" DIRECTIVE AT THE TOP
+
+3.1. UI COMPONENTS (components/ui/)
+------------------------------------
+Example - components/ui/Button.jsx:
+------------------------------------
+"use client";
+
+export function Button({ children, onClick, variant = 'primary', ...props }) {
+  const baseClasses = 'px-4 py-2 rounded font-medium transition';
+  const variantClasses = {
+    primary: 'bg-blue-600 text-white hover:bg-blue-700',
+    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
+    danger: 'bg-red-600 text-white hover:bg-red-700'
+  };
+  
+  return (
+    <button 
+      className={`${baseClasses} ${variantClasses[variant]}`}
+      onClick={onClick}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
+Components to create:
+- Button.jsx
+- Input.jsx
+- Modal.jsx
+- Card.jsx
+- LoadingSpinner.jsx
+- Badge.jsx
+- Alert.jsx
+
+3.2. LAYOUT COMPONENTS (components/layout/)
+--------------------------------------------
+- Header.jsx
+- Footer.jsx
+- Sidebar.jsx
+- AdminSidebar.jsx
+
+3.3. FORM COMPONENTS (components/forms/)
+-----------------------------------------
+- LoginForm.jsx
+- RegisterForm.jsx
+
+Migration Checklist for Phase 3:
+[ ] Create components/ui/ folder with all generic components
+[ ] Add "use client" to all UI components
+[ ] Create components/layout/ folder with layout components
+[ ] Add "use client" to all layout components
+[ ] Create components/forms/ folder with form components
+[ ] Add "use client" to all form components
+[ ] Ensure components are properly isolated and reusable
+[ ] Update imports in existing pages (temporarily)
+
+================================================================================
+
+PHASE 4: MIGRATE PUBLIC PAGES
+------------------------------
+Goal: Move customer-facing pages to (public) route group with server/client separation
+
+Pattern for Each Page:
+app/(public)/[page-name]/
+├── page.jsx              # SERVER component (minimal)
+└── [PageName]Client.jsx  # CLIENT component (all logic)
+
+4.1. HOMEPAGE ((public)/page.jsx)
+----------------------------------
+Example - app/(public)/page.jsx (SERVER COMPONENT):
+----------------------------------------------------
+// NO "use client" directive
+
+export default function HomePage() {
+  // Minimal server component
+  // Just renders the client component
+  return <HomeClient />;
+}
+
+Example - app/(public)/HomeClient.jsx (CLIENT COMPONENT):
+----------------------------------------------------------
+"use client";
+
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchFeaturedProducts } from '@/lib/store/actions/productActions';
+import { Hero } from '@/components/home/Hero';
+import { FeaturedProducts } from '@/components/home/FeaturedProducts';
+
+export default function HomeClient() {
+  const dispatch = useDispatch();
+  const products = useSelector(state => state.products.featured);
+  
+  useEffect(() => {
+    dispatch(fetchFeaturedProducts());
+  }, [dispatch]);
+  
+  return (
+    <div>
+      <Hero />
+      <FeaturedProducts products={products} />
+    </div>
+  );
+}
+
+Create components/home/ folder:
+- Hero.jsx (with "use client")
+- FeaturedProducts.jsx (with "use client")
+- CategoryShowcase.jsx (with "use client")
+
+4.2. MENU PAGE ((public)/menu/)
+--------------------------------
+Example - app/(public)/menu/page.jsx (SERVER COMPONENT):
+---------------------------------------------------------
+export default function MenuPage() {
+  return <MenuClient />;
+}
+
+Example - app/(public)/menu/MenuClient.jsx (CLIENT COMPONENT):
+---------------------------------------------------------------
+"use client";
+
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProducts } from '@/lib/store/actions/productActions';
+import { CategoryFilter } from '@/components/menu/CategoryFilter';
+import { ProductCard } from '@/components/menu/ProductCard';
+
+export default function MenuClient() {
+  const dispatch = useDispatch();
+  const products = useSelector(state => state.products.products);
+  const loading = useSelector(state => state.products.loading);
+  
+  useEffect(() => {
+    dispatch(fetchProducts());
+  }, [dispatch]);
+  
+  return (
+    <div>
+      <CategoryFilter />
+      <div className="grid grid-cols-3 gap-4">
+        {products.map(product => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+Create components/menu/ folder:
+- CategoryFilter.jsx (with "use client")
+- ProductCard.jsx (with "use client")
+- ProductModal.jsx (with "use client")
+
+4.3. ORDER PAGE ((public)/order/)
+----------------------------------
+Example - app/(public)/order/page.jsx (SERVER COMPONENT):
+----------------------------------------------------------
+export default function OrderPage() {
+  return <OrderClient />;
+}
+
+Example - app/(public)/order/OrderClient.jsx (CLIENT COMPONENT):
+-----------------------------------------------------------------
+"use client";
+
+import { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { FirstStep } from '@/components/order/FirstStep';
+import { SecondStep } from '@/components/order/SecondStep';
+import { ThirdStep } from '@/components/order/ThirdStep';
+
+export default function OrderClient() {
+  const [step, setStep] = useState(1);
+  const cart = useSelector(state => state.cart.items);
+  
+  return (
+    <div>
+      {step === 1 && <FirstStep onNext={() => setStep(2)} />}
+      {step === 2 && <SecondStep onNext={() => setStep(3)} onBack={() => setStep(1)} />}
+      {step === 3 && <ThirdStep onBack={() => setStep(2)} />}
+    </div>
+  );
+}
+
+Create components/order/ folder:
+- CartSummary.jsx (with "use client")
+- CustomPizzaBuilder.jsx (with "use client")
+- FirstStep.jsx (with "use client")
+- SecondStep.jsx (with "use client")
+- ThirdStep.jsx (with "use client")
+
+FIX Problems #16 and #17 in order components
+
+4.4. AUTH PAGES ((public)/login/ and (public)/register/)
+---------------------------------------------------------
+Example - app/(public)/login/page.jsx (SERVER COMPONENT):
+----------------------------------------------------------
+export default function LoginPage() {
+  return <LoginClient />;
+}
+
+Example - app/(public)/login/LoginClient.jsx (CLIENT COMPONENT):
+-----------------------------------------------------------------
+"use client";
+
+import { useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import { login } from '@/lib/store/actions/authActions';
+import { LoginForm } from '@/components/forms/LoginForm';
+
+export default function LoginClient() {
+  const dispatch = useDispatch();
+  const router = useRouter();
+  
+  const handleLogin = async (credentials) => {
+    await dispatch(login(credentials));
+    router.push('/');
+  };
+  
+  return <LoginForm onSubmit={handleLogin} />;
+}
+
+Migration Checklist for Phase 4:
+[ ] Create (public)/layout.jsx with customer header/footer (CLIENT)
+[ ] Create (public)/page.jsx (SERVER)
+[ ] Create (public)/HomeClient.jsx (CLIENT)
+[ ] Create components/home/ folder with components
+[ ] Migrate homepage
+[ ] Create (public)/menu/page.jsx (SERVER)
+[ ] Create (public)/menu/MenuClient.jsx (CLIENT)
+[ ] Create components/menu/ folder with components
+[ ] Migrate menu page
+[ ] Create (public)/order/page.jsx (SERVER)
+[ ] Create (public)/order/OrderClient.jsx (CLIENT)
+[ ] Create components/order/ folder with components
+[ ] Implement custom pizza backend integration (Problem #16)
+[ ] Fix cart item ID handling (Problem #17)
+[ ] Migrate order page
+[ ] Create auth pages (login, register) with CLIENT wrappers
+[ ] Test all customer flows
+
+================================================================================
+
+PHASE 5: MIGRATE ADMIN PAGES
+-----------------------------
+Goal: Move admin pages to (admin) route group with server/client separation and optimizations
+
+Pattern for Each Admin Page:
+app/(admin)/[page-name]/
+├── page.jsx                    # SERVER component (minimal)
+└── [PageName]Client.jsx        # CLIENT component (all logic)
+
+5.1. ADMIN LAYOUT ((admin)/layout.jsx)
+---------------------------------------
+Example - app/(admin)/layout.jsx (CLIENT COMPONENT - needs interactivity):
+---------------------------------------------------------------------------
+"use client";
+
+import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import { AdminSidebar } from '@/components/layout/AdminSidebar';
+import { useDebounce } from '@/lib/hooks/useDebounce';
+
+export default function AdminLayout({ children }) {
+  const pathname = usePathname();
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
+  // Problem #12: Debounced resize handler
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Debounce resize events
+    let timeoutId;
+    const debouncedResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleResize, 150);
+    };
+    
+    handleResize(); // Initial check
+    window.addEventListener('resize', debouncedResize);
+    
+    return () => {
+      window.removeEventListener('resize', debouncedResize);
+      clearTimeout(timeoutId);
+    };
+  }, []);
+  
+  // Problem #11: Proper modal management (no global window object)
+  // Use Context API or state management instead
+  
+  return (
+    <div className="flex h-screen">
+      <AdminSidebar 
+        isOpen={sidebarOpen} 
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        isMobile={isMobile}
+      />
+      <main className="flex-1 overflow-auto">
+        {children}
+      </main>
+    </div>
+  );
+}
+
+FIX Problems #10, #11, #12 in admin layout
+
+5.2. DASHBOARD ((admin)/dashboard/)
+------------------------------------
+Example - app/(admin)/dashboard/page.jsx (SERVER COMPONENT):
+-------------------------------------------------------------
+export default function DashboardPage() {
+  return <DashboardClient />;
+}
+
+Example - app/(admin)/dashboard/DashboardClient.jsx (CLIENT COMPONENT):
+------------------------------------------------------------------------
+"use client";
+
+import { useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchDashboard } from '@/lib/store/actions/adminActions';
+import { StatsCard } from '@/components/dashboard/StatsCard';
+import { RevenueChart } from '@/components/dashboard/RevenueChart';
+import { useDashboardDataLoader } from '@/lib/hooks/useDashboardDataLoader';
+
+export default function DashboardClient() {
+  const dispatch = useDispatch();
+  const dashboardData = useSelector(state => state.admin.dashboardData);
+  const loading = useSelector(state => state.admin.loading);
+  
+  // Problem #1, #2: Custom hook with optimized data loading and retry
+  useDashboardDataLoader();
+  
+  // Problem #4: Memoized statistics calculations
+  const statistics = useMemo(() => {
+    if (!dashboardData) return null;
+    
+    return {
+      totalRevenue: calculateTotalRevenue(dashboardData),
+      totalOrders: dashboardData.orders?.length || 0,
+      totalProducts: dashboardData.products?.length || 0,
+      // ... other calculations
+    };
+  }, [dashboardData]);
+  
+  if (loading) return <div>Loading...</div>;
+  
+  return (
+    <div>
+      <div className="grid grid-cols-4 gap-4">
+        <StatsCard title="Revenue" value={statistics?.totalRevenue} />
+        <StatsCard title="Orders" value={statistics?.totalOrders} />
+        {/* ... more stats */}
+      </div>
+      <RevenueChart data={dashboardData?.revenueData} />
+    </div>
+  );
+}
+
+function calculateTotalRevenue(data) {
+  // Optimized calculation logic
+  return data.orders?.reduce((sum, order) => sum + order.total, 0) || 0;
+}
+
+Example - lib/hooks/useDashboardDataLoader.js (Problems #1, #2, #3, #19):
+--------------------------------------------------------------------------
+"use client";
+
+import { useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchDashboard } from '@/lib/store/actions/adminActions';
+
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY = 2000; // Problem #2: Less aggressive backoff
+
+export function useDashboardDataLoader() {
+  const dispatch = useDispatch();
+  const dataInitialized = useSelector(state => state.admin.dataInitialized);
+  const retryCountRef = useRef(0);
+  const isMountedRef = useRef(true);
+  
+  useEffect(() => {
+    isMountedRef.current = true;
+    
+    const loadData = async () => {
+      if (dataInitialized) return;
+      
+      try {
+        // Problem #1, #19: Optimized parallel fetch with simple endpoint
+        await dispatch(fetchDashboard());
+        retryCountRef.current = 0;
+      } catch (error) {
+        if (retryCountRef.current < MAX_RETRIES && isMountedRef.current) {
+          retryCountRef.current++;
+          const delay = INITIAL_RETRY_DELAY * retryCountRef.current; // Linear backoff
+          
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              loadData();
+            }
+          }, delay);
+        }
+      }
+    };
+    
+    loadData();
+    
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [dispatch, dataInitialized]);
+}
+
+Example - lib/store/actions/adminActions.js (Problems #1, #19):
+----------------------------------------------------------------
+// Problem #1: Parallel requests instead of sequential
+// Problem #19: Use /category/simple endpoint
+
+export const FETCH_DASHBOARD_REQUEST = 'FETCH_DASHBOARD_REQUEST';
+export const FETCH_DASHBOARD_SUCCESS = 'FETCH_DASHBOARD_SUCCESS';
+export const FETCH_DASHBOARD_FAILURE = 'FETCH_DASHBOARD_FAILURE';
+
+export const fetchDashboard = () => async (dispatch) => {
+  dispatch({ type: FETCH_DASHBOARD_REQUEST });
+  
+  try {
+    // Problem #1: Parallel requests with Promise.all
+    const [categoriesRes, usersRes, ordersRes, statsRes] = await Promise.all([
+      api.get('/category/simple'),  // Problem #19: Use simple endpoint
+      api.get('/users'),
+      api.get('/orders'),
+      api.get('/admin/stats')
+    ]);
+    
+    dispatch({
+      type: FETCH_DASHBOARD_SUCCESS,
+      payload: {
+        categories: categoriesRes.data,
+        users: usersRes.data,
+        orders: ordersRes.data,
+        stats: statsRes.data
+      }
+    });
+  } catch (error) {
+    // Problem #5: Detailed error handling
+    const errorMessage = error.response?.data?.message || 'Failed to load dashboard data';
+    const failedResource = error.config?.url || 'unknown';
+    
+    dispatch({
+      type: FETCH_DASHBOARD_FAILURE,
+      payload: `${errorMessage} (Resource: ${failedResource})`
+    });
+  }
+};
+
+Create components/dashboard/ folder:
+- StatsCard.jsx (with "use client")
+- RevenueChart.jsx (with "use client")
+- RecentOrders.jsx (with "use client")
+
+FIX Problems #1, #2, #3, #4, #5, #19 in dashboard
+
+5.3. ORDERS ADMIN ((admin)/orders-admin/)
+------------------------------------------
+Example - app/(admin)/orders-admin/page.jsx (SERVER COMPONENT):
+----------------------------------------------------------------
+export default function OrdersAdminPage() {
+  return <OrdersAdminClient />;
+}
+
+Example - app/(admin)/orders-admin/OrdersAdminClient.jsx (CLIENT COMPONENT):
+-----------------------------------------------------------------------------
+"use client";
+
+import { useEffect, useRef, useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchOrders, updateOrderStatus } from '@/lib/store/actions/orderActions';
+import { useDebounce } from '@/lib/hooks/useDebounce';
+import { OrderTable } from '@/components/orders-admin/OrderTable';
+import { OrderFilters } from '@/components/orders-admin/OrderFilters';
+
+const POLLING_INTERVAL = 30000; // Problem #6: Less aggressive polling (30s instead of 5s)
+
+export default function OrdersAdminClient() {
+  const dispatch = useDispatch();
+  const orders = useSelector(state => state.orders.orders);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  
+  const mountedRef = useRef(true);
+  const lastFetchRef = useRef(0);
+  const pollingTimeoutRef = useRef(null);
+  
+  // Problem #7: Debounced search
+  const debouncedSearch = useDebounce(searchTerm, 300);
+  
+  // Problem #7: Memoized filtered orders
+  const filteredOrders = useMemo(() => {
+    let result = orders;
+    
+    if (debouncedSearch) {
+      result = result.filter(order => 
+        order.id.toString().includes(debouncedSearch) ||
+        order.customerName?.toLowerCase().includes(debouncedSearch.toLowerCase())
+      );
+    }
+    
+    if (statusFilter !== 'all') {
+      result = result.filter(order => order.status === statusFilter);
+    }
+    
+    return result;
+  }, [orders, debouncedSearch, statusFilter]);
+  
+  // Problem #6: Smarter polling with cleanup
+  useEffect(() => {
+    mountedRef.current = true;
+    
+    const fetchData = async () => {
+      const now = Date.now();
+      if (now - lastFetchRef.current < 5000) return; // Minimum 5s between fetches
+      
+      lastFetchRef.current = now;
+      await dispatch(fetchOrders());
+      
+      // Schedule next poll
+      if (mountedRef.current) {
+        pollingTimeoutRef.current = setTimeout(fetchData, POLLING_INTERVAL);
+      }
+    };
+    
+    fetchData();
+    
+    // Problem #8: Proper cleanup
+    return () => {
+      mountedRef.current = false;
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+        pollingTimeoutRef.current = null;
+      }
+    };
+  }, [dispatch]);
+  
+  // Problem #9: Optimistic update
+  const handleStatusUpdate = async (orderId, newStatus) => {
+    // Optimistic update
+    dispatch({
+      type: 'UPDATE_ORDER_STATUS_OPTIMISTIC',
+      payload: { orderId, status: newStatus }
+    });
+    
+    try {
+      await dispatch(updateOrderStatus(orderId, newStatus));
+    } catch (error) {
+      // Revert on error
+      dispatch({
+        type: 'UPDATE_ORDER_STATUS_REVERT',
+        payload: { orderId }
+      });
+    }
+  };
+  
+  return (
+    <div>
+      <OrderFilters 
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+      />
+      <OrderTable 
+        orders={filteredOrders}
+        onStatusUpdate={handleStatusUpdate}
+      />
+    </div>
+  );
+}
+
+Create components/orders-admin/ folder:
+- OrderTable.jsx (with "use client")
+- OrderFilters.jsx (with "use client")
+- StatusBadge.jsx (with "use client")
+- OrderRow.jsx (with "use client")
+
+FIX Problems #6, #7, #8, #9 in orders-admin
+
+5.4. OTHER ADMIN PAGES (categories, products, users)
+-----------------------------------------------------
+Follow the same pattern:
+- Create page.jsx (SERVER)
+- Create [PageName]Client.jsx (CLIENT)
+- Create components/[page-name]/ folder with components
+- Apply learned patterns from dashboard and orders
+
+Example - app/(admin)/products/page.jsx (SERVER COMPONENT):
+------------------------------------------------------------
+export default function ProductsPage() {
+  return <ProductsClient />;
+}
+
+Example - app/(admin)/products/ProductsClient.jsx (CLIENT COMPONENT):
+----------------------------------------------------------------------
+"use client";
+
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProducts } from '@/lib/store/actions/productActions';
+import { ProductList } from '@/components/products/ProductList';
+import { ProductForm } from '@/components/products/ProductForm';
+
+export default function ProductsClient() {
+  const dispatch = useDispatch();
+  const products = useSelector(state => state.products.products);
+  const currentProduct = useSelector(state => state.products.currentProduct); // Problem #18
+  
+  useEffect(() => {
+    dispatch(fetchProducts());
+  }, [dispatch]);
+  
+  return (
+    <div>
+      <ProductList products={products} />
+      {currentProduct && <ProductForm product={currentProduct} />}
+    </div>
+  );
+}
+
+Create component folders:
+- components/categories/ (with "use client" in all files)
+- components/products/ (with "use client" in all files)
+- components/users/ (with "use client" in all files)
+
+Migration Checklist for Phase 5:
+[ ] Create (admin)/layout.jsx (CLIENT) with sidebar
+[ ] Fix admin layout issues (Problems #10, #11, #12)
+[ ] Create (admin)/dashboard/page.jsx (SERVER)
+[ ] Create (admin)/dashboard/DashboardClient.jsx (CLIENT)
+[ ] Create components/dashboard/ folder with components
+[ ] Create useDashboardDataLoader hook
+[ ] Optimize dashboard data loading (Problems #1, #19)
+[ ] Implement proper retry mechanism (Problem #2)
+[ ] Fix dashboard state management (Problem #3)
+[ ] Optimize statistics calculations (Problem #4)
+[ ] Improve dashboard error handling (Problem #5)
+[ ] Create (admin)/orders-admin/page.jsx (SERVER)
+[ ] Create (admin)/orders-admin/OrdersAdminClient.jsx (CLIENT)
+[ ] Create components/orders-admin/ folder with components
+[ ] Optimize orders polling (Problem #6)
+[ ] Optimize filters with debounce and useMemo (Problem #7)
+[ ] Fix memory leaks in orders page (Problem #8)
+[ ] Implement optimistic updates (Problem #9)
+[ ] Create remaining admin pages (categories, products, users)
+[ ] Create remaining component folders
+[ ] Add currentProduct state (Problem #18)
+
+================================================================================
+
+PHASE 6: REDUX STATE STRUCTURE REFINEMENT
+------------------------------------------
+Goal: Optimize Redux store with action-reducer pattern
+
+Tasks:
+
+6.1. REVIEW ALL ACTION FILES
+-----------------------------
+Ensure all action files follow consistent pattern:
+
+// lib/store/actions/[resource]Actions.js
+
+// Action Types (constants)
+export const FETCH_[RESOURCE]_REQUEST = 'FETCH_[RESOURCE]_REQUEST';
+export const FETCH_[RESOURCE]_SUCCESS = 'FETCH_[RESOURCE]_SUCCESS';
+export const FETCH_[RESOURCE]_FAILURE = 'FETCH_[RESOURCE]_FAILURE';
+
+// Action Creators (thunks)
+export const fetch[Resource] = () => async (dispatch) => {
+  dispatch({ type: FETCH_[RESOURCE]_REQUEST });
+  
+  try {
+    const response = await api.get('/endpoint');
+    dispatch({ type: FETCH_[RESOURCE]_SUCCESS, payload: response.data });
+  } catch (error) {
+    dispatch({ 
+      type: FETCH_[RESOURCE]_FAILURE, 
+      payload: error.response?.data?.message || 'Error message' 
+    });
+  }
+};
+
+6.2. REVIEW ALL REDUCER FILES
+------------------------------
+Ensure all reducers follow consistent pattern:
+
+// lib/store/reducers/[resource]Reducer.js
+import {
+  FETCH_[RESOURCE]_REQUEST,
+  FETCH_[RESOURCE]_SUCCESS,
+  FETCH_[RESOURCE]_FAILURE
+} from '../actions/[resource]Actions';
+
+const initialState = {
+  [resources]: [],
+  loading: false,  // Module-specific loading
+  error: null
+};
+
+export default function [resource]Reducer(state = initialState, action) {
+  switch (action.type) {
+    case FETCH_[RESOURCE]_REQUEST:
+      return { ...state, loading: true, error: null };
+      
+    case FETCH_[RESOURCE]_SUCCESS:
+      return { ...state, loading: false, [resources]: action.payload, error: null };
+      
+    case FETCH_[RESOURCE]_FAILURE:
+      return { ...state, loading: false, error: action.payload };
+      
+    default:
+      return state;
+  }
+}
+
+6.3. PRODUCT REDUCER ENHANCEMENT (Problem #18)
+-----------------------------------------------
+// lib/store/reducers/productReducer.js
+const initialState = {
+  products: [],
+  currentProduct: null,  // Problem #18: Add this
+  loading: false,
+  error: null
+};
+
+// Add cases for SET_CURRENT_PRODUCT and CLEAR_CURRENT_PRODUCT
+
+6.4. DASHBOARD REDUCER ENHANCEMENT (Problem #3)
+------------------------------------------------
+// lib/store/reducers/adminReducer.js
+const initialState = {
+  dashboardData: null,  // Single source of truth
+  dataInitialized: false,
+  loading: false,
+  error: null
+};
+
+// Remove any duplicate state management
+
+6.5. ORDER REDUCER ENHANCEMENT (Problem #9)
+--------------------------------------------
+// lib/store/reducers/orderReducer.js
+
+// Add optimistic update actions
+case 'UPDATE_ORDER_STATUS_OPTIMISTIC':
+  return {
+    ...state,
+    orders: state.orders.map(order =>
+      order.id === action.payload.orderId
+        ? { ...order, status: action.payload.status, _optimistic: true }
+        : order
+    )
+  };
+
+case 'UPDATE_ORDER_STATUS_SUCCESS':
+  return {
+    ...state,
+    orders: state.orders.map(order =>
+      order.id === action.payload.orderId
+        ? { ...order, ...action.payload, _optimistic: false }
+        : order
+    )
+  };
+
+case 'UPDATE_ORDER_STATUS_REVERT':
+  // Revert optimistic update on error
+  return {
+    ...state,
+    orders: state.orders.map(order =>
+      order.id === action.payload.orderId && order._optimistic
+        ? { ...order, _optimistic: false } // Revert to original
+        : order
+    )
+  };
+
+Migration Checklist for Phase 6:
+[ ] Review all action files for consistency
+[ ] Review all reducer files for consistency
+[ ] Fix dashboard state duplication (Problem #3)
+[ ] Add currentProduct state to productReducer (Problem #18)
+[ ] Add optimistic update support to orderReducer (Problem #9)
+[ ] Verify all state updates work correctly
+[ ] Test all Redux actions and reducers
+[ ] Ensure error middleware catches all failures
+
+================================================================================
+
+PHASE 7: TESTING AND CLEANUP
+-----------------------------
+Goal: Ensure everything works, remove old code
+
+Tasks:
+
+7.1. FUNCTIONAL TESTING
+------------------------
+Customer Flows:
+[ ] Browse menu (view products, filter by category)
+[ ] Add items to cart
+[ ] Create custom pizza
+[ ] Place order as guest
+[ ] Place order as authenticated user
+[ ] Login/Register
+[ ] View order history (if implemented)
+
+Admin Flows:
+[ ] Dashboard overview (all stats load correctly)
+[ ] View orders (polling works, no memory leaks)
+[ ] Update order status (optimistic updates work)
+[ ] Filter orders (debouncing works)
+[ ] CRUD operations for categories
+[ ] CRUD operations for products
+[ ] Manage users
+[ ] Mobile responsiveness (sidebar, all pages)
+
+Authentication:
+[ ] Login works
+[ ] Logout works
+[ ] Protected routes redirect to login
+[ ] Token refresh (if implemented)
+[ ] Unauthorized access handling
+
+Error Scenarios:
+[ ] API failures show proper error messages
+[ ] Network errors handled gracefully
+[ ] Invalid form submissions prevented
+[ ] 404 pages work
+[ ] Error boundaries catch component errors
+
+7.2. PERFORMANCE TESTING
+-------------------------
+Metrics to Measure (Before/After):
+[ ] Dashboard initial load time
+[ ] Dashboard API request count (should use parallel requests)
+[ ] Orders page polling behavior (should be less aggressive)
+[ ] Filter operations response time (should be debounced)
+[ ] Memory usage over time (no leaks)
+[ ] Bundle size (check for unnecessary imports)
+
+Performance Checks:
+[ ] Dashboard loads significantly faster (Problem #1)
+[ ] Orders page has no memory leaks (Problem #8)
+[ ] Filters are debounced (Problem #7)
+[ ] Statistics calculations are memoized (Problem #4)
+[ ] No unnecessary re-renders
+[ ] Smooth user experience on all pages
+
+7.3. CODE REVIEW
+-----------------
+[ ] Check for unused imports
+[ ] Verify all components have "use client" directive (except page.jsx)
+[ ] Verify all page.jsx files are SERVER components (no "use client")
+[ ] Ensure consistent naming conventions
+[ ] Check for console.log statements (remove or convert to proper logging)
+[ ] Verify error handling is consistent
+[ ] Check for TODO or FIXME comments
+[ ] Verify all 20 problems are fixed
+
+7.4. CLEANUP
+------------
+Remove Old Code:
+[ ] Remove old src/app/ files (except new structure)
+[ ] Remove old src/lib/ files (except new structure)
+[ ] Remove old src/components/ files (except new structure)
+[ ] Remove any duplicate files
+[ ] Remove commented-out code
+[ ] Remove temporary compatibility layers
+
+Update Configuration:
+[ ] Update all import paths to use new structure
+[ ] Update .gitignore if needed
+[ ] Remove unused dependencies from package.json
+[ ] Update next.config.js if needed
+[ ] Verify environment variables
+
+7.5. DOCUMENTATION
+------------------
+[ ] Update README with new structure
+[ ] Document server/client component pattern
+[ ] Document component organization (page-based folders)
+[ ] Document Redux action-reducer pattern
+[ ] Document custom hooks usage
+[ ] Add comments for complex logic
+[ ] Document all fixed problems with solutions
+[ ] Create migration notes (what changed, why)
+
+Migration Checklist for Phase 7:
+[ ] Complete functional test of all customer flows
+[ ] Complete functional test of all admin flows
+[ ] Test authentication and authorization
+[ ] Test all error scenarios
+[ ] Run performance benchmarks (compare before/after)
+[ ] Document performance improvements with metrics
+[ ] Review all code for consistency
+[ ] Verify all components have proper "use client" directives
+[ ] Verify all page.jsx files are SERVER components
+[ ] Remove old src/app/ files (after verification)
+[ ] Remove old src/lib/ files (after verification)
+[ ] Remove old src/components/ files (after verification)
+[ ] Update all import paths throughout the app
+[ ] Remove unused dependencies
+[ ] Clean up console.log statements
+[ ] Update README and documentation
+[ ] Final verification test
+[ ] Document all 20 problems as SOLVED
+
+================================================================================
+BEST PRACTICES TO FOLLOW
+================================================================================
+
+1. SERVER VS CLIENT COMPONENT RULES
+------------------------------------
+SERVER Components (page.jsx):
+// app/(public)/menu/page.jsx
+// NO "use client" directive
+
+export default async function MenuPage() {
+  // Optional: Fetch data on server (we mostly use Redux)
+  // const data = await fetch('...').then(r => r.json());
+  
+  // Minimal - just return client component
+  return <MenuClient />;
+}
+
+CLIENT Components (everything else):
+// app/(public)/menu/MenuClient.jsx
+"use client";  // REQUIRED
+
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+
+export default function MenuClient() {
+  // All hooks, Redux, interactivity here
+  return <div>...</div>;
+}
+
+// components/menu/ProductCard.jsx
+"use client";  // REQUIRED
+
+export function ProductCard({ product }) {
+  // Component logic
+  return <div>...</div>;
+}
+
+2. COMPONENT ORGANIZATION BY PAGE/FEATURE
+------------------------------------------
+components/
+├── dashboard/           # All dashboard-related components
+│   ├── StatsCard.jsx   # "use client" at top
+│   ├── RevenueChart.jsx
+│   └── RecentOrders.jsx
+├── orders-admin/        # All orders-admin components
+│   ├── OrderTable.jsx  # "use client" at top
+│   └── OrderFilters.jsx
+└── ui/                  # Only generic, reusable components
+    ├── Button.jsx      # "use client" at top
+    └── Modal.jsx
+
+3. REDUX ACTION-REDUCER PATTERN
+--------------------------------
+Action File:
+// lib/store/actions/productActions.js
+
+// 1. Define action type constants
+export const FETCH_PRODUCTS_REQUEST = 'FETCH_PRODUCTS_REQUEST';
+export const FETCH_PRODUCTS_SUCCESS = 'FETCH_PRODUCTS_SUCCESS';
+export const FETCH_PRODUCTS_FAILURE = 'FETCH_PRODUCTS_FAILURE';
+
+// 2. Create action creators (thunks)
+export const fetchProducts = () => async (dispatch) => {
+  dispatch({ type: FETCH_PRODUCTS_REQUEST });
+  
+  try {
+    const response = await api.get('/products');
+    dispatch({ 
+      type: FETCH_PRODUCTS_SUCCESS, 
+      payload: response.data 
+    });
+  } catch (error) {
+    dispatch({ 
+      type: FETCH_PRODUCTS_FAILURE, 
+      payload: error.response?.data?.message || 'Failed to fetch' 
+    });
+  }
+};
+
+Reducer File:
+// lib/store/reducers/productReducer.js
+import {
+  FETCH_PRODUCTS_REQUEST,
+  FETCH_PRODUCTS_SUCCESS,
+  FETCH_PRODUCTS_FAILURE
+} from '../actions/productActions';
+
+const initialState = {
+  products: [],
+  loading: false,
+  error: null
+};
+
+export default function productReducer(state = initialState, action) {
+  switch (action.type) {
+    case FETCH_PRODUCTS_REQUEST:
+      return { ...state, loading: true, error: null };
+      
+    case FETCH_PRODUCTS_SUCCESS:
+      return { ...state, loading: false, products: action.payload };
+      
+    case FETCH_PRODUCTS_FAILURE:
+      return { ...state, loading: false, error: action.payload };
+      
+    default:
+      return state;
+  }
+}
+
+4. IMPORT ORGANIZATION
+----------------------
+// 1. React and external dependencies
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+
+// 2. Actions
+import { fetchProducts } from '@/lib/store/actions/productActions';
+
+// 3. Components
+import { Button } from '@/components/ui/Button';
+import { ProductCard } from '@/components/menu/ProductCard';
+
+// 4. Hooks
+import { useDebounce } from '@/lib/hooks/useDebounce';
+
+// 5. Utils
+import { formatCurrency } from '@/lib/utils/formatters';
+
+// 6. Styles
+import styles from './styles.module.css';
+
+5. CUSTOM HOOKS PATTERN
+------------------------
+// lib/hooks/useDebounce.js
+"use client";  // If it will be used in client components
+
+import { useState, useEffect } from 'react';
+
+export function useDebounce(value, delay = 300) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+6. ERROR HANDLING PATTERN
+--------------------------
+// lib/store/middleware/errorMiddleware.js
+const errorMiddleware = (store) => (next) => (action) => {
+  if (action.type.endsWith('_FAILURE') || action.error) {
+    const errorMessage = action.payload || 'An error occurred';
+    console.error('Redux Error:', action.type, errorMessage);
+    
+    // Dispatch to global error state
+    store.dispatch({
+      type: 'SET_GLOBAL_ERROR',
+      payload: errorMessage
+    });
+  }
+  
+  return next(action);
+};
+
+export default errorMiddleware;
+
+7. LOADING STATES PATTERN
+--------------------------
+// Module-specific loading
+const productReducer = (state = initialState, action) => {
+  // ...
+  loading: false  // Only for this module
+};
+
+// Global loading (in globalReducer)
+const globalReducer = (state = initialState, action) => {
+  // ...
+  globalLoading: false  // App-wide overlay
+};
+
+8. NAMING CONVENTIONS
+----------------------
+- Files: PascalCase for components (ProductCard.jsx)
+- Folders: kebab-case for routes (orders-admin)
+- Folders: lowercase for component folders (dashboard, menu)
+- Route groups: Wrap in parentheses ((admin), (public))
+- Action types: UPPER_SNAKE_CASE (FETCH_PRODUCTS_REQUEST)
+- Functions: camelCase (fetchOrders, handleSubmit)
+
+================================================================================
+MIGRATION EXECUTION RULES
+================================================================================
+
+RULE 1: SERVER/CLIENT SEPARATION IS CRITICAL
+---------------------------------------------
+ALWAYS follow this pattern:
+1. page.jsx = SERVER component (no "use client")
+2. [Page]Client.jsx = CLIENT component ("use client" at top)
+3. All components in /components = CLIENT ("use client" at top)
+
+RULE 2: REDUX PATTERN IS FIXED
+-------------------------------
+ALWAYS use action-reducer pattern:
+1. Actions in lib/store/actions/[resource]Actions.js
+2. Reducers in lib/store/reducers/[resource]Reducer.js
+3. NO Redux Toolkit slices
+4. Action types as constants
+5. Thunks for async actions
+
+RULE 3: NO BIG BANG REWRITES
+-----------------------------
+- Migrate incrementally, one phase at a time
+- Keep app functional at end of each phase
+- Test thoroughly before moving to next phase
+
+RULE 4: PROBLEM-SOLUTION COUPLING
+----------------------------------
+- When migrating a component, solve its related problems
+- Reference problem numbers in commit messages
+- Don't just move code, improve it
+
+RULE 5: GIT STRATEGY
+---------------------
+git checkout -b refactor/next-js-best-practices
+
+# Commit after each major task
+git commit -m "Phase 2: Migrate axios instance (Fix #13, #14)"
+git commit -m "Phase 2: Migrate Redux store with error middleware (Fix #15, #20)"
+git commit -m "Phase 5: Migrate dashboard with server/client separation (Fix #1-5, #19)"
+
+RULE 6: TESTING GATES
+----------------------
+- Each phase must pass functional tests
+- No broken functionality in main branch
+- Performance must improve, not degrade
+
+RULE 7: "use client" DIRECTIVE PLACEMENT
+-----------------------------------------
+// ALWAYS at the very top of the file
+"use client";
+
+import React from 'react';
+// ... rest of imports
+
+================================================================================
+COMMON PITFALLS TO AVOID
+================================================================================
+
+PITFALL 1: FORGETTING "use client" DIRECTIVE
+---------------------------------------------
+WRONG:
+// components/menu/ProductCard.jsx
+import { useState } from 'react';  // ERROR: Hooks need "use client"
+
+export function ProductCard() {
+  const [count, setCount] = useState(0);
+  return <div>{count}</div>;
+}
+
+RIGHT:
+// components/menu/ProductCard.jsx
+"use client";  // REQUIRED
+
+import { useState } from 'react';
+
+export function ProductCard() {
+  const [count, setCount] = useState(0);
+  return <div>{count}</div>;
+}
+
+PITFALL 2: ADDING "use client" TO page.jsx
+-------------------------------------------
+WRONG:
+// app/(public)/menu/page.jsx
+"use client";  // DON'T DO THIS
+
+export default function MenuPage() {
+  return <MenuClient />;
+}
+
+RIGHT:
+// app/(public)/menu/page.jsx
+// NO "use client" directive
+
+export default function MenuPage() {
+  return <MenuClient />;
+}
+
+PITFALL 3: USING REDUX TOOLKIT SLICES
+--------------------------------------
+WRONG:
+// DON'T use createSlice
+import { createSlice } from '@reduxjs/toolkit';
+
+const productSlice = createSlice({
+  name: 'products',
+  initialState: {},
+  reducers: {}
+});
+
+RIGHT:
+// USE action-reducer pattern
+// lib/store/actions/productActions.js
+export const FETCH_PRODUCTS_REQUEST = 'FETCH_PRODUCTS_REQUEST';
+
+// lib/store/reducers/productReducer.js
+export default function productReducer(state = initialState, action) {
+  switch (action.type) {
+    case FETCH_PRODUCTS_REQUEST:
+      return { ...state, loading: true };
+    default:
+      return state;
+  }
+}
+
+PITFALL 4: NOT FIXING PROBLEMS DURING MIGRATION
+------------------------------------------------
+WRONG: Just moving code without improvements
+// Still has Problem #1: Sequential API calls
+await fetchCategories();
+await fetchUsers();
+
+RIGHT: Fix problems while migrating
+// Fixed Problem #1: Parallel API calls
+await Promise.all([
+  fetchCategories(),
+  fetchUsers()
+]);
+
+PITFALL 5: INCONSISTENT COMPONENT ORGANIZATION
+-----------------------------------------------
+WRONG:
+components/
+└── ui/
+    ├── Button.jsx
+    ├── DashboardStatsCard.jsx  # Too specific for ui/
+
+RIGHT:
+components/
+├── ui/
+│   └── Button.jsx  # Generic only
+└── dashboard/
+    └── StatsCard.jsx  # Page-specific
+
+================================================================================
+PHASE COMPLETION CHECKLIST TEMPLATE
+================================================================================
+
+PHASE X COMPLETION CHECKLIST
+-----------------------------
+CODE MOVEMENT:
+[ ] All files moved to correct locations
+[ ] Server/Client separation implemented
+[ ] All client components have "use client" directive
+[ ] All page.jsx files are SERVER components
+[ ] Imports updated correctly
+
+REDUX (if applicable):
+[ ] Action-reducer pattern followed
+[ ] Action types as constants
+[ ] Thunks for async actions
+[ ] No Redux Toolkit slices used
+
+FUNCTIONALITY:
+[ ] All features work correctly
+[ ] No console errors
+[ ] No broken links or routes
+
+PROBLEMS FIXED:
+[ ] Problem #N fixed and verified
+[ ] Problem #M fixed and verified
+
+TESTING:
+[ ] Manual testing completed
+[ ] Error scenarios tested
+[ ] Mobile responsiveness checked
+
+CODE QUALITY:
+[ ] No commented-out code
+[ ] No console.log statements
+[ ] Consistent naming conventions
+[ ] Proper code organization
+
+GIT:
+[ ] Clear commit messages with problem numbers
+[ ] Logical commit grouping
+
+================================================================================
+FINAL NOTES FOR AI AGENT
+================================================================================
+
+CRITICAL REQUIREMENTS
+----------------------
+1. ALWAYS use "use client" directive in:
+   - All [Page]Client.jsx files
+   - All components in /components folder
+   - All custom hooks
+
+2. NEVER use "use client" in:
+   - page.jsx files (these are SERVER components)
+
+3. ALWAYS use action-reducer pattern:
+   - NO Redux Toolkit slices
+   - Action types as constants
+   - Separate action and reducer files
+
+4. ALWAYS fix problems while migrating:
+   - Reference the 20-problem list
+   - Don't just move code
+   - Solve problems as you go
+
+EXECUTION CHECKLIST
+-------------------
+[ ] Read entire guide before starting
+[ ] Follow phases sequentially
+[ ] Verify server/client separation in each file
+[ ] Verify action-reducer pattern in Redux files
+[ ] Test after each major change
+[ ] Reference problem numbers in commits
+[ ] Keep app functional at all times
+
+SUCCESS METRICS
+---------------
+✓ All page.jsx files are SERVER components (no "use client")
+✓ All other components are CLIENT components (have "use client")
+✓ Redux uses action-reducer pattern (NOT slices)
+✓ All 20 problems solved
+✓ Zero regression bugs
+✓ Improved performance
+✓ Clean, maintainable codebase
+
+================================================================================
+DOCUMENT VERSION: 3.0
+LAST UPDATED: 2025-01-10
+STATUS: Ready for AI Agent Execution
+LANGUAGE: JavaScript (No TypeScript)
+COMPONENT PATTERN: Server/Client separation
+REDUX PATTERN: Action-Reducer (NOT slices)
+COMPONENT ORGANIZATION: Page-based folders in components/
+================================================================================

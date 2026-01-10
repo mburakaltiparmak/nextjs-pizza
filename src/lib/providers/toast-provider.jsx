@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { ToastContext } from '@/hooks/use-toast';
+import { ToastContext } from '@/lib/hooks/useToast';
 import { ToastContainer } from '@/components/ui/toast';
 
 // Toast Provider
@@ -11,9 +11,9 @@ export const ToastProvider = ({ children }) => {
   const addToast = (toastData) => {
     const id = Date.now() + Math.random();
     const toast = { id, ...toastData };
-    
+
     setToasts(prev => [...prev, toast]);
-    
+
     return id;
   };
 

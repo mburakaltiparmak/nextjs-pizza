@@ -2,7 +2,7 @@
 
 import { Provider } from "react-redux";
 import { store } from "@/lib/store/store";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider } from "@/lib/contexts/AuthContext";
 import { ToastProvider } from "./toast-provider";
 
 

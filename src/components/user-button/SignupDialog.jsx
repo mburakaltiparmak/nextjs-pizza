@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserPlus } from "@fortawesome/free-solid-svg-icons";
-import SecondaryLoading from "@/components/secondaryLoading";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export const SignupDialog = ({
@@ -80,8 +80,8 @@ export const SignupDialog = ({
                                         required
                                         placeholder="John"
                                         className={`w-full px-3 py-2 text-xs border-2 rounded-lg transition-all ${touched.name && !fieldValidations.name
-                                                ? "border-red"
-                                                : "border-lightgray2 focus:border-yellow"
+                                            ? "border-red"
+                                            : "border-lightgray2 focus:border-yellow"
                                             } focus:outline-none focus:ring-opacity-50 font-Quattrocento_Sans`}
                                         value={formData.name}
                                         onChange={handleChange}
@@ -100,8 +100,8 @@ export const SignupDialog = ({
                                         required
                                         placeholder="Doe"
                                         className={`w-full px-3 py-2 text-xs border-2 rounded-lg transition-all ${touched.surname && !fieldValidations.surname
-                                                ? "border-red"
-                                                : "border-lightgray2 focus:border-yellow"
+                                            ? "border-red"
+                                            : "border-lightgray2 focus:border-yellow"
                                             } focus:outline-none focus:ring-opacity-50 font-Quattrocento_Sans`}
                                         value={formData.surname}
                                         onChange={handleChange}
@@ -122,8 +122,8 @@ export const SignupDialog = ({
                                     required
                                     placeholder="mail@example.com"
                                     className={`w-full px-3 py-2 text-xs border-2 rounded-lg transition-all ${touched.email && !fieldValidations.email
-                                            ? "border-red"
-                                            : "border-lightgray2 focus:border-yellow"
+                                        ? "border-red"
+                                        : "border-lightgray2 focus:border-yellow"
                                         } focus:outline-none focus:ring-opacity-50 font-Quattrocento_Sans`}
                                     value={formData.email}
                                     onChange={handleChange}
@@ -143,8 +143,8 @@ export const SignupDialog = ({
                                     required
                                     placeholder="05*********"
                                     className={`w-full px-3 py-2 text-xs border-2 rounded-lg transition-all ${touched.phoneNumber && !fieldValidations.phoneNumber
-                                            ? "border-red"
-                                            : "border-lightgray2 focus:border-yellow"
+                                        ? "border-red"
+                                        : "border-lightgray2 focus:border-yellow"
                                         } focus:outline-none focus:ring-opacity-50 font-Quattrocento_Sans`}
                                     value={formData.phoneNumber}
                                     onChange={handleChange}
@@ -165,8 +165,8 @@ export const SignupDialog = ({
                                         required
                                         placeholder="8+ kar."
                                         className={`w-full px-3 py-2 text-xs border-2 rounded-lg transition-all ${touched.password && !fieldValidations.password
-                                                ? "border-red"
-                                                : "border-lightgray2 focus:border-yellow"
+                                            ? "border-red"
+                                            : "border-lightgray2 focus:border-yellow"
                                             } focus:outline-none focus:ring-opacity-50 font-Quattrocento_Sans`}
                                         value={formData.password}
                                         onChange={handleChange}
@@ -185,8 +185,8 @@ export const SignupDialog = ({
                                         required
                                         placeholder="Tekrar"
                                         className={`w-full px-3 py-2 text-xs border-2 rounded-lg transition-all ${touched.confirmPassword && !fieldValidations.confirmPassword
-                                                ? "border-red"
-                                                : "border-lightgray2 focus:border-yellow"
+                                            ? "border-red"
+                                            : "border-lightgray2 focus:border-yellow"
                                             } focus:outline-none focus:ring-opacity-50 font-Quattrocento_Sans`}
                                         value={formData.confirmPassword}
                                         onChange={handleChange}
@@ -200,13 +200,13 @@ export const SignupDialog = ({
                                 type="submit"
                                 disabled={!isFormValid || loading}
                                 className={`w-full py-2.5 px-4 rounded-lg font-bold text-white transition-all duration-200 font-Barlow shadow-md transform text-sm ${!isFormValid || loading
-                                        ? "bg-gray cursor-not-allowed opacity-60"
-                                        : "bg-red hover:bg-darkred hover:shadow-lg hover:scale-105 active:scale-95"
+                                    ? "bg-gray cursor-not-allowed opacity-60"
+                                    : "bg-red hover:bg-darkred hover:shadow-lg hover:scale-105 active:scale-95"
                                     }`}
                             >
                                 {loading ? (
                                     <div className="flex items-center justify-center">
-                                        <SecondaryLoading size="small" />
+                                        <LoadingSpinner size="small" />
                                         <span className="ml-2">Kayıt Olunuyor...</span>
                                     </div>
                                 ) : (

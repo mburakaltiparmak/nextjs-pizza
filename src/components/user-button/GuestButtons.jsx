@@ -6,10 +6,10 @@ import { faUserPlus } from "@fortawesome/free-solid-svg-icons";
 import { LoginDialog } from "./LoginDialog";
 import { SignupDialog } from "./SignupDialog";
 import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
-import { useLoginForm } from "@/hooks/use-login-form";
-import { useSignupForm } from "@/hooks/use-signup-form";
-import { useForgotPassword } from "@/hooks/use-forgot-password";
-import useAuth from "@/hooks/use-auth";
+import { useLoginForm } from "@/lib/hooks/useLoginForm";
+import { useSignupForm } from "@/lib/hooks/useSignupForm";
+import { useForgotPassword } from "@/lib/hooks/useForgotPassword";
+import useAuth from "@/lib/hooks/useAuth";
 import { useAppDispatch } from "@/lib/hooks";
 import { setGuestMode } from "@/lib/store/actions/appActions";
 

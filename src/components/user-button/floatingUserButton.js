@@ -1,10 +1,10 @@
 "use client";
 import React from "react";
-import { useUserButton } from "@/hooks/use-user-button";
+import { useUserButton } from "@/lib/hooks/useUserButton";
 import { UserDropdown } from "./UserDropdown";
 import { GuestButtons } from "./GuestButtons";
 import Loading from "@/app/loading";
-import useAuth from "@/hooks/use-auth";
+import useAuth from "@/lib/hooks/useAuth";
 
 const FloatingUserButton = () => {
   const { loading: authLoading } = useAuth([], "/", false);
