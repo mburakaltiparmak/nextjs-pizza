@@ -11,18 +11,20 @@ export const useHomeData = () => {
     // Selectors to check if data is already loaded
     const products = useSelector(state => state.product.products);
     const categories = useSelector(state => state.category.categories);
+    const productPagination = useSelector(state => state.product.pagination);
 
     const loadHomeData = useCallback(async () => {
-        // Optimization: Don't fetch if we already have data
-        if (products.length > 0 && categories.length > 0) {
+        // Optimization: Don't fetch if we already have data and pagination info
+        // We check if totalPages is set to ensure we have pagination metadata
+        if (products.length > 0 && categories.length > 0 && productPagination?.totalPages > 0) {
             return;
         }
 
         dispatch(setLoading(true));
         try {
             await Promise.all([
-                dispatch(fetchProducts()),
-                dispatch(fetchCategories())
+                dispatch(fetchProducts(0, 8)), // Sayfa boyutu 8 olarak ayarlandı
+                dispatch(fetchCategories(0, 100))
             ]);
         } catch (error) {
             console.error("Error loading home data:", error);
@@ -30,7 +32,7 @@ export const useHomeData = () => {
         } finally {
             dispatch(setLoading(false));
         }
-    }, [dispatch, products.length, categories.length]);
+    }, [dispatch, products.length, categories.length, productPagination?.totalPages]);
 
     return {
         loading,

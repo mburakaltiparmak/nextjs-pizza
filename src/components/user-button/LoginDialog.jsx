@@ -37,12 +37,6 @@ export const LoginDialog = ({
 
   return (
     <AlertDialog open={loginOpen} onOpenChange={setLoginOpen}>
-      <AlertDialogTrigger asChild>
-        <button className="h-10 max-md:h-8 max-md:w-16 max-md:text-xs max-md:gap-1 px-4 py-2 bg-yellow text-red hover:bg-black hover:text-yellow ring-2 ring-inset ring-black hover:ring-yellow rounded-lg font-Barlow font-bold text-sm inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:bg-opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:scale-105 active:scale-95">
-          <FontAwesomeIcon icon={faUser} className="mr-2 max-md:mr-0" />
-          <span className="max-md:hidden">Giriş Yap</span>
-        </button>
-      </AlertDialogTrigger>
 
       <AlertDialogContent className="w-full max-w-sm bg-transparent border-none shadow-none p-0 z-50">
         <VisuallyHidden>

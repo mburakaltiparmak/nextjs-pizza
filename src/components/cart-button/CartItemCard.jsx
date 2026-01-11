@@ -9,10 +9,10 @@ export const CartItemCard = ({
   onRemove,
 }) => {
   return (
-    <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-      <div className="flex items-center space-x-3">
+    <div className="flex items-center justify-between p-3 mb-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-lg transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+      <div className="flex items-center space-x-4 w-full">
         {/* Product Image */}
-        <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+        <div className="w-16 h-16 border-2 border-black rounded-md overflow-hidden bg-lightgray flex-shrink-0">
           {item.product.img ? (
             <img
               src={item.product.img}
@@ -20,54 +20,59 @@ export const CartItemCard = ({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-200">
-              <span className="text-gray-500 text-xs">Görsel yok</span>
+            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+              <span className="text-gray-500 text-[10px] font-Barlow text-center p-1 leading-tight">Görsel Yok</span>
             </div>
           )}
         </div>
 
-        {/* Product Info */}
-        <div>
-          <p className="font-medium text-gray-800 text-sm">
-            {item.product.name}
-          </p>
-          
-          {/* Quantity Controls */}
-          <div className="flex items-center space-x-2 mt-1">
+        {/* Product Info & Controls Container */}
+        <div className="flex flex-1 flex-col justify-between h-full gap-2">
+
+          {/* Header Row: Name & Remove */}
+          <div className="flex justify-between items-start">
+            <p className="font-bold text-darkgray font-Barlow text-base leading-tight pr-2 line-clamp-2">
+              {item.product.name}
+            </p>
             <button
-              onClick={() => onUpdateQuantity(item.id, item.count, "decrease")}
-              className="text-gray-500 hover:text-red disabled:text-gray-300 transition-colors"
-              disabled={item.count <= 1}
-              aria-label="Azalt"
+              onClick={() => onRemove(item.id)}
+              className="text-gray-400 hover:text-red transition-colors p-1 -mr-2 -mt-2"
+              aria-label="Kaldır"
             >
-              <Minus size={16} />
-            </button>
-            <span className="text-sm font-medium min-w-[20px] text-center">
-              {item.count}
-            </span>
-            <button
-              onClick={() => onUpdateQuantity(item.id, item.count, "increase")}
-              className="text-gray-500 hover:text-red transition-colors"
-              aria-label="Arttır"
-            >
-              <Plus size={16} />
+              <Trash2 size={18} />
             </button>
           </div>
-        </div>
-      </div>
 
-      {/* Price and Remove Button */}
-      <div className="flex items-center space-x-3">
-        <p className="font-medium text-gray-800 text-sm">
-          {(item.product.price * item.count).toFixed(2)} ₺
-        </p>
-        <button
-          onClick={() => onRemove(item.id)}
-          className="text-gray-500 hover:text-red transition-colors"
-          aria-label="Kaldır"
-        >
-          <Trash2 size={18} />
-        </button>
+          {/* Footer Row: Controls & Price */}
+          <div className="flex items-center justify-between">
+            {/* Quantity Controls */}
+            <div className="flex items-center bg-lightgray rounded border border-black">
+              <button
+                onClick={() => onUpdateQuantity(item.id, item.count, "decrease")}
+                className="w-7 h-7 flex items-center justify-center text-darkgray hover:bg-red hover:text-white border-r border-black disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-darkgray transition-colors"
+                disabled={item.count <= 1}
+                aria-label="Azalt"
+              >
+                <Minus size={12} strokeWidth={3} />
+              </button>
+              <span className="w-8 text-center text-sm font-bold font-Barlow text-darkgray">
+                {item.count}
+              </span>
+              <button
+                onClick={() => onUpdateQuantity(item.id, item.count, "increase")}
+                className="w-7 h-7 flex items-center justify-center text-darkgray hover:bg-green-600 hover:text-white border-l border-black transition-colors"
+                aria-label="Arttır"
+              >
+                <Plus size={12} strokeWidth={3} />
+              </button>
+            </div>
+
+            {/* Price */}
+            <div className="font-bold text-darkgray font-Barlow text-lg">
+              {(item.product.price * item.count).toFixed(2)} ₺
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

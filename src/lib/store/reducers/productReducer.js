@@ -10,10 +10,17 @@ export const productActions = {
   SET_SELECTED_CATEGORY: "SET_SELECTED_CATEGORY",
   SET_FETCH_STATE: "SET_PRODUCT_FETCH_STATE",
   SET_ERROR: "SET_PRODUCT_ERROR",
+  SET_PAGINATION: "SET_PRODUCT_PAGINATION",
 };
 
 const productInitialState = {
   products: [],
+  pagination: {
+    page: 0,
+    size: 20,
+    totalPages: 0,
+    totalElements: 0,
+  },
   currentProduct: null,
   selectedCategory: null,
   fetchState: fetchStates.NOT_FETCHED,
@@ -27,6 +34,12 @@ export const productReducer = (state = productInitialState, action) => {
       return {
         ...state,
         products: action.payload,
+      };
+
+    case productActions.SET_PAGINATION:
+      return {
+        ...state,
+        pagination: action.payload,
       };
 
     case productActions.ADD_PRODUCT:

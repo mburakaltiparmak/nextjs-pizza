@@ -55,7 +55,7 @@ export const useCartButton = () => {
 
     // Handlers
     const handleCheckout = () => {
-        router.push("/create-order");
+        router.push("/checkout");
         setIsOpen(false);
     };
 

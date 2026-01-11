@@ -2,7 +2,7 @@
 import React from "react";
 import { useSearchParams } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUserPlus } from "@fortawesome/free-solid-svg-icons";
+import { faUserPlus, faUser } from "@fortawesome/free-solid-svg-icons";
 import { LoginDialog } from "./LoginDialog";
 import { SignupDialog } from "./SignupDialog";
 import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
@@ -61,7 +61,7 @@ export const GuestButtons = ({ router }) => {
   const handleGuestCheckout = () => {
     dispatch(setGuestMode(true));
     setLoginOpen(false);
-    router.push("/create-order");
+    router.push("/checkout");
   };
 
   // Auto-open login/signup modal if query param is present
@@ -75,7 +75,15 @@ export const GuestButtons = ({ router }) => {
   }, [searchParams]);
 
   return (
-    <div className="flex gap-2 items-center max-md:items-start max-md:flex-col max-md:fixed max-md:right-4 max-md:top-2 max-md:z-50">
+    <div className="fixed top-2 left-2 space-x-2 z-50">
+      <button
+        className="flex gap-1 w-10 h-10 lg:w-24 lg:px-2 py-2 bg-yellow text-red hover:bg-black hover:text-yellow ring-2 ring-inset ring-black hover:ring-yellow rounded-lg font-Barlow font-bold text-sm inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:bg-opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:scale-105 active:scale-95"
+        onClick={() => setLoginOpen(true)}
+      >
+        <FontAwesomeIcon icon={faUser} />
+        <span className="hidden lg:block">Giriş Yap</span>
+      </button>
+
       <LoginDialog
         loginOpen={loginOpen}
         setLoginOpen={setLoginOpen}
@@ -117,11 +125,11 @@ export const GuestButtons = ({ router }) => {
       />
 
       <button
-        className="h-10 max-md:w-16 max-md:text-xs max-md:h-8 px-4 py-2 bg-white gap-1 text-red hover:bg-black hover:text-yellow ring-2 ring-inset ring-yellow hover:ring-white rounded-lg font-Barlow font-bold text-sm inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:bg-opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:scale-105 active:scale-95"
+        className="flex gap-1 h-10 w-10 lg:w-20 lg:px-2 py-2 bg-white gap-1 text-red hover:bg-black hover:text-yellow ring-2 ring-inset ring-yellow hover:ring-white rounded-lg font-Barlow font-bold text-sm inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:bg-opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:scale-105 active:scale-95"
         onClick={() => setSignupOpen(true)}
       >
-        <FontAwesomeIcon icon={faUserPlus} className="mr-2 max-md:mr-0" />
-        <span className="max-md:hidden">Üye Ol</span>
+        <FontAwesomeIcon icon={faUserPlus} />
+        <span className="hidden lg:block">Üye Ol</span>
       </button>
     </div>
   );

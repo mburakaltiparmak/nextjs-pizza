@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import AddressList from "@/components/create-order-components/addressList";
-import AddressForm from "@/components/create-order-components/addressForm";
+import AddressList from "@/components/checkout/addressList";
+import AddressForm from "@/components/checkout/addressForm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMapMarkerAlt, faTimes } from "@fortawesome/free-solid-svg-icons";
 import {

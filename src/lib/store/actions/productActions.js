@@ -16,7 +16,7 @@ export const clearCurrentProduct = () => ({
   type: productActions.CLEAR_CURRENT_PRODUCT,
 });
 
-export const fetchProducts = () => async (dispatch) => {
+export const fetchProducts = (page = 0, size = 8) => async (dispatch) => {
   dispatch(setModuleLoading('product', true)); // ✅ Module loading kullan
   dispatch({
     type: productActions.SET_FETCH_STATE,
@@ -27,8 +27,8 @@ export const fetchProducts = () => async (dispatch) => {
     // Backend pagination endpoint kullan
     const response = await instance.get("/product/paged", {
       params: {
-        page: 0,
-        size: 100, // Tüm ürünleri almak için büyük bir sayfa boyutu
+        page,
+        size,
         sort: "id,desc"
       }
     });
@@ -39,6 +39,19 @@ export const fetchProducts = () => async (dispatch) => {
 
     // Paginated response'dan content'i çıkar
     const products = response.data.content || response.data;
+
+    // Pagination bilgisini dispatch et
+    if (response.data.page) {
+      dispatch({
+        type: productActions.SET_PAGINATION,
+        payload: {
+          page: response.data.page.number,
+          size: response.data.page.size,
+          totalPages: response.data.page.totalPages,
+          totalElements: response.data.page.totalElements
+        }
+      });
+    }
 
     dispatch({
       type: productActions.SET_PRODUCTS,
@@ -105,23 +118,23 @@ export const fetchProductById = (productId) => async (dispatch, getState) => {
 };
 
 // Kategori ID'sine göre ürünleri getir
-export const fetchProductsByCategory = (categoryId) => async (dispatch) => {
+export const fetchProductsByCategory = (categoryId, page = 0, size = 8) => async (dispatch) => {
   if (!categoryId) {
-    return dispatch(fetchProducts());
+    return dispatch(fetchProducts(page, size));
   }
 
-  dispatch(setLoading(true));
+  dispatch(setModuleLoading('product', true));
   dispatch({
-    type: productActions.setProductFetchState,
+    type: productActions.SET_FETCH_STATE,
     payload: fetchStates.FETCHING,
   });
 
   try {
     // Backend'in pagination endpoint'ini kullan: /product/category/{id}/paged
-    const response = await instance.get(`/product/category/${categoryId}/paged`, {
+    const response = await instance.get(`/product/paged/category/${categoryId}`, {
       params: {
-        page: 0,
-        size: 100, // Tüm ürünleri almak için büyük bir sayfa boyutu
+        page,
+        size,
         sort: "id,desc"
       }
     });
@@ -133,6 +146,19 @@ export const fetchProductsByCategory = (categoryId) => async (dispatch) => {
     // Paginated response'dan content'i çıkar
     const products = response.data.content || response.data;
 
+    // Pagination bilgisini dispatch et
+    if (response.data.page) {
+      dispatch({
+        type: productActions.SET_PAGINATION,
+        payload: {
+          page: response.data.page.number,
+          size: response.data.page.size,
+          totalPages: response.data.page.totalPages,
+          totalElements: response.data.page.totalElements
+        }
+      });
+    }
+
     dispatch({
       type: productActions.SET_PRODUCTS,
       payload: products,
@@ -143,7 +169,7 @@ export const fetchProductsByCategory = (categoryId) => async (dispatch) => {
       payload: fetchStates.FETCHED,
     });
 
-    dispatch(setLoading(false));
+    dispatch(setModuleLoading('product', false));
 
     return products;
   } catch (err) {

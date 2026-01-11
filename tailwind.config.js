@@ -67,11 +67,11 @@ module.exports = {
       },
       fontFamily: {
         sans: ["var(--font-sans)", ...defaultTheme.fontFamily.sans],
-        Barlow: ["Barlow", "sans-serif"],
-        Quattrocento_Sans: ["Quattrocento Sans", "sans-serif"],
-        Quattrocento: ["Quattrocento", "sans-serif"],
-        Londrina_Solid: ["Londrina Solid", "sans-serif"],
-        Satisfy: ["Satisfy", "sans-serif"],
+        Barlow: ["var(--font-barlow)", "sans-serif"],
+        Quattrocento_Sans: ["var(--font-quattrocento)", "sans-serif"],
+        Quattrocento: ["var(--font-quattrocento)", "sans-serif"],
+        Londrina_Solid: ["var(--font-londrina-solid)", "sans-serif"],
+        Satisfy: ["var(--font-satisfy)", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

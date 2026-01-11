@@ -18,15 +18,21 @@ export const setCategoryFetchState = (state) => ({
 /**
  * Cache ile tüm kategorileri getir - pagination desteği ile
  */
-export const fetchCategories = () => async (dispatch) => {
-  const CACHE_KEY = 'categories_all';
+export const fetchCategories = (page = 0, size = 100) => async (dispatch) => {
+  const CACHE_KEY = `categories_page_${page}_size_${size}`;
 
   // Cache kontrolü
   const cached = cache.get(CACHE_KEY);
   if (cached) {
-    dispatch(setCategories(cached));
+    dispatch(setCategories(cached.content));
+    if (cached.pagination) {
+      dispatch({
+        type: categoryActions.SET_PAGINATION,
+        payload: cached.pagination
+      });
+    }
     dispatch(setCategoryFetchState(fetchStates.FETCHED));
-    return cached;
+    return cached.content;
   }
 
   dispatch(setCategoryFetchState(fetchStates.FETCHING));
@@ -35,8 +41,8 @@ export const fetchCategories = () => async (dispatch) => {
     // Backend pagination endpoint kullan
     const response = await instance.get("/category/paged", {
       params: {
-        page: 0,
-        size: 50, // Tüm kategorileri almak için yeterli büyük bir sayfa boyutu
+        page,
+        size,
         sort: "name,asc"
       }
     });
@@ -44,11 +50,27 @@ export const fetchCategories = () => async (dispatch) => {
     // Paginated response'dan content'i çıkar
     const categories = response.data.content || response.data;
 
+    // Pagination bilgisini dispatch et
+    let paginationData = null;
+    if (response.data.page) {
+      paginationData = {
+        page: response.data.page.number,
+        size: response.data.page.size,
+        totalPages: response.data.page.totalPages,
+        totalElements: response.data.page.totalElements
+      };
+
+      dispatch({
+        type: categoryActions.SET_PAGINATION,
+        payload: paginationData
+      });
+    }
+
     dispatch(setCategories(categories));
     dispatch(setCategoryFetchState(fetchStates.FETCHED));
 
     // Cache'e kaydet (5 dakika)
-    cache.set(CACHE_KEY, categories);
+    cache.set(CACHE_KEY, { content: categories, pagination: paginationData });
 
     return categories;
   } catch (err) {

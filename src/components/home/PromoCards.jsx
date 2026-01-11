@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { PROMO_CARDS } from "@/lib/constants/homeData";
+import card1 from "../../../public/images/kart-1.png";
+import card2 from "../../../public/images/kart-2.png";
+import card3 from "../../../public/images/kart-3.png";
 
 export default function PromoCards() {
   const router = useRouter();
@@ -11,64 +13,65 @@ export default function PromoCards() {
   };
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="flex flex-row justify-center gap-4 mt-4 max-md:flex-col max-md:items-center max-md:mt-0 max-md:gap-2 w-full">
+    <div className="w-full max-w-7xl mx-auto px-4 md:px-8 py-12 md:py-24">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 h-auto md:h-[500px]">
+        {/* Large Left Card */}
         <div
-          className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0 w-full max-md:w-80 bg-cover bg-center cursor-pointer hover:opacity-90 transition-opacity"
+          className="relative w-full h-[300px] md:h-full bg-cover bg-center rounded-2xl overflow-hidden cursor-pointer group shadow-lg transition-transform duration-300 hover:scale-[1.01]"
           style={{
-            backgroundImage: `url(${PROMO_CARDS[0].backgroundImage.src})`,
+            backgroundImage: `url(${card1.src})`,
           }}
-          onClick={() => handleCardClick(PROMO_CARDS[0].productId)}
+          onClick={() => handleCardClick(32)}
         >
-          <span className="m-4 flex flex-col items-start gap-4">
-            <p
-              className={`${PROMO_CARDS[0].textSize} font-bold font-Quattrocento ${PROMO_CARDS[0].textWidth} text-left`}
-            >
-              {PROMO_CARDS[0].text}
+          <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors duration-300"></div>
+          <div className="relative h-full flex flex-col justify-center items-start p-8 md:p-12">
+            <p className="text-3xl md:text-5xl font-bold font-Quattrocento text-white mb-6 leading-tight w-2/3 drop-shadow-lg">
+              Özel Lezzetus
             </p>
-            <button className="btn-primary">
-              {PROMO_CARDS[0].buttonText}
+            <button className="btn-primary shadow-xl">
+              SİPARİŞ VER
             </button>
-          </span>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-4 max-md:gap-2 max-md:items-center">
+        {/* Right Column Stacked Cards */}
+        <div className="flex flex-col gap-4 md:gap-6 h-full">
+          {/* Top Right Card */}
           <div
-            className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0 bg-cover bg-center h-full w-80 cursor-pointer hover:opacity-90 transition-opacity"
+            className="relative flex-1 bg-cover bg-center rounded-2xl overflow-hidden cursor-pointer group shadow-lg transition-transform duration-300 hover:scale-[1.01] min-h-[200px]"
             style={{
-              backgroundImage: `url(${PROMO_CARDS[1].backgroundImage.src})`,
+              backgroundImage: `url(${card2.src})`,
             }}
-            onClick={() => handleCardClick(PROMO_CARDS[1].productId)}
+            onClick={() => handleCardClick(33)}
           >
-            <span className="m-4 flex flex-col items-start gap-4">
-              <p
-                className={`${PROMO_CARDS[1].textSize} font-bold font-Barlow ${PROMO_CARDS[1].textWidth} text-left`}
-              >
-                {PROMO_CARDS[1].text}
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300"></div>
+            <div className="relative h-full flex flex-col justify-center items-start p-6 md:p-10">
+              <p className="text-xl md:text-2xl font-bold font-Barlow text-white mb-4 w-3/4 drop-shadow-md">
+                Hackathlon Burger Menü
               </p>
-              <button className="btn-third">
-                {PROMO_CARDS[1].buttonText}
+              <button className="btn-third shadow-lg">
+                SİPARİŞ VER
               </button>
-            </span>
+            </div>
           </div>
 
+          {/* Bottom Right Card */}
           <div
-            className="flex flex-col justify-start items-start text-center text-lightgray p-2 rounded-md max-md:p-0 bg-cover bg-center h-full w-80 cursor-pointer hover:opacity-90 transition-opacity"
+            className="relative flex-1 bg-cover bg-center rounded-2xl overflow-hidden cursor-pointer group shadow-lg transition-transform duration-300 hover:scale-[1.01] min-h-[200px]"
             style={{
-              backgroundImage: `url(${PROMO_CARDS[2].backgroundImage.src})`,
+              backgroundImage: `url(${card3.src})`,
             }}
-            onClick={() => handleCardClick(PROMO_CARDS[2].productId)}
+            onClick={() => handleCardClick(39)}
           >
-            <span className="m-4 flex flex-col items-start gap-4">
-              <p
-                className={`${PROMO_CARDS[2].textSize} text-darkgray font-bold font-Barlow ${PROMO_CARDS[2].textWidth} text-left`}
-              >
-                {PROMO_CARDS[2].text}
+            <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-300"></div>
+            <div className="relative h-full flex flex-col justify-center items-start p-6 md:p-10">
+              <p className="text-xl md:text-2xl text-darkgray font-bold font-Barlow mb-4 w-3/5 drop-shadow-sm">
+                Çoooook hızlı npm gibi kurye
               </p>
-              <button className="btn-fourth">
-                {PROMO_CARDS[2].buttonText}
+              <button className="btn-fourth shadow-lg">
+                SİPARİŞ VER
               </button>
-            </span>
+            </div>
           </div>
         </div>
       </div>

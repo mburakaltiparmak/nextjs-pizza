@@ -1,21 +1,32 @@
-import { HERO_CONFIG } from "@/lib/constants/homeData";
-import HeroCTA from "./HeroCTA";
+"use client";
+
+import heroImg from "../../../public/images/mvp-banner.png";
 
 export default function HeroSection() {
+
+  const scrollToMenu = () => {
+    const menuSection = document.getElementById("menu");
+    if (menuSection) {
+      menuSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <div
-      className="bg-cover bg-center h-screen w-full max-md:h-96"
-      style={{ backgroundImage: `url(${HERO_CONFIG.backgroundImage.src})` }}
+      className="bg-cover bg-center h-[95vh] w-full"
+      style={{ backgroundImage: `url(${heroImg.src})` }}
     >
       <div className="flex flex-col justify-start items-center gap-4 mt-4">
         <div className="flex flex-col justify-between items-center gap-4 text-center">
           <h4 className="font-Satisfy text-yellow text-2xl">
-            {HERO_CONFIG.subtitle}
+            fırsatı kaçırma
           </h4>
           <h2 className="font-Barlow text-4xl tracking-tighter text-lightgray">
-            {HERO_CONFIG.title.line1} <br /> {HERO_CONFIG.title.line2}
+            KOD ACIKTIRIR, <br /> PİZZA DOYURUR
           </h2>
-          <HeroCTA />
+          <button onClick={scrollToMenu} className="btn-primary">
+            ACIKTIM
+          </button>
         </div>
       </div>
     </div>
