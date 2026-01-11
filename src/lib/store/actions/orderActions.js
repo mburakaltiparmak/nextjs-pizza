@@ -321,6 +321,7 @@ export const createOrder =
         dispatch(setOrderDetail(response.data));
 
         // Ödeme işlemini yap
+        // Ödeme işlemini yap
         try {
           if (orderData.paymentMethod === "ONLINE_CREDIT_CARD") {
             // Online kredi kartı ödemesi (Iyzico Hosted Checkout Başlatma)
@@ -341,21 +342,24 @@ export const createOrder =
               throw new Error(errorMessage || "Ödeme sayfası oluşturulamadı.");
             }
           } else if (orderData.paymentMethod === "CASH") {
-            console.log("Nakit ödeme seçildi via createOrder");
-            // No extra API call needed.
-            // Order is already created with paymentStatus='PENDING' (which is correct for Cash on Delivery)
-          } else if (orderData.paymentMethod === "ONLINE") {
-            // Iyzico online ödeme için
-            console.log("Online ödeme (Iyzico) seçildi");
+            console.log("Nakit ödeme (Kapıda) seçildi. Sipariş beklemede.");
+            // Ekstra API çağrısı gerekmez.
+          } else if (orderData.paymentMethod === "CREDIT_CARD") {
+            console.log("Kredi Kartı (Kapıda) seçildi. Sipariş beklemede.");
+            // Ekstra API çağrısı gerekmez.
+          } else if (orderData.paymentMethod === "GIFT_CARD") {
+            console.log("Hediye Kartı (Kapıda) seçildi. Sipariş beklemede.");
+            // Ekstra API çağrısı gerekmez.
           }
         } catch (paymentError) {
           console.error("Ödeme işlemi sırasında hata:", paymentError);
+          // Ödeme hatası olsa bile sipariş ID oluştuğu için başarılı sayabiliriz veya iptal edebiliriz.
+          // Şimdilik sadece uyarı veriyoruz.
           dispatch(
             setSuccess(
               "Siparişiniz oluşturuldu fakat ödeme işlemi sırasında bir hata oluştu"
             )
           );
-          // Ödeme hatası olsa bile siparişi başarılı sayıyoruz
         }
 
         // Sipariş ve ödeme bilgileri Redux'a kaydedildi

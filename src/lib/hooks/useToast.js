@@ -23,23 +23,25 @@ export const useToast = () => {
         });
     };
 
+    // Attach methods to toast function to allow toast.success(...) syntax
+    toast.success = (message, options = {}) => addToast({ type: 'success', message, ...options });
+    toast.error = (message, options = {}) => addToast({ type: 'error', message, ...options });
+    toast.warning = (message, options = {}) => addToast({ type: 'warning', message, ...options });
+    toast.info = (message, options = {}) => addToast({ type: 'info', message, ...options });
+    toast.cartNotification = (product, options = {}) => addToast({ type: 'cart', product, ...options });
+    toast.validation = (message, options = {}) => addToast({ type: 'validation', message, ...options });
+    toast.dismiss = removeToast;
+    toast.dismissAll = clearAllToasts;
+
     return {
         toast,
-        success: (message, options = {}) =>
-            addToast({ type: 'success', message, ...options }),
-
-        error: (message, options = {}) =>
-            addToast({ type: 'error', message, ...options }),
-
-        warning: (message, options = {}) =>
-            addToast({ type: 'warning', message, ...options }),
-
-        info: (message, options = {}) =>
-            addToast({ type: 'info', message, ...options }),
-
-        cartNotification: (product, options = {}) =>
-            addToast({ type: 'cart', product, ...options }),
-
+        // Keep these destucturable properties for backward compatibility if needed
+        success: toast.success,
+        error: toast.error,
+        warning: toast.warning,
+        info: toast.info,
+        cartNotification: toast.cartNotification,
+        validation: toast.validation,
         dismiss: removeToast,
         dismissAll: clearAllToasts
     };

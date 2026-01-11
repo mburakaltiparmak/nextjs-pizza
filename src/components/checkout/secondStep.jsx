@@ -36,20 +36,16 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
 
   const handleContinue = () => {
     if (!paymentMethod) {
-      toast({
-        title: "Ödeme yöntemi seçilmedi",
-        description: "Lütfen bir ödeme yöntemi seçin.",
-        variant: "destructive"
+      toast.error("Ödeme yöntemi seçilmedi", {
+        title: "Hata"
       });
       return;
     }
 
     if (isGuest) {
       if (!guestData.name || !guestData.surname || !guestData.email || !guestData.phoneNumber) {
-        toast({
-          title: "Eksik bilgi",
-          description: "Lütfen önceki adımda tüm kişisel bilgilerinizi doldurun.",
-          variant: "destructive"
+        toast.error("Lütfen önceki adımda tüm kişisel bilgilerinizi doldurun.", {
+          title: "Eksik bilgi"
         });
         setCurrentStep(1);
         return;
@@ -57,10 +53,8 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
     }
 
     if (!selectedAddress) {
-      toast({
-        title: "Adres bilgisi eksik",
-        description: "Lütfen önceki adımda bir teslimat adresi belirtin.",
-        variant: "destructive"
+      toast.error("Lütfen önceki adımda bir teslimat adresi belirtin.", {
+        title: "Adres bilgisi eksik"
       });
       setCurrentStep(1);
       return;
@@ -69,9 +63,8 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
     setStep2(true);
     setCurrentStep(3);
 
-    toast({
-      title: "Ödeme yöntemi seçildi",
-      description: "Şimdi siparişinizi tamamlayabilirsiniz."
+    toast.success("Şimdi siparişinizi tamamlayabilirsiniz.", {
+      title: "Ödeme yöntemi seçildi"
     });
   };
 
@@ -183,8 +176,8 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
             <button
               type="button"
               className={`flex items-center border p-3 rounded-md ${paymentMethod === "ONLINE_CREDIT_CARD"
-                  ? "border-yellow bg-darkred text-yellow"
-                  : "border-gray-300 hover:border-gray-400"
+                ? "border-yellow bg-darkred text-yellow"
+                : "border-gray-300 hover:border-gray-400"
                 }`}
               onClick={() => handlePaymentMethodSelect("ONLINE_CREDIT_CARD")}
             >
@@ -195,8 +188,8 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
             <button
               type="button"
               className={`flex items-center border p-3 rounded-md ${paymentMethod === "CREDIT_CARD"
-                  ? "border-yellow bg-darkred text-yellow"
-                  : "border-gray-300 hover:border-gray-400"
+                ? "border-yellow bg-darkred text-yellow"
+                : "border-gray-300 hover:border-gray-400"
                 }`}
               onClick={() => handlePaymentMethodSelect("CREDIT_CARD")}
             >
@@ -207,8 +200,8 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
             <button
               type="button"
               className={`flex items-center border p-3 rounded-md ${paymentMethod === "CASH"
-                  ? "border-yellow bg-darkred text-yellow"
-                  : "border-gray-300 hover:border-gray-400"
+                ? "border-yellow bg-darkred text-yellow"
+                : "border-gray-300 hover:border-gray-400"
                 }`}
               onClick={() => handlePaymentMethodSelect("CASH")}
             >
@@ -220,8 +213,8 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
               <button
                 type="button"
                 className={`flex items-center border p-3 rounded-md ${paymentMethod === "GIFT_CARD"
-                    ? "border-yellow bg-darkred text-yellow"
-                    : "border-gray-300 hover:border-gray-400"
+                  ? "border-yellow bg-darkred text-yellow"
+                  : "border-gray-300 hover:border-gray-400"
                   }`}
                 onClick={() => handlePaymentMethodSelect("GIFT_CARD")}
               >
@@ -248,8 +241,8 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
           onClick={handleContinue}
           disabled={!paymentMethod}
           className={`flex items-center font-semibold gap-2 px-6 py-2 rounded-md ${paymentMethod
-              ? "bg-yellow text-red hover:bg-red hover:text-yellow border border-transparent hover:border-yellow"
-              : "bg-gray-200 text-gray-500 cursor-not-allowed"
+            ? "bg-yellow text-red hover:bg-red hover:text-yellow border border-transparent hover:border-yellow"
+            : "bg-gray-200 text-gray-500 cursor-not-allowed"
             }`}
         >
           DEVAM

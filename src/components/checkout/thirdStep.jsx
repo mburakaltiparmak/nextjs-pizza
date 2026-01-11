@@ -1,194 +1,19 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { createOrder } from "@/lib/store/actions/orderActions";
+import { createOrder, clearCart } from "@/lib/store/actions/orderActions";
 import { useToast } from "@/lib/hooks/useToast";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, CreditCard } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import Loading from "@/app/loading";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
-// Online Kredi Kartı component'i - Kart bilgileri formu
-const OnlineCardPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control }) => {
-  return (
-    <form onSubmit={onSubmit} className="bg-white rounded-lg shadow-md overflow-hidden font-Barlow">
-      <div className="p-6">
-        <h2 className="text-xl font-semibold mb-2 text-gray-800">Online Ödeme Bilgileri</h2>
-        <p className="text-gray-500 text-sm mb-6">
-          Güvenli ödeme işlemi için kart bilgilerinizi giriniz.
-        </p>
-
-        <div className="space-y-6">
-          {/* Kart Numarası */}
-          <Controller
-            name="cardNumber"
-            control={control}
-            render={({ field }) => (
-              <div>
-                <label htmlFor="card-number" className="block text-sm font-medium text-gray-700 mb-1">
-                  Kart Numarası
-                </label>
-                <div className="relative">
-                  <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                  <input
-                    {...field}
-                    id="card-number"
-                    placeholder="1234 5678 9012 3456"
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red focus:border-red"
-                  />
-                </div>
-                {errors.cardNumber && (
-                  <p className="mt-1 text-sm text-red">{errors.cardNumber.message}</p>
-                )}
-              </div>
-            )}
-          />
-
-          {/* Kart İsim */}
-          <Controller
-            name="nameOnCard"
-            control={control}
-            render={({ field }) => (
-              <div>
-                <label htmlFor="card-name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Kart Üzerindeki İsim
-                </label>
-                <input
-                  {...field}
-                  id="card-name"
-                  placeholder="John Doe"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red focus:border-red"
-                />
-                {errors.nameOnCard && (
-                  <p className="mt-1 text-sm text-red">{errors.nameOnCard.message}</p>
-                )}
-              </div>
-            )}
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="expiration-date" className="block text-sm font-medium text-gray-700 mb-1">
-                Son Kullanma Tarihi
-              </label>
-              <div className="flex gap-2">
-                <Controller
-                  name="expirationMonth"
-                  control={control}
-                  render={({ field }) => (
-                    <select
-                      {...field}
-                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red focus:border-red"
-                    >
-                      <option value="">Ay</option>
-                      {Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, "0")).map((month) => (
-                        <option key={month} value={month}>
-                          {month}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                />
-
-                <Controller
-                  name="expirationYear"
-                  control={control}
-                  render={({ field }) => (
-                    <select
-                      {...field}
-                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red focus:border-red"
-                    >
-                      <option value="">Yıl</option>
-                      {Array.from({ length: 10 }, (_, i) => (i + new Date().getFullYear()).toString().slice(2)).map((year) => (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                />
-              </div>
-              {(errors.expirationMonth || errors.expirationYear) && (
-                <p className="mt-1 text-sm text-red">
-                  Son kullanma tarihi gereklidir.
-                </p>
-              )}
-            </div>
-
-            <Controller
-              name="cvc"
-              control={control}
-              render={({ field }) => (
-                <div>
-                  <label htmlFor="cvc" className="block text-sm font-medium text-gray-700 mb-1">
-                    CVC
-                  </label>
-                  <input
-                    {...field}
-                    id="cvc"
-                    placeholder="123"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red focus:border-red"
-                  />
-                  {errors.cvc && (
-                    <p className="mt-1 text-sm text-red">{errors.cvc.message}</p>
-                  )}
-                </div>
-              )}
-            />
-          </div>
-
-          {/* Sipariş Notu Alanı */}
-          <Controller
-            name="notes"
-            control={control}
-            render={({ field }) => (
-              <div>
-                <Label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
-                  Sipariş Notu
-                </Label>
-                <Textarea
-                  {...field}
-                  id="notes"
-                  placeholder="Siparişinizle ilgili eklemek istediğiniz not var mı? (Tercihen kapı kodu, adres tarifi, vb.)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red focus:border-red"
-                  rows={3}
-                />
-              </div>
-            )}
-          />
-        </div>
-      </div>
-
-      <div className="px-6 py-4 bg-gray-50 flex justify-between">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md border border-darkgray bg-white text-darkgray shadow-md hover:shadow-lg"
-        >
-          <ChevronLeft className="w-5 h-5" />
-          GERİ
-        </button>
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md bg-yellow text-red hover:bg-red hover:text-yellow border border-transparent hover:border-yellow"
-        >
-          ÖDEMEYİ TAMAMLA
-        </button>
-      </div>
-    </form>
-  );
-};
-
-
 // Diğer ödeme yöntemleri için component - Sadece not alanı
-const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, paymentMethod }) => {
+const PaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, paymentMethod }) => {
   // Ödeme yöntemine göre başlık ve açıklama
   const getPaymentTitle = () => {
     switch (paymentMethod) {
@@ -219,10 +44,6 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
   const userData = useAppSelector((state) => state.order.userData);
   const selectedAddress = useAppSelector((state) => state.order.selectedAddress);
   const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
-  const role = useAppSelector((state) => state.user.role);
-
-  console.log("userData", userData);
-  console.log("selectedAddress", selectedAddress);
 
   // Teslimat bilgilerini görüntüle
   const renderDeliveryInfo = () => {
@@ -318,12 +139,13 @@ const OtherPaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, pay
   );
 };
 
-const ThirdStep = ({ setCurrentStep, setStep3 }) => {
+const ThirdStep = ({ setCurrentStep, setStep3, onSuccess }) => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
   const router = useRouter();
+  const [isSuccess, setIsSuccess] = useState(false); // Başarılı işlem durumu
 
-  // Redux state'inden ödeme yöntemini ve diğer bilgileri al
+  // Redux state
   const userData = useAppSelector((state) => state.order.userData);
   const selectedAddress = useAppSelector((state) => state.order.selectedAddress);
   const cartData = useAppSelector((state) => state.order.cart);
@@ -331,28 +153,13 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
   const role = useAppSelector((state) => state.user.role);
 
-  // Misafir bilgilerini al
   const isGuest = role === "GUEST";
   const guestData = useAppSelector((state) => state.guest);
 
-  // Online kart ödemesi için validation schema
-  const onlineCardSchema = z.object({
-    cardNumber: z.string().min(16, { message: "Kredi Kartı numarası 16 haneli olmalıdır." }),
-    nameOnCard: z.string().min(1, { message: "İsminiz gereklidir." }),
-    expirationMonth: z.string().min(1, { message: "Son kullanma tarihi gereklidir." }),
-    expirationYear: z.string().min(1, { message: "Son kullanma tarihi gereklidir." }),
-    cvc: z.string().min(3, { message: "CVC 3 haneli olmalıdır." }),
+  // Basit schema - sadece not alanı
+  const formSchema = z.object({
     notes: z.string().optional()
   });
-
-  // Diğer ödeme yöntemleri için basit schema
-  const otherPaymentSchema = z.object({
-    notes: z.string().optional()
-  });
-
-  // Ödeme yöntemine göre schema seç
-  // ONLINE_CREDIT_CARD artık Iyzico Hosted Checkout kullandığı için form bilgisi gerektirmez
-  const formSchema = otherPaymentSchema;
 
   const {
     control,
@@ -361,46 +168,32 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
   } = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      cardNumber: "",
-      nameOnCard: "",
-      expirationMonth: "",
-      expirationYear: "",
-      cvc: "",
       notes: ""
     },
   });
 
-  // isSubmitting durumunda tüm sayfayı kaplayan Loading göster
-  if (isSubmitting) {
-    return <LoadingSpinner text="Siparişiniz Alınıyor" size="fullPage" />;
+  if (isSubmitting || isSuccess) { // Success durumunda da loading göster
+    return <LoadingSpinner text={isSuccess ? "Yönlendiriliyorsunuz..." : "Siparişiniz Alınıyor"} size="fullPage" />;
   }
-
 
   const submitOrder = async (formData) => {
     // console.log("Form verileri:", formData);
-    console.log("Adres bilgileri:", selectedAddress);
-    console.log("Sepet içeriği:", cartData);
-    console.log("Kullanıcı bilgileri:", userData);
 
     try {
       setStep3(true);
 
-      toast({
-        title: "Siparişiniz alınıyor...",
-      });
-
-      // Adres bilgilerini kontrol et
+      // Adres kontrolü
       if (!selectedAddress) {
         throw new Error("Lütfen bir teslimat adresi seçin veya ekleyin.");
       }
 
-      // Sipariş verisini hazırla - DÜZELTİLMİŞ KISIM
+      // Sipariş verisini hazırla
       const orderRequest = {
-        // Sepet öğeleri - ID'leri dahil et
+        // Backend'in beklediği format
         items: cartData.map(item => ({
           quantity: item.count,
           product: {
-            id: item.product.id,  // Mevcut ürünün ID'si - ÖNEMLİ!
+            id: item.product.id,
             name: item.product.name,
             price: item.product.price,
             image: item.product.img,
@@ -408,20 +201,15 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
           },
           unitPrice: item.product.price
         })),
-
-        // Ödeme bilgileri
         paymentMethod: paymentMethod,
         notes: formData.notes || ""
       };
 
       // Adres bilgilerini ekle
-      // Kullanıcı giriş yapmış ve kayıtlı adresi seçilmiş
       if (isAuthenticated && selectedAddress.id) {
         orderRequest.addressId = selectedAddress.id;
-      }
-      // Yeni adres girilmiş
-      else {
-        // Backend'in beklediği formatta yeni adres bilgilerini gönder
+      } else {
+        // Yeni adres objesini oluştur
         orderRequest.newAddress = {
           fullAddress: selectedAddress.fullAddress,
           city: selectedAddress.city,
@@ -432,57 +220,62 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
           recipientName: selectedAddress.recipientName || userData.fullname || "",
           saveAddress: selectedAddress.saveAddress === true,
           isDefault: selectedAddress.isDefault === true,
-          // Backend için email alanı - Misafir kullanıcılar için zorunlu
+          // Email önceliği: Misafir Guest Data > Adres Email > User Guest Email
           email: isGuest && guestData?.email
             ? guestData.email
             : selectedAddress.email || userData.guestEmail || null
         };
       }
 
-      // Ödeme bilgileri (sadece online kart ödemesi için)
-      // Iyzico Hosted Checkout için kart bilgisi gönderilmez, null set ediyoruz.
-      const paymentData = null;
-
-      console.log("Backend'e gönderilecek sipariş verisi:", JSON.stringify(orderRequest, null, 2));
-
-      // Sipariş oluşturma işlemini çağır
+      // Sipariş oluştur
       const result = await dispatch(createOrder({
         orderData: orderRequest,
-        paymentData: paymentData,
+        paymentData: null, // Iyzico için null
       }));
 
-      // Hata durumunu kontrol et
+      // 1. Durum: Redirect işlemi (Iyzico Hosted Checkout)
+      // Result undefined dönerse, action içinde window.location.href yapılmıştır.
+      if (!result) {
+        // Redirecting...
+        return;
+      }
+
+      // 2. Durum: Hata
       if (result.error) {
         console.error("Sipariş oluşturma hatası:", result.error);
-        toast({
-          title: "Sipariş oluşturulurken bir hata oluştu.",
-          description: result.error,
-          variant: "destructive",
+        toast.error(result.error || "Sipariş oluşturulamadı.", {
+          title: "Hata"
         });
         setStep3(false);
         return;
       }
 
-      // Başarılı ise
-      toast({
-        title: "Siparişiniz başarıyla oluşturuldu!",
-        description: "Teşekkür ederiz, siparişiniz alındı."
-      });
+      // 3. Durum: Başarılı (Nakit / Gift Card)
+      if (result && result.id) {
+        setIsSuccess(true); // Loading ekranını tetikle
 
-      // Başarı sayfasına yönlendir
-      // Kısa bir gecikme ekleyerek toast mesajının görülmesini sağla
-      setTimeout(() => {
-        router.push("/success");
-      }, 1000);
+        // Parent component'e başarili olduğunu bildir (redirect'i engellemesi için)
+        if (onSuccess) onSuccess();
+
+        // Sepeti temizle
+        dispatch(clearCart());
+
+        // Başarılı toast
+        toast.success("Teşekkür ederiz, siparişiniz alındı.", {
+          title: "Siparişiniz Oluşturuldu!"
+        });
+
+        // Başarı sayfasına yönlendir (Order ID ile)
+        router.push(`/payment/success?orderId=${result.id}`);
+      }
 
     } catch (error) {
-      console.error("Sipariş oluşturma işlemi sırasında beklenmeyen bir hata oluştu:", error);
-      toast({
-        title: "Sipariş oluşturulurken bir hata oluştu.",
-        description: error.message,
-        variant: "destructive",
+      console.error("Sipariş işlem hatası:", error);
+      toast.error(error.message || "Beklenmeyen bir hata oluştu.", {
+        title: "İşlem Başarısız"
       });
       setStep3(false);
+      setIsSuccess(false); // Hata durumunda loading'i kapat
     }
   };
 
@@ -491,11 +284,8 @@ const ThirdStep = ({ setCurrentStep, setStep3 }) => {
     setStep3(false);
   };
 
-  // Ödeme yöntemine göre farklı component göster
-  // Ödeme yöntemine göre farklı component göster
-  // ONLINE_CREDIT_CARD için de OtherPaymentForm (bilgilendirme mesajı ile) kullanılır
   return (
-    <OtherPaymentForm
+    <PaymentForm
       onSubmit={handleSubmit(submitOrder)}
       onBack={handleBack}
       isSubmitting={isSubmitting}

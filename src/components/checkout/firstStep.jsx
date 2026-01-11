@@ -101,7 +101,6 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
     // Seçilen adresi Redux'a kaydet
     if (selectedAddress) {
       dispatch(setSelectedAddress(selectedAddress));
-      success("Adres seçildi");
       console.log(`Adres seçildi ve Redux'a kaydedildi: ID ${addressId}`, selectedAddress);
     }
   };
@@ -138,7 +137,6 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
 
       // Adresi Redux'a kaydet
       dispatch(setSelectedAddress(formattedAddress));
-      success("Adres başarıyla kaydedildi");
     }
     // Eğer yeni bir adres ise (backend'e kaydedilmemiş veya misafir kullanıcı için)
     else {
@@ -154,11 +152,6 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
 
       // Adresi Redux'a da kaydet
       dispatch(setSelectedAddress(formattedAddress));
-
-      success("Adres bilgileri alındı", {
-        title: "Adres kaydedildi",
-        message: "Siparişiniz için kullanılacak."
-      });
     }
   };
 
@@ -226,11 +219,6 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
       setStep1(true);
       setCurrentStep(2);
 
-      success(isGuest ?
-        "Misafir bilgileriniz ve adres bilgileriniz başarıyla kaydedildi" :
-        "Kişisel bilgileriniz başarıyla kaydedildi", {
-        title: "Bilgiler kaydedildi"
-      });
     } catch (error) {
       console.error("Adım 1 tamamlanırken hata:", error);
       error("Bilgiler kaydedilirken bir sorun oluştu", {

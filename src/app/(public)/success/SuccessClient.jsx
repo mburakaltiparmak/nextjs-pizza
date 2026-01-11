@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { useRouter } from "next/navigation";
-import instance from "@/lib/api/axios"; // Updated path
+import { instance } from "@/lib/hooks";
 import { clearCartAction, saveCartToStorage, setSelectedAddress } from "@/lib/store/actions/orderActions";
 import { clearGuestData } from "@/lib/store/reducers/guestReducer";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner"; // Updated import
