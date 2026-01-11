@@ -1,11 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { PlusCircle } from "lucide-react";
 
 const AdminNavbar = ({ title, showAddButton, addButtonText = "Yeni Ekle", onAddButtonClick, isMobile }) => {
-    // const [showMobileMenu, setShowMobileMenu] = useState(false); // Unused
-
     return (
         <header className="bg-yellow text-red shadow-sm">
             <div className="px-4 py-4 flex justify-between items-center">
