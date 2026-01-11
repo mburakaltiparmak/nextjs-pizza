@@ -106,7 +106,7 @@ export const PasswordChangeDialog = ({ open, onOpenChange }) => {
             <AlertDialogContent className="max-w-md">
                 <form onSubmit={handleSubmit}>
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="text-darkgray font-Quattrocento_Sans flex items-center gap-2">
+                        <AlertDialogTitle className="text-darkgray font-Barlow flex items-center gap-2">
                             <FontAwesomeIcon icon={faLock} className="text-red" />
                             Şifre Değiştir
                         </AlertDialogTitle>
@@ -119,7 +119,7 @@ export const PasswordChangeDialog = ({ open, onOpenChange }) => {
                         <div>
                             <Label
                                 htmlFor="currentPassword"
-                                className="flex items-center text-darkgray font-Quattrocento_Sans"
+                                className="flex items-center text-darkgray font-Barlow"
                             >
                                 <span>Mevcut Şifre</span>
                                 {passwordErrors.currentPassword && (
@@ -142,7 +142,7 @@ export const PasswordChangeDialog = ({ open, onOpenChange }) => {
                         <div>
                             <Label
                                 htmlFor="newPassword"
-                                className="flex items-center text-darkgray font-Quattrocento_Sans"
+                                className="flex items-center text-darkgray font-Barlow"
                             >
                                 <span>Yeni Şifre</span>
                                 {passwordErrors.newPassword && (
@@ -165,7 +165,7 @@ export const PasswordChangeDialog = ({ open, onOpenChange }) => {
                         <div>
                             <Label
                                 htmlFor="confirmPassword"
-                                className="flex items-center text-darkgray font-Quattrocento_Sans"
+                                className="flex items-center text-darkgray font-Barlow"
                             >
                                 <span>Yeni Şifre (Tekrar)</span>
                                 {passwordErrors.confirmPassword && (

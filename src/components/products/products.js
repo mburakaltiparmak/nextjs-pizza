@@ -84,7 +84,7 @@ const Products = ({ categoryFilter = "", onPageChange }) => {
 
                 {/* Product Info */}
                 <div className="p-5">
-                  <h3 className="font-Quattrocento_Sans font-bold text-lg text-black mb-2 line-clamp-2">
+                  <h3 className="font-Barlow font-bold text-lg text-black mb-2 line-clamp-2">
                     {item.name}
                   </h3>
 
@@ -92,7 +92,7 @@ const Products = ({ categoryFilter = "", onPageChange }) => {
                     <RatingStars rating={item.rating} />
                   </div>
 
-                  <p className="text-sm text-black line-clamp-2 mb-4 font-Quattrocento_Sans">
+                  <p className="text-sm text-black line-clamp-2 mb-4 font-Barlow">
                     {item.description || "Ürün açıklaması yakında..."}
                   </p>
 

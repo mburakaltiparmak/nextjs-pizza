@@ -79,7 +79,7 @@ export const OrderHistoryTab = () => {
                                 className="text-gray"
                             />
                         </div>
-                        <h3 className="text-xl font-bold text-darkgray font-Quattrocento_Sans">
+                        <h3 className="text-xl font-bold text-darkgray font-Barlow">
                             Henüz Sipariş Yok
                         </h3>
                         <p className="text-gray font-Barlow">
@@ -108,7 +108,7 @@ export const OrderHistoryTab = () => {
                     <CardHeader>
                         <div className="flex justify-between items-start">
                             <div>
-                                <CardTitle className="text-darkgray font-Quattrocento_Sans">
+                                <CardTitle className="text-darkgray font-Barlow">
                                     Sipariş #{order.id}
                                 </CardTitle>
                                 <CardDescription className="text-gray font-Barlow">

@@ -27,7 +27,7 @@ export const AddressManagementTab = () => {
         return (
             <Card className="border-gray">
                 <CardHeader>
-                    <CardTitle className="text-darkgray font-Quattrocento_Sans flex items-center gap-2">
+                    <CardTitle className="text-darkgray font-Barlow flex items-center gap-2">
                         <FontAwesomeIcon icon={faMapMarkerAlt} />
                         Yeni Adres Ekle
                     </CardTitle>
@@ -54,7 +54,7 @@ export const AddressManagementTab = () => {
     return (
         <Card className="border-gray">
             <CardHeader>
-                <CardTitle className="text-darkgray font-Quattrocento_Sans flex items-center gap-2">
+                <CardTitle className="text-darkgray font-Barlow flex items-center gap-2">
                     <FontAwesomeIcon icon={faMapMarkerAlt} />
                     Kayıtlı Adreslerim
                 </CardTitle>

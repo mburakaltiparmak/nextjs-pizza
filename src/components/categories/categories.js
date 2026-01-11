@@ -25,7 +25,7 @@ const Categories = ({ selectedCategoryId, onCategorySelect }) => {
         <button
           onClick={() => onCategorySelect(null)}
           className={`
-            px-6 py-3 rounded-full font-Quattrocento_Sans font-bold text-lg transition-all duration-300 shadow-md border-2
+            px-6 py-3 rounded-full font-Barlow font-bold text-lg transition-all duration-300 shadow-md border-2
             ${selectedCategoryId === null
               ? "bg-red text-yellow border-red scale-105"
               : "bg-white text-black border-transparent hover:border-red hover:text-red hover:bg-yellow/10"
@@ -40,7 +40,7 @@ const Categories = ({ selectedCategoryId, onCategorySelect }) => {
             key={category.id}
             onClick={() => onCategorySelect(category.id)}
             className={`
-              px-6 py-3 rounded-full font-Quattrocento_Sans font-bold text-lg transition-all duration-300 shadow-md border-2 whitespace-nowrap
+              px-6 py-3 rounded-full font-Barlow font-bold text-lg transition-all duration-300 shadow-md border-2 whitespace-nowrap
               ${selectedCategoryId === category.id
                 ? "bg-red text-yellow border-red scale-105"
                 : "bg-white text-black border-transparent hover:border-red hover:text-red hover:bg-yellow/10"

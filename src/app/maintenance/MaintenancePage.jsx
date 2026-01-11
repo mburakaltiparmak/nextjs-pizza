@@ -45,7 +45,7 @@ const MaintenancePage = () => {
             <h2 className="text-2xl md:text-3xl font-Barlow font-bold text-darkgray mb-3">
               Bakımdayız! 🔧
             </h2>
-            <p className="text-lg md:text-xl font-Quattrocento_Sans text-gray-700">
+            <p className="text-lg md:text-xl font-Barlow text-gray-700">
               Sitemiz şu anda yenileniyor
             </p>
           </div>
@@ -60,11 +60,11 @@ const MaintenancePage = () => {
           {/* Description */}
           <div className="bg-lightgray/50 rounded-2xl p-6 md:p-8 mb-8">
             <p className="text-center text-darkgray font-Barlow text-lg md:text-xl leading-relaxed mb-4">
-              Sizlere daha iyi hizmet verebilmek için sistemimizi güncelliyoruz. 
+              Sizlere daha iyi hizmet verebilmek için sistemimizi güncelliyoruz.
               <br className="hidden md:block" />
               Kısa süre içinde yeni ve geliştirilmiş özelliklerle karşınızda olacağız!
             </p>
-            
+
             {/* Feature cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
               <div className="bg-white rounded-xl p-4 shadow-md transform hover:scale-105 transition-transform duration-300">
@@ -74,7 +74,7 @@ const MaintenancePage = () => {
                   </div>
                   <div>
                     <h3 className="font-Barlow font-bold text-darkgray">Yeni Özellikler</h3>
-                    <p className="text-sm text-gray-600 font-Quattrocento_Sans">Geliştiriliyor</p>
+                    <p className="text-sm text-gray-600 font-Barlow">Geliştiriliyor</p>
                   </div>
                 </div>
               </div>
@@ -86,7 +86,7 @@ const MaintenancePage = () => {
                   </div>
                   <div>
                     <h3 className="font-Barlow font-bold text-darkgray">Performans</h3>
-                    <p className="text-sm text-gray-600 font-Quattrocento_Sans">İyileştiriliyor</p>
+                    <p className="text-sm text-gray-600 font-Barlow">İyileştiriliyor</p>
                   </div>
                 </div>
               </div>
@@ -98,7 +98,7 @@ const MaintenancePage = () => {
                   </div>
                   <div>
                     <h3 className="font-Barlow font-bold text-darkgray">Menü</h3>
-                    <p className="text-sm text-gray-600 font-Quattrocento_Sans">Güncelleniyor</p>
+                    <p className="text-sm text-gray-600 font-Barlow">Güncelleniyor</p>
                   </div>
                 </div>
               </div>
@@ -115,18 +115,18 @@ const MaintenancePage = () => {
 
           {/* Contact info */}
           <div className="text-center">
-            <p className="text-gray-600 font-Quattrocento_Sans text-sm md:text-base mb-2">
+            <p className="text-gray-600 font-Barlow text-sm md:text-base mb-2">
               Acil durumlar için bizimle iletişime geçebilirsiniz:
             </p>
-            <a 
-              href="mailto:aciktim@teknolojikyemekler.com" 
+            <a
+              href="mailto:aciktim@teknolojikyemekler.com"
               className="text-red hover:text-yellow font-Barlow font-semibold text-lg transition-colors duration-300"
             >
               aciktim@teknolojikyemekler.com
             </a>
             <div className="mt-2">
-              <a 
-                href="tel:+902161234567" 
+              <a
+                href="tel:+902161234567"
                 className="text-red hover:text-yellow font-Barlow font-semibold transition-colors duration-300"
               >
                 +90 216 123 45 67
@@ -136,7 +136,7 @@ const MaintenancePage = () => {
 
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-gray-300">
-            <p className="text-center text-gray-500 text-sm font-Quattrocento_Sans">
+            <p className="text-center text-gray-500 text-sm font-Barlow">
               &copy; {new Date().getFullYear()} Teknolojik Yemekler. Tüm hakları saklıdır.
             </p>
           </div>

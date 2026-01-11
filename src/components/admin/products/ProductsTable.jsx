@@ -106,7 +106,7 @@ export const ProductsTable = ({
                                                 )}
                                             </div>
                                             <div className="ml-4">
-                                                <div className="text-sm font-medium text-darkgray font-Quattrocento_Sans">
+                                                <div className="text-sm font-medium text-darkgray font-Barlow">
                                                     {product.name}
                                                 </div>
                                             </div>

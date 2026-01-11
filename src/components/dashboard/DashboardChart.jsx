@@ -14,7 +14,7 @@ export default function DashboardChart({ data, loading }) {
   if (loading) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-lightgray p-6 mb-8">
-        <h3 className="text-lg font-semibold text-darkgray mb-4 font-Quattrocento_Sans">
+        <h3 className="text-lg font-semibold text-darkgray mb-4 font-Barlow">
           Kategori Bazlı Dağılım
         </h3>
         <div className="animate-pulse">
@@ -30,7 +30,7 @@ export default function DashboardChart({ data, loading }) {
   if (!hasData) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-lightgray p-6 mb-8">
-        <h3 className="text-lg font-semibold text-darkgray mb-4 font-Quattrocento_Sans">
+        <h3 className="text-lg font-semibold text-darkgray mb-4 font-Barlow">
           Kategori Bazlı Dağılım
         </h3>
         <div className="text-center py-12 text-gray font-Barlow">
@@ -42,9 +42,9 @@ export default function DashboardChart({ data, loading }) {
   }
 
   // Veri formatını kontrol et - ürünSayısı ve stokMiktarı olmalı
-  const validData = data.every(item => 
-    item && 
-    typeof item.ürünSayısı === 'number' && 
+  const validData = data.every(item =>
+    item &&
+    typeof item.ürünSayısı === 'number' &&
     typeof item.stokMiktarı === 'number'
   );
 
@@ -52,7 +52,7 @@ export default function DashboardChart({ data, loading }) {
     console.error("❌ Invalid chart data format:", data);
     return (
       <div className="bg-white rounded-xl shadow-sm border border-lightgray p-6 mb-8">
-        <h3 className="text-lg font-semibold text-darkgray mb-4 font-Quattrocento_Sans">
+        <h3 className="text-lg font-semibold text-darkgray mb-4 font-Barlow">
           Kategori Bazlı Dağılım
         </h3>
         <div className="text-center py-12 text-red font-Barlow">
@@ -66,44 +66,44 @@ export default function DashboardChart({ data, loading }) {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-lightgray p-6 mb-8">
-      <h3 className="text-lg font-semibold text-darkgray mb-4 font-Quattrocento_Sans">
+      <h3 className="text-lg font-semibold text-darkgray mb-4 font-Barlow">
         Kategori Bazlı Dağılım
       </h3>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#E5E5E5" />
-          <XAxis 
-            dataKey="name" 
+          <XAxis
+            dataKey="name"
             tick={{ fill: '#6B7280', fontSize: 12 }}
             tickLine={{ stroke: '#E5E5E5' }}
           />
-          <YAxis 
+          <YAxis
             tick={{ fill: '#6B7280', fontSize: 12 }}
             tickLine={{ stroke: '#E5E5E5' }}
           />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: '#FFFFFF', 
+          <Tooltip
+            contentStyle={{
+              backgroundColor: '#FFFFFF',
               border: '1px solid #E5E5E5',
               borderRadius: '8px',
               padding: '10px'
             }}
           />
-          <Legend 
-            wrapperStyle={{ 
+          <Legend
+            wrapperStyle={{
               paddingTop: '20px',
               fontSize: '14px'
             }}
           />
-          <Bar 
-            dataKey="ürünSayısı" 
-            fill="#CE2829" 
+          <Bar
+            dataKey="ürünSayısı"
+            fill="#CE2829"
             name="Ürün Sayısı"
             radius={[8, 8, 0, 0]}
           />
-          <Bar 
-            dataKey="stokMiktarı" 
-            fill="#FDC913" 
+          <Bar
+            dataKey="stokMiktarı"
+            fill="#FDC913"
             name="Stok Miktarı"
             radius={[8, 8, 0, 0]}
           />

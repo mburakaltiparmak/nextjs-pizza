@@ -209,7 +209,7 @@ const UsersClient = () => {
             <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-lightgray">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-darkgray font-Quattrocento_Sans">
+                        <h1 className="text-2xl font-bold text-darkgray font-Barlow">
                             Kullanıcı Yönetimi
                         </h1>
                         <p className="text-sm text-gray-500 mt-1 font-Barlow">

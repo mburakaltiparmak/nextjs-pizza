@@ -14,7 +14,7 @@ export const UserStatsCards = ({ stats }) => {
                         <p className="text-sm font-medium text-gray-600 font-Barlow">
                             Toplam Kullanıcı
                         </p>
-                        <p className="text-2xl font-bold text-darkgray font-Quattrocento_Sans mt-1">
+                        <p className="text-2xl font-bold text-darkgray font-Barlow mt-1">
                             {stats.total}
                         </p>
                     </div>
@@ -31,7 +31,7 @@ export const UserStatsCards = ({ stats }) => {
                         <p className="text-sm font-medium text-gray-600 font-Barlow">
                             Aktif Kullanıcı
                         </p>
-                        <p className="text-2xl font-bold text-green-600 font-Quattrocento_Sans mt-1">
+                        <p className="text-2xl font-bold text-green-600 font-Barlow mt-1">
                             {stats.active}
                         </p>
                     </div>
@@ -48,7 +48,7 @@ export const UserStatsCards = ({ stats }) => {
                         <p className="text-sm font-medium text-gray-600 font-Barlow">
                             Onay Bekleyen
                         </p>
-                        <p className="text-2xl font-bold text-yellow-600 font-Quattrocento_Sans mt-1">
+                        <p className="text-2xl font-bold text-yellow-600 font-Barlow mt-1">
                             {stats.pending}
                         </p>
                     </div>
@@ -65,7 +65,7 @@ export const UserStatsCards = ({ stats }) => {
                         <p className="text-sm font-medium text-gray-600 font-Barlow">
                             Admin Kullanıcı
                         </p>
-                        <p className="text-2xl font-bold text-purple-600 font-Quattrocento_Sans mt-1">
+                        <p className="text-2xl font-bold text-purple-600 font-Barlow mt-1">
                             {stats.byRole.ADMIN}
                         </p>
                     </div>

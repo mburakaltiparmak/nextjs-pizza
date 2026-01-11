@@ -95,7 +95,7 @@ export function RegisterForm({
                             className={`w-full px-3 py-2 text-xs border-2 rounded-lg transition-all ${touched.name && !fieldValidations.name
                                 ? "border-red"
                                 : "border-lightgray2 focus:border-yellow"
-                                } focus:outline-none focus:ring-opacity-50 font-Quattrocento_Sans`}
+                                } focus:outline-none focus:ring-opacity-50 font-Barlow`}
                             value={formData.name}
                             onChange={handleChange}
                             onBlur={handleBlur}
@@ -115,7 +115,7 @@ export function RegisterForm({
                             className={`w-full px-3 py-2 text-xs border-2 rounded-lg transition-all ${touched.surname && !fieldValidations.surname
                                 ? "border-red"
                                 : "border-lightgray2 focus:border-yellow"
-                                } focus:outline-none focus:ring-opacity-50 font-Quattrocento_Sans`}
+                                } focus:outline-none focus:ring-opacity-50 font-Barlow`}
                             value={formData.surname}
                             onChange={handleChange}
                             onBlur={handleBlur}
@@ -137,7 +137,7 @@ export function RegisterForm({
                         className={`w-full px-3 py-2 text-xs border-2 rounded-lg transition-all ${touched.email && !fieldValidations.email
                             ? "border-red"
                             : "border-lightgray2 focus:border-yellow"
-                            } focus:outline-none focus:ring-opacity-50 font-Quattrocento_Sans`}
+                            } focus:outline-none focus:ring-opacity-50 font-Barlow`}
                         value={formData.email}
                         onChange={handleChange}
                         onBlur={handleBlur}
@@ -158,7 +158,7 @@ export function RegisterForm({
                         className={`w-full px-3 py-2 text-xs border-2 rounded-lg transition-all ${touched.phoneNumber && !fieldValidations.phoneNumber
                             ? "border-red"
                             : "border-lightgray2 focus:border-yellow"
-                            } focus:outline-none focus:ring-opacity-50 font-Quattrocento_Sans`}
+                            } focus:outline-none focus:ring-opacity-50 font-Barlow`}
                         value={formData.phoneNumber}
                         onChange={handleChange}
                         onBlur={handleBlur}
@@ -180,7 +180,7 @@ export function RegisterForm({
                             className={`w-full px-3 py-2 text-xs border-2 rounded-lg transition-all ${touched.password && !fieldValidations.password
                                 ? "border-red"
                                 : "border-lightgray2 focus:border-yellow"
-                                } focus:outline-none focus:ring-opacity-50 font-Quattrocento_Sans`}
+                                } focus:outline-none focus:ring-opacity-50 font-Barlow`}
                             value={formData.password}
                             onChange={handleChange}
                             onBlur={handleBlur}
@@ -200,7 +200,7 @@ export function RegisterForm({
                             className={`w-full px-3 py-2 text-xs border-2 rounded-lg transition-all ${touched.confirmPassword && !fieldValidations.confirmPassword
                                 ? "border-red"
                                 : "border-lightgray2 focus:border-yellow"
-                                } focus:outline-none focus:ring-opacity-50 font-Quattrocento_Sans`}
+                                } focus:outline-none focus:ring-opacity-50 font-Barlow`}
                             value={formData.confirmPassword}
                             onChange={handleChange}
                             onBlur={handleBlur}
@@ -268,7 +268,7 @@ export function RegisterForm({
 
             {onLoginClick && (
                 <div className="text-center pt-2 border-t border-lightgray2">
-                    <p className="text-gray font-Quattrocento_Sans text-xs">
+                    <p className="text-gray font-Barlow text-xs">
                         Zaten üye misiniz?{" "}
                         <button
                             onClick={onLoginClick}

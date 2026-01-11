@@ -68,8 +68,6 @@ module.exports = {
       fontFamily: {
         sans: ["var(--font-sans)", ...defaultTheme.fontFamily.sans],
         Barlow: ["var(--font-barlow)", "sans-serif"],
-        Quattrocento_Sans: ["var(--font-quattrocento)", "sans-serif"],
-        Quattrocento: ["var(--font-quattrocento)", "sans-serif"],
         Londrina_Solid: ["var(--font-londrina-solid)", "sans-serif"],
         Satisfy: ["var(--font-satisfy)", "sans-serif"],
       },

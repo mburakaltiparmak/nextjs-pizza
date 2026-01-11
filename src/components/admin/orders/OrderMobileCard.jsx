@@ -28,7 +28,7 @@ export const OrderMobileCard = ({ order, onViewDetail }) => {
             <div className="flex justify-between items-start mb-3">
                 <div>
                     <p className="text-sm text-gray-500 font-Barlow">Sipariş No</p>
-                    <p className="font-semibold text-darkgray font-Quattrocento_Sans">
+                    <p className="font-semibold text-darkgray font-Barlow">
                         #{order.id}
                     </p>
                 </div>

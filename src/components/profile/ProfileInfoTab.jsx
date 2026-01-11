@@ -116,7 +116,7 @@ export const ProfileInfoTab = ({ userProfile, userEmail, onPasswordChange }) => 
     return (
         <Card className="border-gray">
             <CardHeader>
-                <CardTitle className="text-darkgray font-Quattrocento_Sans">
+                <CardTitle className="text-darkgray font-Barlow">
                     Profil Bilgileri
                 </CardTitle>
                 <CardDescription className="text-gray font-Barlow">
@@ -132,7 +132,7 @@ export const ProfileInfoTab = ({ userProfile, userEmail, onPasswordChange }) => 
                                 <FontAwesomeIcon icon={faUser} size="3x" />
                             </div>
                             <div>
-                                <h3 className="text-xl font-semibold text-darkgray font-Quattrocento_Sans">
+                                <h3 className="text-xl font-semibold text-darkgray font-Barlow">
                                     {userProfile?.name} {userProfile?.surname}
                                 </h3>
                                 <p className="text-darkgray font-Barlow">
@@ -154,7 +154,7 @@ export const ProfileInfoTab = ({ userProfile, userEmail, onPasswordChange }) => 
                                 <div>
                                     <Label
                                         htmlFor="name"
-                                        className="flex items-center text-darkgray font-Quattrocento_Sans"
+                                        className="flex items-center text-darkgray font-Barlow"
                                     >
                                         <span>İsim</span>
                                         {formErrors.name && (
@@ -180,7 +180,7 @@ export const ProfileInfoTab = ({ userProfile, userEmail, onPasswordChange }) => 
                                 <div>
                                     <Label
                                         htmlFor="surname"
-                                        className="flex items-center text-darkgray font-Quattrocento_Sans"
+                                        className="flex items-center text-darkgray font-Barlow"
                                     >
                                         <span>Soyisim</span>
                                         {formErrors.surname && (
@@ -207,7 +207,7 @@ export const ProfileInfoTab = ({ userProfile, userEmail, onPasswordChange }) => 
                             <div>
                                 <Label
                                     htmlFor="email"
-                                    className="flex items-center text-darkgray font-Quattrocento_Sans"
+                                    className="flex items-center text-darkgray font-Barlow"
                                 >
                                     <span>E-posta</span>
                                     {formErrors.email && (

@@ -47,7 +47,7 @@ export const OrderDetailModal = ({
             <AlertDialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <AlertDialogHeader>
                     <AlertDialogTitle className="flex justify-between items-center">
-                        <span className="font-Quattrocento_Sans text-darkgray">
+                        <span className="font-Barlow text-darkgray">
                             Sipariş Detayı #{order.id}
                         </span>
                         <Button
@@ -65,7 +65,7 @@ export const OrderDetailModal = ({
                     {/* Status & Payment */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="bg-lightgray/30 rounded-lg p-4 border border-lightgray2">
-                            <p className="text-sm text-gray-600 mb-2 font-Quattrocento_Sans">
+                            <p className="text-sm text-gray-600 mb-2 font-Barlow">
                                 Sipariş Durumu
                             </p>
                             <Select
@@ -88,7 +88,7 @@ export const OrderDetailModal = ({
                         </div>
 
                         <div className="bg-lightgray/30 rounded-lg p-4 border border-lightgray2">
-                            <p className="text-sm text-gray-600 mb-2 font-Quattrocento_Sans">
+                            <p className="text-sm text-gray-600 mb-2 font-Barlow">
                                 Ödeme Bilgileri
                             </p>
                             <div className="space-y-2">
@@ -107,7 +107,7 @@ export const OrderDetailModal = ({
 
                     {/* Customer Info */}
                     <div className="bg-lightgray/30 rounded-lg p-4 border border-lightgray2">
-                        <h3 className="font-semibold text-darkgray mb-3 flex items-center gap-2 font-Quattrocento_Sans">
+                        <h3 className="font-semibold text-darkgray mb-3 flex items-center gap-2 font-Barlow">
                             <User className="w-5 h-5" />
                             Müşteri Bilgileri
                         </h3>
@@ -135,7 +135,7 @@ export const OrderDetailModal = ({
                     {/* Delivery Address */}
                     {order.deliveryAddress && (
                         <div className="bg-lightgray/30 rounded-lg p-4 border border-lightgray2">
-                            <h3 className="font-semibold text-darkgray mb-3 flex items-center gap-2 font-Quattrocento_Sans">
+                            <h3 className="font-semibold text-darkgray mb-3 flex items-center gap-2 font-Barlow">
                                 <MapPin className="w-5 h-5" />
                                 Teslimat Adresi
                             </h3>
@@ -158,7 +158,7 @@ export const OrderDetailModal = ({
 
                     {/* Order Items */}
                     <div className="bg-lightgray/30 rounded-lg p-4 border border-lightgray2">
-                        <h3 className="font-semibold text-darkgray mb-3 flex items-center gap-2 font-Quattrocento_Sans">
+                        <h3 className="font-semibold text-darkgray mb-3 flex items-center gap-2 font-Barlow">
                             <Package className="w-5 h-5" />
                             Sipariş İçeriği ({order.items?.length || 0} ürün)
                         </h3>
@@ -198,7 +198,7 @@ export const OrderDetailModal = ({
                     {/* Notes */}
                     {order.notes && (
                         <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-                            <p className="text-sm font-medium text-yellow-900 mb-1 font-Quattrocento_Sans">
+                            <p className="text-sm font-medium text-yellow-900 mb-1 font-Barlow">
                                 📝 Sipariş Notu
                             </p>
                             <p className="text-sm text-yellow-800">{order.notes}</p>
@@ -219,7 +219,7 @@ export const OrderDetailModal = ({
                                 <span className="font-medium text-darkgray">Ücretsiz</span>
                             </div>
                             <div className="border-t border-lightgray2 pt-2 flex justify-between">
-                                <span className="font-semibold text-darkgray font-Quattrocento_Sans">
+                                <span className="font-semibold text-darkgray font-Barlow">
                                     Toplam
                                 </span>
                                 <span className="font-bold text-lg text-red">

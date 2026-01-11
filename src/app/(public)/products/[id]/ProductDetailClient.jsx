@@ -169,7 +169,7 @@ export default function ProductDetailClient() {
                                 className="flex flex-col justify-between"
                             >
                                 <div>
-                                    <h1 className="text-3xl font-bold text-darkgray mb-2 font-Quattrocento_Sans">
+                                    <h1 className="text-3xl font-bold text-darkgray mb-2 font-Barlow">
                                         {product.name}
                                     </h1>
 
@@ -192,7 +192,7 @@ export default function ProductDetailClient() {
                                                 <p className="text-sm text-gray mb-1 font-Barlow">
                                                     Fiyat
                                                 </p>
-                                                <p className="text-4xl font-bold text-darkgray font-Quattrocento_Sans">
+                                                <p className="text-4xl font-bold text-darkgray font-Barlow">
                                                     {product.price} ₺
                                                 </p>
                                             </div>

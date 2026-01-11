@@ -26,7 +26,7 @@ export const CategoryTableRow = ({ category, onEdit, onDelete }) => {
                         />}
 
                     </div>
-                    <span className="font-medium text-darkgray font-Quattrocento_Sans">
+                    <span className="font-medium text-darkgray font-Barlow">
                         {category.name}
                     </span>
                 </div>

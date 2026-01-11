@@ -149,7 +149,7 @@ export const CategoryFormModal = ({ open, onClose, editingCategory }) => {
                         name="name"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
+                                <FormLabel className="flex flex-row items-center font-Barlow">
                                     <p className="text-darkgray">Kategori Adı</p>
                                     <p className="text-red pl-1">*</p>
                                 </FormLabel>
@@ -170,7 +170,7 @@ export const CategoryFormModal = ({ open, onClose, editingCategory }) => {
                         name="image"
                         render={({ field: { onChange, value, ...rest } }) => (
                             <FormItem className="">
-                                <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
+                                <FormLabel className="flex flex-row items-center font-Barlow">
                                     <p className="text-darkgray">Kategori Logo</p>
                                     <p className="text-red pl-1">*</p>
                                 </FormLabel>

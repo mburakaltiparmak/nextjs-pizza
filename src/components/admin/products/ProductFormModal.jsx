@@ -157,7 +157,7 @@ export const ProductFormModal = ({
                         name="name"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
+                                <FormLabel className="flex flex-row items-center font-Barlow">
                                     <p className="text-darkgray">Ürün Adı</p>
                                     <p className="text-red pl-1">*</p>
                                 </FormLabel>
@@ -178,7 +178,7 @@ export const ProductFormModal = ({
                         name="categoryId"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
+                                <FormLabel className="flex flex-row items-center font-Barlow">
                                     <p className="text-darkgray">Kategori</p>
                                     <p className="text-red pl-1">*</p>
                                 </FormLabel>
@@ -216,7 +216,7 @@ export const ProductFormModal = ({
                             name="price"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
+                                    <FormLabel className="flex flex-row items-center font-Barlow">
                                         <p className="text-darkgray">Fiyat (₺)</p>
                                         <p className="text-red pl-1">*</p>
                                     </FormLabel>
@@ -239,7 +239,7 @@ export const ProductFormModal = ({
                             name="stock"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
+                                    <FormLabel className="flex flex-row items-center font-Barlow">
                                         <p className="text-darkgray">Stok</p>
                                         <p className="text-red pl-1">*</p>
                                     </FormLabel>
@@ -262,7 +262,7 @@ export const ProductFormModal = ({
                         name="rating"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
+                                <FormLabel className="flex flex-row items-center font-Barlow">
                                     <p className="text-darkgray">Puan (0-5)</p>
                                     <p className="text-red pl-1">*</p>
                                 </FormLabel>
@@ -289,7 +289,7 @@ export const ProductFormModal = ({
                         name="image"
                         render={({ field }) => (
                             <FormItem className="">
-                                <FormLabel className="flex flex-row items-center font-Quattrocento_Sans">
+                                <FormLabel className="flex flex-row items-center font-Barlow">
                                     <p className="text-darkgray">Ürün Resmi</p>
                                     <p className="text-red pl-1">*</p>
                                 </FormLabel>

@@ -194,7 +194,7 @@ export default function OrdersPageClient() {
                         Geri
                     </Button>
 
-                    <h1 className="text-3xl font-bold text-center text-darkgray font-Quattrocento_Sans">
+                    <h1 className="text-3xl font-bold text-center text-darkgray font-Barlow">
                         Siparişlerim
                     </h1>
 
@@ -211,7 +211,7 @@ export default function OrdersPageClient() {
                 <Card className="border-gray">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
-                            <CardTitle className="text-darkgray font-Quattrocento_Sans">
+                            <CardTitle className="text-darkgray font-Barlow">
                                 Sipariş Geçmişim
                             </CardTitle>
                             <CardDescription className="text-gray font-Barlow">

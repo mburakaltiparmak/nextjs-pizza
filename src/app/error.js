@@ -15,7 +15,7 @@ export default function ErrorPage() {
           <h1 className="text-4xl font-Londrina_Solid text-red">
             Teknolojik Yemekler
           </h1>
-          <p className="text-gray-600 font-Quattrocento_Sans">
+          <p className="text-gray-600 font-Barlow">
             Bir Hata Oluştu
           </p>
         </div>
@@ -41,7 +41,7 @@ export default function ErrorPage() {
             <h2 className="text-3xl font-Barlow font-bold text-gray-800 mb-2">
               İşlem Başarısız
             </h2>
-            <p className="text-gray-600 font-Quattrocento_Sans text-center mb-6">
+            <p className="text-gray-600 font-Barlow text-center mb-6">
               {errorMessage}
             </p>
             <div className="flex space-x-4">
@@ -88,7 +88,7 @@ export default function ErrorPage() {
           </div>
         </div>
 
-        <div className="mt-8 text-center text-gray-500 text-sm font-Quattrocento_Sans">
+        <div className="mt-8 text-center text-gray-500 text-sm font-Barlow">
           &copy; {new Date().getFullYear()} Teknolojik Yemekler. Tüm hakları
           saklıdır.
         </div>

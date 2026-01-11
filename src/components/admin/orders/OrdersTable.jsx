@@ -77,7 +77,7 @@ export const OrdersTable = ({ orders, onViewDetail, filteredCount, totalCount })
         return (
             <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-lightgray">
                 <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-darkgray mb-2 font-Quattrocento_Sans">
+                <h3 className="text-lg font-semibold text-darkgray mb-2 font-Barlow">
                     Sipariş Bulunamadı
                 </h3>
                 <p className="text-gray-500 font-Barlow">
@@ -98,7 +98,7 @@ export const OrdersTable = ({ orders, onViewDetail, filteredCount, totalCount })
                         <thead className="bg-lightgray/50">
                             <tr className="border-b border-lightgray2">
                                 <th
-                                    className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Quattrocento_Sans whitespace-nowrap cursor-pointer hover:bg-lightgray/70 transition-colors"
+                                    className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Barlow whitespace-nowrap cursor-pointer hover:bg-lightgray/70 transition-colors"
                                     onClick={() => handleSort("id")}
                                 >
                                     <div className="flex items-center gap-2">
@@ -107,7 +107,7 @@ export const OrdersTable = ({ orders, onViewDetail, filteredCount, totalCount })
                                     </div>
                                 </th>
                                 <th
-                                    className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Quattrocento_Sans min-w-[180px] cursor-pointer hover:bg-lightgray/70 transition-colors"
+                                    className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Barlow min-w-[180px] cursor-pointer hover:bg-lightgray/70 transition-colors"
                                     onClick={() => handleSort("customer")}
                                 >
                                     <div className="flex items-center gap-2">
@@ -116,7 +116,7 @@ export const OrdersTable = ({ orders, onViewDetail, filteredCount, totalCount })
                                     </div>
                                 </th>
                                 <th
-                                    className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Quattrocento_Sans whitespace-nowrap cursor-pointer hover:bg-lightgray/70 transition-colors"
+                                    className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Barlow whitespace-nowrap cursor-pointer hover:bg-lightgray/70 transition-colors"
                                     onClick={() => handleSort("orderDate")}
                                 >
                                     <div className="flex items-center gap-2">
@@ -124,11 +124,11 @@ export const OrdersTable = ({ orders, onViewDetail, filteredCount, totalCount })
                                         <SortIcon field="orderDate" />
                                     </div>
                                 </th>
-                                <th className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Quattrocento_Sans whitespace-nowrap">
+                                <th className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Barlow whitespace-nowrap">
                                     Ürünler
                                 </th>
                                 <th
-                                    className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Quattrocento_Sans whitespace-nowrap cursor-pointer hover:bg-lightgray/70 transition-colors"
+                                    className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Barlow whitespace-nowrap cursor-pointer hover:bg-lightgray/70 transition-colors"
                                     onClick={() => handleSort("totalAmount")}
                                 >
                                     <div className="flex items-center gap-2">
@@ -136,11 +136,11 @@ export const OrdersTable = ({ orders, onViewDetail, filteredCount, totalCount })
                                         <SortIcon field="totalAmount" />
                                     </div>
                                 </th>
-                                <th className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Quattrocento_Sans min-w-[160px]">
+                                <th className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Barlow min-w-[160px]">
                                     Ödeme
                                 </th>
                                 <th
-                                    className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Quattrocento_Sans whitespace-nowrap cursor-pointer hover:bg-lightgray/70 transition-colors"
+                                    className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Barlow whitespace-nowrap cursor-pointer hover:bg-lightgray/70 transition-colors"
                                     onClick={() => handleSort("orderStatus")}
                                 >
                                     <div className="flex items-center gap-2">
@@ -148,7 +148,7 @@ export const OrdersTable = ({ orders, onViewDetail, filteredCount, totalCount })
                                         <SortIcon field="orderStatus" />
                                     </div>
                                 </th>
-                                <th className="px-6 py-4 text-right text-sm font-bold text-darkgray font-Quattrocento_Sans whitespace-nowrap">
+                                <th className="px-6 py-4 text-right text-sm font-bold text-darkgray font-Barlow whitespace-nowrap">
                                     İşlemler
                                 </th>
                             </tr>

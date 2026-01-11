@@ -19,7 +19,7 @@ export const Modal = ({ isOpen, onClose, title, children, footer }) => {
       <div className="relative bg-white w-full h-full md:h-auto md:max-h-[90vh] md:max-w-2xl md:rounded-xl shadow-xl flex flex-col font-Barlow">
         {/* Header */}
         <div className="p-4 md:p-6 border-b flex-shrink-0 flex items-center justify-between">
-          <h3 className="text-lg md:text-xl font-semibold text-gray font-Quattrocento_Sans">{title}</h3>
+          <h3 className="text-lg md:text-xl font-semibold text-gray font-Barlow">{title}</h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors ml-4"

@@ -10,7 +10,7 @@ export default function DashboardCategoriesTable({ data, loading }) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-lightgray">
         <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold text-darkgray font-Quattrocento_Sans">
+          <h3 className="text-lg font-semibold text-darkgray font-Barlow">
             Kategoriler
           </h3>
         </div>
@@ -32,7 +32,7 @@ export default function DashboardCategoriesTable({ data, loading }) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-lightgray">
         <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold text-darkgray font-Quattrocento_Sans">
+          <h3 className="text-lg font-semibold text-darkgray font-Barlow">
             Kategoriler
           </h3>
         </div>
@@ -55,7 +55,7 @@ export default function DashboardCategoriesTable({ data, loading }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-lightgray">
       <div className="p-6 border-b flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-darkgray font-Quattrocento_Sans">
+        <h3 className="text-lg font-semibold text-darkgray font-Barlow">
           Kategoriler
         </h3>
         <span className="text-sm text-gray font-Barlow">
@@ -79,8 +79,8 @@ export default function DashboardCategoriesTable({ data, loading }) {
           </thead>
           <tbody className="bg-white divide-y divide-lightgray">
             {data.map((category, index) => (
-              <tr 
-                key={category.name || index} 
+              <tr
+                key={category.name || index}
                 className="hover:bg-lightgray transition-colors duration-150 cursor-pointer"
                 onClick={() => router.push(`/category`)}
               >

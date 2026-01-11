@@ -86,7 +86,7 @@ function AdminLayoutContent({ children }) {
     }
 
     return (
-        <div className="flex flex-col md:flex-row h-screen font-Quattrocento_Sans bg-lightgray">
+        <div className="flex flex-col md:flex-row h-screen font-Barlow bg-lightgray">
             <AdminSidebar activePage={activePage} />
 
             <div className="flex-1 flex flex-col overflow-hidden w-full">

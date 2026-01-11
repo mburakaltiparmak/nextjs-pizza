@@ -3,11 +3,11 @@
 import { AlertTriangle, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function DashboardErrorBanner({ 
-  error, 
-  onRetry, 
-  retryCount, 
-  maxRetries 
+export default function DashboardErrorBanner({
+  error,
+  onRetry,
+  retryCount,
+  maxRetries
 }) {
   const showRetryInfo = typeof retryCount === 'number' && typeof maxRetries === 'number';
   const canRetry = !showRetryInfo || retryCount < maxRetries;
@@ -24,10 +24,10 @@ export default function DashboardErrorBanner({
 
         {/* Content */}
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-red mb-2 font-Quattrocento_Sans">
+          <h3 className="text-lg font-semibold text-red mb-2 font-Barlow">
             Veri Yükleme Hatası
           </h3>
-          
+
           <p className="text-darkgray mb-4 font-Barlow">
             {error || "Dashboard verileri yüklenirken bir hata oluştu."}
           </p>

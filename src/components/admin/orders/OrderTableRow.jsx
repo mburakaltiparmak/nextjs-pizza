@@ -24,7 +24,7 @@ export const OrderTableRow = ({ order, onViewDetail }) => {
         <tr className="border-b border-lightgray2 hover:bg-lightgray/30 transition-colors">
             {/* Order ID */}
             <td className="px-6 py-4">
-                <span className="font-semibold text-darkgray font-Quattrocento_Sans">
+                <span className="font-semibold text-darkgray font-Barlow">
                     #{order.id}
                 </span>
             </td>

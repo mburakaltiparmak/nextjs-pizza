@@ -56,7 +56,7 @@ export function LoginForm({
                             type="email"
                             required
                             disabled={loading}
-                            className="w-full pl-9 pr-3 py-2 text-sm border-2 border-lightgray2 rounded-lg focus:border-yellow focus:ring-2 focus:ring-yellow focus:ring-opacity-50 transition-all duration-200 font-Quattrocento_Sans placeholder:text-gray"
+                            className="w-full pl-9 pr-3 py-2 text-sm border-2 border-lightgray2 rounded-lg focus:border-yellow focus:ring-2 focus:ring-yellow focus:ring-opacity-50 transition-all duration-200 font-Barlow placeholder:text-gray"
                             placeholder="Email adresinizi girin"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -82,7 +82,7 @@ export function LoginForm({
                             type={showPassword ? "text" : "password"}
                             required
                             disabled={loading}
-                            className="w-full pl-9 pr-9 py-2 text-sm border-2 border-lightgray2 rounded-lg focus:border-yellow focus:ring-2 focus:ring-yellow focus:ring-opacity-50 transition-all duration-200 font-Quattrocento_Sans placeholder:text-gray"
+                            className="w-full pl-9 pr-9 py-2 text-sm border-2 border-lightgray2 rounded-lg focus:border-yellow focus:ring-2 focus:ring-yellow focus:ring-opacity-50 transition-all duration-200 font-Barlow placeholder:text-gray"
                             placeholder="Şifrenizi girin"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -208,7 +208,7 @@ export function LoginForm({
             {/* Sign Up Link */}
             {onSignupClick && (
                 <div className="text-center pt-2 border-t border-lightgray2">
-                    <p className="text-gray font-Quattrocento_Sans text-xs">
+                    <p className="text-gray font-Barlow text-xs">
                         Hesabınız yok mu?{" "}
                         <button
                             type="button"

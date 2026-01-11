@@ -50,7 +50,7 @@ export const RoleChangeDialog = ({
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent className="sm:max-w-md">
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="font-Quattrocento_Sans">
+                    <AlertDialogTitle className="font-Barlow">
                         Kullanıcı Rolünü Değiştir
                     </AlertDialogTitle>
                     <AlertDialogDescription className="font-Barlow">

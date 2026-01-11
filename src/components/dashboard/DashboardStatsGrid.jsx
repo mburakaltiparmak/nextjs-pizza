@@ -27,7 +27,7 @@ export default function DashboardStatsGrid({ statistics, moduleLoading }) {
           </span>
         </div>
         <div className="flex items-baseline space-x-2">
-          <p className="text-3xl font-bold text-darkgray font-Quattrocento_Sans">{value || 0}</p>
+          <p className="text-3xl font-bold text-darkgray font-Barlow">{value || 0}</p>
         </div>
       </div>
     );

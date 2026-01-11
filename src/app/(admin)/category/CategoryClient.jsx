@@ -124,13 +124,13 @@ const CategoryClient = () => {
                 <table className="w-full">
                     <thead className="bg-lightgray/50">
                         <tr className="border-b border-lightgray2">
-                            <th className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Quattrocento_Sans">
+                            <th className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Barlow">
                                 Kategori Adı
                             </th>
-                            <th className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Quattrocento_Sans">
+                            <th className="px-6 py-4 text-left text-sm font-bold text-darkgray font-Barlow">
                                 Ürün Sayısı
                             </th>
-                            <th className="px-6 py-4 text-right text-sm font-bold text-darkgray font-Quattrocento_Sans">
+                            <th className="px-6 py-4 text-right text-sm font-bold text-darkgray font-Barlow">
                                 İşlemler
                             </th>
                         </tr>
