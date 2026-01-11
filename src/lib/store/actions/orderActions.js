@@ -1,5 +1,7 @@
 // orderActions.js
 import { instance } from "@/lib/hooks";
+import { cartStorage } from "@/lib/utils/cartPersistence";
+import { paymentRecovery } from "@/lib/utils/paymentRecovery";
 import { setError, setLoading, setSuccess } from "./globalActions";
 import { fetchStates } from "../constants";
 
@@ -22,28 +24,7 @@ export const orderActions = {
 };
 
 // localStorage yardımcı fonksiyonları
-export const saveCartToStorage = (cart) => {
-  if (typeof window !== "undefined") {
-    try {
-      localStorage.setItem("cart", JSON.stringify(cart));
-    } catch (error) {
-      console.error("Cart localStorage kaydetme hatası:", error);
-    }
-  }
-};
-
-const loadCartFromStorage = () => {
-  if (typeof window !== "undefined") {
-    try {
-      const savedCart = localStorage.getItem("cart");
-      return savedCart ? JSON.parse(savedCart) : [];
-    } catch (error) {
-      console.error("Cart localStorage okuma hatası:", error);
-      return [];
-    }
-  }
-  return [];
-};
+// Local storage helpers removed - using cartStorage utility
 
 // Seçilen adresi kaydetmek için action creator
 export const setSelectedAddress = (address) => ({
@@ -120,8 +101,9 @@ export const setOrderData = (orderData) => ({
 
 // localStorage'dan sepeti yükle
 export const initializeCart = () => (dispatch) => {
-  const savedCart = loadCartFromStorage();
+  const savedCart = cartStorage.load();
   if (savedCart && savedCart.length > 0) {
+    console.log(`🛒 Cart loaded from storage: ${savedCart.length} items`);
     dispatch(loadCartFromStorageAction(savedCart));
   }
 };
@@ -141,7 +123,7 @@ export const addToCart =
 
       // localStorage'a kaydet
       const updatedCart = getState().order.cart;
-      saveCartToStorage(updatedCart);
+      cartStorage.save(updatedCart);
 
       return { success: true };
     };
@@ -153,7 +135,7 @@ export const removeFromCart = (itemId) => (dispatch, getState) => {
 
   // localStorage'a kaydet
   const updatedCart = getState().order.cart;
-  saveCartToStorage(updatedCart);
+  cartStorage.save(updatedCart);
 
   return { success: true };
 };
@@ -164,7 +146,7 @@ export const updateCartItem = (itemId, count) => (dispatch, getState) => {
 
   // localStorage'a kaydet
   const updatedCart = getState().order.cart;
-  saveCartToStorage(updatedCart);
+  cartStorage.save(updatedCart);
 
   return { success: true };
 };
@@ -174,7 +156,7 @@ export const clearCart = () => (dispatch) => {
   dispatch(clearCartAction());
 
   // localStorage'dan da temizle
-  saveCartToStorage([]);
+  cartStorage.clear();
 
   return { success: true };
 };
@@ -334,6 +316,14 @@ export const createOrder =
 
             if (status === "PENDING_CHECKOUT" && paymentPageUrl) {
               console.log("Ödeme sayfası URL'i alındı, yönlendiriliyor: " + paymentPageUrl);
+
+              // 3D Secure öncesi state'i kaydet
+              paymentRecovery.saveState(
+                orderId,
+                initResponse.data.paymentId || "unknown_payment_id",
+                orderData.totalAmount || 0,
+                initResponse.data.uuid // UUID Backend'den gelmeli (updates.txt)
+              );
 
               // Kullanıcıyı Iyzico ödeme sayfasına yönlendir
               window.location.href = paymentPageUrl;

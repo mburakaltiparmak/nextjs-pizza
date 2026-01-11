@@ -14,6 +14,7 @@ import {
     User,
     Menu,
     X,
+    Settings,
 } from "lucide-react";
 import { Separator } from "../ui/separator";
 
@@ -175,6 +176,12 @@ export default function AdminSidebar({ activePage = "dashboard", isOpen, onToggl
             name: "Kullanıcılar",
             icon: <User className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />,
             id: "users",
+        },
+        {
+            path: "/settings",
+            name: "Ayarlar",
+            icon: <Settings className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />,
+            id: "settings",
         },
     ];
 

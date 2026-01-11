@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { useAdminModal } from "@/lib/contexts/AdminLayoutContext"; // Updated to use useAdminModal if separate or stick to Layout context
@@ -71,13 +71,21 @@ const CategoryClient = () => {
         setDeleteModalOpen(false);
     };
 
+    // Mounted ref for memory leak protection
+    const mounted = useRef(true);
+    useEffect(() => {
+        return () => {
+            mounted.current = false;
+        };
+    }, []);
+
     const handleDelete = async () => {
         if (!categoryToDelete) return;
 
         try {
             const result = await dispatch(deleteCategory(categoryToDelete.id));
 
-            if (!result.error) {
+            if (mounted.current && !result.error) {
                 dispatch(
                     setSuccess(`"${categoryToDelete.name}" kategorisi başarıyla silindi`)
                 );

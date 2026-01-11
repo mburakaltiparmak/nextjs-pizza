@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import useAuthRoute from "@/lib/hooks/useAuthRole"; // Updated import
 import { useAdminLayout } from "@/lib/contexts/AdminLayoutContext"; // Updated import
@@ -100,6 +100,16 @@ const ProductClient = () => {
         setDeleteModalOpen(false);
     };
 
+    // Mounted ref for memory leak protection
+    const mountedRef = useState(true)[0]; // Use ref but initialized? No, standard pattern:
+    // Actually useRef is better.
+    const mounted = useRef(true);
+    useEffect(() => {
+        return () => {
+            mounted.current = false;
+        };
+    }, []);
+
     const handleFormSubmit = async (data, editingProduct) => {
         const productData = {
             name: data.name,
@@ -128,7 +138,7 @@ const ProductClient = () => {
             productToDelete.name
         );
 
-        if (result && !result.error) {
+        if (mounted.current && result && !result.error) {
             closeDeleteModal();
         }
     };

@@ -5,6 +5,7 @@ import {
   Satisfy,
 } from "next/font/google";
 import Providers from "@/lib/providers/providers";
+import ErrorBoundary from "@/components/errors/ErrorBoundary";
 
 const barlow = Barlow({
   subsets: ["latin"],
@@ -39,9 +40,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={fontClasses}>
       <body>
-        <Providers>
-          {children}
-        </Providers>
+        <ErrorBoundary>
+          <Providers>
+            {children}
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );

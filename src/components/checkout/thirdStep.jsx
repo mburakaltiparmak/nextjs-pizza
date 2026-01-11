@@ -5,6 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { createOrder, clearCart } from "@/lib/store/actions/orderActions";
+import { cartStorage } from "@/lib/utils/cartPersistence";
 import { useToast } from "@/lib/hooks/useToast";
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
@@ -181,6 +182,8 @@ const ThirdStep = ({ setCurrentStep, setStep3, onSuccess }) => {
 
     try {
       setStep3(true);
+      // Backup cart before starting the process
+      cartStorage.backup();
 
       // Adres kontrolü
       if (!selectedAddress) {

@@ -24,6 +24,7 @@ function AdminLayoutContent({ children }) {
         if (path.includes("/product")) return "product";
         if (path.includes("/orders-admin")) return "orders-admin";
         if (path.includes("/users")) return "users";
+        if (path.includes("/settings")) return "settings";
         return "dashboard";
     };
 
@@ -51,6 +52,10 @@ function AdminLayoutContent({ children }) {
             },
             "/users": {
                 title: "Kullanıcılar",
+                showAddButton: false,
+            },
+            "/settings": {
+                title: "Ayarlar",
                 showAddButton: false,
             },
         };

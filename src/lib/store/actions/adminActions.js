@@ -240,3 +240,62 @@ export const updateUserRole = (userId, role) => async (dispatch) => {
     return handleApiError(err, dispatch, 'updateUserRole');
   }
 };
+
+// Siparişleri yeniden indeksle (Elasticsearch Reindex)
+export const reindexOrders = () => async (dispatch) => {
+  dispatch(setLoading(true));
+
+  try {
+    const response = await instance.post("/orders/admin/reindex");
+
+    dispatch(setSuccess("Siparişler yeniden indeksleniyor. Bu işlem arka planda devam edecek."));
+    dispatch(setLoading(false));
+
+    return { success: true, message: response.data };
+  } catch (err) {
+    dispatch(setLoading(false));
+    return handleApiError(err, dispatch, 'reindexOrders');
+  }
+};
+
+// Ürünleri yeniden indeksle
+export const reindexProducts = () => async (dispatch) => {
+  dispatch(setLoading(true));
+  try {
+    const response = await instance.post("/product/reindex"); // Endpoint per updates.txt
+    dispatch(setSuccess("Ürünler yeniden indeksleniyor."));
+    dispatch(setLoading(false));
+    return { success: true, message: response.data };
+  } catch (err) {
+    dispatch(setLoading(false));
+    return handleApiError(err, dispatch, 'reindexProducts');
+  }
+};
+
+// Kategorileri yeniden indeksle
+export const reindexCategories = () => async (dispatch) => {
+  dispatch(setLoading(true));
+  try {
+    const response = await instance.post("/category/reindex"); // Endpoint per updates.txt
+    dispatch(setSuccess("Kategoriler yeniden indeksleniyor."));
+    dispatch(setLoading(false));
+    return { success: true, message: response.data };
+  } catch (err) {
+    dispatch(setLoading(false));
+    return handleApiError(err, dispatch, 'reindexCategories');
+  }
+};
+
+// Kullanıcıları yeniden indeksle
+export const reindexUsers = () => async (dispatch) => {
+  dispatch(setLoading(true));
+  try {
+    const response = await instance.post("/admin/users/reindex"); // Endpoint per updates.txt
+    dispatch(setSuccess("Kullanıcılar yeniden indeksleniyor."));
+    dispatch(setLoading(false));
+    return { success: true, message: response.data };
+  } catch (err) {
+    dispatch(setLoading(false));
+    return handleApiError(err, dispatch, 'reindexUsers');
+  }
+};
