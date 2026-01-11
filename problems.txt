@@ -1,0 +1,1218 @@
+# NEXT.JS PIZZA - E-COMMERCE PRODUCTION GUIDE
+# Son Güncelleme: 2025-01-11
+# Proje: nextjs-pizza (Full-Featured E-Commerce Platform)
+# Backend: Spring Boot E-Commerce API (Payment, Orders, Inventory, Users)
+# Frontend: Production-Grade Next.js 15 Application
+
+================================================================================
+PROJE GERÇEĞI - E-TİCARET PLATFORMU
+================================================================================
+
+Backend Yetenekleri:
+✅ Kullanıcı yönetimi (Registration, OAuth, JWT)
+✅ Ürün kataloğu (Categories, Products, Stock management)
+✅ Sipariş yönetimi (Order lifecycle, Status tracking)
+✅ Ödeme entegrasyonu (Iyzico, 3D Secure, Multiple payment methods)
+✅ Admin dashboard (User approval, Order management, Analytics)
+✅ Adres yönetimi (Multiple addresses, Delivery tracking)
+✅ Email notifications (Order confirmation, Status updates)
+✅ Search (Elasticsearch integration)
+
+Frontend Gereksinimleri:
+❌ Production-grade UX
+❌ Real-time order tracking
+❌ Proper error boundaries
+❌ Loading states standardization
+❌ Analytics integration
+❌ Performance optimization
+❌ Accessibility (A11y)
+❌ SEO optimization (optional for portfolio)
+❌ Security best practices
+❌ Mobile responsiveness
+❌ Progressive Web App (PWA) capabilities
+❌ Cart persistence
+❌ Wishlist feature
+❌ Product reviews
+❌ Order history filtering
+❌ Push notifications
+
+ŞU ANKİ DURUM:
+- Backend: Enterprise-grade ✅
+- Frontend: MVP seviyesi ⚠️
+
+HEDEF:
+- Frontend'i backend seviyesine yükseltmek
+- Production e-ticaret standartlarına uymak
+- Best practices'i uygulamak
+
+================================================================================
+YENİDEN GRUPLANMIŞ ÖNCELİKLER
+================================================================================
+
+P0 - KRİTİK (Production blocker - E-ticaret için ZORUNLU)
+P1 - YÜKSEK (E-ticaret için olmazsa olmaz)
+P2 - ORTA (E-ticaret UX standartları)
+P3 - DÜŞÜK (Nice to have)
+
+================================================================================
+P0 - KRİTİK E-TİCARET GEREKSİNİMLERİ (PRODUCTION BLOCKER)
+================================================================================
+
+[P0-1] API TIMEOUT & RETRY STRATEGY (1 saat) - ÇOK KRİTİK ❌
+------------------------------------------------------------
+
+E-TİCARET CONTEXT:
+- Ödeme işlemleri timeout olursa sipariş kaybolabilir
+- Network hatalarında kullanıcı sepetini kaybedebilir
+- Admin siparişleri göremeyebilir
+
+ÇÖZÜM (E-COMMERCE GRADE):
+------------------------------------------------------------
+// src/lib/axios/config.js (YENİ DOSYA)
+
+import axios from 'axios';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+// E-ticaret için farklı timeout stratejileri
+const TIMEOUT_CONFIG = {
+  DEFAULT: 15000,      // Genel işlemler
+  PAYMENT: 30000,      // Ödeme işlemleri (3D Secure)
+  UPLOAD: 60000,       // Dosya yükleme
+  SEARCH: 5000,        // Arama istekleri
+};
+
+// Retry stratejisi
+const RETRY_CONFIG = {
+  retries: 3,
+  retryDelay: (retryCount) => {
+    return Math.min(1000 * 2 ** retryCount, 10000); // Exponential backoff
+  },
+  retryCondition: (error) => {
+    // Sadece network hatalarında retry
+    return !error.response && error.code !== 'ECONNABORTED';
+  },
+};
+
+// Ana axios instance
+export const instance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: TIMEOUT_CONFIG.DEFAULT,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Payment-specific instance
+export const paymentInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: TIMEOUT_CONFIG.PAYMENT,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Upload-specific instance
+export const uploadInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: TIMEOUT_CONFIG.UPLOAD,
+});
+
+// Request interceptor - JWT token
+instance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor - Error handling
+instance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Token expired - refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        const refreshToken = localStorage.getItem('refreshToken');
+        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+          refreshToken,
+        });
+        localStorage.setItem('token', response.data.accessToken);
+        originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
+        return instance(originalRequest);
+      } catch (refreshError) {
+        // Refresh failed - logout user
+        localStorage.clear();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
+    }
+
+    // Retry logic for network errors
+    if (
+      !originalRequest._retry &&
+      RETRY_CONFIG.retryCondition(error) &&
+      (originalRequest._retryCount || 0) < RETRY_CONFIG.retries
+    ) {
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+      const delay = RETRY_CONFIG.retryDelay(originalRequest._retryCount);
+      
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return instance(originalRequest);
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+// Tüm instance'lara aynı interceptor'ları ekle
+[paymentInstance, uploadInstance].forEach(inst => {
+  inst.interceptors.request.use(instance.interceptors.request.handlers[0].fulfilled);
+  inst.interceptors.response.use(
+    instance.interceptors.response.handlers[0].fulfilled,
+    instance.interceptors.response.handlers[0].rejected
+  );
+});
+
+------------------------------------------------------------
+// src/lib/hooks.js - DEĞİŞTİR
+
+// ESKI: Tüm axios config burada
+// YENİ: Sadece re-export
+
+export { instance, paymentInstance, uploadInstance } from './axios/config';
+
+GİT COMMIT:
+git add src/lib/axios/config.js src/lib/hooks.js
+git commit -m "feat: Add production-grade axios config with retry strategy (P0-1)"
+
+TEST:
+1. Network offline → Online yap (retry çalışmalı)
+2. Token expire et (refresh çalışmalı)
+3. Payment timeout test (30s timeout)
+
+ETKİ: ÇOK YÜKSEK - E-ticaret reliability için kritik
+
+
+[P0-2] ERROR BOUNDARY IMPLEMENTATION (2 saat) - KRİTİK ❌
+------------------------------------------------------------
+
+E-TİCARET CONTEXT:
+- Kullanıcı checkout sırasında hata alırsa sepet kaybolmamalı
+- Admin dashboard crash olursa tüm yönetim durur
+- Runtime error'lar kullanıcı deneyimini yok eder
+
+ÇÖZÜM (E-COMMERCE GRADE):
+------------------------------------------------------------
+// src/components/errors/ErrorBoundary.jsx (YENİ DOSYA)
+
+'use client';
+
+import React from 'react';
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { 
+      hasError: false, 
+      error: null,
+      errorInfo: null,
+      errorCount: 0
+    };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    // Log to error reporting service (Sentry, LogRocket)
+    console.error('ErrorBoundary caught:', error, errorInfo);
+    
+    this.setState(prevState => ({
+      error,
+      errorInfo,
+      errorCount: prevState.errorCount + 1
+    }));
+
+    // E-ticaret için özel: Sepet backup
+    if (typeof window !== 'undefined') {
+      const cart = localStorage.getItem('cart');
+      if (cart) {
+        localStorage.setItem('cart_backup', cart);
+        console.log('🛡️ Cart backed up before crash');
+      }
+    }
+
+    // Production'da error reporting
+    if (process.env.NODE_ENV === 'production') {
+      // Sentry.captureException(error);
+    }
+  }
+
+  handleReset = () => {
+    // Sepet restore
+    if (typeof window !== 'undefined') {
+      const cartBackup = localStorage.getItem('cart_backup');
+      if (cartBackup) {
+        localStorage.setItem('cart', cartBackup);
+        console.log('🔄 Cart restored from backup');
+      }
+    }
+
+    this.setState({ 
+      hasError: false, 
+      error: null, 
+      errorInfo: null 
+    });
+  };
+
+  handleGoHome = () => {
+    window.location.href = '/';
+  };
+
+  render() {
+    if (this.state.hasError) {
+      // Too many errors - show minimal UI
+      if (this.state.errorCount > 3) {
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+            <div className="text-center">
+              <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+              <h1 className="text-2xl font-bold mb-2">Ciddi Bir Hata Oluştu</h1>
+              <p className="text-gray-600 mb-6">
+                Lütfen sayfayı yenileyerek tekrar deneyin.
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Sayfayı Yenile
+              </Button>
+            </div>
+          </div>
+        );
+      }
+
+      // E-ticaret için özel error UI
+      const isCheckout = window.location.pathname.includes('checkout');
+      const isPayment = window.location.pathname.includes('payment');
+
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+            <div className="text-center">
+              <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+              <h1 className="text-2xl font-bold mb-2">Bir Şeyler Ters Gitti</h1>
+              
+              {isCheckout || isPayment ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-blue-800">
+                    ✅ Sepetiniz güvende! Verileriniz kaybedilmedi.
+                  </p>
+                </div>
+              ) : null}
+
+              <p className="text-gray-600 mb-6">
+                {isCheckout 
+                  ? "Ödeme işleminiz sırasında bir hata oluştu. Sepetiniz kayıtlı, lütfen tekrar deneyin."
+                  : "Beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyin."}
+              </p>
+
+              {process.env.NODE_ENV === 'development' && (
+                <details className="text-left mb-6 bg-gray-100 p-4 rounded text-xs">
+                  <summary className="cursor-pointer font-semibold mb-2">
+                    Hata Detayları (Development)
+                  </summary>
+                  <pre className="overflow-auto">
+                    {this.state.error?.toString()}
+                    {'\n\n'}
+                    {this.state.errorInfo?.componentStack}
+                  </pre>
+                </details>
+              )}
+
+              <div className="flex gap-3">
+                <Button 
+                  onClick={this.handleReset}
+                  className="flex-1"
+                  variant="default"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Tekrar Dene
+                </Button>
+                <Button 
+                  onClick={this.handleGoHome}
+                  className="flex-1"
+                  variant="outline"
+                >
+                  <Home className="w-4 h-4 mr-2" />
+                  Ana Sayfa
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export default ErrorBoundary;
+
+------------------------------------------------------------
+// src/app/layout.js - SARMALA
+
+import ErrorBoundary from '@/components/errors/ErrorBoundary';
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="tr">
+      <body>
+        <ErrorBoundary>
+          <Providers>
+            {children}
+          </Providers>
+        </ErrorBoundary>
+      </body>
+    </html>
+  );
+}
+
+------------------------------------------------------------
+// src/app/(public)/checkout/layout.js - ÖZEL ERROR BOUNDARY
+
+import CheckoutErrorBoundary from '@/components/errors/CheckoutErrorBoundary';
+
+export default function CheckoutLayout({ children }) {
+  return (
+    <CheckoutErrorBoundary>
+      {children}
+    </CheckoutErrorBoundary>
+  );
+}
+
+// src/components/errors/CheckoutErrorBoundary.jsx
+// ... Özel checkout error handling ...
+
+GİT COMMIT:
+git add src/components/errors/*.jsx src/app/layout.js
+git commit -m "feat: Add production-grade error boundaries for e-commerce (P0-2)"
+
+TEST:
+1. Component'te hata fırlat (throw new Error())
+2. Checkout'ta hata fırlat (sepet backup kontrol)
+3. Error count 3'ü geçince minimal UI görmeli
+
+ETKİ: ÇOK YÜKSEK - E-ticaret reliability için kritik
+
+
+[P0-3] CART PERSISTENCE & RECOVERY (1 saat) - KRİTİK ❌
+------------------------------------------------------------
+
+E-TİCARET CONTEXT:
+- Kullanıcı sepete ürün ekler, sayfa yenilenir → Sepet kaybolur
+- Browser crash → Sepet kaybolur
+- Çoklu tab → Sepet sync problemi
+
+ÇÖZÜM (E-COMMERCE GRADE):
+------------------------------------------------------------
+// src/lib/utils/cartPersistence.js (YENİ DOSYA)
+
+const CART_STORAGE_KEY = 'cart';
+const CART_BACKUP_KEY = 'cart_backup';
+const CART_SYNC_KEY = 'cart_sync';
+const CART_EXPIRY_DAYS = 7;
+
+// Cart persistence utilities
+export const cartStorage = {
+  // Save cart to localStorage
+  save: (cart) => {
+    try {
+      const cartData = {
+        items: cart,
+        timestamp: Date.now(),
+        expiresAt: Date.now() + (CART_EXPIRY_DAYS * 24 * 60 * 60 * 1000)
+      };
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartData));
+      
+      // Trigger sync event for other tabs
+      localStorage.setItem(CART_SYNC_KEY, Date.now().toString());
+      
+      return true;
+    } catch (error) {
+      console.error('Cart save error:', error);
+      return false;
+    }
+  },
+
+  // Load cart from localStorage
+  load: () => {
+    try {
+      const cartDataStr = localStorage.getItem(CART_STORAGE_KEY);
+      if (!cartDataStr) return [];
+
+      const cartData = JSON.parse(cartDataStr);
+      
+      // Check expiry
+      if (cartData.expiresAt && Date.now() > cartData.expiresAt) {
+        cartStorage.clear();
+        return [];
+      }
+
+      return cartData.items || [];
+    } catch (error) {
+      console.error('Cart load error:', error);
+      return [];
+    }
+  },
+
+  // Backup cart (before risky operations)
+  backup: () => {
+    try {
+      const currentCart = localStorage.getItem(CART_STORAGE_KEY);
+      if (currentCart) {
+        localStorage.setItem(CART_BACKUP_KEY, currentCart);
+        console.log('🛡️ Cart backed up');
+      }
+    } catch (error) {
+      console.error('Cart backup error:', error);
+    }
+  },
+
+  // Restore cart from backup
+  restore: () => {
+    try {
+      const backupCart = localStorage.getItem(CART_BACKUP_KEY);
+      if (backupCart) {
+        localStorage.setItem(CART_STORAGE_KEY, backupCart);
+        console.log('🔄 Cart restored from backup');
+        return JSON.parse(backupCart).items || [];
+      }
+      return [];
+    } catch (error) {
+      console.error('Cart restore error:', error);
+      return [];
+    }
+  },
+
+  // Clear cart
+  clear: () => {
+    try {
+      localStorage.removeItem(CART_STORAGE_KEY);
+      localStorage.removeItem(CART_BACKUP_KEY);
+    } catch (error) {
+      console.error('Cart clear error:', error);
+    }
+  },
+
+  // Merge carts (for multi-tab sync)
+  merge: (localCart, syncedCart) => {
+    const mergedMap = new Map();
+
+    // Add local cart items
+    localCart.forEach(item => {
+      mergedMap.set(item.id, item);
+    });
+
+    // Merge synced cart items
+    syncedCart.forEach(item => {
+      if (mergedMap.has(item.id)) {
+        // Take the one with higher count
+        const existing = mergedMap.get(item.id);
+        if (item.count > existing.count) {
+          mergedMap.set(item.id, item);
+        }
+      } else {
+        mergedMap.set(item.id, item);
+      }
+    });
+
+    return Array.from(mergedMap.values());
+  }
+};
+
+------------------------------------------------------------
+// src/lib/store/actions/orderActions.js - GÜNCELLE
+
+import { cartStorage } from '@/lib/utils/cartPersistence';
+
+// Initialize cart from storage
+export const initializeCart = () => (dispatch) => {
+  try {
+    const savedCart = cartStorage.load();
+    if (savedCart.length > 0) {
+      dispatch(loadCartFromStorageAction(savedCart));
+      console.log(`🛒 Cart loaded: ${savedCart.length} items`);
+    }
+  } catch (error) {
+    console.error('Cart initialization error:', error);
+  }
+};
+
+// Add to cart - WITH PERSISTENCE
+export const addToCart = (item) => (dispatch, getState) => {
+  dispatch(addToCartAction(item));
+  
+  // Save to localStorage
+  const { order } = getState();
+  cartStorage.save(order.cart);
+};
+
+// Remove from cart - WITH PERSISTENCE
+export const removeFromCart = (itemId) => (dispatch, getState) => {
+  dispatch(removeFromCartAction(itemId));
+  
+  // Save to localStorage
+  const { order } = getState();
+  cartStorage.save(order.cart);
+};
+
+// Update cart item - WITH PERSISTENCE
+export const updateCartItem = (itemId, quantity) => (dispatch, getState) => {
+  dispatch(updateCartItemAction(itemId, quantity));
+  
+  // Save to localStorage
+  const { order } = getState();
+  cartStorage.save(order.cart);
+};
+
+// Clear cart - WITH PERSISTENCE
+export const clearCart = () => (dispatch) => {
+  dispatch(clearCartAction());
+  cartStorage.clear();
+};
+
+------------------------------------------------------------
+// src/app/layout.js - MULTI-TAB SYNC
+
+'use client';
+
+useEffect(() => {
+  // Multi-tab cart sync
+  const handleStorageChange = (e) => {
+    if (e.key === 'cart_sync') {
+      const syncedCart = cartStorage.load();
+      const localCart = store.getState().order.cart;
+      
+      // Merge carts
+      const mergedCart = cartStorage.merge(localCart, syncedCart);
+      
+      // Update Redux
+      store.dispatch(loadCartFromStorageAction(mergedCart));
+      
+      console.log('🔄 Cart synced across tabs');
+    }
+  };
+
+  window.addEventListener('storage', handleStorageChange);
+  
+  return () => {
+    window.removeEventListener('storage', handleStorageChange);
+  };
+}, []);
+
+GİT COMMIT:
+git add src/lib/utils/cartPersistence.js src/lib/store/actions/orderActions.js
+git commit -m "feat: Add cart persistence and multi-tab sync (P0-3)"
+
+TEST:
+1. Sepete ürün ekle → Sayfa yenile (sepet kalmalı)
+2. İki tab aç → Birinde sepete ekle (diğerinde sync olmalı)
+3. 7 gün sonra expire test (manual timestamp değişikliği)
+
+ETKİ: ÇOK YÜKSEK - E-ticaret UX için kritik
+
+
+[P0-4] PAYMENT FLOW ERROR HANDLING (2 saat) - KRİTİK ❌
+------------------------------------------------------------
+
+E-TİCARET CONTEXT:
+- 3D Secure redirect sonrası hata → Kullanıcı parası çekilir ama sipariş oluşmaz
+- Payment timeout → Double charge riski
+- Network error during payment → Sipariş durumu belirsiz
+
+ÇÖZÜM (E-COMMERCE GRADE):
+------------------------------------------------------------
+// src/lib/utils/paymentRecovery.js (YENİ DOSYA)
+
+const PAYMENT_STATE_KEY = 'payment_state';
+
+export const paymentRecovery = {
+  // Save payment state before 3D Secure redirect
+  saveState: (orderId, paymentId, amount) => {
+    const state = {
+      orderId,
+      paymentId,
+      amount,
+      timestamp: Date.now(),
+      status: 'PENDING'
+    };
+    localStorage.setItem(PAYMENT_STATE_KEY, JSON.stringify(state));
+  },
+
+  // Load payment state after redirect
+  loadState: () => {
+    try {
+      const stateStr = localStorage.getItem(PAYMENT_STATE_KEY);
+      if (!stateStr) return null;
+      return JSON.parse(stateStr);
+    } catch (error) {
+      return null;
+    }
+  },
+
+  // Clear payment state
+  clearState: () => {
+    localStorage.removeItem(PAYMENT_STATE_KEY);
+  },
+
+  // Check for incomplete payment on app load
+  checkIncompletePayment: async (api) => {
+    const state = paymentRecovery.loadState();
+    if (!state) return null;
+
+    // Payment state exists - check if it was completed
+    const timeDiff = Date.now() - state.timestamp;
+    const TIMEOUT = 10 * 60 * 1000; // 10 dakika
+
+    if (timeDiff > TIMEOUT) {
+      // Too old - clear it
+      paymentRecovery.clearState();
+      return null;
+    }
+
+    try {
+      // Check payment status from backend
+      const response = await api.get(`/payment/${state.paymentId}/status`);
+      
+      if (response.data.status === 'SUCCESS') {
+        // Payment completed - redirect to success
+        return {
+          type: 'SUCCESS',
+          orderId: state.orderId,
+          paymentId: state.paymentId
+        };
+      } else if (response.data.status === 'FAILED') {
+        // Payment failed - show error
+        paymentRecovery.clearState();
+        return {
+          type: 'FAILED',
+          error: response.data.errorMessage
+        };
+      } else {
+        // Still pending - user can continue waiting
+        return {
+          type: 'PENDING',
+          paymentId: state.paymentId
+        };
+      }
+    } catch (error) {
+      console.error('Payment recovery check error:', error);
+      return null;
+    }
+  }
+};
+
+------------------------------------------------------------
+// src/components/checkout/thirdStep.jsx - PAYMENT FLOW
+
+import { paymentRecovery } from '@/lib/utils/paymentRecovery';
+import { cartStorage } from '@/lib/utils/cartPersistence';
+
+const submitOrder = async (formData) => {
+  try {
+    // 1. Backup cart before payment
+    cartStorage.backup();
+
+    // 2. Create order
+    const orderResponse = await createOrder({/* ... */});
+    
+    if (!orderResponse || !orderResponse.id) {
+      throw new Error("Sipariş oluşturulamadı");
+    }
+
+    // 3. Check payment method
+    if (paymentMethod === "CREDIT_CARD" || paymentMethod === "ONLINE") {
+      // 3D Secure flow
+      
+      // Save payment state BEFORE redirect
+      paymentRecovery.saveState(
+        orderResponse.id,
+        orderResponse.payment?.id,
+        totalAmount
+      );
+
+      // Redirect to payment page
+      router.push(`/payment/${orderResponse.id}`);
+    } else {
+      // Cash/Gift Card - direct success
+      paymentRecovery.clearState();
+      clearCart();
+      router.push(`/payment/success?orderId=${orderResponse.id}`);
+    }
+
+  } catch (error) {
+    // Payment error - restore cart
+    const restoredCart = cartStorage.restore();
+    if (restoredCart.length > 0) {
+      dispatch(loadCartFromStorageAction(restoredCart));
+      toast.success("Sepetiniz geri yüklendi");
+    }
+    
+    toast.error(error.message || "Ödeme işlemi başarısız");
+  }
+};
+
+------------------------------------------------------------
+// src/app/layout.js - PAYMENT RECOVERY CHECK ON LOAD
+
+'use client';
+
+import { paymentRecovery } from '@/lib/utils/paymentRecovery';
+
+useEffect(() => {
+  // Check for incomplete payment
+  const checkPayment = async () => {
+    const recovery = await paymentRecovery.checkIncompletePayment(instance);
+    
+    if (recovery) {
+      switch (recovery.type) {
+        case 'SUCCESS':
+          // Payment completed - redirect
+          router.push(`/payment/success?orderId=${recovery.orderId}`);
+          toast.success("Ödemeniz başarıyla tamamlandı!");
+          break;
+          
+        case 'FAILED':
+          // Payment failed - show error
+          toast.error(`Ödeme başarısız: ${recovery.error}`);
+          paymentRecovery.clearState();
+          break;
+          
+        case 'PENDING':
+          // Still pending - user can wait
+          toast.warning("Ödemeniz işleniyor, lütfen bekleyin...");
+          break;
+      }
+    }
+  };
+
+  checkPayment();
+}, []);
+
+GİT COMMIT:
+git add src/lib/utils/paymentRecovery.js src/components/checkout/thirdStep.jsx
+git commit -m "feat: Add payment recovery and 3D Secure error handling (P0-4)"
+
+TEST:
+1. Payment başlat → Browser kapat → Tekrar aç (recovery çalışmalı)
+2. 3D Secure timeout → Error görmeli + cart restore
+3. Successful payment → Success page'e redirect
+
+ETKİ: ÇOK YÜKSEK - E-ticaret güvenilirliği için kritik
+
+
+[P0-5] MEMORY LEAK COMPREHENSIVE FIX (1.5 saat) - KRİTİK ❌
+------------------------------------------------------------
+(Önceki rehberdeki P0-2'yi genişlet, tüm sayfalara uygula)
+
+Dosyalar:
+- src/lib/hooks/useOrdersManager.js ✅
+- src/lib/hooks/useOrderActions.js ✅
+- src/lib/hooks/useUsersManager.js (EKLE)
+- src/lib/hooks/useCartButton.js (EKLE)
+- src/app/(admin)/product/ProductClient.jsx (EKLE)
+- src/app/(admin)/category/CategoryClient.jsx (EKLE)
+- src/app/(public)/profile/ProfilePageClient.jsx (EKLE)
+
+[Önceki çözüm + ek dosyalar...]
+
+GİT COMMIT:
+git add src/lib/hooks/*.js src/app/**/Client.jsx
+git commit -m "fix: Comprehensive memory leak prevention across all pages (P0-5)"
+
+
+================================================================================
+P1 - E-TİCARET İÇİN OLMAZSA OLMAZ
+================================================================================
+
+[P1-1] REAL-TIME ORDER TRACKING (4 saat) - YÜKSEK ⚠️
+------------------------------------------------------------
+
+E-TİCARET CONTEXT:
+- Admin yeni siparişleri görmeli (real-time)
+- Kullanıcı sipariş durumunu takip etmeli
+- Desktop notifications
+
+ÇÖZÜM OPTIONS:
+
+OPSIYON 1: WebSocket (Backend değişiklik gerekir - SKIP)
+OPSIYON 2: Server-Sent Events (Backend değişiklik gerekir - SKIP)
+OPSIYON 3: Smart Polling + Desktop Notifications (Frontend-only ✅)
+
+[Önceki Smart Polling çözümü + Desktop Notifications eklentisi...]
+
+------------------------------------------------------------
+// Desktop Notifications ekle
+
+// src/lib/utils/notifications.js (YENİ)
+
+export const notificationManager = {
+  permission: null,
+
+  async requestPermission() {
+    if (!('Notification' in window)) {
+      console.warn('Tarayıcı bildirim desteklemiyor');
+      return false;
+    }
+
+    if (Notification.permission === 'granted') {
+      this.permission = 'granted';
+      return true;
+    }
+
+    if (Notification.permission !== 'denied') {
+      const permission = await Notification.requestPermission();
+      this.permission = permission;
+      return permission === 'granted';
+    }
+
+    return false;
+  },
+
+  show(title, options = {}) {
+    if (this.permission !== 'granted') return;
+
+    const notification = new Notification(title, {
+      icon: '/logo.png',
+      badge: '/badge.png',
+      ...options
+    });
+
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
+
+    return notification;
+  },
+
+  showNewOrder(order) {
+    this.show('Yeni Sipariş!', {
+      body: `Sipariş #${order.id} - ${order.totalAmount} TL`,
+      tag: `order-${order.id}`,
+      requireInteraction: true
+    });
+  }
+};
+
+------------------------------------------------------------
+// src/lib/hooks/useOrdersManager.js - NOTIFICATION EKLE
+
+import { notificationManager } from '@/lib/utils/notifications';
+
+useEffect(() => {
+  // İlk permission request
+  notificationManager.requestPermission();
+}, []);
+
+// fetchOrders içinde yeni sipariş kontrolü
+const checkNewOrders = (oldOrders, newOrders) => {
+  const oldIds = new Set(oldOrders.map(o => o.id));
+  const newOnes = newOrders.filter(o => !oldIds.has(o.id));
+  
+  newOnes.forEach(order => {
+    notificationManager.showNewOrder(order);
+    // Ses de çalabilir
+    new Audio('/notification.mp3').play().catch(() => {});
+  });
+};
+
+GİT COMMIT:
+git add src/lib/utils/notifications.js src/lib/hooks/useOrdersManager.js
+git commit -m "feat: Add real-time order tracking with desktop notifications (P1-1)"
+
+
+[P1-2] LOADING STATES STANDARDIZATION (3 saat) - YÜKSEK ⚠️
+------------------------------------------------------------
+
+E-TİCARET CONTEXT:
+- Kullanıcı loading durumunu net görmeli
+- Multiple spinner confusion olmamalı
+- Skeleton screens (modern UX)
+
+ÇÖZÜM (E-COMMERCE GRADE):
+------------------------------------------------------------
+// src/lib/hooks/useLoadingManager.js (YENİ)
+
+import { useDispatch, useSelector } from 'react-redux';
+import { setModuleLoading } from '@/lib/store/actions/globalActions';
+
+export const useLoadingManager = (module) => {
+  const dispatch = useDispatch();
+  const loadingStates = useSelector(state => state.global.moduleLoading);
+  
+  const setLoading = (loading) => {
+    dispatch(setModuleLoading({ module, loading }));
+  };
+
+  const isLoading = loadingStates[module] || false;
+  const isAnyLoading = Object.values(loadingStates).some(l => l);
+
+  return { 
+    isLoading, 
+    isAnyLoading,
+    setLoading 
+  };
+};
+
+------------------------------------------------------------
+// Skeleton components oluştur
+
+// src/components/ui/skeletons/ProductSkeleton.jsx
+export const ProductSkeleton = () => (
+  <div className="animate-pulse">
+    <div className="bg-gray-200 h-48 rounded-lg mb-4" />
+    <div className="bg-gray-200 h-6 rounded mb-2" />
+    <div className="bg-gray-200 h-4 rounded w-2/3" />
+  </div>
+);
+
+// src/components/ui/skeletons/OrderSkeleton.jsx
+// src/components/ui/skeletons/CategorySkeleton.jsx
+// ... daha fazla skeleton ...
+
+------------------------------------------------------------
+// Component'lerde kullan
+
+// src/app/(public)/menu/page.jsx
+import { ProductSkeleton } from '@/components/ui/skeletons/ProductSkeleton';
+
+const { isLoading } = useLoadingManager('product');
+
+return (
+  <div className="grid grid-cols-3 gap-4">
+    {isLoading ? (
+      <>
+        {[1,2,3,4,5,6].map(i => (
+          <ProductSkeleton key={i} />
+        ))}
+      </>
+    ) : (
+      products.map(product => (
+        <ProductCard key={product.id} product={product} />
+      ))
+    )}
+  </div>
+);
+
+GİT COMMIT:
+git add src/lib/hooks/useLoadingManager.js src/components/ui/skeletons/*
+git commit -m "feat: Add standardized loading states with skeleton screens (P1-2)"
+
+
+[P1-3] ANALYTICS & TRACKING (2 saat) - YÜKSEK ⚠️
+------------------------------------------------------------
+
+E-TİCARET CONTEXT:
+- Conversion tracking (sipariş tamamlama oranı)
+- Product view tracking
+- Cart abandonment tracking
+- User journey analytics
+
+ÇÖZÜM:
+------------------------------------------------------------
+// src/lib/analytics/tracker.js (YENİ)
+
+class AnalyticsTracker {
+  constructor() {
+    this.enabled = process.env.NODE_ENV === 'production';
+  }
+
+  // E-commerce events
+  trackProductView(product) {
+    if (!this.enabled) return;
+    
+    // Google Analytics 4
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'view_item', {
+        currency: 'TRY',
+        value: product.price,
+        items: [{
+          item_id: product.id,
+          item_name: product.name,
+          price: product.price,
+          item_category: product.categoryName
+        }]
+      });
+    }
+  }
+
+  trackAddToCart(product, quantity) {
+    if (!this.enabled) return;
+    
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'add_to_cart', {
+        currency: 'TRY',
+        value: product.price * quantity,
+        items: [{
+          item_id: product.id,
+          item_name: product.name,
+          price: product.price,
+          quantity: quantity
+        }]
+      });
+    }
+  }
+
+  trackPurchase(order) {
+    if (!this.enabled) return;
+    
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'purchase', {
+        transaction_id: order.id,
+        value: order.totalAmount,
+        currency: 'TRY',
+        items: order.items.map(item => ({
+          item_id: item.productId,
+          item_name: item.productName,
+          price: item.price,
+          quantity: item.quantity
+        }))
+      });
+    }
+  }
+
+  trackCheckoutStep(step, paymentMethod = null) {
+    if (!this.enabled) return;
+    
+    const eventData = {
+      checkout_step: step,
+      checkout_option: step === 3 ? paymentMethod : null
+    };
+    
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'checkout_progress', eventData);
+    }
+  }
+}
+
+export const analytics = new AnalyticsTracker();
+
+------------------------------------------------------------
+// Kullanım
+
+// src/app/(public)/product/[id]/page.jsx
+useEffect(() => {
+  analytics.trackProductView(product);
+}, [product]);
+
+// src/lib/store/actions/orderActions.js
+export const addToCart = (item) => (dispatch) => {
+  dispatch(addToCartAction(item));
+  analytics.trackAddToCart(item.product, item.count);
+};
+
+// src/app/(public)/success/page.jsx
+useEffect(() => {
+  analytics.trackPurchase(orderDetail);
+}, [orderDetail]);
+
+GİT COMMIT:
+git add src/lib/analytics/* src/app/**/*.jsx
+git commit -m "feat: Add e-commerce analytics tracking (P1-3)"
+
+
+================================================================================
+P2 - E-TİCARET UX STANDARTLARI
+================================================================================
+
+[P2-1] ACCESSIBILITY (A11y) COMPLIANCE (4 saat)
+[P2-2] IMAGE OPTIMIZATION & CDN (2 saat)
+[P2-3] CODE SPLITTING & LAZY LOADING (3 saat)
+[P2-4] PROGRESSIVE WEB APP (PWA) (4 saat)
+[P2-5] ORDER HISTORY ADVANCED FILTERING (2 saat)
+[P2-6] PRODUCT REVIEWS & RATINGS (4 saat)
+[P2-7] WISHLIST FEATURE (3 saat)
+
+[Detayları gerekirse açabiliriz...]
+
+
+================================================================================
+TOPLAM SÜRE TAHMİNİ
+================================================================================
+
+P0 - KRİTİK:
+- API Timeout & Retry: 1 saat
+- Error Boundaries: 2 saat
+- Cart Persistence: 1 saat
+- Payment Recovery: 2 saat
+- Memory Leak Comprehensive: 1.5 saat
+TOPLAM P0: ~7.5 saat (1 gün)
+
+P1 - YÜKSEK:
+- Real-time Tracking: 4 saat
+- Loading States: 3 saat
+- Analytics: 2 saat
+TOPLAM P1: ~9 saat (1-2 gün)
+
+P2 - ORTA:
+- A11y, Images, Code Split, PWA, vb: ~22 saat (3 gün)
+
+GRAND TOTAL: ~38.5 saat (~1 hafta full-time)
+
+
+================================================================================
+PRİORİTİZE EDİLMİŞ AKSIYON PLANI
+================================================================================
+
+GÜN 1 (P0 - Production Blocker):
+✅ API Timeout & Retry Strategy (1h)
+✅ Error Boundaries (2h)
+✅ Cart Persistence (1h)
+✅ Payment Recovery (2h)
+✅ Memory Leak Comprehensive (1.5h)
+
+GÜN 2-3 (P1 - E-ticaret must-have):
+✅ Real-time Order Tracking (4h)
+✅ Loading States Standardization (3h)
+✅ Analytics Integration (2h)
+
+GÜN 4-7 (P2 - UX Polish):
+✅ A11y Compliance
+✅ PWA Features
+✅ Advanced Filtering
+✅ Reviews & Wishlist
+
+================================================================================
+SONUÇ - E-TİCARET PLATFORM READİNESS
+================================================================================
+
+ŞU ANKI DURUM:
+- Backend: Enterprise E-commerce ⭐⭐⭐⭐⭐
+- Frontend: MVP / Demo ⭐⭐☆☆☆
+
+P0 SONRASI:
+- Backend: Enterprise E-commerce ⭐⭐⭐⭐⭐
+- Frontend: Production-Ready E-commerce ⭐⭐⭐⭐☆
+
+P0 + P1 SONRASI:
+- Backend: Enterprise E-commerce ⭐⭐⭐⭐⭐
+- Frontend: Full-Featured E-commerce ⭐⭐⭐⭐⭐
+
+P0 + P1 + P2 SONRASI:
+- Backend: Enterprise E-commerce ⭐⭐⭐⭐⭐
+- Frontend: Best-in-Class E-commerce ⭐⭐⭐⭐⭐
+
+BACKEND-FRONTEND MATCH: ✅ ACHIEVED
+
+================================================================================

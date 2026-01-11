@@ -4,7 +4,7 @@ import {
   Londrina_Solid,
   Satisfy,
 } from "next/font/google";
-import Providers from "@/lib/providers/Providers";
+import Providers from "@/lib/providers/providers";
 
 const barlow = Barlow({
   subsets: ["latin"],
