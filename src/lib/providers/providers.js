@@ -1,7 +1,7 @@
 "use client";
 
 import { Provider } from "react-redux";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { store } from "@/lib/store/store";
 import { cartStorage } from "@/lib/utils/cartPersistence";
 import { paymentRecovery } from "@/lib/utils/paymentRecovery";
@@ -54,8 +54,15 @@ function AppInitializer() {
   }, []);
 
   // 2. Payment Recovery Check
+  // 2. Payment Recovery Check
+  const checkedPaymentRef = useRef(false);
+
   useEffect(() => {
     const checkPayment = async () => {
+      // Prevent double checks
+      if (checkedPaymentRef.current) return;
+      checkedPaymentRef.current = true;
+
       // Avoid checking if we are already on the success page to prevent loop/redundancy
       if (window.location.pathname.includes('/payment/success')) {
         return;
@@ -69,7 +76,7 @@ function AppInitializer() {
           toast({
             title: "Ödeme Başarılı",
             description: "Ödemeniz başarıyla tamamlandı!",
-            variant: "default", // or success if available in theme
+            variant: "default",
             className: "bg-green-50 border-green-200 text-green-900"
           });
         } else if (recovery.type === 'FAILED') {
@@ -85,7 +92,7 @@ function AppInitializer() {
 
     // Small delay to ensure client side is ready?
     checkPayment();
-  }, [router, toast]);
+  }, []); // Run once on mount
 
   return null;
 }
