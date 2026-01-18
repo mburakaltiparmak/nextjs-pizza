@@ -7,13 +7,15 @@ import {
     updateCartItem,
 } from "@/lib/store/actions/orderActions";
 
+import { selectCartItems } from "@/lib/store/selectors/orderSelectors";
+
 // Özel event ismi - Toast'tan sepeti açmak için
 const OPEN_CART_EVENT = "open_floating_cart";
 
 export const useCartButton = () => {
     const router = useRouter();
     const dispatch = useAppDispatch();
-    const cart = useAppSelector((state) => state.order.cart);
+    const cart = useAppSelector(selectCartItems);
 
     const [isOpen, setIsOpen] = useState(false);
     const [isClient, setIsClient] = useState(false);

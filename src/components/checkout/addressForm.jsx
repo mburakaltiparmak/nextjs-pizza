@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { User, Phone, MapPin, Building, Mail, Star, Save, Loader2 } from "lucide-react";
 
 import { addressSchema } from "@/lib/validations/order";
+import { selectIsAuthenticated, selectUserRole } from "@/lib/store/selectors/userSelectors";
 
 // Schema imported from central validation file
 
@@ -26,8 +27,8 @@ const AddressForm = ({
 }) => {
   const { success, error } = useToast();
   const dispatch = useAppDispatch();
-  const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
-  const role = useAppSelector((state) => state.user.role);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated) || false;
+  const role = useAppSelector(selectUserRole);
   const isGuestUser = role === "GUEST" || isGuest;
   const [isSaving, setIsSaving] = useState(false);
 

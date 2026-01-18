@@ -5,20 +5,23 @@ import { setPaymentMethod, setUserData } from "@/lib/store/actions/orderActions"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight, CreditCard, Banknote, GiftIcon, UserIcon } from "lucide-react";
 import { useToast } from "@/lib/hooks/useToast";
+import { selectPaymentMethod, selectCartItems, selectOrderUserData, selectSelectedAddress } from "@/lib/store/selectors/orderSelectors";
+import { selectIsAuthenticated, selectUserRole } from "@/lib/store/selectors/userSelectors";
+import { selectGuestData } from "@/lib/store/selectors/guestSelectors";
 
 const SecondStep = ({ setCurrentStep, setStep2 }) => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
 
   // Redux'tan gerekli verileri al
-  const paymentMethod = useAppSelector((state) => state.order.paymentMethod || "CASH");
-  const cart = useAppSelector((state) => state.order.cart);
-  const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
-  const role = useAppSelector((state) => state.user.role);
+  const paymentMethod = useAppSelector(selectPaymentMethod) || "CASH";
+  const cart = useAppSelector(selectCartItems);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated) || false;
+  const role = useAppSelector(selectUserRole);
   const isGuest = role === "GUEST";
-  const guestData = useAppSelector((state) => state.guest);
-  const userData = useAppSelector((state) => state.order.userData);
-  const selectedAddress = useAppSelector((state) => state.order.selectedAddress);
+  const guestData = useAppSelector(selectGuestData);
+  const userData = useAppSelector(selectOrderUserData);
+  const selectedAddress = useAppSelector(selectSelectedAddress);
 
   const [selectedTab, setSelectedTab] = useState("default");
 

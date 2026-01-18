@@ -21,14 +21,17 @@ import { useLoginForm } from "@/lib/hooks/useLoginForm";
 import { useSignupForm } from "@/lib/hooks/useSignupForm";
 import { useForgotPassword } from "@/lib/hooks/useForgotPassword";
 import useAuth from "@/lib/hooks/useAuth";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { setGuestMode } from "@/lib/store/actions/appActions";
+import { selectIsAuthenticated, selectUserProfile, selectUserRole, selectAuthLoading } from "@/lib/store/selectors/userSelectors";
 import Link from "next/link";
 import { LoadingSpinner } from "../ui/LoadingSpinner";
 import { useRouter, usePathname } from "next/navigation";
 
 const Sidebar = () => {
-    const { loading: authLoading, refreshAuth } = useAuth([], "/", false);
+    // Auth loading from Redux selector
+    const authLoading = useAppSelector(selectAuthLoading);
+    const { refreshAuth } = useAuth([], "/", false);
     const dispatch = useAppDispatch();
     const [isOpen, setIsOpen] = useState(false);
 

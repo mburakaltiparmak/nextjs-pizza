@@ -13,6 +13,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import DOMPurify from "dompurify";
+import { selectOrderUserData, selectSelectedAddress, selectCartItems, selectPaymentMethod } from "@/lib/store/selectors/orderSelectors";
+import { selectIsAuthenticated, selectUserRole } from "@/lib/store/selectors/userSelectors";
+import { selectGuestData } from "@/lib/store/selectors/guestSelectors";
 
 // Diğer ödeme yöntemleri için component - Sadece not alanı
 const PaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, paymentMethod }) => {
@@ -43,9 +46,9 @@ const PaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, paymentM
   };
 
   // Kullanıcı verileri ve teslimat bilgileri
-  const userData = useAppSelector((state) => state.order.userData);
-  const selectedAddress = useAppSelector((state) => state.order.selectedAddress);
-  const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
+  const userData = useAppSelector(selectOrderUserData);
+  const selectedAddress = useAppSelector(selectSelectedAddress);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated) || false;
 
   // Teslimat bilgilerini görüntüle
   const renderDeliveryInfo = () => {
@@ -148,15 +151,15 @@ const ThirdStep = ({ setCurrentStep, setStep3, onSuccess }) => {
   const [isSuccess, setIsSuccess] = useState(false); // Başarılı işlem durumu
 
   // Redux state
-  const userData = useAppSelector((state) => state.order.userData);
-  const selectedAddress = useAppSelector((state) => state.order.selectedAddress);
-  const cartData = useAppSelector((state) => state.order.cart);
-  const paymentMethod = useAppSelector((state) => state.order.paymentMethod);
-  const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
-  const role = useAppSelector((state) => state.user.role);
+  const userData = useAppSelector(selectOrderUserData);
+  const selectedAddress = useAppSelector(selectSelectedAddress);
+  const cartData = useAppSelector(selectCartItems);
+  const paymentMethod = useAppSelector(selectPaymentMethod);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated) || false;
+  const role = useAppSelector(selectUserRole);
 
   const isGuest = role === "GUEST";
-  const guestData = useAppSelector((state) => state.guest);
+  const guestData = useAppSelector(selectGuestData);
 
 
   // Basit schema - sadece not alanı

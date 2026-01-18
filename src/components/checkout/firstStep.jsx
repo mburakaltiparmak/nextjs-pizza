@@ -12,6 +12,8 @@ import AddressList from "./addressList";
 import GuestInfoForm from "./guestInfoForm";
 
 import { personalInfoSchema } from "@/lib/validations/order";
+import { selectUserProfile, selectIsAuthenticated, selectUserRole, selectUserAddresses } from "@/lib/store/selectors/userSelectors";
+import { selectGuestData } from "@/lib/store/selectors/guestSelectors";
 
 // Schema imported from central validation file
 
@@ -21,18 +23,19 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
   const { success, error, warning } = useToast();
 
   // Get user profile from redux store
-  const userProfile = useAppSelector((state) => state.user.profile);
-  const isAuthenticated = useAppSelector((state) => state.user?.isLogin) || false;
-  const role = useAppSelector((state) => state.user.role);
+  // Get user profile from redux store
+  const userProfile = useAppSelector(selectUserProfile);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated) || false;
+  const role = useAppSelector(selectUserRole);
   const isGuestMode = useAppSelector((state) => state.app?.isGuestMode);
   // Kullanıcı giriş yapmamışsa otomatik olarak misafir sayılır
   const isGuest = role === "GUEST" || isGuestMode || !isAuthenticated;
 
   // Get guest data from redux store if role is GUEST
-  const guestData = useAppSelector((state) => state.guest);
+  const guestData = useAppSelector(selectGuestData);
 
   // Mevcut adresleri redux'tan al (AddressList bunları kullanacak)
-  const addresses = useAppSelector((state) => state.user.addresses || []);
+  const addresses = useAppSelector(selectUserAddresses) || [];
 
   const [newAddress, setNewAddress] = useState(null);
   const [selectedAddressId, setSelectedAddressId] = useState(null);

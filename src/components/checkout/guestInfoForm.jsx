@@ -12,6 +12,7 @@ import {
 } from "@/lib/store/actions/guestActions";
 
 import { guestInfoSchema } from "@/lib/validations/order";
+import { selectGuestData } from "@/lib/store/selectors/guestSelectors";
 
 // Schema imported from central validation file
 
@@ -20,7 +21,7 @@ const GuestInfoForm = () => {
   const dispatch = useAppDispatch();
 
   // Get guest data from redux store
-  const guestData = useAppSelector((state) => state.guest);
+  const guestData = useAppSelector(selectGuestData);
 
   const {
     register,

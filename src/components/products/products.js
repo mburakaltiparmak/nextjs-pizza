@@ -2,6 +2,8 @@
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { addToCart } from "@/lib/store/actions/orderActions";
 import { useMemo } from "react";
+import { selectProductList, selectProductPagination } from "@/lib/store/selectors/productSelectors";
+import { selectAuthLoading as selectGlobalLoading } from "@/lib/store/selectors/userSelectors";
 import { useToast } from "@/lib/hooks/useToast";
 import RatingStars from "../admin/ratingStars";
 import Link from "next/link";
@@ -16,9 +18,11 @@ const Products = ({ categoryFilter = "", onPageChange, products: propProducts, p
   const { cartNotification } = useToast(); // useToast'dan cartNotification metodunu al
 
   // Redux state
-  const reduxProducts = useAppSelector((state) => state.product.products);
-  const reduxPagination = useAppSelector((state) => state.product.pagination);
-  const globalLoading = useAppSelector((state) => state.global.loading);
+
+
+  const reduxProducts = useAppSelector(selectProductList);
+  const reduxPagination = useAppSelector(selectProductPagination);
+  const globalLoading = useAppSelector((state) => state.global.loading); // Optimized global selector later if needed
 
   const products = propProducts || reduxProducts;
   const pagination = propPagination || reduxPagination;

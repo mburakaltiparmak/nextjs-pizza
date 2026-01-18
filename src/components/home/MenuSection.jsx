@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { useHomeData } from "@/lib/hooks/useHomeData";
 import { fetchProducts, fetchProductsByCategory } from "@/lib/store/actions/productActions";
+import { selectProductList } from "@/lib/store/selectors/productSelectors";
+import { selectAllCategories } from "@/lib/store/selectors/categorySelectors";
 
 // Components
 import FeaturedProductsSection from "./FeaturedProductsSection";
@@ -17,8 +19,9 @@ export default function MenuSection() {
     const [selectedCategoryId, setSelectedCategoryId] = useState(null);
 
     // We check store directly to avoid redundant fetching if data exists
-    const products = useAppSelector((store) => store.product.products);
-    const categories = useAppSelector((store) => store.category.categories);
+
+    const products = useAppSelector(selectProductList);
+    const categories = useAppSelector(selectAllCategories);
 
     const hasProductData = Array.isArray(products) && products.length > 0;
     const hasCategoryData = Array.isArray(categories) && categories.length > 0;
