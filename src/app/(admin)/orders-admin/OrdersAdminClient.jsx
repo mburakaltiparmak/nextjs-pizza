@@ -149,9 +149,10 @@ const OrdersAdminClient = () => {
         return null;
     }
 
-    if (loading) {
-        return <LoadingSpinner size="fullPage" />;
-    }
+    // Loading state removed to show skeletons
+    // if (loading) {
+    //     return <LoadingSpinner size="fullPage" />;
+    // }
 
     return (
         <div>
@@ -208,6 +209,7 @@ const OrdersAdminClient = () => {
                 onViewDetail={handleShowDetail}
                 filteredCount={filteredOrders.length}
                 totalCount={filterStats.total}
+                isLoading={loading || isRefreshing}
             />
 
             {/* Order Detail Modal */}

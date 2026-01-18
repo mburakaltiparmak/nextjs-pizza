@@ -148,10 +148,10 @@ const ProductClient = () => {
         return null;
     }
 
-    // Loading state
-    if (loading) {
-        return <LoadingSpinner size="fullPage" />;
-    }
+    // Loading state removed for skeleton UI
+    // if (loading) {
+    //     return <LoadingSpinner size="fullPage" />;
+    // }
 
     return (
         <div>

@@ -1,0 +1,30 @@
+
+> nextjs-pizza@0.1.0 lint
+> next lint
+
+`next lint` is deprecated and will be removed in Next.js 16.
+For new projects, use create-next-app to choose your preferred linter.
+For existing projects, migrate to the ESLint CLI:
+npx @next/codemod@canary next-lint-to-eslint-cli .
+
+
+./src/app/(admin)/category/CategoryClient.jsx
+37:11  Warning: The 'categories' logical expression could make the dependencies of useMemo Hook (at line 112) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'categories' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+
+./src/components/admin/orders/OrdersTable.jsx
+30:26  Error: React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+
+./src/components/layout/AdminSidebar.jsx
+123:9  Warning: React Hook useCallback has a missing dependency: 'setMobileOpen'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/lib/contexts/AdminLayoutContext.jsx
+21:6  Warning: React Hook useCallback has a missing dependency: 'modalState'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/lib/contexts/AuthContext.jsx
+253:30  Warning: React Hook useCallback received a function whose dependencies are unknown. Pass an inline function instead.  react-hooks/exhaustive-deps
+363:6  Warning: React Hook useEffect has a missing dependency: 'context'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/lib/providers/providers.js
+95:6  Warning: React Hook useEffect has missing dependencies: 'router' and 'toast'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

@@ -1,11 +1,10 @@
 import Image from "next/image";
 import { Edit, Trash2, Package, Plus } from "lucide-react";
 import RatingStars from "@/components/admin/ratingStars";
+import { TableSkeleton } from "@/components/ui/skeletons/TableSkeleton";
 
-/**
- * Products Table Component
- * Displays products in table format with actions
- */
+// ...
+
 export const ProductsTable = ({
     products,
     categories,
@@ -31,13 +30,10 @@ export const ProductsTable = ({
         );
         return foundCategory ? foundCategory.name : "Bilinmeyen Kategori";
     };
+    // ...
 
     if (loading) {
-        return (
-            <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-                <p className="text-gray-500 font-Barlow">Yükleniyor...</p>
-            </div>
-        );
+        return <TableSkeleton rowCount={10} columnCount={6} />;
     }
 
     return (

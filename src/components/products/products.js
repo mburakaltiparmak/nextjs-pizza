@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Pagination } from "@/components/ui/Pagination";
 import { ShoppingCart } from "lucide-react";
+import { ProductCardSkeleton } from "@/components/ui/skeletons/ProductCardSkeleton";
 
 const Products = ({ categoryFilter = "", onPageChange }) => {
   const dispatch = useAppDispatch();
@@ -29,9 +30,17 @@ const Products = ({ categoryFilter = "", onPageChange }) => {
     });
   };
 
+  // ... (inside Products component)
+
   // Ürünler yüklenene kadar loading göster
   if (globalLoading || !products) {
-    return <LoadingSpinner size="small" />;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-md:py-6 w-full">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <ProductCardSkeleton key={i} />
+        ))}
+      </div>
+    );
   }
 
   // Ürün bulunamadı durumu
@@ -61,6 +70,7 @@ const Products = ({ categoryFilter = "", onPageChange }) => {
               <div className="relative bg-white rounded-xl overflow-hidden drop-shadow-md hover:drop-shadow-xl transition-all duration-300 border border-lightgray z-50">
                 {/* Image Container */}
                 <div className="flex items-center justify-center py-8">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={item.img}
                     alt={item.name}

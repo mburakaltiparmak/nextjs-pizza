@@ -6,6 +6,7 @@ import {
 } from "next/font/google";
 import Providers from "@/lib/providers/providers";
 import ErrorBoundary from "@/components/errors/ErrorBoundary";
+import { LoadingBar } from "@/components/ui/LoadingBar";
 
 const barlow = Barlow({
   subsets: ["latin"],
@@ -36,12 +37,15 @@ export const metadata = {
   description: "made by burak altiparmak",
 };
 
+// ...
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={fontClasses}>
       <body>
         <ErrorBoundary>
           <Providers>
+            <LoadingBar />
             {children}
           </Providers>
         </ErrorBoundary>

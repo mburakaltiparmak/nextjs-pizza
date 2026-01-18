@@ -4,8 +4,9 @@ import { useState, useMemo } from "react";
 import { ShoppingBag, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { OrderTableRow } from "./OrderTableRow";
 import { OrderMobileCard } from "./OrderMobileCard";
+import { TableSkeleton } from "@/components/ui/skeletons/TableSkeleton";
 
-export const OrdersTable = ({ orders, onViewDetail, filteredCount, totalCount }) => {
+export const OrdersTable = ({ orders, onViewDetail, filteredCount, totalCount, isLoading }) => {
     const [sortField, setSortField] = useState("orderDate");
     const [sortDirection, setSortDirection] = useState("desc");
 
@@ -72,6 +73,10 @@ export const OrdersTable = ({ orders, onViewDetail, filteredCount, totalCount })
             <ArrowDown className="w-4 h-4 text-blue-600" />
         );
     };
+
+    if (isLoading) {
+        return <TableSkeleton rowCount={10} columnCount={8} />;
+    }
 
     if (!orders || orders.length === 0) {
         return (
