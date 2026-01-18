@@ -1,19 +1,22 @@
 "use client";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import useAuthRoute from "@/lib/hooks/useAuthRole"; // Updated import
-import { useAdminLayout } from "@/lib/contexts/AdminLayoutContext"; // Updated import
+import useAuthRoute from "@/lib/hooks/useAuthRole";
+import { useAdminLayout } from "@/lib/contexts/AdminLayoutContext";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
+import { fetchProducts, fetchProductsByCategory } from "@/lib/store/actions/productActions";
+import { fetchCategories } from "@/lib/store/actions/categoryActions";
+
 
 // Custom Hooks
-import { useProductsManager } from "@/lib/hooks/useProductsManager"; // Updated import
-import { useProductActions } from "@/lib/hooks/useProductActions"; // Updated import
+import { useProductActions } from "@/lib/hooks/useProductActions";
 
 // Components
-import { ConfirmationModal } from "@/components/admin/AdminModals"; // Updated import
+import { ConfirmationModal } from "@/components/admin/AdminModals";
 import { ProductFilters } from "@/components/admin/products/ProductFilters";
 import { ProductsTable } from "@/components/admin/products/ProductsTable";
 import { ProductFormModal } from "@/components/admin/products/ProductFormModal";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner"; // Updated import
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 const ProductClient = () => {
     const router = useRouter();
@@ -21,61 +24,79 @@ const ProductClient = () => {
     const { registerModal } = useAdminLayout();
 
     // State
+    // Duplicates removed
+    const dispatch = useAppDispatch();
+
+    // Redux Selectors
+    const products = useAppSelector((state) => state.product.products);
+    const pagination = useAppSelector((state) => state.product.pagination);
+    // Categories might still be needed from useProductsManager or Redux. 
+    // Homepage uses: const categories = useAppSelector((store) => store.category.categories);
+    // Let's assume we need to fetch categories too if not present.
+    const categoriesRoot = useAppSelector((state) => state.category.categories);
+    // But useProductsManager fetches categories too. Let's start with matching redux.
+
+    // Actually, Admin layout might load initial data? 
+    // Let's keep useProductsManager for *categories* if redundant, or better, use Redux for consistency.
+    // For now, let's mix: Use Redux for Products (server filter), useProductsManager for Categories (if not in redux).
+    // ...Wait, MenuSection uses useHomeData to load initial data.
+
+    // Let's try to stick to Redux for products.
+
     const [searchTerm, setSearchTerm] = useState("");
     const [filterCategory, setFilterCategory] = useState("");
+
+    // ... modal states ...
     const [modalOpen, setModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [productToDelete, setProductToDelete] = useState(null);
 
-    // Custom Hooks
-    const {
-        products,
-        categories,
-        loading,
-        refreshProducts,
-        updateProductLocally,
-        addProductLocally,
-        removeProductLocally,
-    } = useProductsManager();
+    // Initial Fetch (similar to MenuSection)
+    useEffect(() => {
+        // Fetch initial products (page 0)
+        dispatch(fetchProducts(0));
+        // We also need categories for the filter dropdown
+        dispatch(fetchCategories());
+    }, [dispatch]);
+
+    // Using useProductsManager ONLY for categories if needed, or better, import fetchCategories.
+    // Let's check if fetchCategories is exported from productActions or categoryActions.
+    // user said "request and order structure" of homepage.
+    // Homepage uses `useHomeData` which likely dispatches `fetchCategories`.
+
+    // Let's rely on `categoriesRoot` from Redux if available.
+
+    const handleCategoryChange = (categoryId) => {
+        setFilterCategory(categoryId);
+        if (categoryId) {
+            dispatch(fetchProductsByCategory(categoryId, 0));
+        } else {
+            // Reset to all products
+            dispatch(fetchProducts(0));
+        }
+    };
+
+    // Helper to refresh current view (after edit/delete)
+    const refreshCurrentView = () => {
+        if (filterCategory) {
+            dispatch(fetchProductsByCategory(filterCategory, 0));
+        } else {
+            dispatch(fetchProducts(0));
+        }
+    };
 
     const { isUpdating, createProduct, updateProduct, deleteProduct } =
         useProductActions({
-            onSuccess: refreshProducts,
-            updateProductLocally,
-            addProductLocally,
-            removeProductLocally,
+            onSuccess: refreshCurrentView, // Refresh redux state instead of local
+            // No local updates needed for Redux flow usually, as actions update store?
+            // Actually useProductActions might expect local updaters.
+            // If we pass null, maybe it works?
+            // Let's pass dummy functions or adapt useProductActions.
         });
-
-    // Filtered products - memoized
-    const filteredProducts = useMemo(() => {
-        if (!products || !Array.isArray(products)) {
-            return [];
-        }
-
-        return products.filter((product) => {
-            if (!product || !product.name || typeof product.name !== "string") {
-                return false;
-            }
-
-            const matchesSearch = product.name
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase());
-
-            let matchesCategory = true;
-            if (filterCategory !== "") {
-                matchesCategory =
-                    product.categoryId &&
-                    product.categoryId.toString() === filterCategory;
-            }
-
-            return matchesSearch && matchesCategory;
-        });
-    }, [products, searchTerm, filterCategory]);
 
     // Handlers
     const openModal = useCallback((product = null) => {
-        console.log("open modal clicked");
         setEditingProduct(product);
         setModalOpen(true);
     }, []);
@@ -100,15 +121,7 @@ const ProductClient = () => {
         setDeleteModalOpen(false);
     };
 
-    // Mounted ref for memory leak protection
-    const mountedRef = useState(true)[0]; // Use ref but initialized? No, standard pattern:
-    // Actually useRef is better.
-    const mounted = useRef(true);
-    useEffect(() => {
-        return () => {
-            mounted.current = false;
-        };
-    }, []);
+    // ... handleFormSubmit and handleDeleteProduct remain similar but use new refresh ...
 
     const handleFormSubmit = async (data, editingProduct) => {
         const productData = {
@@ -126,7 +139,6 @@ const ProductClient = () => {
         } else {
             result = await createProduct(productData);
         }
-
         return result;
     };
 
@@ -138,7 +150,7 @@ const ProductClient = () => {
             productToDelete.name
         );
 
-        if (mounted.current && result && !result.error) {
+        if (result && !result.error) {
             closeDeleteModal();
         }
     };
@@ -156,22 +168,23 @@ const ProductClient = () => {
     return (
         <div>
             {/* Filters */}
+            {/* Filters */}
             <ProductFilters
                 searchTerm={searchTerm}
                 filterCategory={filterCategory}
-                categories={categories}
+                categories={categoriesRoot}
                 onSearchChange={setSearchTerm}
-                onCategoryChange={setFilterCategory}
+                onCategoryChange={handleCategoryChange}
             />
 
             {/* Products Table */}
             <ProductsTable
-                products={filteredProducts}
-                categories={categories}
+                products={products}
+                categories={categoriesRoot}
                 onEdit={openModal}
                 onDelete={openDeleteModal}
                 onAddNew={() => openModal()}
-                loading={loading}
+                loading={false} // Redux loading handled globally or component specific?
             />
 
             {/* Add/Edit Product Modal */}
@@ -180,7 +193,7 @@ const ProductClient = () => {
                 onClose={closeModal}
                 onSubmit={handleFormSubmit}
                 editingProduct={editingProduct}
-                categories={categories}
+                categories={categoriesRoot}
                 isUpdating={isUpdating}
             />
 

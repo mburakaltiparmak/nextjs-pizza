@@ -51,7 +51,10 @@ const Sidebar = () => {
 
     const pathname = usePathname();
 
+    const [mounted, setMounted] = useState(false);
+
     useEffect(() => {
+        setMounted(true);
         // Anasayfa kontrolü (Root, /tr veya /en)
         const isHome = pathname === "/" || pathname === "/tr" || pathname === "/en";
         setIsHomePage(isHome);
@@ -153,115 +156,116 @@ const Sidebar = () => {
                             <div className="h-px bg-white/20 my-2 mx-2"></div>
                         </div>
                     )}
-
-
-                    {authLoading ? (
-                        <div className="flex justify-center py-4">
-                            <LoadingSpinner size="small" color="border-white" />
-                        </div>
-                    ) : isLogin ? (
-                        // USER LINKS
-                        <>
-                            {/* User Profile Summary */}
-                            <div className="flex items-center gap-4 p-3 mb-2 bg-black/20 rounded-xl border border-yellow/30">
-                                <div className="w-12 h-12 bg-white text-red rounded-full flex items-center justify-center font-bold font-Barlow text-xl border-2 border-yellow shadow-sm" title={displayName}>
-                                    {displayName ? displayName.charAt(0).toUpperCase() : <FontAwesomeIcon icon={faUser} />}
+                    {
+                        authLoading ? (
+                            <div className="flex justify-center py-4" >
+                                <LoadingSpinner size="small" color="border-white" />
+                            </div >
+                        ) : (mounted && isLogin) ? (
+                            // USER LINKS
+                            <>
+                                {/* User Profile Summary */}
+                                <div className="flex items-center gap-4 p-3 mb-2 bg-black/20 rounded-xl border border-yellow/30">
+                                    <div className="w-12 h-12 bg-white text-red rounded-full flex items-center justify-center font-bold font-Barlow text-xl border-2 border-yellow shadow-sm" title={displayName}>
+                                        {displayName ? displayName.charAt(0).toUpperCase() : <FontAwesomeIcon icon={faUser} />}
+                                    </div>
+                                    <div className="flex flex-col overflow-hidden">
+                                        <span className="font-Barlow font-bold text-yellow truncate">Merhaba,</span>
+                                        <span className="font-Barlow text-sm truncate opacity-90">{displayName || "Kullanıcı"}</span>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col overflow-hidden">
-                                    <span className="font-Barlow font-bold text-yellow truncate">Merhaba,</span>
-                                    <span className="font-Barlow text-sm truncate opacity-90">{displayName || "Kullanıcı"}</span>
-                                </div>
-                            </div>
 
-                            <button
-                                onClick={() => {
-                                    handleNavigation("/profile");
-                                    setIsOpen(false);
-                                }}
-                                className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/20 transition-all text-white group text-left"
-                            >
-                                <div className="w-10 h-10 flex items-center justify-center">
-                                    <FontAwesomeIcon icon={faUserEdit} className="text-xl group-hover:text-yellow transition-colors" />
-                                </div>
-                                <span className="font-Barlow font-medium text-lg">Profil Bilgilerim</span>
-                            </button>
-
-                            {isAdminOrPersonal ? (
                                 <button
                                     onClick={() => {
-                                        handleNavigation("/dashboard");
+                                        handleNavigation("/profile");
                                         setIsOpen(false);
                                     }}
                                     className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/20 transition-all text-white group text-left"
                                 >
                                     <div className="w-10 h-10 flex items-center justify-center">
-                                        <FontAwesomeIcon icon={faUserTie} className="text-xl group-hover:text-yellow transition-colors" />
+                                        <FontAwesomeIcon icon={faUserEdit} className="text-xl group-hover:text-yellow transition-colors" />
                                     </div>
-                                    <span className="font-Barlow font-medium text-lg">Admin Paneli</span>
+                                    <span className="font-Barlow font-medium text-lg">Profil Bilgilerim</span>
                                 </button>
-                            ) : (
+
+                                {isAdminOrPersonal ? (
+                                    <button
+                                        onClick={() => {
+                                            handleNavigation("/dashboard");
+                                            setIsOpen(false);
+                                        }}
+                                        className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/20 transition-all text-white group text-left"
+                                    >
+                                        <div className="w-10 h-10 flex items-center justify-center">
+                                            <FontAwesomeIcon icon={faUserTie} className="text-xl group-hover:text-yellow transition-colors" />
+                                        </div>
+                                        <span className="font-Barlow font-medium text-lg">Admin Paneli</span>
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            handleNavigation("/orders");
+                                            setIsOpen(false);
+                                        }}
+                                        className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/20 transition-all text-white group text-left"
+                                    >
+                                        <div className="w-10 h-10 flex items-center justify-center">
+                                            <FontAwesomeIcon icon={faShoppingBag} className="text-xl group-hover:text-yellow transition-colors" />
+                                        </div>
+                                        <span className="font-Barlow font-medium text-lg">Siparişlerim</span>
+                                    </button>
+                                )}
+                            </>
+                        ) : (
+                            // GUEST LINKS
+                            <>
+
+
                                 <button
-                                    onClick={() => {
-                                        handleNavigation("/orders");
-                                        setIsOpen(false);
-                                    }}
-                                    className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/20 transition-all text-white group text-left"
+                                    onClick={() => setLoginOpen(true)}
+                                    className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/20 transition-all text-white group text-left bg-black/20"
                                 >
-                                    <div className="w-10 h-10 flex items-center justify-center">
-                                        <FontAwesomeIcon icon={faShoppingBag} className="text-xl group-hover:text-yellow transition-colors" />
+                                    <div className="w-10 h-10 bg-yellow text-red rounded-full flex items-center justify-center shadow-md">
+                                        <FontAwesomeIcon icon={faUser} className="text-lg" />
                                     </div>
-                                    <span className="font-Barlow font-medium text-lg">Siparişlerim</span>
+                                    <span className="font-Barlow font-bold text-lg">Giriş Yap</span>
                                 </button>
-                            )}
-                        </>
-                    ) : (
-                        // GUEST LINKS
-                        <>
 
-
-                            <button
-                                onClick={() => setLoginOpen(true)}
-                                className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/20 transition-all text-white group text-left bg-black/20"
-                            >
-                                <div className="w-10 h-10 bg-yellow text-red rounded-full flex items-center justify-center shadow-md">
-                                    <FontAwesomeIcon icon={faUser} className="text-lg" />
-                                </div>
-                                <span className="font-Barlow font-bold text-lg">Giriş Yap</span>
-                            </button>
-
-                            <button
-                                onClick={() => setSignupOpen(true)}
-                                className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/20 transition-all text-white group text-left border border-white/20"
-                            >
-                                <div className="w-10 h-10 bg-white text-red rounded-full flex items-center justify-center shadow-md">
-                                    <FontAwesomeIcon icon={faUserPlus} className="text-lg" />
-                                </div>
-                                <span className="font-Barlow font-bold text-lg">Üye Ol</span>
-                            </button>
-                        </>
-                    )}
-                </div>
+                                <button
+                                    onClick={() => setSignupOpen(true)}
+                                    className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/20 transition-all text-white group text-left border border-white/20"
+                                >
+                                    <div className="w-10 h-10 bg-white text-red rounded-full flex items-center justify-center shadow-md">
+                                        <FontAwesomeIcon icon={faUserPlus} className="text-lg" />
+                                    </div>
+                                    <span className="font-Barlow font-bold text-lg">Üye Ol</span>
+                                </button>
+                            </>
+                        )}
+                </div >
 
                 {/* Footer / Logout */}
-                {isLogin && (
-                    <div className="p-6 border-t border-white/20">
-                        <button
-                            onClick={() => {
-                                handleLogout();
-                                setIsOpen(false);
-                            }}
-                            disabled={isLoggingOut}
-                            className="w-full flex items-center justify-center gap-3 p-3 rounded-xl bg-darkred hover:bg-black transition-colors text-white shadow-lg"
-                        >
-                            <FontAwesomeIcon icon={faSignOutAlt} />
-                            <span className="font-Barlow font-bold">Güvenli Çıkış</span>
-                        </button>
-                    </div>
-                )}
-            </aside>
+                {
+                    (mounted && isLogin) && (
+                        <div className="p-6 border-t border-white/20">
+                            <button
+                                onClick={() => {
+                                    handleLogout();
+                                    setIsOpen(false);
+                                }}
+                                disabled={isLoggingOut}
+                                className="w-full flex items-center justify-center gap-3 p-3 rounded-xl bg-darkred hover:bg-black transition-colors text-white shadow-lg"
+                            >
+                                <FontAwesomeIcon icon={faSignOutAlt} />
+                                <span className="font-Barlow font-bold">Güvenli Çıkış</span>
+                            </button>
+                        </div>
+                    )
+                }
+            </aside >
 
             {/* Dialogs */}
-            <LoginDialog
+            < LoginDialog
                 loginOpen={loginOpen}
                 setLoginOpen={setLoginOpen}
                 onGuestCheckout={handleGuestCheckout}

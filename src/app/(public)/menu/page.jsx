@@ -1,6 +1,4 @@
-import { FeaturedProductsSection } from "@/components/home";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import MenuClient from "./MenuClient";
 
 export const metadata = {
     title: "Teknolojik Yemekler - Menü",
@@ -11,7 +9,7 @@ export default function MenuPage() {
     return (
         <>
             <div className="pt-8">
-                <FeaturedProductsSection />
+                <MenuClient />
             </div>
         </>
     );

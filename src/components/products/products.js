@@ -11,14 +11,17 @@ import { Pagination } from "@/components/ui/Pagination";
 import { ShoppingCart } from "lucide-react";
 import { ProductCardSkeleton } from "@/components/ui/skeletons/ProductCardSkeleton";
 
-const Products = ({ categoryFilter = "", onPageChange }) => {
+const Products = ({ categoryFilter = "", onPageChange, products: propProducts, pagination: propPagination }) => {
   const dispatch = useAppDispatch();
   const { cartNotification } = useToast(); // useToast'dan cartNotification metodunu al
 
   // Redux state
-  const products = useAppSelector((state) => state.product.products);
-  const pagination = useAppSelector((state) => state.product.pagination);
+  const reduxProducts = useAppSelector((state) => state.product.products);
+  const reduxPagination = useAppSelector((state) => state.product.pagination);
   const globalLoading = useAppSelector((state) => state.global.loading);
+
+  const products = propProducts || reduxProducts;
+  const pagination = propPagination || reduxPagination;
 
   const handleAddToCart = (product, e) => {
     e.preventDefault(); // Link tıklamasını önle
