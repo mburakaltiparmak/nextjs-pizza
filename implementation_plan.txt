@@ -1,0 +1,451 @@
+# Implementation Plan: Pizza Project Refactor Branch
+
+**Branch:** refactor  
+**Environment:** localhost:8080  
+**Date:** 2026-01-18
+
+---
+
+## Overview
+
+This implementation plan outlines the systematic refactoring and enhancement of the Pizza Order System across both backend (Java/Spring Boot) and frontend (Next.js). The work is organized into 9 phases with 31 tasks, prioritized by impact and dependencies.
+
+### Goals
+
+1. **Code Quality:** Eliminate technical debt, improve maintainability
+2. **Security:** Implement production-grade security measures
+3. **Features:** Add real-time capabilities, refund system, autocomplete search
+4. **UX:** Enhance user experience with loading states, filtering, optimistic updates
+5. **Production Readiness:** Prepare for production deployment with monitoring, logging, and optimization
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Testing Approach**
+> Each task includes specific testing requirements. After completing each phase, we will pause for verification before proceeding. This ensures quality and allows for course correction if needed.
+
+> [!WARNING]
+> **Breaking Changes**
+> - **Phase 8.1:** Response DTO Standardization will change API response format. Frontend must be updated concurrently.
+> - **Phase 9.1:** API Versioning will introduce `/api/v1/` prefix. Old endpoints will be deprecated but remain functional.
+
+> [!CAUTION]
+> **Production Deployment**
+> Do NOT merge to production until ALL phases are complete and tested. The refactor branch must be fully validated on localhost:8080 before deployment.
+
+---
+
+## Proposed Changes
+
+### Phase 1: Backend Code Quality (P0)
+
+#### [MODIFY] [IyzicoConfig.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/config/logic/IyzicoConfig.java)
+- Replace `System.out.println` with `log.info`
+- Add `@Slf4j` annotation
+
+#### [MODIFY] [CloudinaryConfig.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/config/logic/CloudinaryConfig.java)
+- Replace `System.out.println` with `log.info`
+- Add `@Slf4j` annotation
+
+#### [MODIFY] [DotenvConfig.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/config/auth/DotenvConfig.java)
+- Replace `System.out.println` with `log.debug`
+- Add `@Slf4j` annotation
+
+#### [MODIFY] All Service and Repository Classes
+- Audit for `Optional<T>` usage
+- Add `@NotNull` annotations where appropriate
+- Ensure consistent null handling
+
+---
+
+### Phase 2: Backend Security (P0)
+
+#### [NEW] [LogMaskingUtil.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/logic/util/LogMaskingUtil.java)
+- Create utility class for masking sensitive data
+- Methods: `maskEmail()`, `maskToken()`, `maskCardNumber()`
+
+#### [MODIFY] [application-prod.properties](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/resources/application-prod.properties)
+- Restrict actuator endpoints to `health,info`
+- Set `management.endpoint.health.show-details=never`
+
+#### [MODIFY] All DTOs
+- Audit and add validation annotations
+- Ensure `@Valid` on all controller methods
+
+---
+
+### Phase 3: Backend Features (P1)
+
+#### [NEW] [SocketIOConfig.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/config/SocketIOConfig.java)
+- Configure Socket.IO server on port 9092
+- Set up CORS for frontend connection
+
+#### [NEW] [SocketIOService.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/service/socket/SocketIOService.java)
+- Implement `emitOrderCreated()`, `emitOrderUpdated()` methods
+- Handle room management for admin notifications
+
+#### [MODIFY] [OrderServiceImpl.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/service/order/OrderServiceImpl.java)
+- Integrate Socket.IO event emission on order status changes
+
+#### [NEW] [RefundController.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/controller/RefundController.java)
+- Add `POST /api/payment/{paymentId}/refund` endpoint
+
+#### [NEW] [RefundService.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/service/payment/RefundService.java)
+- Implement smart refund logic (Cancel/Void → Refund fallback)
+- Add business rules for cancellable order statuses
+
+#### [NEW] [SearchSuggestionsController.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/controller/SearchSuggestionsController.java)
+- Add `GET /api/search/suggestions?q={query}` endpoint
+
+#### [MODIFY] [ProductSearchService.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/service/product/ProductSearchService.java)
+- Implement fuzzy autocomplete search
+- Limit to 10 results, minimum 2 characters
+
+---
+
+### Phase 4-7: Frontend Changes
+
+#### [DELETE] [axios-instance.js](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/lib/api/axios-instance.js)
+- Remove duplicate axios configuration
+
+#### [MODIFY] All Frontend Files Using Axios
+- Update imports to use `src/lib/axios/config.js`
+
+#### [MODIFY] [next.config.js](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/next.config.js)
+- Add security headers (X-Frame-Options, X-Content-Type-Options, etc.)
+
+#### [NEW] [useLoadingManager.js](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/hooks/useLoadingManager.js)
+- Create custom hook for loading state management
+
+#### [NEW] [/track/[uuid]/page.jsx](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/app/track/[uuid]/page.jsx)
+- Implement order tracking page with Socket.IO integration
+
+---
+
+### Phase 8: Backend Consistency (P2)
+
+#### [NEW] [ApiResponse.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/dto/ApiResponse.java)
+- Create generic response wrapper
+- Fields: `success`, `data`, `message`, `timestamp`
+
+#### [NEW] [PagedResponse.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/dto/PagedResponse.java)
+- Create standardized pagination response
+- Fields: `content`, `page`, `size`, `totalElements`, `totalPages`, `last`
+
+#### [MODIFY] All Controllers
+- Update to use `ApiResponse<T>` and `PagedResponse<T>`
+
+---
+
+### Phase 9: Final Production Readiness
+
+#### [MODIFY] All Controllers
+- Add `/api/v1/` prefix to all endpoints
+- Maintain backward compatibility with deprecation notices
+
+#### [MODIFY] All Controllers and DTOs
+- Add comprehensive Swagger annotations
+- `@Operation`, `@ApiResponse`, `@Schema` with examples
+
+#### [MODIFY] [logback-spring.xml](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/resources/logback-spring.xml)
+- Configure JSON logging format
+- Add Correlation ID, User ID in MDC
+
+---
+
+## Verification Plan
+
+### Automated Tests
+
+#### Backend Unit Tests
+```bash
+# Run all unit tests
+mvn test
+
+# Run specific test class
+mvn test -Dtest=OrderServiceImplTest
+
+# Run with coverage
+mvn clean test jacoco:report
+```
+
+**Existing Test:** [RealEmailManualTest.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/test/java/com/example/pizza/service/logic/RealEmailManualTest.java)
+- Currently only 1 test file exists
+- **Action:** Will create comprehensive test suite for new features
+
+#### Backend Integration Tests
+```bash
+# Run integration tests
+mvn verify
+
+# Run with specific profile
+mvn verify -Pdev
+```
+
+**New Tests to Create:**
+- `SocketIOIntegrationTest.java` - Test Socket.IO event emission
+- `RefundServiceIntegrationTest.java` - Test refund logic with Iyzico sandbox
+- `SearchSuggestionsIntegrationTest.java` - Test autocomplete functionality
+
+#### Frontend Tests
+```bash
+# Run all tests
+npm test
+
+# Run with coverage
+npm test -- --coverage
+
+# Run specific test file
+npm test -- useLoadingManager.test.js
+```
+
+**New Tests to Create:**
+- `useLoadingManager.test.js` - Test loading state hook
+- `OrderTracking.test.jsx` - Test order tracking page
+- `SecurityHeaders.test.js` - Verify security headers
+
+---
+
+### Manual Verification
+
+#### Phase 1: Backend Code Quality
+1. **Verify Logging Migration:**
+   - Start application: `mvn spring-boot:run`
+   - Check console output for proper log formatting
+   - Verify no `System.out.println` in logs
+   - Access Grafana at `http://localhost:3001` (admin/Kqbf9akUe2xBW2k)
+   - Navigate to Loki data source
+   - Query logs: `{container_name="pizza-app"}` 
+   - Verify structured log entries appear
+
+2. **Verify Null Safety:**
+   - Use Postman to test endpoints with missing/null values
+   - Example: `POST /api/auth/register` with missing email
+   - Expected: 400 Bad Request with validation message
+
+#### Phase 2: Backend Security
+1. **Verify Actuator Security:**
+   - Start with prod profile: `mvn spring-boot:run -Dspring-boot.run.profiles=prod`
+   - Access `http://localhost:8080/pizza/actuator/health` - Should work
+   - Access `http://localhost:8080/pizza/actuator/prometheus` - Should return 404
+   - Access `http://localhost:8080/pizza/actuator/metrics` - Should return 404
+
+2. **Verify Sensitive Data Masking:**
+   - Trigger login: `POST /api/auth/login` with valid credentials
+   - Check application logs
+   - Expected: Email should be masked (e.g., `j***e@example.com`)
+   - Trigger payment: `POST /api/payment/initialize`
+   - Check logs for masked card numbers
+
+#### Phase 3: Backend Features
+1. **Verify Socket.IO:**
+   - Start application: `mvn spring-boot:run`
+   - Open browser console and run:
+   ```javascript
+   const socket = io('http://localhost:9092');
+   socket.on('connect', () => console.log('Connected'));
+   socket.on('order_created', (data) => console.log('Order created:', data));
+   ```
+   - Create test order via Postman: `POST /api/order`
+   - Expected: `order_created` event received in browser console
+
+2. **Verify Refund API:**
+   - Create test order and complete payment
+   - Call refund endpoint: `POST /api/payment/{paymentId}/refund`
+   - Check Iyzico sandbox dashboard for refund transaction
+   - Expected: Successful refund or cancel/void
+
+3. **Verify Autocomplete:**
+   - Access: `GET /api/search/suggestions?q=piz`
+   - Expected: JSON array with up to 10 product suggestions
+   - Test with typo: `GET /api/search/suggestions?q=piza`
+   - Expected: Fuzzy search returns "pizza" products
+
+#### Phase 4-7: Frontend Verification
+1. **Verify Security Headers:**
+   - Start dev server: `npm run dev`
+   - Open browser DevTools → Network tab
+   - Refresh page
+   - Click on any request → Headers tab
+   - Verify presence of: `X-Frame-Options`, `X-Content-Type-Options`, `X-XSS-Protection`
+
+2. **Verify Loading States:**
+   - Open DevTools → Network tab → Throttle to "Slow 3G"
+   - Navigate between pages
+   - Expected: Skeleton screens appear during loading
+
+3. **Verify Order Tracking:**
+   - Create test order and note UUID
+   - Navigate to `http://localhost:3000/track/{uuid}`
+   - Expected: Order details and status timeline displayed
+   - Update order status in admin panel
+   - Expected: Real-time update on tracking page (via Socket.IO)
+
+#### Phase 8-9: Final Verification
+1. **Verify API Versioning:**
+   - Test old endpoint: `GET /api/product`
+   - Test new endpoint: `GET /api/v1/product`
+   - Expected: Both work, old endpoint shows deprecation warning
+
+2. **Verify Swagger Documentation:**
+   - Access: `http://localhost:8080/pizza/swagger-ui.html`
+   - Verify all endpoints are documented
+   - Test "Try it out" functionality for sample endpoints
+
+3. **Verify Structured Logging:**
+   - Trigger API request
+   - Check logs in Grafana/Loki
+   - Expected: JSON format with `correlationId`, `userId`, `timestamp`
+
+---
+
+### Performance Testing
+
+#### Load Testing (Optional - Before Production)
+```bash
+# Install Apache Bench
+apt-get install apache2-utils
+
+# Test product listing endpoint
+ab -n 1000 -c 10 http://localhost:8080/pizza/api/product
+
+# Test with authentication
+ab -n 1000 -c 10 -H "Authorization: Bearer {token}" http://localhost:8080/pizza/api/order
+```
+
+**Expected Results:**
+- Response time: < 200ms for 95th percentile
+- No failed requests
+- Stable memory usage
+
+#### Frontend Performance
+```bash
+# Build production bundle
+npm run build
+
+# Analyze bundle size
+npm run analyze
+
+# Run Lighthouse audit
+lighthouse http://localhost:3000 --view
+```
+
+**Target Metrics:**
+- Performance Score: > 90
+- LCP (Largest Contentful Paint): < 2.5s
+- FID (First Input Delay): < 100ms
+- CLS (Cumulative Layout Shift): < 0.1
+
+---
+
+## Testing Checklist
+
+### After Each Phase:
+- [ ] All unit tests pass: `mvn test`
+- [ ] All integration tests pass: `mvn verify`
+- [ ] Manual verification completed
+- [ ] No new warnings in build output
+- [ ] Code committed to refactor branch
+
+### Before Production:
+- [ ] All 9 phases completed
+- [ ] Full regression testing
+- [ ] Load testing completed
+- [ ] Security audit completed
+- [ ] Lighthouse audit score > 90
+- [ ] Documentation updated
+- [ ] CHANGELOG.md updated
+
+---
+
+## Rollback Plan
+
+If issues are discovered during any phase:
+
+1. **Immediate Rollback:**
+   ```bash
+   git reset --hard HEAD~1  # Undo last commit
+   git push -f origin refactor  # Force push (only on refactor branch)
+   ```
+
+2. **Partial Rollback:**
+   ```bash
+   git revert {commit-hash}  # Revert specific commit
+   git push origin refactor
+   ```
+
+3. **Full Rollback:**
+   ```bash
+   git checkout main
+   git branch -D refactor
+   git checkout -b refactor origin/main
+   ```
+
+---
+
+## Dependencies
+
+### Backend Dependencies to Add
+```xml
+<!-- Socket.IO -->
+<dependency>
+    <groupId>com.corundumstudio.socketio</groupId>
+    <artifactId>netty-socketio</artifactId>
+    <version>2.0.3</version>
+</dependency>
+
+<!-- Logback JSON Encoder (Phase 9) -->
+<dependency>
+    <groupId>net.logstash.logback</groupId>
+    <artifactId>logstash-logback-encoder</artifactId>
+    <version>7.4</version>
+</dependency>
+```
+
+### Frontend Dependencies to Add
+```json
+{
+  "dependencies": {
+    "socket.io-client": "^4.7.2",
+    "dompurify": "^3.0.6",
+    "use-sound": "^4.0.1"
+  },
+  "devDependencies": {
+    "@next/bundle-analyzer": "^14.0.0"
+  }
+}
+```
+
+---
+
+## Timeline Estimate
+
+| Phase | Duration | Dependencies |
+|-------|----------|--------------|
+| Phase 1: Backend Code Quality | 1-2 days | None |
+| Phase 2: Backend Security | 1-2 days | Phase 1 |
+| Phase 3: Backend Features | 5-7 days | Phase 1, 2 |
+| Phase 4: Frontend Code Quality | 1-2 days | None |
+| Phase 5: Frontend Security | 1-2 days | Phase 4 |
+| Phase 6: Frontend UX | 3-5 days | Phase 3, 4, 5 |
+| Phase 7: Frontend Features | 3-5 days | Phase 3, 6 |
+| Phase 8: Backend Consistency | 2-3 days | Phase 3 |
+| Phase 9: Final Production | 3-5 days | All phases |
+| **Total** | **20-33 days** | |
+
+---
+
+## Success Criteria
+
+- [ ] All 31 tasks completed
+- [ ] All tests passing (unit, integration, manual)
+- [ ] No System.out.println in production code
+- [ ] All security headers configured
+- [ ] Socket.IO real-time updates working
+- [ ] Refund API functional with Iyzico
+- [ ] Autocomplete search working with fuzzy matching
+- [ ] Lighthouse score > 90
+- [ ] API documentation complete
+- [ ] Production-ready logging configured

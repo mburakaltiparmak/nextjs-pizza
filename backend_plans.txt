@@ -1,40 +1,214 @@
 # BACKEND GÜNCELLEME PLANLARI
 # Son Güncelleme: 18.01.2026
+# Versiyon: 2.0
 
-Bu dosya, **Java/Spring Boot (Backend)** ekibinden talep edilen geliştirmeleri içerir.
+Bu dosya, **Java/Spring Boot (Backend)** tarafında yapılacak geliştirmeleri ve mevcut durumu içerir.
 Frontend entegrasyonu için bu maddelerin tamamlanması gereklidir.
 
 ================================================================================
-1. REAL-TIME ÖZELLİKLER (SOCKET.IO) [P1-1]
+✅ TAMAMLANANLAR
 ================================================================================
-**Hedef:** Sipariş durum değişikliklerini (Mutfak -> Yolda) müşteriye anlık bildirmek.
+Daha önce tamamlanmış altyapı çalışmaları.
 
-**Gereksinimler:**
-- **Kütüphane:** `netty-socketio` (v2.0.3) projeye eklenmeli.
-- **Port:** `9092` üzerinde çalışmalı.
-- **Events:**
-  - `order_created`: Admin odasına (Yeni sipariş düştüğünde).
-  - `order_updated`: Müşteriye (Sipariş durumu değiştiğinde).
-
-================================================================================
-2. İPTAL VE İADE (CANCEL/REFUND) [P0-VAR]
-================================================================================
-**Hedef:** Sipariş iptal edildiğinde Iyzico üzerinden otomatik ücret iadesi yapmak.
-
-**Endpoint:** `POST /api/payment/{paymentId}/refund`
-
-**Akıllı İade Mantığı (Best Practice):**
-1.  **Önce İptal (Cancel/Void):** Gün içinde yapılan işlemleri iptal et (Komisyonsuz).
-2.  **Sonra İade (Refund):** Eğer gün sonu (Settlement) alınmışsa, iade metodunu çağır (Komisyonlu).
-3.  **Hata Yönetimi:** "Settlement already done" hatası alınırsa otomatik Refund'a düş.
-
-**İş Kuralları:**
-- **İptal Edilebilir:** `PENDING`, `APPROVED`, `PREPARING`
-- **İptal Edilemez (Sadece Admin):** `SHIPPING`, `DELIVERED`
+- JWT Authentication (Access + Refresh Token) ✅
+- Rate Limiting (Bucket4j) ✅
+- Redis Caching ✅
+- Elasticsearch Integration ✅
+- Iyzico Payment Gateway ✅
+- Global Exception Handling ✅
+- Prometheus/Grafana Monitoring ✅
+- CORS Configuration ✅
 
 ================================================================================
-3. ELASTICSEARCH AUTOCOMPLETE (HAZIR MI?)
+🔴 KOD KALİTESİ & TEMİZLİK (P0 - QUICK WINS)
 ================================================================================
-**Endpoint:** `GET /api/search/suggestions`
-- Frontend arama çubuğu için kullanılacak.
-- Fuzzy search (hatalı yazım) desteği kontrol edilmeli.
+Hızlıca tamamlanabilecek, kod kalitesini artıracak işler.
+
+1. **[P0-1] System.out.println → Slf4j Logger** ✅
+   - **Sorun:** Bazı yerlerde hala `System.out.println` kullanılıyor olabilir.
+   - **Çözüm:** Tüm print statement'ları `@Slf4j` + `log.info/debug/error` ile değiştirilmeli.
+   - **Komut:** `grep -r "System.out" src/` ile tespit
+   - **Önem:** Log aggregation (ELK) için kritik.
+
+2. **[P0-2] Unused Imports & Dead Code Temizliği** ✅
+   - **Hedef:** IDE warning'lerinin sıfırlanması.
+   - **Araç:** IntelliJ "Optimize Imports" + "Inspect Code"
+   - **Kapsam:** Tüm Java dosyaları
+
+3. **[P0-3] Null Safety Audit** ✅
+   - **Hedef:** `Optional<T>` kullanımının tutarlılığı.
+   - **Kontrol Noktaları:**
+     - Service layer return types
+     - Repository `findBy*` methods
+     - DTO field validations
+   - **Araç:** NullAway veya manuel review
+
+================================================================================
+🔴 GÜVENLİK (P0 - KRİTİK)
+================================================================================
+Production öncesi mutlaka tamamlanması gereken güvenlik önlemleri.
+
+4. **[P0-4] Actuator Endpoint Security** ✅
+   - **Sorun:** Actuator endpoint'leri production'da açık kalmamalı.
+   - **Mevcut Durum:** `ActuatorSecurityConfig.java`'da `permitAll()` var.
+   - **Çözüm (application-prod.properties):**
+     ```properties
+     # Sadece health endpoint açık
+     management.endpoints.web.exposure.include=health,info
+     management.endpoint.health.show-details=never
+     ```
+   - **Alternatif:** IP whitelist veya Basic Auth
+
+5. **[P0-5] Sensitive Data Logging Maskeleme** ✅
+   - **Sorun:** Log'larda email, token gibi bilgiler görünebilir.
+   - **Çözüm:** Custom Logback pattern veya Masking utility
+   - **Örnek:**
+     ```java
+     log.info("User login: {}", maskEmail(email));
+     // john.doe@example.com → j***e@example.com
+     ```
+   - **Kapsam:** AuthController, UserService, PaymentService
+
+6. **[P0-6] Input Validation Audit** ✅
+   - **Hedef:** Tüm endpoint'lerde `@Valid` annotation kontrolü.
+   - **Kontrol:** DTO'larda `@NotNull`, `@Size`, `@Email` vb.
+   - **Riskli Alanlar:** Order notes, address fields, search queries
+
+================================================================================
+🚀 ÖZELLİK GELİŞTİRMELERİ (P1 - YÜKSEK ÖNCELİK)
+================================================================================
+Frontend entegrasyonu için gerekli yeni özellikler.
+
+7. **[P1-1] Real-Time Özellikler (Socket.IO)** ✅
+   - **Hedef:** Sipariş durum değişikliklerini anlık bildirmek.
+   - **Kütüphane:** `netty-socketio` (v2.0.3)
+   - **Port:** `9092`
+   - **Events:**
+     - `order_created` → Admin odasına
+     - `order_updated` → Müşteriye (UUID ile)
+   - **Entegrasyon Noktası:** `OrderServiceImpl.updateOrderStatus()`
+
+8. **[P1-2] İptal ve İade (Cancel/Refund)** ✅
+   - **Endpoint:** `POST /api/payment/{paymentId}/refund`
+   - **Akıllı İade Mantığı:**
+     1. Önce Cancel/Void dene (Gün içi işlemler - Komisyonsuz)
+     2. "Settlement already done" hatası → Refund'a düş (Komisyonlu)
+   - **İş Kuralları:**
+     - İptal Edilebilir: `PENDING`, `APPROVED`, `PREPARING`
+     - Sadece Admin: `SHIPPING`, `DELIVERED`
+   - **Iyzico Methods:** `Cancel.create()`, `Refund.create()`
+
+9. **[P1-3] Elasticsearch Autocomplete**
+   - **Endpoint:** `GET /api/search/suggestions?q={query}`
+   - **Özellikler:**
+     - Fuzzy search (hatalı yazım toleransı)
+     - Minimum 2 karakter
+     - Max 10 öneri
+   - **Response:**
+     ```json
+     {
+       "suggestions": ["Pizza Margherita", "Pizza Pepperoni", ...]
+     }
+     ```
+
+================================================================================
+🟡 KOD TUTARLILIĞI (P2)
+================================================================================
+Kod kalitesini ve maintainability'yi artıracak refactoring'ler.
+
+10. **[P2-1] Response DTO Standardization**
+    - **Hedef:** Tüm endpoint'ler aynı wrapper format kullanmalı.
+    - **Öneri:**
+      ```java
+      public class ApiResponse<T> {
+          private boolean success;
+          private T data;
+          private String message;
+          private LocalDateTime timestamp;
+      }
+      ```
+    - **Kapsam:** Tüm Controller'lar
+
+11. **[P2-2] Pagination Response Tutarlılığı**
+    - **Sorun:** Bazı yerlerde `Page<T>`, bazı yerlerde custom DTO.
+    - **Çözüm:** Tek bir `PagedResponse<T>` DTO'su
+    - **Alanlar:** `content`, `page`, `size`, `totalElements`, `totalPages`, `last`
+
+12. **[P2-3] Exception Hierarchy Review**
+    - **Hedef:** Custom exception'ların tutarlılığı.
+    - **Kontrol:** Tüm exception'lar `ApiException`'dan extend edilmeli.
+    - **HTTP Status mapping review**
+
+================================================================================
+🏁 SON AŞAMA (TÜM GELİŞTİRMELER BİTTİKTEN SONRA)
+================================================================================
+
+13. **[FINAL-1] API Versioning**
+    - **Hedef:** `/api/v1/` prefix stratejisi
+    - **Yöntem:** URL path versioning
+    - **Backward Compatibility:** Eski endpoint'ler deprecate edilmeli
+
+14. **[FINAL-2] OpenAPI/Swagger Enhancement**
+    - **Hedef:** Tüm endpoint'lere detaylı Swagger annotations
+    - **Kapsam:**
+      - `@Operation` descriptions
+      - `@ApiResponse` examples
+      - `@Schema` DTO documentation
+    - **Çıktı:** Otomatik API dokümantasyonu
+
+15. **[FINAL-3] Structured Logging (ELK Ready)**
+    - **Hedef:** JSON format logging
+    - **Kütüphane:** Logback JSON encoder
+    - **Eklenecekler:**
+      - Correlation ID (request tracking)
+      - User ID in MDC
+      - Request/Response timing
+
+================================================================================
+📋 UYGULAMA SIRASI
+================================================================================
+
+AŞAMA 1 - Kod Temizliği (1-2 gün):
+  → P0-1, P0-2, P0-3
+
+AŞAMA 2 - Güvenlik (1-2 gün):
+  → P0-4, P0-5, P0-6
+
+AŞAMA 3 - Özellik Geliştirmeleri (5-7 gün):
+  → P1-1 (Socket.IO - 2-3 gün)
+  → P1-2 (Refund - 1-2 gün)
+  → P1-3 (Autocomplete - 1 gün)
+
+AŞAMA 4 - Kod Tutarlılığı (2-3 gün):
+  → P2-1, P2-2, P2-3
+
+AŞAMA 5 - Final (3-5 gün):
+  → FINAL-1, FINAL-2, FINAL-3
+
+================================================================================
+📊 İLERLEME TAKİBİ
+================================================================================
+
+| Kategori              | Toplam | Tamamlanan | Kalan |
+|-----------------------|--------|------------|-------|
+| P0 - Quick Wins       | 3      | 3          | 0     |
+| P0 - Güvenlik         | 3      | 3          | 0     |
+| P1 - Özellikler       | 3      | 2          | 1     |
+| P2 - Tutarlılık       | 3      | 0          | 3     |
+| Final                 | 3      | 0          | 3     |
+|-----------------------|--------|------------|-------|
+| TOPLAM                | 15     | 8          | 7     |
+
+================================================================================
+🔗 FRONTEND BAĞIMLILIKLARI
+================================================================================
+
+Backend tamamlanmadan Frontend'de başlanamayacak işler:
+
+| Backend Görevi      | Frontend Bağımlı Görev         |
+|---------------------|-------------------------------|
+| P1-1 Socket.IO      | Order Tracking Page, Admin Notification |
+| P1-2 Refund API     | Admin Order Cancel Button     |
+| P1-3 Autocomplete   | Search Bar Suggestions        |
+
+================================================================================

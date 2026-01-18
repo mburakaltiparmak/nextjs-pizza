@@ -1,0 +1,580 @@
+# Pizza Project - Refactor Branch Implementation Tasks
+
+**Branch:** refactor  
+**Environment:** localhost:8080  
+**Last Updated:** 2026-01-18
+
+---
+
+## 📊 Progress Overview
+
+| Phase | Category | Total | Completed | In Progress | Remaining |
+|-------|----------|-------|-----------|-------------|-----------|
+| **Phase 1** | Backend P0 - Code Quality | 3 | 3 | 0 | 0 |
+| **Phase 2** | Backend P0 - Security | 3 | 3 | 0 | 0 |
+| **Phase 3** | Backend P1 - Features | 3 | 0 | 0 | 3 |
+| **Phase 4** | Frontend P0 - Code Quality | 3 | 0 | 0 | 3 |
+| **Phase 5** | Frontend P0 - Security | 3 | 0 | 0 | 3 |
+| **Phase 6** | Frontend P1 - UX | 4 | 0 | 0 | 4 |
+| **Phase 7** | Frontend P2 - Features | 3 | 0 | 0 | 3 |
+| **Phase 8** | Backend P2 - Consistency | 3 | 0 | 0 | 3 |
+| **Phase 9** | Final - Production Ready | 6 | 0 | 0 | 6 |
+| **TOTAL** | | **31** | **6** | **0** | **25** |
+
+---
+
+## 🎯 Phase 1: Backend Code Quality (P0 - Quick Wins)
+
+### [x] Task 1.1: System.out.println → Slf4j Logger Migration
+**Priority:** P0  
+**Estimated Time:** 2-3 hours  
+**Files Affected:**
+- `src/main/java/com/example/pizza/config/logic/IyzicoConfig.java`
+- `src/main/java/com/example/pizza/config/logic/CloudinaryConfig.java`
+- `src/main/java/com/example/pizza/config/auth/DotenvConfig.java`
+- `src/test/java/com/example/pizza/service/logic/RealEmailManualTest.java`
+
+**Implementation:**
+- Replace all `System.out.println` with `log.info/debug/error`
+- Ensure `@Slf4j` annotation is present on all affected classes
+- Use appropriate log levels (DEBUG for config loading, INFO for success, ERROR for failures)
+
+**Testing:**
+- [x] Run application and verify logs appear in console with proper formatting
+- [x] Check Loki/Grafana to ensure logs are being aggregated
+- [x] Verify no `System.out.println` remains: `grep -r "System.out" src/main/`
+
+
+---
+
+### [x] Task 1.2: Unused Imports & Dead Code Cleanup
+**Priority:** P0  
+**Estimated Time:** 1-2 hours
+
+**Implementation:**
+- Run IntelliJ IDEA "Optimize Imports" on entire project
+- Run "Inspect Code" and fix all warnings
+- Remove unused variables, methods, and classes
+
+**Testing:**
+- [x] Build project: `mvn clean compile`
+- [x] Verify no compilation warnings
+- [x] Run all tests: `mvn test`
+
+---
+
+### [x] Task 1.3: Null Safety Audit
+**Priority:** P0  
+**Estimated Time:** 3-4 hours
+
+**Implementation:**
+- Review all Service layer return types for `Optional<T>` usage
+- Ensure Repository `findBy*` methods return `Optional<T>`
+- Add `@NotNull` annotations where appropriate
+- Review DTO field validations
+
+**Testing:**
+- [x] Run all unit tests: `mvn test`
+- [x] Test edge cases with null values via Postman
+- [x] Verify proper error messages for null violations
+
+---
+
+## 🔒 Phase 2: Backend Security (P0 - Critical)
+
+### [x] Task 2.1: Actuator Endpoint Security
+**Priority:** P0  
+**Estimated Time:** 1 hour
+
+**Implementation:**
+- Update `application-prod.properties` to expose only health and info endpoints
+- Configure `management.endpoint.health.show-details=never` for production
+- Keep dev settings permissive for development
+
+**Testing:**
+- [x] Start app with prod profile: `mvn spring-boot:run -Dspring-boot.run.profiles=prod`
+- [x] Verify only `/actuator/health` and `/actuator/info` are accessible
+- [x] Verify `/actuator/prometheus` returns 404 in prod
+
+---
+
+### [x] Task 2.2: Sensitive Data Logging Masking
+**Priority:** P0  
+**Estimated Time:** 2-3 hours
+
+**Implementation:**
+- Create `LogMaskingUtil` class with email, token, and card masking methods
+- Update `AuthController`, `UserService`, `PaymentService` to use masking
+- Configure Logback pattern for sensitive data
+
+**Testing:**
+- [x] Trigger login and check logs for masked email
+- [x] Trigger payment and verify card numbers are masked
+- [x] Review Loki logs to ensure no sensitive data is visible
+
+---
+
+### [x] Task 2.3: Input Validation Audit
+**Priority:** P0  
+**Estimated Time:** 2-3 hours
+
+**Implementation:**
+- Audit all DTOs for `@Valid`, `@NotNull`, `@Size`, `@Email` annotations
+- Add validation to Order notes, address fields, search queries
+- Ensure all Controller methods use `@Valid` annotation
+
+**Testing:**
+- [x] Test invalid inputs via Postman (empty fields, oversized strings, invalid emails)
+- [x] Verify proper 400 Bad Request responses with validation messages
+- [x] Run integration tests: `mvn verify`
+
+---
+
+## 🚀 Phase 3: Backend Features (P1 - High Priority)
+
+### [ ] Task 3.1: Real-Time Features (Socket.IO)
+**Priority:** P1  
+**Estimated Time:** 2-3 days
+
+**Implementation:**
+- Add `netty-socketio` dependency (v2.0.3) to `pom.xml`
+- Create `SocketIOConfig` class (port 9092)
+- Create `SocketIOService` with events: `order_created`, `order_updated`
+- Integrate with `OrderServiceImpl.updateOrderStatus()`
+
+**Testing:**
+- [ ] Start Socket.IO server and verify port 9092 is listening
+- [ ] Use Socket.IO client to connect and listen for events
+- [ ] Create test order and verify `order_created` event is emitted
+- [ ] Update order status and verify `order_updated` event is emitted
+
+---
+
+### [ ] Task 3.2: Cancel & Refund API
+**Priority:** P1  
+**Estimated Time:** 1-2 days
+
+**Implementation:**
+- Create `POST /api/payment/{paymentId}/refund` endpoint
+- Implement smart refund logic (Cancel/Void → Refund fallback)
+- Add business rules for cancellable statuses
+- Integrate Iyzico `Cancel.create()` and `Refund.create()`
+
+**Testing:**
+- [ ] Test same-day order cancellation (should use Cancel/Void)
+- [ ] Test next-day order cancellation (should use Refund)
+- [ ] Verify admin-only access for SHIPPING/DELIVERED orders
+- [ ] Check Iyzico sandbox for successful refund transactions
+
+---
+
+### [ ] Task 3.3: Elasticsearch Autocomplete
+**Priority:** P1  
+**Estimated Time:** 1 day
+
+**Implementation:**
+- Create `GET /api/search/suggestions?q={query}` endpoint
+- Implement fuzzy search with minimum 2 characters
+- Limit results to 10 suggestions
+- Add search analytics tracking
+
+**Testing:**
+- [ ] Test autocomplete with partial product names
+- [ ] Test fuzzy search with typos (e.g., "piza" → "pizza")
+- [ ] Verify max 10 results returned
+- [ ] Check Elasticsearch indices for search analytics
+
+---
+
+## 🎨 Phase 4: Frontend Code Quality (P0 - Quick Wins)
+
+### [ ] Task 4.1: Duplicate Axios Instance Consolidation
+**Priority:** P0  
+**Estimated Time:** 1-2 hours
+
+**Implementation:**
+- Keep `src/lib/axios/config.js` as single source of truth
+- Delete `src/lib/api/axios-instance.js`
+- Update all imports to use `src/lib/axios/config.js`
+
+**Testing:**
+- [ ] Run frontend build: `npm run build`
+- [ ] Test all API calls (login, product fetch, order creation)
+- [ ] Verify no broken imports
+
+---
+
+### [ ] Task 4.2: Console.log Cleanup
+**Priority:** P0  
+**Estimated Time:** 1 hour
+
+**Implementation:**
+- Add ESLint rule: `no-console: ["error", { allow: ["warn", "error"] }]`
+- Run `eslint --fix` to remove console.logs
+- Create custom logger utility in `/lib/utils/logger.js`
+
+**Testing:**
+- [ ] Run `npm run lint`
+- [ ] Build production bundle: `npm run build`
+- [ ] Verify no console.logs in production bundle
+
+---
+
+### [ ] Task 4.3: Unused Imports & Variables Cleanup
+**Priority:** P0  
+**Estimated Time:** 1 hour
+
+**Implementation:**
+- Run `eslint --fix` across all files
+- Use IDE cleanup tools
+- Remove unused dependencies from `package.json`
+
+**Testing:**
+- [ ] Run `npm run lint`
+- [ ] Build project: `npm run build`
+- [ ] Verify no warnings in build output
+
+---
+
+## 🔐 Phase 5: Frontend Security (P0 - Critical)
+
+### [ ] Task 5.1: Security Headers (next.config.js)
+**Priority:** P0  
+**Estimated Time:** 1 hour
+
+**Implementation:**
+- Add security headers in `next.config.js`
+- Configure X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy
+
+**Testing:**
+- [ ] Start dev server: `npm run dev`
+- [ ] Check response headers in browser DevTools Network tab
+- [ ] Verify all security headers are present
+
+---
+
+### [ ] Task 5.2: XSS Prevention - Input Sanitization
+**Priority:** P0  
+**Estimated Time:** 2 hours
+
+**Implementation:**
+- Install `DOMPurify` or `sanitize-html`
+- Sanitize Order notes, address fields, user inputs
+- Update form components to use sanitization
+
+**Testing:**
+- [ ] Test XSS payloads in order notes: `<script>alert('XSS')</script>`
+- [ ] Verify sanitized output in database
+- [ ] Test address fields with HTML injection attempts
+
+---
+
+### [ ] Task 5.3: Redux DevTools Production Disable
+**Priority:** P0  
+**Estimated Time:** 15 minutes
+
+**Implementation:**
+- Update `store.js` with `devTools: process.env.NODE_ENV !== 'production'`
+
+**Testing:**
+- [ ] Build production: `npm run build`
+- [ ] Start production server: `npm start`
+- [ ] Verify Redux DevTools is disabled in browser
+
+---
+
+## 🎯 Phase 6: Frontend UX Improvements (P1)
+
+### [ ] Task 6.1: Loading States Standardization
+**Priority:** P1  
+**Estimated Time:** 1-2 days
+
+**Implementation:**
+- Create `useLoadingManager` hook
+- Implement Skeleton screens for page transitions
+- Add loading states to form submissions
+
+**Testing:**
+- [ ] Test page navigation with slow 3G throttling
+- [ ] Verify skeleton screens appear during data loading
+- [ ] Test form submissions with loading indicators
+
+---
+
+### [ ] Task 6.2: Advanced Filtering
+**Priority:** P1  
+**Estimated Time:** 1 day
+
+**Implementation:**
+- Create Sidebar Filter component
+- Add Price Range, Stock Status filters
+- Integrate with `GET /api/product/search` endpoint
+
+**Testing:**
+- [ ] Test price range filter (e.g., $10-$20)
+- [ ] Test stock status filter (In Stock, Out of Stock)
+- [ ] Verify filter combinations work correctly
+
+---
+
+### [ ] Task 6.3: Form Validation Centralization
+**Priority:** P1  
+**Estimated Time:** 1 day
+
+**Implementation:**
+- Create `/lib/validations/auth.js`, `/lib/validations/order.js`, `/lib/validations/product.js`
+- Consolidate all Zod schemas
+- Update forms to use centralized validations
+
+**Testing:**
+- [ ] Test login form with invalid email
+- [ ] Test checkout form with missing address
+- [ ] Verify consistent error messages across forms
+
+---
+
+### [ ] Task 6.4: Selector Optimization
+**Priority:** P1  
+**Estimated Time:** 1 day
+
+**Implementation:**
+- Audit all `useAppSelector` usage
+- Create memoized selectors with `createSelector`
+- Use React DevTools Profiler to identify re-renders
+
+**Testing:**
+- [ ] Profile app with React DevTools
+- [ ] Verify reduced re-render count
+- [ ] Test performance with large product lists
+
+---
+
+## 🌟 Phase 7: Frontend Features (P2)
+
+### [ ] Task 7.1: Order Tracking Page (Customer)
+**Priority:** P2  
+**Estimated Time:** 1-2 days
+
+**Implementation:**
+- Create `/track/[uuid]` route
+- Implement UUID-based order lookup (no login required)
+- Add real-time status updates with Socket.IO
+- Create Timeline UI component
+
+**Testing:**
+- [ ] Test order tracking with valid UUID
+- [ ] Test invalid UUID (should show error)
+- [ ] Verify real-time updates when order status changes
+
+---
+
+### [ ] Task 7.2: Admin Notification Sound
+**Priority:** P2  
+**Estimated Time:** 1 day
+
+**Implementation:**
+- Install `use-sound` or use Web Audio API
+- Add sound notification on Socket.IO `order_created` event
+- Add settings to enable/disable sound
+
+**Testing:**
+- [ ] Create test order and verify sound plays
+- [ ] Test sound enable/disable toggle
+- [ ] Verify sound only plays for admin users
+
+---
+
+### [ ] Task 7.3: Optimistic Updates
+**Priority:** P2  
+**Estimated Time:** 1 day
+
+**Implementation:**
+- Implement optimistic updates for order status changes
+- Add rollback on error
+- Update Redux actions
+
+**Testing:**
+- [ ] Update order status and verify immediate UI feedback
+- [ ] Simulate API error and verify rollback
+- [ ] Test with slow network throttling
+
+---
+
+## 🔄 Phase 8: Backend Consistency (P2)
+
+### [ ] Task 8.1: Response DTO Standardization
+**Priority:** P2  
+**Estimated Time:** 1-2 days
+
+**Implementation:**
+- Create `ApiResponse<T>` wrapper class
+- Update all Controllers to use `ApiResponse<T>`
+- Ensure consistent response format
+
+**Testing:**
+- [ ] Test all endpoints and verify response structure
+- [ ] Update frontend to handle new response format
+- [ ] Run integration tests
+
+---
+
+### [ ] Task 8.2: Pagination Response Consistency
+**Priority:** P2  
+**Estimated Time:** 1 day
+
+**Implementation:**
+- Create `PagedResponse<T>` DTO
+- Replace all `Page<T>` responses with `PagedResponse<T>`
+- Ensure consistent pagination fields
+
+**Testing:**
+- [ ] Test paginated endpoints (products, orders, users)
+- [ ] Verify pagination metadata (page, size, totalElements, totalPages)
+- [ ] Test edge cases (empty results, last page)
+
+---
+
+### [ ] Task 8.3: Exception Hierarchy Review
+**Priority:** P2  
+**Estimated Time:** 1 day
+
+**Implementation:**
+- Ensure all custom exceptions extend `ApiException`
+- Review HTTP status mappings
+- Standardize error response format
+
+**Testing:**
+- [ ] Trigger various exceptions and verify consistent error responses
+- [ ] Test HTTP status codes (400, 401, 403, 404, 500)
+- [ ] Verify error messages are user-friendly
+
+---
+
+## 🏁 Phase 9: Final Production Readiness
+
+### [ ] Task 9.1: API Versioning
+**Priority:** FINAL  
+**Estimated Time:** 1 day
+
+**Implementation:**
+- Implement `/api/v1/` prefix strategy
+- Update all Controllers with versioned paths
+- Add deprecation notices for old endpoints
+
+**Testing:**
+- [ ] Test all endpoints with `/api/v1/` prefix
+- [ ] Verify backward compatibility
+- [ ] Update API documentation
+
+---
+
+### [ ] Task 9.2: OpenAPI/Swagger Enhancement
+**Priority:** FINAL  
+**Estimated Time:** 1-2 days
+
+**Implementation:**
+- Add `@Operation`, `@ApiResponse`, `@Schema` annotations
+- Document all endpoints with examples
+- Generate comprehensive API documentation
+
+**Testing:**
+- [ ] Access Swagger UI: `http://localhost:8080/pizza/swagger-ui.html`
+- [ ] Verify all endpoints are documented
+- [ ] Test API calls directly from Swagger UI
+
+---
+
+### [ ] Task 9.3: Structured Logging (ELK Ready)
+**Priority:** FINAL  
+**Estimated Time:** 1 day
+
+**Implementation:**
+- Configure Logback JSON encoder
+- Add Correlation ID for request tracking
+- Add User ID in MDC
+- Add Request/Response timing
+
+**Testing:**
+- [ ] Check logs in JSON format
+- [ ] Verify Correlation ID in logs
+- [ ] Test log aggregation in Loki/Grafana
+
+---
+
+### [ ] Task 9.4: Frontend SEO & Metadata
+**Priority:** FINAL  
+**Estimated Time:** 1 day
+
+**Implementation:**
+- Add dynamic `title` and `description`
+- Add Open Graph tags
+- Generate `sitemap.xml` and `robots.txt`
+
+**Testing:**
+- [ ] Test with Facebook/Twitter link preview
+- [ ] Verify `sitemap.xml` is accessible
+- [ ] Run Lighthouse SEO audit
+
+---
+
+### [ ] Task 9.5: Core Web Vitals Optimization
+**Priority:** FINAL  
+**Estimated Time:** 1-2 days
+
+**Implementation:**
+- Run Lighthouse audit
+- Optimize LCP, FID, CLS
+- Analyze bundle size with `@next/bundle-analyzer`
+
+**Testing:**
+- [ ] Run Lighthouse audit (target: 90+ score)
+- [ ] Test on slow 3G network
+- [ ] Verify Core Web Vitals metrics
+
+---
+
+### [ ] Task 9.6: Image Optimization Audit
+**Priority:** FINAL  
+**Estimated Time:** 1 day
+
+**Implementation:**
+- Ensure all images use Next.js `Image` component
+- Verify lazy loading
+- Convert images to WebP format
+
+**Testing:**
+- [ ] Audit all image usage
+- [ ] Test lazy loading with slow network
+- [ ] Verify WebP format in Network tab
+
+---
+
+## 🔍 Testing Strategy
+
+### After Each Task:
+1. **Unit Tests:** Run relevant unit tests
+2. **Integration Tests:** Test API endpoints with Postman
+3. **Manual Testing:** Verify functionality in browser
+4. **Code Review:** Self-review changes before committing
+
+### After Each Phase:
+1. **Full Test Suite:** `mvn test` (backend) and `npm test` (frontend)
+2. **Build Verification:** `mvn clean install` and `npm run build`
+3. **Smoke Testing:** Test critical user flows
+4. **Performance Check:** Monitor response times and resource usage
+
+### Before Production:
+1. **Load Testing:** Test with realistic user load
+2. **Security Audit:** Run OWASP ZAP or similar tools
+3. **Accessibility Audit:** Run Lighthouse accessibility checks
+4. **Cross-browser Testing:** Test on Chrome, Firefox, Safari, Edge
+
+---
+
+## 📝 Notes
+
+- All changes must be committed to `refactor` branch
+- Each task should be tested before moving to the next
+- Production deployment only after all phases complete
+- Maintain backward compatibility where possible
+- Document breaking changes in CHANGELOG.md

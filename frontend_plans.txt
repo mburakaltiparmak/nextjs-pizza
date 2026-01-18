@@ -1,5 +1,6 @@
 # FRONTEND GÜNCELLEME PLANLARI
 # Son Güncelleme: 18.01.2026
+# Versiyon: 2.0
 
 Bu dosya, **Next.js (Frontend)** tarafında yapılacak geliştirmeleri ve mevcut durumu içerir.
 
@@ -8,38 +9,188 @@ Bu dosya, **Next.js (Frontend)** tarafında yapılacak geliştirmeleri ve mevcut
 ================================================================================
 "Production-Grade" seviyesine gelmek için yapılan kritik altyapı çalışmaları.
 
-1. **[P0-1] API Timeout & Retry Strategy**
+1. **[P0-1] API Timeout & Retry Strategy** ✅
    - 3 farklı Axios instance (Default, Payment, Upload) ve Retry mekanizması kuruldu.
-2. **[P0-2] Error Boundary Implementation**
+
+2. **[P0-2] Error Boundary Implementation** ✅
    - Global ve Checkout sayfaları için hata yakalama ekranları eklendi.
-3. **[P0-3] Cart Persistence & Recovery**
+
+3. **[P0-3] Cart Persistence & Recovery** ✅
    - Sepet verileri localStorage'da yedeklendi, sekmeler arası senkronizasyon sağlandı.
-4. **[P0-4] Payment Flow Error Handling**
+
+4. **[P0-4] Payment Flow Error Handling** ✅
    - 3D Secure öncesi/sonrası ödeme takibi (UUID ile) yapıldı.
-5. **[P0-5] Memory Leak & Cleanup**
+
+5. **[P0-5] Memory Leak & Cleanup** ✅
    - Admin panel state güncellemeleri güvenli hale getirildi.
-6. **[P0-6] Admin Reindex Buttons**
+
+6. **[P0-6] Admin Reindex Buttons** ✅
    - Elasticsearch manuel güncelleme butonları eklendi.
+
+================================================================================
+🔴 KOD KALİTESİ & TEMİZLİK (P0 - QUICK WINS)
+================================================================================
+Hızlıca tamamlanabilecek, kod kalitesini artıracak işler.
+
+7. **[P0-7] Duplicate Axios Instance Birleştirme**
+   - **Sorun:** `src/lib/axios/config.js` ve `src/lib/api/axios-instance.js` aynı işi yapıyor.
+   - **Çözüm:** Tek bir merkezi axios config dosyası kullanılacak.
+   - **Dosyalar:** 
+     - KALACAK: `src/lib/axios/config.js`
+     - SİLİNECEK: `src/lib/api/axios-instance.js`
+   - **Etki:** Tüm import'lar güncellenmeli.
+
+8. **[P0-8] Console.log Temizliği**
+   - **Sorun:** Production build'de gereksiz console.log'lar kalıyor.
+   - **Çözüm:** 
+     - ESLint rule: `no-console: ["error", { allow: ["warn", "error"] }]`
+     - Veya: `babel-plugin-transform-remove-console` (production only)
+   - **Alternatif:** Custom logger utility (`/lib/utils/logger.js`)
+
+9. **[P0-9] Unused Imports & Variables Temizliği**
+   - **Hedef:** IDE warning'lerinin sıfırlanması.
+   - **Araç:** `eslint --fix` + IDE cleanup
+
+================================================================================
+🔴 GÜVENLİK (P0 - KRİTİK)
+================================================================================
+Production öncesi mutlaka tamamlanması gereken güvenlik önlemleri.
+
+10. **[P0-10] Security Headers (next.config.js)**
+    - **Hedef:** XSS, Clickjacking ve diğer saldırılara karşı koruma.
+    - **Eklenecek Headers:**
+      ```javascript
+      // next.config.js
+      async headers() {
+        return [
+          {
+            source: '/:path*',
+            headers: [
+              { key: 'X-Frame-Options', value: 'DENY' },
+              { key: 'X-Content-Type-Options', value: 'nosniff' },
+              { key: 'X-XSS-Protection', value: '1; mode=block' },
+              { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+              // CSP için detaylı analiz gerekli
+            ],
+          },
+        ];
+      }
+      ```
+
+11. **[P0-11] XSS Prevention - Input Sanitization**
+    - **Riskli Alanlar:** Order notes, address fields, user inputs
+    - **Çözüm:** `DOMPurify` veya `sanitize-html` kullanımı
+    - **Dosyalar:** Form component'leri
+
+12. **[P0-12] Redux DevTools Production Disable**
+    - **Sorun:** Production'da Redux DevTools açık kalmamalı.
+    - **Çözüm:** `store.js`'de environment check
+    ```javascript
+    devTools: process.env.NODE_ENV !== 'production'
+    ```
 
 ================================================================================
 🚀 SIRADAKİ GÖREVLER (P1 - YÜKSEK ÖNCELİK)
 ================================================================================
 E-ticaret deneyimini iyileştirmek için yapılacak UX çalışmaları.
 
-7. **[P1-2] Loading States Standardization**
-   - **Hedef:** Kullanıcı beklerken boş ekran yerine "Skeleton" (iskelet) ekranlar göstermek.
-   - **Plan:** `UseLoadingManager` yazılacak, sayfa geçişleri ve veri yüklemeleri için standartlaştırılacak.
+13. **[P1-1] Loading States Standardization**
+    - **Hedef:** Kullanıcı beklerken boş ekran yerine "Skeleton" ekranlar göstermek.
+    - **Plan:** `useLoadingManager` hook yazılacak.
+    - **Kapsam:** Sayfa geçişleri, veri yüklemeleri, form submit'ler.
 
-8. **[P1-3] Advanced Filtering**
-   - **Hedef:** Menü sayfasında Fiyat Aralığı, Stok Durumu gibi gelişmiş filtreleri aktif etmek.
-   - **Detay:** Backend (`GET /api/product/search`) hazır, Frontend arayüzü (Sidebar Filter) yapılacak.
+14. **[P1-2] Advanced Filtering**
+    - **Hedef:** Menü sayfasında Fiyat Aralığı, Stok Durumu filtreleri.
+    - **Backend:** `GET /api/product/search` hazır.
+    - **Frontend:** Sidebar Filter component yapılacak.
+
+15. **[P1-3] Form Validation Centralization**
+    - **Sorun:** Zod schema'ları dağınık durumda.
+    - **Çözüm:** `/lib/validations/` klasörü altında merkezi yönetim.
+    - **Dosyalar:**
+      - `/lib/validations/auth.js` (login, register)
+      - `/lib/validations/order.js` (checkout, address)
+      - `/lib/validations/product.js` (admin panel)
+
+16. **[P1-4] Selector Optimization**
+    - **Hedef:** Unnecessary re-render'ların önlenmesi.
+    - **Yöntem:** `useAppSelector` kullanımlarının audit'i.
+    - **Araç:** React DevTools Profiler
 
 ================================================================================
-🏁 SON AŞAMA (GELİŞTİRMELER BİTTİKTEN SONRA)
+🟡 UX İYİLEŞTİRMELERİ (P2)
 ================================================================================
-9. **🔍 SEO & Metadata Optimizasyonu**
-   - **Hedef:** Tüm özellikler bittikten sonra siteyi arama motorları ve sosyal medya paylaşımları için optimize etmek.
-   - **Kapsam:**
-     - Dinamik `title` ve `description` (Ürün detayları için).
-     - Open Graph (OG) etiketleri (WhatsApp/Twitter paylaşım önizlemeleri).
-     - `sitemap.xml` ve `robots.txt` konfigürasyonu.
+Kullanıcı deneyimini artıracak özellikler.
+
+17. **[P2-1] Order Tracking Page (Müşteri)**
+    - **Hedef:** Müşterinin sipariş durumunu UUID ile takip edebilmesi.
+    - **Route:** `/track/[uuid]`
+    - **Özellikler:**
+      - Login gerektirmez (UUID ile erişim)
+      - Real-time durum güncellemesi (Socket.IO ile)
+      - Timeline görünümü
+
+18. **[P2-2] Admin Notification Sound**
+    - **Hedef:** Yeni sipariş geldiğinde ses bildirimi.
+    - **Kütüphane:** `use-sound` veya native Web Audio API
+    - **Koşul:** Socket.IO `order_created` event'i
+
+19. **[P2-3] Optimistic Updates**
+    - **Hedef:** Sipariş durum değişikliklerinde anında UI feedback.
+    - **Kapsam:** Admin order status update
+    - **Yöntem:** Redux action'da optimistic update + rollback on error
+
+================================================================================
+🏁 SON AŞAMA (TÜM GELİŞTİRMELER BİTTİKTEN SONRA)
+================================================================================
+
+20. **[FINAL-1] SEO & Metadata Optimizasyonu**
+    - Dinamik `title` ve `description`
+    - Open Graph (OG) etiketleri
+    - `sitemap.xml` ve `robots.txt`
+
+21. **[FINAL-2] Core Web Vitals Optimization**
+    - Lighthouse audit
+    - LCP, FID, CLS iyileştirmeleri
+    - Bundle size analizi (`@next/bundle-analyzer`)
+
+22. **[FINAL-3] Image Optimization Audit**
+    - Next.js `Image` component kullanım kontrolü
+    - Lazy loading doğrulaması
+    - WebP format kullanımı
+
+================================================================================
+📋 UYGULAMA SIRASI
+================================================================================
+
+AŞAMA 1 - Kod Temizliği (1-2 gün):
+  → P0-7, P0-8, P0-9
+
+AŞAMA 2 - Güvenlik (1-2 gün):
+  → P0-10, P0-11, P0-12
+
+AŞAMA 3 - UX İyileştirmeleri (3-5 gün):
+  → P1-1, P1-2, P1-3, P1-4
+
+AŞAMA 4 - Ek Özellikler (3-5 gün):
+  → P2-1, P2-2, P2-3
+
+AŞAMA 5 - Final (2-3 gün):
+  → FINAL-1, FINAL-2, FINAL-3
+
+================================================================================
+📊 İLERLEME TAKİBİ
+================================================================================
+
+| Kategori          | Toplam | Tamamlanan | Kalan |
+|-------------------|--------|------------|-------|
+| P0 - Tamamlanan   | 6      | 6          | 0     |
+| P0 - Quick Wins   | 3      | 0          | 3     |
+| P0 - Güvenlik     | 3      | 0          | 3     |
+| P1 - UX           | 4      | 0          | 4     |
+| P2 - Özellikler   | 3      | 0          | 3     |
+| Final             | 3      | 0          | 3     |
+|-------------------|--------|------------|-------|
+| TOPLAM            | 22     | 6          | 16    |
+
+================================================================================

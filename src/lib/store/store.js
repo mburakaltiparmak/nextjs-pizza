@@ -21,10 +21,14 @@ export const store = configureStore({
     global: globalReducer,
     app: appReducer,
   },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware()
-      .concat(errorMiddleware)
-      .concat(logger),
+  middleware: (getDefaultMiddleware) => {
+    const middleware = getDefaultMiddleware().concat(errorMiddleware);
+    if (process.env.NODE_ENV !== "production") {
+      middleware.push(logger);
+    }
+    return middleware;
+  },
+  devTools: process.env.NODE_ENV !== "production",
 });
 
 

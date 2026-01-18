@@ -9,6 +9,11 @@ const nextConfig = {
   experimental: {
     optimizeCss: false,
   },
+  compiler: {
+    removeConsole: {
+      exclude: ['error', 'warn'],
+    },
+  },
   reactStrictMode: false,
   images: {
     remotePatterns: [
@@ -44,6 +49,19 @@ const nextConfig = {
       (minimizer) => !minimizer.constructor.name.includes("CssMinimizerPlugin")
     );
     return config;
+  },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        ],
+      },
+    ];
   },
   async rewrites() {
     // API_BASE_URL'in tanımlı olup olmadığını kontrol et

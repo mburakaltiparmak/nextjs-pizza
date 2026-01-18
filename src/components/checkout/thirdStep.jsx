@@ -12,6 +12,7 @@ import { ChevronLeft } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import DOMPurify from "dompurify";
 
 // Diğer ödeme yöntemleri için component - Sadece not alanı
 const PaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, paymentMethod }) => {
@@ -157,9 +158,10 @@ const ThirdStep = ({ setCurrentStep, setStep3, onSuccess }) => {
   const isGuest = role === "GUEST";
   const guestData = useAppSelector((state) => state.guest);
 
+
   // Basit schema - sadece not alanı
   const formSchema = z.object({
-    notes: z.string().optional()
+    notes: z.string().optional().transform(val => val ? DOMPurify.sanitize(val) : val)
   });
 
   const {

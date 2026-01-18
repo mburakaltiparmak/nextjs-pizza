@@ -4,27 +4,29 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { 
-  setGuestName, 
-  setGuestSurname, 
-  setGuestEmail, 
-  setGuestPhone 
+import {
+  setGuestName,
+  setGuestSurname,
+  setGuestEmail,
+  setGuestPhone
 } from "@/lib/store/actions/guestActions";
+
+import DOMPurify from "dompurify";
 
 // Schema for form validation
 const guestSchema = z.object({
-  name: z.string().min(1, { message: "İsim gereklidir" }),
-  surname: z.string().min(1, { message: "Soyisim gereklidir" }),
-  email: z.string().email({ message: "Geçerli bir e-posta adresi giriniz" }),
-  phoneNumber: z.string().min(10, { message: "Geçerli bir telefon numarası giriniz" })
+  name: z.string().min(1, { message: "İsim gereklidir" }).transform(val => DOMPurify.sanitize(val)),
+  surname: z.string().min(1, { message: "Soyisim gereklidir" }).transform(val => DOMPurify.sanitize(val)),
+  email: z.string().email({ message: "Geçerli bir e-posta adresi giriniz" }).transform(val => DOMPurify.sanitize(val)),
+  phoneNumber: z.string().min(10, { message: "Geçerli bir telefon numarası giriniz" }).transform(val => DOMPurify.sanitize(val))
 });
 
 const GuestInfoForm = () => {
   const dispatch = useAppDispatch();
-  
+
   // Get guest data from redux store
   const guestData = useAppSelector((state) => state.guest);
-  
+
   const {
     register,
     handleSubmit,
@@ -46,15 +48,15 @@ const GuestInfoForm = () => {
   const surname = watch("surname");
   const email = watch("email");
   const phoneNumber = watch("phoneNumber");
-  
- 
+
+
 
   // Remove the auto-dispatch on typing to avoid constant updates
   // We'll handle it in the form submission instead
-  
+
   // State for showing success message
   const [isSubmitted, setIsSubmitted] = useState(false);
-  
+
   // Handle form submission
   const onSubmit = (data) => {
     // Dispatch all guest data to Redux store
@@ -62,23 +64,23 @@ const GuestInfoForm = () => {
     dispatch(setGuestSurname(data.surname));
     dispatch(setGuestEmail(data.email));
     dispatch(setGuestPhone(data.phoneNumber));
-        
+
     // Show success message
     setIsSubmitted(true);
-    
+
     // Hide success message after 3 seconds
     setTimeout(() => {
       setIsSubmitted(false);
     }, 3000);
   };
-  
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mb-6">
       <h3 className="text-lg font-medium text-gray-800">Misafir Bilgileri</h3>
       <p className="text-sm text-darkgray mb-4">
         Siparişinizi oluşturmak için lütfen aşağıdaki bilgileri doldurun.
       </p>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-darkgray mb-1">
@@ -94,7 +96,7 @@ const GuestInfoForm = () => {
             <p className="mt-1 text-sm text-red">{errors.name.message}</p>
           )}
         </div>
-        
+
         <div>
           <label htmlFor="surname" className="block text-sm font-medium text-darkgray mb-1">
             Soyisim
@@ -109,7 +111,7 @@ const GuestInfoForm = () => {
             <p className="mt-1 text-sm text-red">{errors.surname.message}</p>
           )}
         </div>
-        
+
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-darkgray mb-1">
             E-posta Adresi
@@ -125,7 +127,7 @@ const GuestInfoForm = () => {
             <p className="mt-1 text-sm text-red">{errors.email.message}</p>
           )}
         </div>
-        
+
         <div>
           <label htmlFor="phoneNumber" className="block text-sm font-medium text-darkgray mb-1">
             Telefon Numarası
@@ -141,7 +143,7 @@ const GuestInfoForm = () => {
           )}
         </div>
       </div>
-      
+
       {/* Başarı mesajı */}
       {isSubmitted && (
         <div className="p-3 bg-green-50 text-green-800 rounded-md border border-green-200">
@@ -153,7 +155,7 @@ const GuestInfoForm = () => {
           </div>
         </div>
       )}
-      
+
       {/* Kaydet butonu */}
       <div className="mt-4">
         <button

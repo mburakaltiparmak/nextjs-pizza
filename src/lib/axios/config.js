@@ -3,7 +3,7 @@ import { getAccessToken, getRefreshToken, clearTokens } from "@/lib/utils/tokenS
 import { tokenRefreshManager } from "@/lib/utils/tokenRefreshManager";
 import { isTokenExpired } from "@/lib/utils/tokenUtils";
 
-const API_BASE_URL = "https://api.burakaltiparmak.site/pizza/api";
+const API_BASE_URL = "http://localhost:8080/pizza/api";
 
 // E-commerce specific timeout strategies
 const TIMEOUT_CONFIG = {
