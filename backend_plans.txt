@@ -1,0 +1,40 @@
+# BACKEND GÜNCELLEME PLANLARI
+# Son Güncelleme: 18.01.2026
+
+Bu dosya, **Java/Spring Boot (Backend)** ekibinden talep edilen geliştirmeleri içerir.
+Frontend entegrasyonu için bu maddelerin tamamlanması gereklidir.
+
+================================================================================
+1. REAL-TIME ÖZELLİKLER (SOCKET.IO) [P1-1]
+================================================================================
+**Hedef:** Sipariş durum değişikliklerini (Mutfak -> Yolda) müşteriye anlık bildirmek.
+
+**Gereksinimler:**
+- **Kütüphane:** `netty-socketio` (v2.0.3) projeye eklenmeli.
+- **Port:** `9092` üzerinde çalışmalı.
+- **Events:**
+  - `order_created`: Admin odasına (Yeni sipariş düştüğünde).
+  - `order_updated`: Müşteriye (Sipariş durumu değiştiğinde).
+
+================================================================================
+2. İPTAL VE İADE (CANCEL/REFUND) [P0-VAR]
+================================================================================
+**Hedef:** Sipariş iptal edildiğinde Iyzico üzerinden otomatik ücret iadesi yapmak.
+
+**Endpoint:** `POST /api/payment/{paymentId}/refund`
+
+**Akıllı İade Mantığı (Best Practice):**
+1.  **Önce İptal (Cancel/Void):** Gün içinde yapılan işlemleri iptal et (Komisyonsuz).
+2.  **Sonra İade (Refund):** Eğer gün sonu (Settlement) alınmışsa, iade metodunu çağır (Komisyonlu).
+3.  **Hata Yönetimi:** "Settlement already done" hatası alınırsa otomatik Refund'a düş.
+
+**İş Kuralları:**
+- **İptal Edilebilir:** `PENDING`, `APPROVED`, `PREPARING`
+- **İptal Edilemez (Sadece Admin):** `SHIPPING`, `DELIVERED`
+
+================================================================================
+3. ELASTICSEARCH AUTOCOMPLETE (HAZIR MI?)
+================================================================================
+**Endpoint:** `GET /api/search/suggestions`
+- Frontend arama çubuğu için kullanılacak.
+- Fuzzy search (hatalı yazım) desteği kontrol edilmeli.

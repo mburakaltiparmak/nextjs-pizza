@@ -1,0 +1,45 @@
+# FRONTEND GÜNCELLEME PLANLARI
+# Son Güncelleme: 18.01.2026
+
+Bu dosya, **Next.js (Frontend)** tarafında yapılacak geliştirmeleri ve mevcut durumu içerir.
+
+================================================================================
+✅ TAMAMLANANLAR (P0 - KRİTİK)
+================================================================================
+"Production-Grade" seviyesine gelmek için yapılan kritik altyapı çalışmaları.
+
+1. **[P0-1] API Timeout & Retry Strategy**
+   - 3 farklı Axios instance (Default, Payment, Upload) ve Retry mekanizması kuruldu.
+2. **[P0-2] Error Boundary Implementation**
+   - Global ve Checkout sayfaları için hata yakalama ekranları eklendi.
+3. **[P0-3] Cart Persistence & Recovery**
+   - Sepet verileri localStorage'da yedeklendi, sekmeler arası senkronizasyon sağlandı.
+4. **[P0-4] Payment Flow Error Handling**
+   - 3D Secure öncesi/sonrası ödeme takibi (UUID ile) yapıldı.
+5. **[P0-5] Memory Leak & Cleanup**
+   - Admin panel state güncellemeleri güvenli hale getirildi.
+6. **[P0-6] Admin Reindex Buttons**
+   - Elasticsearch manuel güncelleme butonları eklendi.
+
+================================================================================
+🚀 SIRADAKİ GÖREVLER (P1 - YÜKSEK ÖNCELİK)
+================================================================================
+E-ticaret deneyimini iyileştirmek için yapılacak UX çalışmaları.
+
+7. **[P1-2] Loading States Standardization**
+   - **Hedef:** Kullanıcı beklerken boş ekran yerine "Skeleton" (iskelet) ekranlar göstermek.
+   - **Plan:** `UseLoadingManager` yazılacak, sayfa geçişleri ve veri yüklemeleri için standartlaştırılacak.
+
+8. **[P1-3] Advanced Filtering**
+   - **Hedef:** Menü sayfasında Fiyat Aralığı, Stok Durumu gibi gelişmiş filtreleri aktif etmek.
+   - **Detay:** Backend (`GET /api/product/search`) hazır, Frontend arayüzü (Sidebar Filter) yapılacak.
+
+================================================================================
+🏁 SON AŞAMA (GELİŞTİRMELER BİTTİKTEN SONRA)
+================================================================================
+9. **🔍 SEO & Metadata Optimizasyonu**
+   - **Hedef:** Tüm özellikler bittikten sonra siteyi arama motorları ve sosyal medya paylaşımları için optimize etmek.
+   - **Kapsam:**
+     - Dinamik `title` ve `description` (Ürün detayları için).
+     - Open Graph (OG) etiketleri (WhatsApp/Twitter paylaşım önizlemeleri).
+     - `sitemap.xml` ve `robots.txt` konfigürasyonu.

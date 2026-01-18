@@ -48,6 +48,23 @@ export const paymentRecovery = {
             return { type: 'TIMEOUT' };
         }
 
+        // Retry limit check
+        // We will increment retry count on each check
+        const currentRetries = state.retries || 0;
+        const MAX_RETRIES = 3;
+
+        if (currentRetries >= MAX_RETRIES) {
+            // Retried too many times without success/fail result
+            // Assume abandoned or manual intervention needed
+            console.log("⚠️ Payment recovery max retries reached. Clearing state.");
+            paymentRecovery.clearState();
+            return null;
+        }
+
+        // Update retry count in storage
+        const updatedState = { ...state, retries: currentRetries + 1 };
+        localStorage.setItem(PAYMENT_STATE_KEY, JSON.stringify(updatedState));
+
         try {
             // Check payment status from backend
             // Per updates.txt, we must use UUID for status check to prevent enumeration
@@ -55,6 +72,12 @@ export const paymentRecovery = {
 
             if (response.data.status === 'SUCCESS') {
                 // Payment completed - redirect to success
+                // Clear state ONLY after we return success so component can redirect
+                // But typically we should clear it here to avoid double processing if redirect fails?
+                // Actually safer to keep it for a moment, but component will redirect.
+                // Let's rely on success page logic or clear it here.
+                // Better to clear it here to prevent loop if redirect loops back.
+                paymentRecovery.clearState();
                 return {
                     type: 'SUCCESS',
                     orderId: state.orderId,

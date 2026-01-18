@@ -20,6 +20,39 @@ export default function TrackOrderClient() {
 
     const dispatch = useAppDispatch();
 
+    const { toast } = useToast();
+
+    // Listen for real-time updates
+    useEffect(() => {
+        if (!order) return;
+
+        const handleOrderUpdate = (data) => {
+            // Check if update is for current order
+            // Adapting to potential backend response structure (id or orderId)
+            const updateId = data.id || data.orderId;
+
+            if (updateId === order.id) {
+                setOrder((prev) => ({
+                    ...prev,
+                    ...data,
+                    orderStatus: data.orderStatus || data.status || prev.orderStatus
+                }));
+
+                toast({
+                    title: "Sipariş Güncellendi",
+                    description: `Sipariş durumu güncellendi: ${data.orderStatus || data.status}`,
+                    className: "bg-blue-50 border-blue-200 text-blue-900"
+                });
+            }
+        };
+
+        socket.on('order_updated', handleOrderUpdate);
+
+        return () => {
+            socket.off('order_updated', handleOrderUpdate);
+        };
+    }, [order, toast]);
+
     const handleTrackOrder = async (e) => {
         e.preventDefault();
         setLoading(true);
