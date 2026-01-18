@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { initiateGoogleLogin, registerUser } from "@/lib/store/actions/userActions";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/lib/hooks/useToast";
+import { registerSchema, registerBaseSchema } from "@/lib/validations/auth";
 
 export const useSignupForm = (onSuccess) => {
     const [formData, setFormData] = useState({
@@ -30,22 +31,41 @@ export const useSignupForm = (onSuccess) => {
     const loading = useAppSelector((state) => state.global.loading);
 
     const fieldValidations = useMemo(() => {
+        // Use Zod schema to determine field validity
+        // We prefer granular checks for UI feedback
         const { name, surname, email, phoneNumber, password, confirmPassword } = formData;
-        const isValidEmailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+        // Helper to check a specific field against the schema
+        const checkField = (field, value) => {
+            const fieldSchema = registerBaseSchema.shape[field];
+            if (!fieldSchema) return true; // if no schema, assume valid? or false?
+            const result = fieldSchema.safeParse(value);
+            return result.success;
+        };
+
+        const isNameValid = checkField("name", name);
+        const isSurnameValid = checkField("surname", surname);
+        const isEmailValid = checkField("email", email);
+        const isPhoneValid = checkField("phoneNumber", phoneNumber);
+        const isPasswordValid = checkField("password", password);
+        // confirmPassword needs custom check because it depends on password, which isn't in shape alone
+        const isConfirmValid = password === confirmPassword && confirmPassword.length >= 6;
 
         return {
-            name: name.trim() !== "",
-            surname: surname.trim() !== "",
-            email: isValidEmailFormat,
-            phoneNumber: /^\d{1,11}$/.test(phoneNumber),
-            password: password.length >= 6,
-            confirmPassword: password === confirmPassword && password.length >= 8,
+            name: isNameValid,
+            surname: isSurnameValid,
+            email: isEmailValid,
+            phoneNumber: isPhoneValid,
+            password: isPasswordValid,
+            confirmPassword: isConfirmValid,
         };
     }, [formData]);
 
     const isFormValid = useMemo(() => {
-        return Object.values(fieldValidations).every((validation) => validation);
-    }, [fieldValidations]);
+        // Validate entire form for submit button
+        const result = registerSchema.safeParse(formData);
+        return result.success;
+    }, [formData]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;

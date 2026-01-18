@@ -11,9 +11,10 @@ import AddressForm from "./addressForm";
 import AddressList from "./addressList";
 import GuestInfoForm from "./guestInfoForm";
 
-const schema = z.object({
-  fullname: z.string().min(1, { message: "İsim ve soyisim gereklidir" }),
-});
+import { personalInfoSchema } from "@/lib/validations/order";
+
+// Schema imported from central validation file
+
 
 const FirstStep = ({ setCurrentStep, setStep1 }) => {
   const dispatch = useAppDispatch();
@@ -44,7 +45,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
     watch,
     setValue
   } = useForm({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(personalInfoSchema),
     defaultValues: {
       fullname: "",
     }

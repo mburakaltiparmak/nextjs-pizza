@@ -11,15 +11,10 @@ import {
   setGuestPhone
 } from "@/lib/store/actions/guestActions";
 
-import DOMPurify from "dompurify";
+import { guestInfoSchema } from "@/lib/validations/order";
 
-// Schema for form validation
-const guestSchema = z.object({
-  name: z.string().min(1, { message: "İsim gereklidir" }).transform(val => DOMPurify.sanitize(val)),
-  surname: z.string().min(1, { message: "Soyisim gereklidir" }).transform(val => DOMPurify.sanitize(val)),
-  email: z.string().email({ message: "Geçerli bir e-posta adresi giriniz" }).transform(val => DOMPurify.sanitize(val)),
-  phoneNumber: z.string().min(10, { message: "Geçerli bir telefon numarası giriniz" }).transform(val => DOMPurify.sanitize(val))
-});
+// Schema imported from central validation file
+
 
 const GuestInfoForm = () => {
   const dispatch = useAppDispatch();
@@ -34,7 +29,7 @@ const GuestInfoForm = () => {
     watch,
     setValue
   } = useForm({
-    resolver: zodResolver(guestSchema),
+    resolver: zodResolver(guestInfoSchema),
     defaultValues: {
       name: guestData.name || "",
       surname: guestData.surname || "",

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useToast } from "@/lib/hooks/useToast";
 import { login, initiateGoogleLogin } from "@/lib/store/actions/userActions";
+import { loginSchema } from "@/lib/validations/auth";
 import { AUTH_ERRORS } from "@/lib/authErrorMessages";
 
 export const useLoginForm = (onSuccess) => {
@@ -30,13 +31,13 @@ export const useLoginForm = (onSuccess) => {
     };
 
     const validateForm = () => {
-        if (!email.trim()) {
-            setErrorMessage("Email gereklidir");
-            return false;
-        }
+        // Use Zod schema for validation
+        const result = loginSchema.safeParse({ email, password });
 
-        if (!password.trim()) {
-            setErrorMessage("Şifre gereklidir");
+        if (!result.success) {
+            // Get the first error message
+            const firstError = result.error.errors[0].message;
+            setErrorMessage(firstError);
             return false;
         }
 

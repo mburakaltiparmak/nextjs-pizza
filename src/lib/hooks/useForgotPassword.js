@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { forgotPassword } from "@/lib/store/actions/userActions";
 import { AUTH_ERRORS } from "@/lib/authErrorMessages";
+import { forgotPasswordSchema } from "@/lib/validations/auth";
 
 export const useForgotPassword = () => {
     const dispatch = useDispatch();
@@ -14,8 +15,10 @@ export const useForgotPassword = () => {
     const handleForgotPassword = async (e) => {
         e?.preventDefault();
 
-        if (!forgotPasswordEmail.trim()) {
-            setForgotPasswordError("Email gereklidir");
+        const validationResult = forgotPasswordSchema.safeParse({ email: forgotPasswordEmail });
+
+        if (!validationResult.success) {
+            setForgotPasswordError(validationResult.error.errors[0].message);
             return;
         }
 

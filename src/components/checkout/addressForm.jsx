@@ -12,19 +12,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { User, Phone, MapPin, Building, Mail, Star, Save, Loader2 } from "lucide-react";
 
-import DOMPurify from "dompurify";
+import { addressSchema } from "@/lib/validations/order";
 
-const addressSchema = z.object({
-  fullAddress: z.string().min(5, { message: "Adres en az 5 karakter olmalıdır" }).transform(val => DOMPurify.sanitize(val)),
-  city: z.string().min(2, { message: "Şehir gereklidir" }).transform(val => DOMPurify.sanitize(val)),
-  district: z.string().min(2, { message: "İlçe gereklidir" }).transform(val => DOMPurify.sanitize(val)),
-  postalCode: z.string().optional().transform(val => val ? DOMPurify.sanitize(val) : val),
-  addressTitle: z.string().optional().transform(val => val ? DOMPurify.sanitize(val) : val),
-  phoneNumber: z.string().optional().transform(val => val ? DOMPurify.sanitize(val) : val),
-  recipientName: z.string().min(3, { message: "Alıcı adı gereklidir" }).transform(val => DOMPurify.sanitize(val)),
-  saveAddress: z.boolean().optional(),
-  isDefault: z.boolean().optional()
-});
+// Schema imported from central validation file
+
 
 const AddressForm = ({
   onSubmit,

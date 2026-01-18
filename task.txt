@@ -12,14 +12,14 @@
 |-------|----------|-------|-----------|-------------|-----------|
 | **Phase 1** | Backend P0 - Code Quality | 3 | 3 | 0 | 0 |
 | **Phase 2** | Backend P0 - Security | 3 | 3 | 0 | 0 |
-| **Phase 3** | Backend P1 - Features | 3 | 0 | 0 | 3 |
+| **Phase 3** | Backend P1 - Features | 3 | 2 | 0 | 1 |
 | **Phase 4** | Frontend P0 - Code Quality | 3 | 0 | 0 | 3 |
 | **Phase 5** | Frontend P0 - Security | 3 | 0 | 0 | 3 |
 | **Phase 6** | Frontend P1 - UX | 4 | 0 | 0 | 4 |
 | **Phase 7** | Frontend P2 - Features | 3 | 0 | 0 | 3 |
 | **Phase 8** | Backend P2 - Consistency | 3 | 0 | 0 | 3 |
 | **Phase 9** | Final - Production Ready | 6 | 0 | 0 | 6 |
-| **TOTAL** | | **31** | **6** | **0** | **25** |
+| **TOTAL** | | **31** | **8** | **0** | **23** |
 
 ---
 
@@ -132,7 +132,7 @@
 
 ## 🚀 Phase 3: Backend Features (P1 - High Priority)
 
-### [ ] Task 3.1: Real-Time Features (Socket.IO)
+### [x] Task 3.1: Real-Time Features (Socket.IO)
 **Priority:** P1  
 **Estimated Time:** 2-3 days
 
@@ -143,14 +143,14 @@
 - Integrate with `OrderServiceImpl.updateOrderStatus()`
 
 **Testing:**
-- [ ] Start Socket.IO server and verify port 9092 is listening
-- [ ] Use Socket.IO client to connect and listen for events
-- [ ] Create test order and verify `order_created` event is emitted
-- [ ] Update order status and verify `order_updated` event is emitted
+- [x] Start Socket.IO server and verify port 9092 is listening
+- [x] Use Socket.IO client to connect and listen for events
+- [x] Create test order and verify `order_created` event is emitted
+- [x] Update order status and verify `order_updated` event is emitted
 
 ---
 
-### [ ] Task 3.2: Cancel & Refund API
+### [x] Task 3.2: Cancel & Refund API
 **Priority:** P1  
 **Estimated Time:** 1-2 days
 
@@ -161,10 +161,10 @@
 - Integrate Iyzico `Cancel.create()` and `Refund.create()`
 
 **Testing:**
-- [ ] Test same-day order cancellation (should use Cancel/Void)
-- [ ] Test next-day order cancellation (should use Refund)
-- [ ] Verify admin-only access for SHIPPING/DELIVERED orders
-- [ ] Check Iyzico sandbox for successful refund transactions
+- [x] Test same-day order cancellation (should use Cancel/Void)
+- [x] Test next-day order cancellation (should use Refund)
+- [x] Verify admin-only access for SHIPPING/DELIVERED orders
+- [x] Check Iyzico sandbox for successful refund transactions
 
 ---
 
