@@ -22,7 +22,10 @@ export const store = configureStore({
     app: appReducer,
   },
   middleware: (getDefaultMiddleware) => {
-    const middleware = getDefaultMiddleware().concat(errorMiddleware);
+    const middleware = getDefaultMiddleware({
+      serializableCheck: false,
+      immutableCheck: { warnAfter: 200 },
+    }).concat(errorMiddleware);
     if (process.env.NODE_ENV !== "production") {
       middleware.push(logger);
     }
