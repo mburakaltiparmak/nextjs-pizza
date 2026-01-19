@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAppDispatch } from '@/lib/store/hooks';
 import { fetchGuestOrderDetail } from '@/lib/store/actions/orderActions';
+import { useSocket } from '@/lib/providers/SocketProvider';
+import { useToast } from '@/lib/hooks/useToast';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -21,17 +23,21 @@ export default function TrackOrderClient() {
     const dispatch = useAppDispatch();
 
     const { toast } = useToast();
+    const { socket } = useSocket();
 
     // Listen for real-time updates
     useEffect(() => {
-        if (!order) return;
+        if (!order || !socket) return;
 
         const handleOrderUpdate = (data) => {
+            console.log("📥 Socket event received (order_updated):", data);
+
             // Check if update is for current order
             // Adapting to potential backend response structure (id or orderId)
             const updateId = data.id || data.orderId;
 
-            if (updateId === order.id) {
+            // Type check: ensure both are strings or both are numbers for comparison
+            if (String(updateId) === String(order.id)) {
                 setOrder((prev) => ({
                     ...prev,
                     ...data,
@@ -51,7 +57,7 @@ export default function TrackOrderClient() {
         return () => {
             socket.off('order_updated', handleOrderUpdate);
         };
-    }, [order, toast]);
+    }, [order, socket, toast]);
 
     const handleTrackOrder = async (e) => {
         e.preventDefault();

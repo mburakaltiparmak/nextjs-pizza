@@ -368,7 +368,7 @@
 
 ---
 
-### [ ] Task 7.2: Admin Notification Sound
+### [x] Task 7.2: Admin Notification Sound
 **Priority:** P2  
 **Estimated Time:** 1 day
 
@@ -378,9 +378,9 @@
 - Add settings to enable/disable sound
 
 **Testing:**
-- [ ] Create test order and verify sound plays
-- [ ] Test sound enable/disable toggle
-- [ ] Verify sound only plays for admin users
+- [x] Create test order and verify sound plays
+- [x] Test sound enable/disable toggle
+- [x] Verify sound only plays for admin users
 
 ---
 

@@ -2,10 +2,10 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import useAuthRoute from "@/lib/hooks/useAuthRole"; // Updated import
+import useAuthRoute from "@/lib/hooks/useAuthRole";
 import { RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner"; // Updated import
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 // Order Components
 import { OrderFilters } from "@/components/admin/orders/OrderFilters";
@@ -13,8 +13,11 @@ import { OrdersTable } from "@/components/admin/orders/OrdersTable";
 import { OrderDetailModal } from "@/components/admin/orders/OrderDetailModal";
 
 // Custom Hooks
-import { useOrdersManager } from "@/lib/hooks/useOrdersManager"; // Updated import
-import { useOrderActions } from "@/lib/hooks/useOrderActions"; // Updated import
+import { useOrdersManager } from "@/lib/hooks/useOrdersManager";
+import { useOrderActions } from "@/lib/hooks/useOrderActions";
+import { SocketStatusIndicator } from "@/components/admin/SocketStatusIndicator";
+import { useNotificationSound } from "@/lib/hooks/useNotificationSound";
+import { SoundToggle } from "@/components/admin/SoundToggle";
 
 const OrdersAdminClient = () => {
     // Auth
@@ -26,6 +29,9 @@ const OrdersAdminClient = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
+    // Notification Sound
+    const notificationSound = useNotificationSound();
+
     // Custom Hooks
     const {
         orders,
@@ -34,7 +40,12 @@ const OrdersAdminClient = () => {
         lastUpdateTime,
         refreshOrders,
         updateOrderLocally,
-    } = useOrdersManager();
+        addOrder,
+    } = useOrdersManager({
+        onNewOrder: (order) => {
+            notificationSound.play();
+        }
+    });
 
     const {
         isUpdating,
@@ -142,17 +153,9 @@ const OrdersAdminClient = () => {
         });
     };
 
-    // Loading state
-    // Auth check handled by hook, usually redirects or returns isAuthorized=false
-    // Assuming hook redirects if not authorized.
     if (!isAuthorized) {
         return null;
     }
-
-    // Loading state removed to show skeletons
-    // if (loading) {
-    //     return <LoadingSpinner size="fullPage" />;
-    // }
 
     return (
         <div>
@@ -172,16 +175,25 @@ const OrdersAdminClient = () => {
                             )}
                         </p>
                     </div>
-                    <Button
-                        onClick={refreshOrders}
-                        disabled={isRefreshing}
-                        className="flex items-center gap-2 bg-red text-lightgray hover:bg-yellow hover:text-red font-Barlow"
-                    >
-                        <RefreshCcw
-                            className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
+                    <div className="flex items-center gap-3">
+                        <SocketStatusIndicator />
+                        <SoundToggle
+                            isEnabled={notificationSound.isEnabled}
+                            isMuted={notificationSound.isMuted}
+                            onToggleEnabled={notificationSound.toggleEnabled}
+                            onToggleMute={notificationSound.toggleMute}
                         />
-                        {isRefreshing ? "Yenileniyor..." : "Yenile"}
-                    </Button>
+                        <Button
+                            onClick={refreshOrders}
+                            disabled={isRefreshing}
+                            className="flex items-center gap-2 bg-red text-lightgray hover:bg-yellow hover:text-red font-Barlow"
+                        >
+                            <RefreshCcw
+                                className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
+                            />
+                            {isRefreshing ? "Yenileniyor..." : "Yenile"}
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Filter Results Info */}

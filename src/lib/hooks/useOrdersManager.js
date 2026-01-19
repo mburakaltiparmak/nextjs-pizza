@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { instance } from "@/lib/hooks";
 import { useToast } from "@/lib/hooks/useToast";
+import { useSocket } from "@/lib/providers/SocketProvider";
 
 /**
  * Orders sayfası için optimize edilmiş veri yönetimi hook'u
  * Smart polling, cache, ve memory leak koruması içerir
  */
-export const useOrdersManager = () => {
+export const useOrdersManager = ({ onNewOrder } = {}) => {
   const { toast } = useToast();
 
   // State
@@ -32,11 +33,15 @@ export const useOrdersManager = () => {
    */
   const fetchOrdersFromAPI = useCallback(async (signal) => {
     try {
-      const response = await instance.get("/orders", {
+      const response = await instance.get("/orders/admin/paged", {
         signal,
+        params: {
+          size: 1000,
+          sort: "orderDate,desc"
+        }
         // timeout: REQUEST_TIMEOUT,
       });
-      return response.data;
+      return response.data.content || [];
     } catch (error) {
       // Abort veya cancel hataları sessizce geç
       if (error.name === "AbortError" || error.name === "CanceledError") {
@@ -240,27 +245,136 @@ export const useOrdersManager = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array - run only once on mount
 
-  // Page visibility polling disabled (prevents rate limit issues)
-  // Users can manually refresh if needed
-  /*
+  // Real-time updates with Socket.IO
+  const { socket } = useSocket();
+
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        console.log("👁️ Page hidden - stopping polling");
-        stopPolling();
-      } else {
-        console.log("👁️ Page visible - starting polling");
-        fetchOrders(true, true); // Hemen yenile
-        startPolling();
+    console.log("🔌 [useOrdersManager] Socket effect triggered");
+    console.log("   Socket available:", !!socket);
+    console.log("   Socket connected:", socket?.connected);
+    console.log("   Socket ID:", socket?.id);
+
+    if (!socket) {
+      console.warn("⚠️ [useOrdersManager] Socket not available yet");
+      return;
+    }
+
+    console.log("✅ [useOrdersManager] Setting up socket event listeners");
+
+    // Join Admin Room (Try common patterns)
+    console.log("📤 [useOrdersManager] Emitting 'join' event with 'admin'");
+    socket.emit('join', 'admin', (response) => {
+      console.log("✅ [useOrdersManager] Join acknowledgment:", response);
+    });
+
+    console.log("📤 [useOrdersManager] Emitting 'subscribe' event with 'orders'");
+    socket.emit('subscribe', 'orders', (response) => {
+      console.log("✅ [useOrdersManager] Subscribe acknowledgment:", response);
+    });
+
+    // Handler for new orders (receives OrderSocketDTO from backend)
+    const handleOrderCreated = (orderDTO) => {
+      console.log("🆕 [useOrdersManager] New order received via socket:", orderDTO);
+
+      // Transform DTO to match frontend order structure
+      const newOrder = {
+        id: orderDTO.id,
+        orderStatus: orderDTO.orderStatus,
+        totalAmount: orderDTO.totalAmount,
+        orderDate: orderDTO.orderDate,
+        userName: orderDTO.userName,
+        userEmail: orderDTO.userEmail,
+        deliveryAddress: orderDTO.deliveryAddress,
+        items: orderDTO.items,
+        // Add user object for compatibility
+        user: orderDTO.userName ? {
+          name: orderDTO.userName,
+          email: orderDTO.userEmail
+        } : null
+      };
+
+      setOrders((prevOrders) => {
+        // Prevent duplicates
+        if (prevOrders.some(o => o.id === newOrder.id)) {
+          console.log("⚠️ [useOrdersManager] Order already exists, skipping");
+          return prevOrders;
+        }
+        console.log("✅ [useOrdersManager] Adding new order to list");
+        return [newOrder, ...prevOrders];
+      });
+
+      toast({
+        title: "Yeni Sipariş!",
+        description: `#${newOrder.id} numaralı sipariş alındı.`,
+        className: "bg-green-50 border-green-200 text-green-900"
+      });
+
+      // Play notification sound
+      if (onNewOrder) {
+        onNewOrder(newOrder);
       }
+
+      // Update stats
+      setLastUpdateTime(new Date());
     };
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    // Handler for order updates (receives OrderSocketDTO from backend)
+    const handleOrderUpdated = (orderDTO) => {
+      console.log("🔄 [useOrdersManager] Order updated via socket:", orderDTO);
+
+      // Transform DTO to match frontend order structure
+      const updatedOrder = {
+        id: orderDTO.id,
+        orderStatus: orderDTO.orderStatus,
+        totalAmount: orderDTO.totalAmount,
+        orderDate: orderDTO.orderDate,
+        userName: orderDTO.userName,
+        userEmail: orderDTO.userEmail,
+        deliveryAddress: orderDTO.deliveryAddress,
+        items: orderDTO.items,
+        user: orderDTO.userName ? {
+          name: orderDTO.userName,
+          email: orderDTO.userEmail
+        } : null
+      };
+
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === updatedOrder.id ? { ...order, ...updatedOrder } : order
+        )
+      );
+
+      setLastUpdateTime(new Date());
     };
-  }, [stopPolling, startPolling, fetchOrders]);
-  */
+
+    console.log("📝 [useOrdersManager] Registering 'order_created' listener");
+    socket.on("order_created", handleOrderCreated);
+
+    console.log("📝 [useOrdersManager] Registering 'order_updated' listener");
+    socket.on("order_updated", handleOrderUpdated);
+
+    // DEBUG: Listen to all events
+    socket.onAny((eventName, ...args) => {
+      console.log(`📡 [useOrdersManager] Incoming Event: ${eventName}`, args);
+    });
+
+    console.log("✅ [useOrdersManager] All socket listeners registered");
+
+    return () => {
+      console.log("🧹 [useOrdersManager] Cleaning up socket listeners");
+      socket.off("order_created", handleOrderCreated);
+      socket.off("order_updated", handleOrderUpdated);
+      socket.offAny();
+    };
+  }, [socket, toast]);
+
+  const addOrder = useCallback((newOrder) => {
+    console.log("⚡ [Hook] addOrder called", newOrder);
+    setOrders(prev => {
+      console.log("⚡ [Hook] Previous orders:", prev.length);
+      return [newOrder, ...prev];
+    });
+  }, []);
 
   return {
     orders,
@@ -269,6 +383,7 @@ export const useOrdersManager = () => {
     lastUpdateTime,
     refreshOrders,
     updateOrderLocally,
-    fetchOrders, // Acil durumlarda kullanım için
+    fetchOrders,
+    addOrder, // Exposed for testing/simulation
   };
 };

@@ -11,15 +11,18 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/lib/hooks/useToast";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
 import { ToastProvider } from "./toast-provider";
+import { SocketProvider } from "./SocketProvider";
 
 export default function Providers({ children }) {
   return (
     <Provider store={store}>
       <AuthProvider>
-        <ToastProvider>
-          <AppInitializer />
-          {children}
-        </ToastProvider>
+        <SocketProvider>
+          <ToastProvider>
+            <AppInitializer />
+            {children}
+          </ToastProvider>
+        </SocketProvider>
       </AuthProvider>
     </Provider>
   );

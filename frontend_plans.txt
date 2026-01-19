@@ -130,7 +130,7 @@ Kullanıcı deneyimini artıracak özellikler.
       - Real-time durum güncellemesi (Socket.IO ile)
       - Timeline görünümü
 
-18. **[P2-2] Admin Notification Sound**
+18. **[P2-2] Admin Notification Sound** ✅
     - **Hedef:** Yeni sipariş geldiğinde ses bildirimi.
     - **Kütüphane:** `use-sound` veya native Web Audio API
     - **Koşul:** Socket.IO `order_created` event'i

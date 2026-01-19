@@ -100,7 +100,9 @@ const setupInterceptors = (axiosInstance) => {
 
             // Dev logging
             if (process.env.NODE_ENV === "development") {
-                if (error.code === "ECONNABORTED") {
+                if (axios.isCancel(error)) {
+                    console.log(`⏹️ Request Canceled: ${error.message}`);
+                } else if (error.code === "ECONNABORTED") {
                     console.warn(`⏱️ API Timeout: ${error.config?.url}`);
                 } else if (!error.response) {
                     console.error(`❌ Network Error: ${error.message}`);
