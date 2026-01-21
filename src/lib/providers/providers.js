@@ -75,7 +75,7 @@ function AppInitializer() {
 
       if (recovery) {
         if (recovery.type === 'SUCCESS') {
-          router.push(`/payment/success?orderId=${recovery.orderId}`);
+          router.push(`/payment/success?orderId=${recovery.orderUuid || recovery.orderId}`);
           toast({
             title: "Ödeme Başarılı",
             description: "Ödemeniz başarıyla tamamlandı!",

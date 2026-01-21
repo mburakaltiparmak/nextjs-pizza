@@ -214,9 +214,20 @@ export const fetchGuestOrderDetail = (orderId, email) => async (dispatch) => {
   dispatch(setOrderFetchState(fetchStates.FETCHING));
 
   try {
-    const response = await instance.get(`/orders/${orderId}`, {
-      params: { email },
-    });
+    // Check if orderId is a UUID
+    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/i.test(orderId);
+
+    let response;
+
+    if (isUuid) {
+      // Use public tracking endpoint for UUIDs
+      response = await instance.get(`/orders/track/${orderId}`);
+    } else {
+      // Use legacy endpoint for numeric IDs
+      response = await instance.get(`/orders/${orderId}`, {
+        params: { email },
+      });
+    }
 
     dispatch(setOrderDetail(response.data));
     dispatch(setOrderFetchState(fetchStates.FETCHED));
@@ -292,12 +303,13 @@ export const createOrder =
         // İsteği gönder
         const response = await instance.post("/orders", requestData);
 
-        if (!response.data || !response.data.id) {
-          throw new Error("Sipariş oluşturuldu fakat ID alınamadı.");
+        if (!response.data || !response.data.uuid) {
+          throw new Error("Sipariş oluşturuldu fakat UUID alınamadı.");
         }
 
-        const orderId = response.data.id;
-        console.log(`Sipariş başarıyla oluşturuldu: ID ${orderId}`);
+        const orderUuid = response.data.uuid;
+        const orderId = response.data.id; // Numeric ID for legacy/logging purposes
+        console.log(`Sipariş başarıyla oluşturuldu: UUID ${orderUuid}, ID ${orderId}`);
 
         // Sipariş detaylarını Redux state'ine kaydet
         dispatch(setOrderDetail(response.data));
@@ -307,7 +319,7 @@ export const createOrder =
         try {
           if (orderData.paymentMethod === "ONLINE_CREDIT_CARD") {
             // Online kredi kartı ödemesi (Iyzico Hosted Checkout Başlatma)
-            const paymentEndpoint = `/payment/checkout/init/${orderId}`;
+            const paymentEndpoint = `/payment/checkout/init/${orderUuid}`;
 
             console.log(`Iyzico ödeme sayfası başlatılıyor: ${paymentEndpoint}`);
             const initResponse = await instance.post(paymentEndpoint);
@@ -319,10 +331,10 @@ export const createOrder =
 
               // 3D Secure öncesi state'i kaydet
               paymentRecovery.saveState(
-                orderId,
+                orderId, // Numeric ID for backward compat in recovery
                 initResponse.data.paymentId || "unknown_payment_id",
                 orderData.totalAmount || 0,
-                initResponse.data.uuid // UUID Backend'den gelmeli (updates.txt)
+                orderUuid // Order UUID for tracking
               );
 
               // Kullanıcıyı Iyzico ödeme sayfasına yönlendir
@@ -376,11 +388,11 @@ export const createOrder =
     };
 
 // Cancel order
-export const cancelOrder = (orderId) => async (dispatch) => {
+export const cancelOrder = (uuid) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
-    const response = await instance.post(`/orders/${orderId}/cancel`);
+    const response = await instance.post(`/orders/${uuid}/cancel`);
 
     // Refresh orders after cancellation
     dispatch(fetchUserOrders());
@@ -404,11 +416,11 @@ export const cancelOrder = (orderId) => async (dispatch) => {
 };
 
 // Misafir sipariş iptali
-export const cancelGuestOrder = (orderId, email) => async (dispatch) => {
+export const cancelGuestOrder = (uuid, email) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
-    const response = await instance.post(`/orders/${orderId}/cancel`, {
+    const response = await instance.post(`/orders/${uuid}/cancel`, {
       email,
     });
 

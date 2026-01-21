@@ -273,8 +273,8 @@ const ThirdStep = ({ setCurrentStep, setStep3, onSuccess }) => {
           title: "Siparişiniz Oluşturuldu!"
         });
 
-        // Başarı sayfasına yönlendir (Order ID ile)
-        router.push(`/payment/success?orderId=${result.id}`);
+        // Başarı sayfasına yönlendir (Order UUID ile)
+        router.push(`/payment/success?orderId=${result.uuid || result.id}`);
       }
 
     } catch (error) {

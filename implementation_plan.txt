@@ -2,7 +2,7 @@
 
 **Branch:** refactor  
 **Environment:** localhost:8080  
-**Date:** 2026-01-18
+**Date:** 2026-01-20
 
 ---
 
@@ -103,7 +103,26 @@ This implementation plan outlines the systematic refactoring and enhancement of 
 - Implement fuzzy autocomplete search
 - Limit to 10 results, minimum 2 characters
 
+#### [MODIFY] [Order.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/entity/order/Order.java)
+- Add `private UUID uuid;` field
+- Implement `@PrePersist` to generating UUID if null
+
+#### [NEW] [OrderTrackingResponse.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/dto/order/OrderTrackingResponse.java)
+- Create DTO for public tracking view
+- Include masked user details
+
+#### [MODIFY] [OrderRestController.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/controller/OrderRestController.java)
+- Add `GET /api/orders/track/{uuid}` endpoint
+- **[x] Order Cancellation (Unified UUID)** ✅
+  - `POST /api/orders/{uuid}/cancel` (Replaces `cancelOrder(Long)`)
+  - Shared logic for Guest (Email check) and User (Auth check)
+- Ensure it's publicly accessible (SecurityConfig)
+
+#### [MODIFY] [SocketIOService.java](file:///c:/Users/phant/Desktop/Burak/Backend/pizza/src/main/java/com/example/pizza/service/socket/SocketIOService.java)
+- Update room logic to support `order_{uuid}`
+
 ---
+
 
 ### Phase 4-7: Frontend Changes
 
@@ -443,9 +462,67 @@ If issues are discovered during any phase:
 - [ ] All tests passing (unit, integration, manual)
 - [ ] No System.out.println in production code
 - [ ] All security headers configured
-- [x] Socket.IO real-time updates working
+- [ ] Socket.IO real-time updates working
 - [ ] Refund API functional with Iyzico
 - [ ] Autocomplete search working with fuzzy matching
 - [ ] Lighthouse score > 90
 - [ ] API documentation complete
 - [ ] Production-ready logging configured
+
+---
+
+## 📊 Progress Overview
+
+| Phase | Category | Total | Completed | In Progress | Remaining |
+|-------|----------|-------|-----------|-------------|-----------|
+| **Phase 1** | Backend P0 - Code Quality | 3 | 3 | 0 | 0 |
+| **Phase 2** | Backend P0 - Security | 3 | 3 | 0 | 0 |
+| **Phase 3** | Backend P1 - Features | 3 | 3 | 0 | 0 |
+| **Phase 4** | Frontend P0 - Code Quality | 3 | 0 | 0 | 3 |
+| **Phase 5** | Frontend P0 - Security | 3 | 0 | 0 | 3 |
+| **Phase 6** | Frontend P1 - UX | 4 | 0 | 0 | 4 |
+| **Phase 7** | Frontend P2 - Features | 3 | 0 | 0 | 3 |
+| **Phase 8** | Backend P2 - Consistency | 3 | 0 | 0 | 3 |
+| **Phase 9** | Final - Production Ready | 6 | 0 | 0 | 6 |
+| **TOTAL** | | **31** | **9** | **0** | **22** |
+
+---
+
+### [x] Task 3.4: Secure Order Tracking (UUID)
+**Priority:** P1  
+**Estimated Time:** 4-6 hours
+
+**Implementation:**
+- Add `uuid` field to `orders` table (migration/auto-ddl)
+- Update `Order` entity with `@PrePersist` UUID generation
+- Create `OrderTrackingResponse` DTO (masked data)
+- Implement `GET /api/orders/track/{uuid}` in `OrderRestController`
+- Update `SocketIOService` to handle `order_{uuid}` rooms
+
+**Testing:**
+- [x] Verify UUID generation for new orders
+- [x] Test public access to tracking endpoint
+- [x] Verify sensitive data masking in response
+- [x] Test real-time updates in `order_{uuid}` room
+
+### [x] Task 3.5: Unified Order Cancellation (UUID)
+**Priority:** P1
+**Implementation:**
+- Refactor `cancelOrder` to use UUID instead of ID
+- Consolidate Guest and Authenticated cancellation logic
+- Update `OrderRestController` to expose `POST /api/orders/{uuid}/cancel`
+- Verify email for guests, UserDetails for authenticated users
+
+**Testing:**
+- [x] Test cancellation with valid UUID (Authenticated)
+- [x] Test cancellation with valid UUID + Email (Guest)
+- [x] Verify 403 for mismatched email/user
+- [x] Verify 404 for invalid UUID
+
+### [x] Task 3.6: Smart Order Cancellation & Refund
+**Priority:** P1
+**Implementation:**
+- Integrate `IyzicoPaymentService` into `OrderServiceImpl`
+- Implement `smartCancelPayment` for automated refund/void
+- Handle "Pay at Door" cancellation correctly (Set PaymentStatus.CANCELLED)
+- Ensure data consistency between DB and Iyzico

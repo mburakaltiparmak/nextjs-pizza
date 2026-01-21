@@ -39,6 +39,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
 
   const [newAddress, setNewAddress] = useState(null);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [selectedAddressObj, setSelectedAddressObj] = useState(null);
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
 
   const {
@@ -94,18 +95,28 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
   }, [isGuest, guestData]);
 
   // Adres seçimi
-  const handleAddressSelect = (addressId) => {
-    // ID'ye göre adres nesnesini bul
-    const selectedAddress = addresses.find(addr => addr.id === addressId);
+  const handleAddressSelect = (addressOrId) => {
+    let selectedAddress;
+    let newAddressId;
 
-    setSelectedAddressId(addressId);
+    if (typeof addressOrId === 'object' && addressOrId !== null) {
+      selectedAddress = addressOrId;
+      newAddressId = addressOrId.id;
+    } else {
+      // Fallback for ID based
+      selectedAddress = addresses.find(addr => addr.id === addressOrId);
+      newAddressId = addressOrId;
+    }
+
+    setSelectedAddressId(newAddressId);
+    setSelectedAddressObj(selectedAddress);
     setShowNewAddressForm(false);
     setNewAddress(null);
 
     // Seçilen adresi Redux'a kaydet
     if (selectedAddress) {
       dispatch(setSelectedAddress(selectedAddress));
-      console.log(`Adres seçildi ve Redux'a kaydedildi: ID ${addressId}`, selectedAddress);
+      console.log(`Adres seçildi ve Redux'a kaydedildi: ID ${newAddressId}`, selectedAddress);
     }
   };
 
@@ -181,7 +192,12 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
       let addressData = null;
 
       if (selectedAddressId) {
-        addressData = addresses.find(addr => addr.id === selectedAddressId);
+        // Use local object if available (handles synchronization issues)
+        if (selectedAddressObj && selectedAddressObj.id === selectedAddressId) {
+          addressData = selectedAddressObj;
+        } else {
+          addressData = addresses.find(addr => addr.id === selectedAddressId);
+        }
       } else if (newAddress) {
         addressData = newAddress;
       }

@@ -2,12 +2,12 @@ const PAYMENT_STATE_KEY = 'payment_state';
 
 export const paymentRecovery = {
     // Save payment state before 3D Secure redirect
-    saveState: (orderId, paymentId, amount, uuid) => {
+    saveState: (orderId, paymentId, amount, orderUuid) => {
         if (typeof window === 'undefined') return;
         const state = {
-            orderId,
+            orderId,      // Numeric ID (legacy, for backward compat)
             paymentId,
-            uuid,
+            orderUuid,    // Order UUID for tracking
             amount,
             timestamp: Date.now(),
             status: 'PENDING'
@@ -68,7 +68,7 @@ export const paymentRecovery = {
         try {
             // Check payment status from backend
             // Per updates.txt, we must use UUID for status check to prevent enumeration
-            const response = await apiInstance.get(`/payment/${state.uuid}/status`);
+            const response = await apiInstance.get(`/payment/${state.orderUuid}/status`);
 
             if (response.data.status === 'SUCCESS') {
                 // Payment completed - redirect to success
@@ -81,6 +81,7 @@ export const paymentRecovery = {
                 return {
                     type: 'SUCCESS',
                     orderId: state.orderId,
+                    orderUuid: state.orderUuid,
                     paymentId: state.paymentId
                 };
             } else if (response.data.status === 'FAILED') {

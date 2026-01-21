@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAppDispatch } from '@/lib/store/hooks';
 import { fetchGuestOrderDetail } from '@/lib/store/actions/orderActions';
 import { useSocket } from '@/lib/providers/SocketProvider';
@@ -59,6 +59,8 @@ export default function TrackOrderClient() {
         };
     }, [order, socket, toast]);
 
+    const router = useRouter();
+
     const handleTrackOrder = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -70,7 +72,11 @@ export default function TrackOrderClient() {
 
             if (result.error) {
                 setError(result.error);
+            } else if (result.uuid) {
+                // Best Practice: Redirect to the secure tracking page
+                router.push(`/track/${result.uuid}`);
             } else {
+                // Fallback for orders without UUID (if any)
                 setOrder(result);
             }
         } catch (err) {
@@ -139,37 +145,14 @@ export default function TrackOrderClient() {
                         </Button>
                     </form>
 
-                    {order && (
-                        <div className="mt-8 p-6 bg-gray/5 rounded-xl border border-lightgray2">
-                            <h2 className="text-xl font-bold mb-4 text-darkgray">Sipariş Detayları</h2>
-
-                            <div className="space-y-3">
-                                <div className="flex justify-between border-b border-lightgray2 pb-2">
-                                    <span className="text-gray">Sipariş No:</span>
-                                    <span className="font-medium text-darkgray">{order.id}</span>
-                                </div>
-
-                                <div className="flex justify-between border-b border-lightgray2 pb-2">
-                                    <span className="text-gray">Durum:</span>
-                                    <span className="font-medium text-green-600">
-                                        {order.orderStatus}
-                                    </span>
-                                </div>
-
-                                <div className="flex justify-between border-b border-lightgray2 pb-2">
-                                    <span className="text-gray">Toplam:</span>
-                                    <span className="font-bold text-lg text-red">
-                                        {order.totalAmount?.toFixed(2)} ₺
-                                    </span>
-                                </div>
-
-                                <div className="flex justify-between">
-                                    <span className="text-gray">Tarih:</span>
-                                    <span className="font-medium text-darkgray">
-                                        {new Date(order.orderDate).toLocaleString('tr-TR')}
-                                    </span>
-                                </div>
-                            </div>
+                    {/* Inline display removed - Redirects to /track/[uuid] */}
+                    {order && !order.uuid && (
+                        <div className="mt-8 p-6 bg-yellow/10 rounded-xl border border-yellow">
+                            <h2 className="text-xl font-bold mb-2 text-darkgray">Uyarı</h2>
+                            <p className="text-darkgray">
+                                Bu sipariş eski bir versiyonda oluşturulmuş ve takip ID'si (UUID) bulunmuyor.
+                                Durum: <b>{order.orderStatus}</b>
+                            </p>
                         </div>
                     )}
                 </div>

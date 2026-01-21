@@ -190,7 +190,7 @@ const AddressList = ({
               ? "border-red bg-gradient-to-r from-yellow to-lightyellow shadow-lg scale-102"
               : "border-lightgray2 bg-white hover:border-yellow"
               }`}
-            onClick={() => onSelectAddress(address.id)}
+            onClick={() => onSelectAddress(address)}
           >
             {/* Header */}
             <div className="flex justify-between items-start mb-4">

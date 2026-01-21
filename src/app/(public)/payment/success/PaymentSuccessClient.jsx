@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAppDispatch } from "@/lib/store/hooks";
 import { clearCartAction } from "@/lib/store/actions/orderActions";
@@ -13,18 +13,19 @@ const PaymentSuccessClient = () => {
     const router = useRouter();
     const dispatch = useAppDispatch();
     const { toast } = useToast();
-    const orderId = searchParams.get("orderId");
+    // Backend now sends Order UUID directly in callback (either as 'uuid' or 'orderId' param)
+    const orderUuid = searchParams.get("uuid") || searchParams.get("orderId");
 
     useEffect(() => {
         // Ödeme başarılı olduğunda sepeti temizle
-        if (orderId) {
+        if (orderUuid) {
             dispatch(clearCartAction());
         }
-    }, [orderId, dispatch]);
+    }, [orderUuid, dispatch]);
 
     const handleCopyId = () => {
-        if (orderId) {
-            navigator.clipboard.writeText(orderId);
+        if (orderUuid) {
+            navigator.clipboard.writeText(orderUuid);
             toast.success("Sipariş numarası panoya kopyalandı.", {
                 title: "Kopyalandı",
                 duration: 2000,
@@ -75,7 +76,7 @@ const PaymentSuccessClient = () => {
                         Tebrikler! Ödemeniz başarıyla gerçekleşti. En kısa sürede kapınızdayız.
                     </motion.p>
 
-                    {orderId && (
+                    {orderUuid && (
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -85,7 +86,7 @@ const PaymentSuccessClient = () => {
                             <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5 block">Sipariş Takip No</span>
                             <div className="flex items-center justify-between gap-3">
                                 <span className="font-mono text-lg font-bold text-gray-800 break-all pl-2">
-                                    {orderId}
+                                    {orderUuid}
                                 </span>
                                 <button
                                     onClick={handleCopyId}
@@ -103,7 +104,7 @@ const PaymentSuccessClient = () => {
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.6 }}
-                            onClick={() => router.push(`/track-order?id=${orderId || ''}`)}
+                            onClick={() => router.push(`/track/${orderUuid || ''}`)}
                             className="w-full bg-red text-white font-bold py-3.5 px-6 rounded-xl hover:bg-darkred hover:shadow-lg hover:shadow-red/20 active:translate-y-[1px] transition-all flex items-center justify-center gap-2 group"
                         >
                             <Truck size={20} />
