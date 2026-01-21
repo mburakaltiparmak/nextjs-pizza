@@ -6,6 +6,7 @@ import useAuthRoute from "@/lib/hooks/useAuthRole";
 import { RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { Pagination } from "@/components/ui/Pagination";
 
 // Order Components
 import { OrderFilters } from "@/components/admin/orders/OrderFilters";
@@ -41,6 +42,8 @@ const OrdersAdminClient = () => {
         refreshOrders,
         updateOrderLocally,
         addOrder,
+        pagination,
+        fetchOrders,
     } = useOrdersManager({
         onNewOrder: (order) => {
             notificationSound.play();
@@ -220,9 +223,27 @@ const OrdersAdminClient = () => {
                 orders={filteredOrders}
                 onViewDetail={handleShowDetail}
                 filteredCount={filteredOrders.length}
-                totalCount={filterStats.total}
+                totalCount={filterStats.total} // Shows total elements from api now if we use pagination.totalElements?
+                // filterStats.total is calculated from `orders.length` currently. 
+                // If we use pagination, `orders` is just 10 items.
+                // We should display pagination.totalElements if available.
+                // Let's pass pagination.totalElements as totalCount if available.
                 isLoading={loading || isRefreshing}
             />
+
+            {/* Pagination */}
+            {pagination && pagination.totalPages > 1 && (
+                <Pagination
+                    currentPage={pagination.page}
+                    totalPages={pagination.totalPages}
+                    onPageChange={(page) => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        fetchOrders(page);
+                        // Note: fetchOrders is exposed from useOrdersManager
+                        // We don't need to dispatch actions because useOrdersManager handles it.
+                    }}
+                />
+            )}
 
             {/* Order Detail Modal */}
             <OrderDetailModal

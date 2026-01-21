@@ -1,5 +1,6 @@
 import { User, UserCheck, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TableSkeleton } from "@/components/ui/skeletons/TableSkeleton";
 
 /**
  * Pending Users Table Component
@@ -24,11 +25,7 @@ export const PendingUsersTable = ({
     };
 
     if (loading) {
-        return (
-            <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-                <p className="text-gray-500 font-Barlow">Yükleniyor...</p>
-            </div>
-        );
+        return <TableSkeleton rowCount={8} columnCount={4} />;
     }
 
     if (!users || users.length === 0) {

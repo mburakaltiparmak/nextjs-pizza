@@ -3,8 +3,6 @@ import { Edit, Trash2, Package, Plus } from "lucide-react";
 import RatingStars from "@/components/admin/ratingStars";
 import { TableSkeleton } from "@/components/ui/skeletons/TableSkeleton";
 
-// ...
-
 export const ProductsTable = ({
     products,
     categories,
@@ -13,9 +11,7 @@ export const ProductsTable = ({
     onAddNew,
     loading,
 }) => {
-    /**
-     * Get category name helper
-     */
+
     const getCategoryName = (categoryId) => {
         if (!categoryId) return "Bilinmeyen Kategori";
 
@@ -30,7 +26,6 @@ export const ProductsTable = ({
         );
         return foundCategory ? foundCategory.name : "Bilinmeyen Kategori";
     };
-    // ...
 
     if (loading) {
         return <TableSkeleton rowCount={10} columnCount={6} />;

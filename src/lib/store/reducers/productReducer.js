@@ -11,13 +11,14 @@ export const productActions = {
   SET_FETCH_STATE: "SET_PRODUCT_FETCH_STATE",
   SET_ERROR: "SET_PRODUCT_ERROR",
   SET_PAGINATION: "SET_PRODUCT_PAGINATION",
+  RESET_PRODUCT_STATE: "RESET_PRODUCT_STATE",
 };
 
 const productInitialState = {
   products: [],
   pagination: {
     page: 0,
-    size: 20,
+    size: 10,
     totalPages: 0,
     totalElements: 0,
   },
@@ -114,6 +115,9 @@ export const productReducer = (state = productInitialState, action) => {
         ...state,
         error: action.payload,
       };
+
+    case productActions.RESET_PRODUCT_STATE:
+      return productInitialState;
 
     default:
       return state;

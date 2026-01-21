@@ -16,6 +16,10 @@ export const clearCurrentProduct = () => ({
   type: productActions.CLEAR_CURRENT_PRODUCT,
 });
 
+export const resetProductState = () => ({
+  type: productActions.RESET_PRODUCT_STATE,
+});
+
 export const fetchProducts = (page = 0, size = 8) => async (dispatch) => {
   dispatch(setModuleLoading('product', true)); // ✅ Module loading kullan
   dispatch({

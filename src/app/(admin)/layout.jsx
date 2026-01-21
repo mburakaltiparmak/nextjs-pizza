@@ -1,14 +1,15 @@
 "use client";
 
-import AdminNavbar from "@/components/layout/AdminNavbar";
-import AdminSidebar from "@/components/layout/AdminSidebar";
+import { GlobalLoadingOverlay } from "@/components/ui/GlobalLoadingOverlay";
 import { useState, useEffect } from "react";
 import Loading from "@/app/loading";
 import { usePathname, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { userRoles } from "@/lib/store/constants";
-import { useMobileDetection } from "@/lib/hooks/useMobileDetection"; // Check this hook
+import { useMobileDetection } from "@/lib/hooks/useMobileDetection";
 import { AdminLayoutProvider, useAdminLayout } from "@/lib/contexts/AdminLayoutContext";
+import AdminNavbar from "@/components/layout/AdminNavbar";
+import AdminSidebar from "@/components/layout/AdminSidebar";
 
 function AdminLayoutContent({ children }) {
     const [isMounted, setIsMounted] = useState(false);
@@ -92,6 +93,7 @@ function AdminLayoutContent({ children }) {
 
     return (
         <div className="flex flex-col md:flex-row h-screen font-Barlow bg-lightgray">
+            <GlobalLoadingOverlay />
             <AdminSidebar activePage={activePage} isMobile={isMobile} />
 
             <div className="flex-1 flex flex-col overflow-hidden w-full">
@@ -118,3 +120,5 @@ export default function AdminLayoutClient({ children }) {
         </AdminLayoutProvider>
     );
 }
+
+

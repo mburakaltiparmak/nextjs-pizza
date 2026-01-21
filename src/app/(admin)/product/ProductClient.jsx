@@ -4,8 +4,9 @@ import { useRouter } from "next/navigation";
 import useAuthRoute from "@/lib/hooks/useAuthRole";
 import { useAdminLayout } from "@/lib/contexts/AdminLayoutContext";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
-import { fetchProducts, fetchProductsByCategory } from "@/lib/store/actions/productActions";
+import { fetchProducts, fetchProductsByCategory, resetProductState } from "@/lib/store/actions/productActions";
 import { fetchCategories } from "@/lib/store/actions/categoryActions";
+import { fetchStates } from "@/lib/store/constants";
 
 
 // Custom Hooks
@@ -17,67 +18,51 @@ import { ProductFilters } from "@/components/admin/products/ProductFilters";
 import { ProductsTable } from "@/components/admin/products/ProductsTable";
 import { ProductFormModal } from "@/components/admin/products/ProductFormModal";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { Pagination } from "@/components/ui/Pagination";
 
 const ProductClient = () => {
     const router = useRouter();
     const { isAuthorized } = useAuthRoute(["ADMIN", "PERSONAL"], "/");
     const { registerModal } = useAdminLayout();
-
-    // State
-    // Duplicates removed
     const dispatch = useAppDispatch();
 
-    // Redux Selectors
     const products = useAppSelector((state) => state.product.products);
     const pagination = useAppSelector((state) => state.product.pagination);
-    // Categories might still be needed from useProductsManager or Redux. 
-    // Homepage uses: const categories = useAppSelector((store) => store.category.categories);
-    // Let's assume we need to fetch categories too if not present.
     const categoriesRoot = useAppSelector((state) => state.category.categories);
-    // But useProductsManager fetches categories too. Let's start with matching redux.
-
-    // Actually, Admin layout might load initial data? 
-    // Let's keep useProductsManager for *categories* if redundant, or better, use Redux for consistency.
-    // For now, let's mix: Use Redux for Products (server filter), useProductsManager for Categories (if not in redux).
-    // ...Wait, MenuSection uses useHomeData to load initial data.
-
-    // Let's try to stick to Redux for products.
+    const fetchState = useAppSelector((state) => state.product.fetchState);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [filterCategory, setFilterCategory] = useState("");
 
-    // ... modal states ...
     const [modalOpen, setModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [productToDelete, setProductToDelete] = useState(null);
 
-    // Initial Fetch (similar to MenuSection)
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+
     useEffect(() => {
-        // Fetch initial products (page 0)
-        dispatch(fetchProducts(0));
-        // We also need categories for the filter dropdown
-        dispatch(fetchCategories());
+        // Ensure loading state is active until initial fetch completes
+        setIsInitialLoad(true);
+        Promise.all([
+            dispatch(fetchProducts(0)),
+            dispatch(fetchCategories())
+        ]).finally(() => {
+            setIsInitialLoad(false);
+        });
     }, [dispatch]);
 
-    // Using useProductsManager ONLY for categories if needed, or better, import fetchCategories.
-    // Let's check if fetchCategories is exported from productActions or categoryActions.
-    // user said "request and order structure" of homepage.
-    // Homepage uses `useHomeData` which likely dispatches `fetchCategories`.
 
-    // Let's rely on `categoriesRoot` from Redux if available.
 
     const handleCategoryChange = (categoryId) => {
         setFilterCategory(categoryId);
         if (categoryId) {
             dispatch(fetchProductsByCategory(categoryId, 0));
         } else {
-            // Reset to all products
             dispatch(fetchProducts(0));
         }
     };
 
-    // Helper to refresh current view (after edit/delete)
     const refreshCurrentView = () => {
         if (filterCategory) {
             dispatch(fetchProductsByCategory(filterCategory, 0));
@@ -88,20 +73,14 @@ const ProductClient = () => {
 
     const { isUpdating, createProduct, updateProduct, deleteProduct } =
         useProductActions({
-            onSuccess: refreshCurrentView, // Refresh redux state instead of local
-            // No local updates needed for Redux flow usually, as actions update store?
-            // Actually useProductActions might expect local updaters.
-            // If we pass null, maybe it works?
-            // Let's pass dummy functions or adapt useProductActions.
+            onSuccess: refreshCurrentView,
         });
 
-    // Handlers
     const openModal = useCallback((product = null) => {
         setEditingProduct(product);
         setModalOpen(true);
     }, []);
 
-    // Register modal with AdminLayoutContext
     useEffect(() => {
         registerModal(openModal);
     }, [registerModal, openModal]);
@@ -120,8 +99,6 @@ const ProductClient = () => {
         setProductToDelete(null);
         setDeleteModalOpen(false);
     };
-
-    // ... handleFormSubmit and handleDeleteProduct remain similar but use new refresh ...
 
     const handleFormSubmit = async (data, editingProduct) => {
         const productData = {
@@ -160,14 +137,8 @@ const ProductClient = () => {
         return null;
     }
 
-    // Loading state removed for skeleton UI
-    // if (loading) {
-    //     return <LoadingSpinner size="fullPage" />;
-    // }
-
     return (
         <div>
-            {/* Filters */}
             {/* Filters */}
             <ProductFilters
                 searchTerm={searchTerm}
@@ -184,8 +155,24 @@ const ProductClient = () => {
                 onEdit={openModal}
                 onDelete={openDeleteModal}
                 onAddNew={() => openModal()}
-                loading={false} // Redux loading handled globally or component specific?
+                loading={isInitialLoad || fetchState === fetchStates.FETCHING || fetchState === fetchStates.NOT_FETCHED}
             />
+
+            {/* Pagination */}
+            {products.length > 0 && pagination.totalPages > 1 && (
+                <Pagination
+                    currentPage={pagination.page}
+                    totalPages={pagination.totalPages}
+                    onPageChange={(page) => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        if (filterCategory) {
+                            dispatch(fetchProductsByCategory(filterCategory, page));
+                        } else {
+                            dispatch(fetchProducts(page));
+                        }
+                    }}
+                />
+            )}
 
             {/* Add/Edit Product Modal */}
             <ProductFormModal

@@ -1,7 +1,6 @@
 "use client";
 import { Search, Filter } from "lucide-react";
 
-// Arama bileşeni
 export const SearchBar = ({ value, onChange, placeholder = "Ara..." }) => {
   return (
     <div className="relative flex-1 w-full">
@@ -19,7 +18,6 @@ export const SearchBar = ({ value, onChange, placeholder = "Ara..." }) => {
   );
 };
 
-// Kategori filtre bileşeni
 export const CategoryFilter = ({
   category,
   value,
@@ -48,7 +46,6 @@ export const CategoryFilter = ({
   );
 };
 
-// Arama ve Filtreleme container
 export const SearchFilterContainer = ({ children }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-col md:flex-row items-center gap-4 border border-lightgray">

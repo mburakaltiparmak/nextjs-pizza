@@ -4,18 +4,18 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { useAdminModal } from "@/lib/contexts/AdminLayoutContext"; // Updated to use useAdminModal if separate or stick to Layout context
 import { useAdminLayout } from "@/lib/contexts/AdminLayoutContext"; // Updated path
-import { deleteCategory } from "@/lib/store/actions/categoryActions";
-import { fetchDashboard, clearDashboardCache } from "@/lib/store/actions/adminActions";
+import { fetchCategories, deleteCategory } from "@/lib/store/actions/categoryActions";
+import { fetchDashboard } from "@/lib/store/actions/adminActions";
 import { setSuccess } from "@/lib/store/actions/globalActions";
 import { fetchStates } from "@/lib/store/constants";
 
 // Components
 import { ConfirmationModal } from "@/components/admin/AdminModals"; // Updated path
 import { SearchBar } from "@/components/admin/AdminSearchFilter"; // Updated path
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner"; // Updated Spinner
-import { CategoryTableRow } from "@/components/admin/category/CategoryTableRow";
+import { CategoryTable } from "@/components/admin/category/CategoryTable";
 import { CategoryFormModal } from "@/components/admin/category/CategoryFormModal";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
+import { Pagination } from "@/components/ui/Pagination";
 
 const CategoryClient = () => {
     const router = useRouter();
@@ -27,29 +27,30 @@ const CategoryClient = () => {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
     const [categoryToDelete, setCategoryToDelete] = useState(null);
-    const [dataFetchAttempted, setDataFetchAttempted] = useState(false);
 
-    // Redux state - dashboard data'dan kategorileri çek
-    const dashboardData = useAppSelector((state) => state.admin.dashboardData);
-    const adminFetchState = useAppSelector((state) => state.admin.fetchState);
+    // Redux state
+    const categories = useAppSelector((state) => state.category.categories);
+    const pagination = useAppSelector((state) => state.category.pagination);
+    const categoryFetchState = useAppSelector((state) => state.category.fetchState);
+    const dashboardData = useAppSelector((state) => state.admin.dashboardData); // +Get Dashboard Data
 
-    // Dashboard data'dan categories array'ini al
-    const categories = dashboardData?.categories || [];
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-    // Dashboard verisi yükle
+    // Fetch categories AND dashboard data (for counts) on mount
     useEffect(() => {
-        if (adminFetchState === fetchStates.NOT_FETCHED && !dataFetchAttempted) {
-            setDataFetchAttempted(true);
-            dispatch(fetchDashboard());
-        }
-    }, [dispatch, adminFetchState, dataFetchAttempted]);
+        setIsInitialLoad(true);
+        Promise.all([
+            dispatch(fetchCategories(0)),
+            dispatch(fetchDashboard()) // +Fetch Dashboard
+        ]).finally(() => setIsInitialLoad(false));
+    }, [dispatch]);
 
+    // Register modal with AdminLayoutContext
     const openModal = useCallback((category = null) => {
         setEditingCategory(category);
         setModalOpen(true);
     }, []);
 
-    // Register modal with AdminLayoutContext
     useEffect(() => {
         registerModal(openModal);
     }, [registerModal, openModal]);
@@ -57,8 +58,6 @@ const CategoryClient = () => {
     const closeModal = () => {
         setModalOpen(false);
         setEditingCategory(null);
-        // Modal kapatıldıktan sonra verileri yenile
-        dispatch(fetchDashboard(true)); // force refresh
     };
 
     const openDeleteModal = (category) => {
@@ -89,9 +88,8 @@ const CategoryClient = () => {
                 dispatch(
                     setSuccess(`"${categoryToDelete.name}" kategorisi başarıyla silindi`)
                 );
-                // Cache'i temizle ve dashboard'u yenile
-                clearDashboardCache();
-                dispatch(fetchDashboard(true));
+                // Refresh categories
+                dispatch(fetchCategories(pagination.page));
                 closeDeleteModal();
             }
         } catch (err) {
@@ -99,22 +97,35 @@ const CategoryClient = () => {
         }
     };
 
-    // Kategorileri filtrele
-    const filteredCategories = useMemo(() => {
+    // Merge categories with product counts from dashboardData
+    const categoriesWithCounts = useMemo(() => {
         if (!categories || !Array.isArray(categories)) return [];
 
-        return categories.filter((category) => {
+        // If we have dashboard data, map counts
+        if (dashboardData && dashboardData.categories) {
+            return categories.map(cat => {
+                const dashboardCat = dashboardData.categories.find(d => d.id === cat.id);
+                return {
+                    ...cat,
+                    productCount: dashboardCat ? (dashboardCat.productCount || 0) : (cat.productCount || 0)
+                };
+            });
+        }
+
+        return categories;
+    }, [categories, dashboardData]);
+
+    const filteredCategories = useMemo(() => {
+        const source = categoriesWithCounts; // Use enriched data
+        if (!source || !Array.isArray(source)) return [];
+
+        return source.filter((category) => {
             if (!category || !category.name || typeof category.name !== "string") {
                 return false;
             }
             return category.name.toLowerCase().includes(searchTerm.toLowerCase());
         });
-    }, [categories, searchTerm]);
-
-    // Yükleniyor durumu
-    if (adminFetchState === fetchStates.FETCHING) {
-        return <LoadingSpinner size="fullPage" />;
-    }
+    }, [categoriesWithCounts, searchTerm]);
 
     return (
         <div>
@@ -128,51 +139,25 @@ const CategoryClient = () => {
             </div>
 
             {/* Tablo */}
-            <div className="bg-white rounded-xl shadow-sm border border-lightgray overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full min-w-[640px]">
-                        <thead className="bg-lightgray/50">
-                            <tr className="border-b border-lightgray2">
-                                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-darkgray font-Barlow">
-                                    Kategori Adı
-                                </th>
-                                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-bold text-darkgray font-Barlow">
-                                    Ürün Sayısı
-                                </th>
-                                <th className="px-4 sm:px-6 py-3 sm:py-4 text-right text-xs sm:text-sm font-bold text-darkgray font-Barlow">
-                                    İşlemler
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredCategories.length > 0 ? (
-                                filteredCategories.map((category) => (
-                                    <CategoryTableRow
-                                        key={category.id}
-                                        category={category}
-                                        onEdit={() => openModal(category)}
-                                        onDelete={() => openDeleteModal(category)}
-                                    />
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="3" className="px-4 sm:px-6 py-12 text-center">
-                                        <p className="text-gray font-Barlow mb-4">
-                                            Herhangi bir kategori bulunamadı.
-                                        </p>
-                                        <button
-                                            onClick={() => openModal()}
-                                            className="px-4 py-2 bg-red text-lightgray rounded-lg hover:bg-yellow hover:text-red transition-colors font-Barlow text-sm sm:text-base"
-                                        >
-                                            Yeni Kategori Ekle
-                                        </button>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <CategoryTable
+                categories={filteredCategories}
+                onEdit={openModal}
+                onDelete={openDeleteModal}
+                onAddNew={() => openModal()}
+                loading={isInitialLoad || categoryFetchState === fetchStates.FETCHING || categoryFetchState === fetchStates.NOT_FETCHED}
+            />
+
+            {/* Pagination */}
+            {categories.length > 0 && pagination.totalPages > 1 && (
+                <Pagination
+                    currentPage={pagination.page}
+                    totalPages={pagination.totalPages}
+                    onPageChange={(page) => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        dispatch(fetchCategories(page));
+                    }}
+                />
+            )}
 
             {/* Kategori Ekleme/Düzenleme Modal */}
             <CategoryFormModal

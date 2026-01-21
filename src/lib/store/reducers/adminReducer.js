@@ -7,12 +7,20 @@ export const adminActions = {
   UPDATE_USER_STATUS: "UPDATE_USER_STATUS",
   UPDATE_USER_ROLE: "UPDATE_USER_ROLE",
   SET_FETCH_STATE: "SET_ADMIN_FETCH_STATE",
-  SET_ERROR: "SET_ADMIN_ERROR"
+  SET_ERROR: "SET_ADMIN_ERROR",
+  RESET_ADMIN_STATE: "RESET_ADMIN_STATE",
+  SET_USERS_PAGINATION: "SET_USERS_PAGINATION" // +Added
 };
 
 const adminInitialState = {
   allUsers: [],
   pendingUsers: [],
+  pagination: { // +Added
+    page: 0,
+    size: 10,
+    totalPages: 0,
+    totalElements: 0
+  },
   dashboardData: null,
   fetchState: fetchStates.NOT_FETCHED,
   error: null
@@ -30,6 +38,11 @@ export const adminReducer = (state = adminInitialState, action) => {
         ...state,
         pendingUsers: action.payload
       };
+    case adminActions.SET_USERS_PAGINATION: // +Added
+      return {
+        ...state,
+        pagination: action.payload
+      };
     case adminActions.SET_DASHBOARD_DATA:
       return {
         ...state,
@@ -38,22 +51,22 @@ export const adminReducer = (state = adminInitialState, action) => {
     case adminActions.UPDATE_USER_STATUS:
       return {
         ...state,
-        allUsers: state.allUsers.map(user => 
-          user.id === action.payload.userId 
-            ? { ...user, status: action.payload.status } 
+        allUsers: state.allUsers.map(user =>
+          user.id === action.payload.userId
+            ? { ...user, status: action.payload.status }
             : user
         ),
-        pendingUsers: state.pendingUsers.filter(user => 
-          user.id !== action.payload.userId || 
+        pendingUsers: state.pendingUsers.filter(user =>
+          user.id !== action.payload.userId ||
           (user.id === action.payload.userId && action.payload.status === userStatus.PENDING)
         )
       };
     case adminActions.UPDATE_USER_ROLE:
       return {
         ...state,
-        allUsers: state.allUsers.map(user => 
-          user.id === action.payload.userId 
-            ? { ...user, role: action.payload.role } 
+        allUsers: state.allUsers.map(user =>
+          user.id === action.payload.userId
+            ? { ...user, role: action.payload.role }
             : user
         )
       };
@@ -67,6 +80,8 @@ export const adminReducer = (state = adminInitialState, action) => {
         ...state,
         error: action.payload
       };
+    case adminActions.RESET_ADMIN_STATE:
+      return adminInitialState;
     default:
       return state;
   }

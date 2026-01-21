@@ -526,3 +526,42 @@ If issues are discovered during any phase:
 - Implement `smartCancelPayment` for automated refund/void
 - Handle "Pay at Door" cancellation correctly (Set PaymentStatus.CANCELLED)
 - Ensure data consistency between DB and Iyzico
+
+### [x] Task 3.7: UUID-Based Payment Endpoint Migration
+**Priority:** P0 (Security)
+**Implementation:**
+- Update `orderActions.js` to use `response.data.uuid` for payment initialization
+- Migrate `/payment/checkout/init/{id}` to `/payment/checkout/init/{uuid}`
+- Update `paymentRecovery.js` parameter names for clarity (uuid → orderUuid)
+- Fix `providers.js` to use `recovery.orderUuid`
+
+**Testing:**
+- [x] Test online credit card payment with UUID
+- [x] Verify payment recovery uses correct UUID
+- [x] Confirm payment status check endpoint uses UUID
+
+### [x] Task 3.8: Checkout Address Selection Fix
+**Priority:** P1 (Bug Fix)
+**Implementation:**
+- Fix synchronization issue between `AddressList` and `FirstStep`
+- Update `AddressList` to pass full address object instead of just ID
+- Add `selectedAddressObj` state in `FirstStep` to store selected address
+- Prevent null address errors during checkout
+
+**Testing:**
+- [x] Test registered user address selection
+- [x] Verify address persists through checkout flow
+- [x] Test guest user new address creation
+
+### [x] Task 3.9: Payment Success UUID Alignment
+**Priority:** P1
+**Implementation:**
+- Simplify `PaymentSuccessClient` to use Order UUID from callback
+- Support both `uuid` and `orderId` URL parameters
+- Remove numeric ID to UUID conversion workaround
+- Update tracking redirect to use Order UUID
+
+**Testing:**
+- [x] Test payment callback with UUID parameter
+- [x] Verify tracking page redirect works correctly
+- [x] Test backward compatibility with orderId parameter

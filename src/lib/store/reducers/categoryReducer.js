@@ -8,7 +8,8 @@ export const categoryActions = {
   DELETE_CATEGORY: "DELETE_CATEGORY",
   SET_FETCH_STATE: "SET_CATEGORY_FETCH_STATE",
   SET_ERROR: "SET_CATEGORY_ERROR",
-  SET_PAGINATION: "SET_CATEGORY_PAGINATION"
+  SET_PAGINATION: "SET_CATEGORY_PAGINATION",
+  RESET_CATEGORY_STATE: "RESET_CATEGORY_STATE"
 };
 
 const categoryInitialState = {
@@ -68,6 +69,8 @@ export const categoryReducer = (state = categoryInitialState, action) => {
         ...state,
         error: action.payload
       };
+    case categoryActions.RESET_CATEGORY_STATE:
+      return categoryInitialState;
     default:
       return state;
   }

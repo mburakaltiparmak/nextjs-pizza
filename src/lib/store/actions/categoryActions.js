@@ -15,10 +15,14 @@ export const setCategoryFetchState = (state) => ({
   payload: state,
 });
 
+export const resetCategoryState = () => ({
+  type: categoryActions.RESET_CATEGORY_STATE,
+});
+
 /**
  * Cache ile tüm kategorileri getir - pagination desteği ile
  */
-export const fetchCategories = (page = 0, size = 100) => async (dispatch) => {
+export const fetchCategories = (page = 0, size = 10) => async (dispatch) => {
   const CACHE_KEY = `categories_page_${page}_size_${size}`;
 
   // Cache kontrolü

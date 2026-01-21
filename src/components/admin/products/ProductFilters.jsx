@@ -4,10 +4,6 @@ import {
     SearchFilterContainer,
 } from "@/components/admin/searchAndFilter";
 
-/**
- * Product Filters Component
- * Search and category filtering controls
- */
 export const ProductFilters = ({
     searchTerm,
     filterCategory,

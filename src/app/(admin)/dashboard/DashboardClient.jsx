@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useDashboardDataLoader } from "@/lib/hooks/useDashboardDataLoader";
-import { fetchDashboard } from "@/lib/store/actions/adminActions";
+import { fetchDashboard, resetAdminState } from "@/lib/store/actions/adminActions";
 import {
     DashboardStatsGrid,
     DashboardChart,
@@ -12,14 +12,23 @@ import {
 } from "@/components/dashboard";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useAppSelector } from "@/lib/store/hooks";
+import { fetchStates } from "@/lib/store/constants";
 
 const DashboardClient = () => {
     // Auto-fetches data on mount
     useDashboardDataLoader();
     const dispatch = useDispatch();
 
+    // Force refresh on mount to show skeletons
+    useEffect(() => {
+        dispatch(fetchDashboard(true));
+    }, [dispatch]);
+
     const dashboardData = useAppSelector((state) => state.admin.dashboardData);
-    const loading = useAppSelector((state) => state.global.loading);
+    const adminFetchState = useAppSelector((state) => state.admin.fetchState);
+
+    // Treat NOT_FETCHED as loading to show skeleton immediately on mount
+    const loading = adminFetchState === fetchStates.FETCHING || adminFetchState === fetchStates.NOT_FETCHED;
     const error = useAppSelector((state) => state.global.error);
 
     const statistics = dashboardData || {
@@ -34,9 +43,7 @@ const DashboardClient = () => {
         dispatch(fetchDashboard());
     };
 
-    if (loading && !dashboardData) {
-        return <LoadingSpinner size="fullPage" />;
-    }
+
 
     return (
         <div className="space-y-6">

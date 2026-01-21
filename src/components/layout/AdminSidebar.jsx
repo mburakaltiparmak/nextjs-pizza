@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch } from "@/lib/store/hooks";
+
 import {
     ChevronRight,
     ChevronLeft,
@@ -111,14 +112,19 @@ export default function AdminSidebar({ activePage = "dashboard", isOpen, onToggl
     // Sayfa yönlendirmesi
     const navigateTo = useCallback(
         (path) => {
+            if (typeof window !== 'undefined' && window.location.pathname === path) return;
+
             setIsNavigating(true);
+
             if (isMobile) {
                 setMobileOpen(false);
             }
             router.push(path);
+
+            // Navigation lock duration
             setTimeout(() => {
                 setIsNavigating(false);
-            }, 300);
+            }, 500);
         },
         [router, isMobile]
     );

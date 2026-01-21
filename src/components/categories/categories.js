@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import { useAppSelector } from "@/lib/hooks";
-import { HoverCard, HoverCardTrigger } from "../ui/hover-card";
 import { LoadingSpinner } from "../ui/LoadingSpinner";
 
 const allLogo = "/assets/adv-aseets/icons/all-logo.png";

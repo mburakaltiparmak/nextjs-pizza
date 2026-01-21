@@ -1,5 +1,5 @@
 # FRONTEND GÜNCELLEME PLANLARI
-# Son Güncelleme: 18.01.2026
+# Son Güncelleme: 21.01.2026
 # Versiyon: 2.0
 
 Bu dosya, **Next.js (Frontend)** tarafında yapılacak geliştirmeleri ve mevcut durumu içerir.
@@ -122,13 +122,14 @@ E-ticaret deneyimini iyileştirmek için yapılacak UX çalışmaları.
 ================================================================================
 Kullanıcı deneyimini artıracak özellikler.
 
-17. **[P2-1] Order Tracking Page (Müşteri)**
+17. **[P2-1] Order Tracking Page (Müşteri)** ✅
     - **Hedef:** Müşterinin sipariş durumunu UUID ile takip edebilmesi.
     - **Route:** `/track/[uuid]`
     - **Özellikler:**
       - Login gerektirmez (UUID ile erişim)
       - Real-time durum güncellemesi (Socket.IO ile)
       - Timeline görünümü
+      - Guest order cancellation (email verification)
 
 18. **[P2-2] Admin Notification Sound** ✅
     - **Hedef:** Yeni sipariş geldiğinde ses bildirimi.
@@ -188,9 +189,9 @@ AŞAMA 5 - Final (2-3 gün):
 | P0 - Quick Wins   | 3      | 0          | 3     |
 | P0 - Güvenlik     | 3      | 0          | 3     |
 | P1 - UX           | 4      | 0          | 4     |
-| P2 - Özellikler   | 3      | 0          | 3     |
+| P2 - Özellikler   | 3      | 2          | 1     |
 | Final             | 3      | 0          | 3     |
 |-------------------|--------|------------|-------|
-| TOPLAM            | 22     | 6          | 16    |
+| TOPLAM            | 22     | 8          | 14    |
 
 ================================================================================

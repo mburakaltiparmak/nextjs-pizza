@@ -38,8 +38,8 @@ export const useProductsManager = () => {
 
             // Paginated endpoint'leri kullan - büyük size ile tüm datayı çek
             const [productsRes, categoriesRes] = await Promise.all([
-                instance.get("/product/paged?size=1000", { signal: abortController.signal }),
-                instance.get("/category/paged?size=1000", { signal: abortController.signal }),
+                instance.get("/product/paged?size=10", { signal: abortController.signal }),
+                instance.get("/category/paged?size=10", { signal: abortController.signal }),
             ]);
 
             if (!mountedRef.current) return;

@@ -41,18 +41,47 @@ export const setAdminError = (error) => ({
   payload: error,
 });
 
+export const resetAdminState = () => ({
+  type: adminActions.RESET_ADMIN_STATE,
+});
+
 // Cache keys
 const DASHBOARD_CACHE_KEY = 'dashboard_data';
 
 
-// Tüm kullanıcıları getir
-export const fetchAllUsers = () => async (dispatch) => {
+// Pagination update
+export const setUsersPagination = (pagination) => ({
+  type: adminActions.SET_USERS_PAGINATION,
+  payload: pagination,
+});
+
+// Tüm kullanıcıları getir (Pagination + Search destekli)
+export const fetchAllUsers = (page = 0, size = 10, search = "") => async (dispatch) => {
   dispatch(setAdminFetchState(fetchStates.FETCHING));
 
   try {
-    const response = await instance.get("/admin/users");
+    const response = await instance.get("/admin/users", {
+      params: {
+        page,
+        size,
+        search, // Backend desteği varsa çalışır, yoksa ignore edilir
+        sort: "id,desc"
+      }
+    });
 
-    dispatch(setAllUsers(response.data));
+    // Handle paged response
+    const users = response.data.content || response.data;
+
+    if (response.data.page) {
+      dispatch(setUsersPagination({
+        page: response.data.page.number,
+        size: response.data.page.size,
+        totalPages: response.data.page.totalPages,
+        totalElements: response.data.page.totalElements
+      }));
+    }
+
+    dispatch(setAllUsers(users));
     dispatch(setAdminFetchState(fetchStates.FETCHED));
 
     return response.data;
@@ -62,14 +91,35 @@ export const fetchAllUsers = () => async (dispatch) => {
   }
 };
 
-// Onay bekleyen kullanıcıları getir
-export const fetchPendingUsers = () => async (dispatch) => {
+// Onay bekleyen kullanıcıları getir (Pagination destekli)
+export const fetchPendingUsers = (page = 0, size = 10) => async (dispatch) => {
   dispatch(setAdminFetchState(fetchStates.FETCHING));
 
   try {
-    const response = await instance.get("/admin/users/pending");
+    const response = await instance.get("/admin/users/pending", {
+      params: {
+        page,
+        size,
+        sort: "id,desc"
+      }
+    });
 
-    dispatch(setPendingUsers(response.data));
+    const users = response.data.content || response.data;
+
+    // Handle pagination for pending users too? 
+    // Usually tabs share the same list or have separate lists. 
+    // adminReducer has 'pendingUsers' and 'pagination'. 
+    // If we switch tabs, we overwrite pagination state? Yes, that's fine.
+    if (response.data.page) {
+      dispatch(setUsersPagination({
+        page: response.data.page.number,
+        size: response.data.page.size,
+        totalPages: response.data.page.totalPages,
+        totalElements: response.data.page.totalElements
+      }));
+    }
+
+    dispatch(setPendingUsers(users));
     dispatch(setAdminFetchState(fetchStates.FETCHED));
 
     return response.data;
@@ -124,6 +174,7 @@ export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
       });
 
       return {
+        id: category.id, // ✅ Add ID for unique key prop
         name: category.name,
         ürünSayısı: category.productCount || 0,  // ✅ Backend'den hazır
         stokMiktarı: category.totalStock || 0     // ✅ Backend'den hazır

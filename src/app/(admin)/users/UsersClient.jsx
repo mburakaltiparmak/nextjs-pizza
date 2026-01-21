@@ -9,15 +9,20 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Custom Hooks
-import { useUsersManager } from "@/lib/hooks/useUsersManager";
+// Removed useUsersManager
 import { useUserActions } from "@/lib/hooks/useUserActions";
+
+// Redux
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
+import { fetchAllUsers, fetchPendingUsers, fetchDashboard } from "@/lib/store/actions/adminActions";
+import { Pagination } from "@/components/ui/Pagination";
+import { fetchStates } from "@/lib/store/constants";
 
 // Components
 import { ConfirmationModal } from "@/components/admin/AdminModals";
 import { UserFilters } from "@/components/admin/users/UserFilters";
 import { UsersTable } from "@/components/admin/users/UsersTable";
 import { PendingUsersTable } from "@/components/admin/users/PendingUsersTable";
-import { UserStatsCards } from "@/components/admin/users/UserStatsCards";
 import { RoleChangeDialog } from "@/components/admin/users/RoleChangeDialog";
 import { UserFormModal } from "@/components/admin/users/UserFormModal"; // Ensure this import exists if used, or remove if not in original page but I added it
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -26,6 +31,7 @@ const UsersClient = () => {
     const router = useRouter();
     const { isAuthorized } = useAuthRoute(["ADMIN", "PERSONAL"], "/");
     const { registerModal } = useAdminLayout();
+    const dispatch = useAppDispatch();
 
     // State
     const [activeTab, setActiveTab] = useState("all-users");
@@ -39,63 +45,50 @@ const UsersClient = () => {
     const [editingUser, setEditingUser] = useState(null);
     const [userToDelete, setUserToDelete] = useState(null);
 
-    // Custom Hooks
-    const {
-        users,
-        pendingUsers, // Added pendingUsers
-        loading,
-        isRefreshing,
-        lastUpdateTime,
-        stats, // Added stats
-        refreshUsers,
-        updateUserLocally,
-        addUserLocally,
-        removeUserLocally,
-    } = useUsersManager();
+    const users = useAppSelector((state) => state.admin.allUsers);
+    const pendingUsers = useAppSelector((state) => state.admin.pendingUsers);
+    const pagination = useAppSelector((state) => state.admin.pagination);
+    const adminFetchState = useAppSelector((state) => state.admin.fetchState);
+    const dashboardData = useAppSelector((state) => state.admin.dashboardData);
 
-    const { isUpdating, createUser, updateUser, deleteUser, approveUser, rejectUser, updateUserRole } = // Added approve/reject/updateRole
-        useUserActions({
-            onSuccess: refreshUsers,
-            updateUserLocally,
-            addUserLocally,
-            removeUserLocally,
-        });
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-    // Filtered users - memoized
-    const filteredUsers = useMemo(() => {
-        if (!users || !Array.isArray(users)) {
-            return [];
+    useEffect(() => {
+        // Only fetch Dashboard once on mount
+        dispatch(fetchDashboard());
+    }, [dispatch]);
+
+    // Handle tab change & Initial Fetch
+    useEffect(() => {
+        // Ensure loading when switching tabs or on initial load
+        if (isInitialLoad) setIsInitialLoad(true);
+
+        let promise;
+        if (activeTab === "pending-users") {
+            promise = dispatch(fetchPendingUsers(0));
+        } else {
+            promise = dispatch(fetchAllUsers(0, 10, searchTerm));
         }
 
-        return users.filter((user) => {
-            if (!user) return false;
+        if (isInitialLoad) {
+            promise.finally(() => setIsInitialLoad(false));
+        }
+    }, [activeTab, dispatch]); // activeTab changed
 
-            const userName = (user.name || "").toLowerCase();
-            const userSurname = (user.surname || "").toLowerCase(); // Check surname
-            const fullName = `${userName} ${userSurname}`.trim();
+    const refreshUsers = () => {
+        if (activeTab === "pending-users") {
+            dispatch(fetchPendingUsers(pagination.page));
+        } else {
+            dispatch(fetchAllUsers(pagination.page, 10, searchTerm));
+        }
+    };
 
-            const userEmail = (user.email || "").toLowerCase();
-            const userPhone = (user.phoneNumber || "").toLowerCase();
-            const searchLower = searchTerm.toLowerCase();
-
-            const matchesSearch =
-                fullName.includes(searchLower) ||
-                userEmail.includes(searchLower) ||
-                userPhone.includes(searchLower);
-
-            let matchesRole = true;
-            if (roleFilter !== "ALL") {
-                matchesRole = user.role === roleFilter;
-            }
-
-            let matchesStatus = true; // Added status filter logic
-            if (statusFilter !== "ALL") {
-                matchesStatus = user.status === statusFilter;
-            }
-
-            return matchesSearch && matchesRole && matchesStatus;
+    const { isUpdating, createUser, updateUser, deleteUser, approveUser, rejectUser, updateUserRole } =
+        useUserActions({
+            onSuccess: refreshUsers,
         });
-    }, [users, searchTerm, roleFilter, statusFilter]);
+
+
 
     // Handlers
     const openModal = (user = null) => {
@@ -139,9 +132,20 @@ const UsersClient = () => {
             if (result?.success) {
                 setRoleDialogOpen(false);
                 setSelectedUserForRole(null);
+                refreshUsers();
             }
         }
     };
+
+    // Search Handler - Server side
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (activeTab === "all-users") {
+                dispatch(fetchAllUsers(0, 10, searchTerm));
+            }
+        }, 500); // Debounce
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm, dispatch]);
 
     const handleResetFilters = () => {
         setSearchTerm("");
@@ -190,6 +194,7 @@ const UsersClient = () => {
 
         if (result && !result.error) {
             closeDeleteModal();
+            refreshUsers();
         }
     };
 
@@ -198,10 +203,8 @@ const UsersClient = () => {
         return null;
     }
 
-    // Loading state
-    if (loading) {
-        return <LoadingSpinner size="fullPage" />;
-    }
+    const currentList = activeTab === "pending-users" ? pendingUsers : users;
+    const isLoading = isInitialLoad || adminFetchState === fetchStates.FETCHING || adminFetchState === fetchStates.NOT_FETCHED;
 
     return (
         <div>
@@ -214,28 +217,23 @@ const UsersClient = () => {
                         </h1>
                         <p className="text-sm text-gray-500 mt-1 font-Barlow">
                             Tüm kullanıcıları görüntüleyin ve yönetin
-                            {lastUpdateTime && (
-                                <span className="ml-2">
-                                    • Son güncelleme: {formatDate(lastUpdateTime)}
-                                </span>
-                            )}
+                            <span className="ml-2">
+                                • Toplam: {pagination.totalElements}
+                            </span>
                         </p>
                     </div>
                     <Button
                         onClick={refreshUsers}
-                        disabled={isRefreshing}
+                        disabled={isLoading}
                         className="flex items-center gap-2 bg-red text-lightgray hover:bg-yellow hover:text-red font-Barlow"
                     >
                         <RefreshCcw
-                            className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
+                            className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
                         />
-                        {isRefreshing ? "Yenileniyor..." : "Yenile"}
+                        {isLoading ? "Yenileniyor..." : "Yenile"}
                     </Button>
                 </div>
             </div>
-
-            {/* Stats Cards */}
-            <UserStatsCards stats={stats} />
 
             {/* Filters */}
             <UserFilters
@@ -258,34 +256,30 @@ const UsersClient = () => {
                     <TabsTrigger value="all-users" className="font-Barlow">
                         <Users size={16} className="mr-2" />
                         Tüm Kullanıcılar
-                        {filteredUsers && filteredUsers.length > 0 && (
-                            <span className="ml-2 bg-gray-200 text-gray-700 text-xs font-bold px-2 py-1 rounded-full">
-                                {filteredUsers.length}
-                            </span>
-                        )}
+                        <span className="ml-2 bg-gray-200 text-gray-700 text-xs font-bold px-2 py-1 rounded-full">
+                            {activeTab === "all-users" ? pagination.totalElements : ""}
+                        </span>
                     </TabsTrigger>
                     <TabsTrigger value="pending-users" className="font-Barlow">
                         <AlertTriangle size={16} className="mr-2" />
                         Onay Bekleyenler
-                        {pendingUsers && pendingUsers.length > 0 && (
-                            <span className="ml-2 bg-red text-white text-xs font-bold px-2 py-1 rounded-full">
-                                {pendingUsers.length}
-                            </span>
-                        )}
+                        <span className="ml-2 bg-red text-white text-xs font-bold px-2 py-1 rounded-full">
+                            {activeTab === "pending-users" ? pagination.totalElements : ""}
+                        </span>
                     </TabsTrigger>
                 </TabsList>
 
                 {/* ALL USERS TAB */}
                 <TabsContent value="all-users" className="space-y-4">
                     <UsersTable
-                        users={filteredUsers}
+                        users={users}
                         onApprove={approveUser}
                         onReject={rejectUser}
                         onRoleChange={handleRoleChange}
                         onEdit={openModal} // Added edit
                         onDelete={openDeleteModal} // Added delete
                         isUpdating={isUpdating}
-                        loading={loading}
+                        loading={isLoading}
                     />
                 </TabsContent>
 
@@ -296,14 +290,28 @@ const UsersClient = () => {
                         onApprove={approveUser}
                         onReject={rejectUser}
                         isUpdating={isUpdating}
-                        loading={loading}
+                        loading={isLoading}
                     />
                 </TabsContent>
             </Tabs>
 
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+                <Pagination
+                    currentPage={pagination.page}
+                    totalPages={pagination.totalPages}
+                    onPageChange={(page) => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        if (activeTab === "pending-users") {
+                            dispatch(fetchPendingUsers(page));
+                        } else {
+                            dispatch(fetchAllUsers(page, 10, searchTerm));
+                        }
+                    }}
+                />
+            )}
+
             {/* Add/Edit User Modal */}
-            {/* Assuming UserFormModal was used in original page (it wasn't imported in my view of original page, but I added it in previous step. If not needed, check usage. Original page used openModal for adding new user? No, ShowAddButton=false in page props. So maybe no add button? But I see `registerModal(openModal)` context usage. So maybe Add IS supported via sidebar/header button. ) */}
-            {/* The original page had UsersPage.props = { showAddButton: false }. So maybe Add button is hidden. But logic was there. I will include it. */}
             <UserFormModal
                 isOpen={modalOpen}
                 onClose={closeModal}

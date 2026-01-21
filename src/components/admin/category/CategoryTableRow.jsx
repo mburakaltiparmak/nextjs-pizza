@@ -5,7 +5,6 @@ import { SquarePen, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const CategoryTableRow = ({ category, onEdit, onDelete }) => {
-    console.log("category", category);
     return (
         <tr className="border-b border-lightgray2 hover:bg-lightgray/30 transition-colors">
             <td className="px-6 py-4">
