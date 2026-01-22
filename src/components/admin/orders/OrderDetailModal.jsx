@@ -17,6 +17,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { formatDateTime, formatPrice } from "@/lib/utils/formatters";
+import { ORDER_STATUS, ORDER_STATUS_LABELS } from "@/lib/utils/adminConstants";
 
 export const OrderDetailModal = ({
     open,
@@ -26,18 +28,6 @@ export const OrderDetailModal = ({
     isUpdating
 }) => {
     if (!order) return null;
-
-    const formatDate = (dateString) => {
-        if (!dateString) return "-";
-        const date = new Date(dateString);
-        return date.toLocaleDateString("tr-TR", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    };
 
     const customerName = order.userName || order.deliveryAddress?.recipientName || "Misafir";
     const customerEmail = order.userEmail || "-";
@@ -77,12 +67,11 @@ export const OrderDetailModal = ({
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="PENDING">Beklemede</SelectItem>
-                                    <SelectItem value="CONFIRMED">Onaylandı</SelectItem>
-                                    <SelectItem value="PREPARING">Hazırlanıyor</SelectItem>
-                                    <SelectItem value="SHIPPING">Yolda</SelectItem>
-                                    <SelectItem value="DELIVERED">Teslim Edildi</SelectItem>
-                                    <SelectItem value="CANCELLED">İptal Edildi</SelectItem>
+                                    {Object.entries(ORDER_STATUS).map(([key, value]) => (
+                                        <SelectItem key={value} value={value}>
+                                            {ORDER_STATUS_LABELS[value]}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -182,12 +171,12 @@ export const OrderDetailModal = ({
                                             {item.productName}
                                         </p>
                                         <p className="text-sm text-gray-600">
-                                            {item.quantity} x {item.price?.toFixed(2)} ₺
+                                            {item.quantity} x {formatPrice(item.price)}
                                         </p>
                                     </div>
                                     <div className="text-right">
                                         <p className="font-semibold text-darkgray">
-                                            {item.subtotal?.toFixed(2)} ₺
+                                            {formatPrice(item.subtotal)}
                                         </p>
                                     </div>
                                 </div>
@@ -211,7 +200,7 @@ export const OrderDetailModal = ({
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-600">Ara Toplam</span>
                                 <span className="font-medium text-darkgray">
-                                    {order.totalAmount?.toFixed(2)} ₺
+                                    {formatPrice(order.totalAmount)}
                                 </span>
                             </div>
                             <div className="flex justify-between text-sm">
@@ -223,7 +212,7 @@ export const OrderDetailModal = ({
                                     Toplam
                                 </span>
                                 <span className="font-bold text-lg text-red">
-                                    {order.totalAmount?.toFixed(2)} ₺
+                                    {formatPrice(order.totalAmount)}
                                 </span>
                             </div>
                         </div>
@@ -233,12 +222,12 @@ export const OrderDetailModal = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
                         <div className="flex items-center gap-2">
                             <Calendar className="w-4 h-4" />
-                            <span>Sipariş Tarihi: {formatDate(order.orderDate)}</span>
+                            <span>Sipariş Tarihi: {formatDateTime(order.orderDate)}</span>
                         </div>
                         {order.payment?.completedAt && (
                             <div className="flex items-center gap-2">
                                 <Clock className="w-4 h-4" />
-                                <span>Ödeme: {formatDate(order.payment.completedAt)}</span>
+                                <span>Ödeme: {formatDateTime(order.payment.completedAt)}</span>
                             </div>
                         )}
                     </div>

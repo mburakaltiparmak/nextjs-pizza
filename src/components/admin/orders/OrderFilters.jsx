@@ -10,6 +10,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { ORDER_STATUS, ORDER_STATUS_LABELS } from "@/lib/utils/adminConstants";
 
 export const OrderFilters = ({
     statusFilter,
@@ -18,23 +19,25 @@ export const OrderFilters = ({
     onSearchChange,
     onReset,
     stats,
+    loading,
 }) => {
     return (
         <div className="bg-white rounded-xl shadow-sm p-4 mb-6 border border-lightgray">
             <div className="flex flex-col md:flex-row gap-4">
                 {/* Status Filter */}
-                <Select value={statusFilter} onValueChange={onStatusChange}>
+                <Select value={statusFilter} onValueChange={onStatusChange} disabled={loading}>
                     <SelectTrigger className="w-full md:w-56 font-Barlow">
                         <SelectValue placeholder="Durum Filtrele" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="ALL">Tümü ({stats?.total || 0})</SelectItem>
-                        <SelectItem value="PENDING">Beklemede ({stats?.pending || 0})</SelectItem>
-                        <SelectItem value="CONFIRMED">Onaylandı ({stats?.confirmed || 0})</SelectItem>
-                        <SelectItem value="PREPARING">Hazırlanıyor ({stats?.preparing || 0})</SelectItem>
-                        <SelectItem value="SHIPPING">Yolda ({stats?.shipping || 0})</SelectItem>
-                        <SelectItem value="DELIVERED">Teslim Edildi ({stats?.delivered || 0})</SelectItem>
-                        <SelectItem value="CANCELLED">İptal Edildi ({stats?.cancelled || 0})</SelectItem>
+                        {Object.entries(ORDER_STATUS).map(([key, value]) => {
+                            const count = stats?.[key.toLowerCase()];
+                            return (
+                                <SelectItem key={value} value={value}>
+                                    {ORDER_STATUS_LABELS[value]} {loading ? "" : count !== undefined ? `(${count})` : ""}
+                                </SelectItem>
+                            );
+                        })}
                     </SelectContent>
                 </Select>
 
