@@ -24,20 +24,14 @@ const DashboardClient = () => {
         dispatch(fetchDashboard(true));
     }, [dispatch]);
 
-    const dashboardData = useAppSelector((state) => state.admin.dashboardData);
-    const adminFetchState = useAppSelector((state) => state.admin.fetchState);
+    const dashboardData = useAppSelector((state) => state.admin.dashboard.data);
+    const adminFetchState = useAppSelector((state) => state.admin.dashboard.fetchState);
 
     // Treat NOT_FETCHED as loading to show skeleton immediately on mount
     const loading = adminFetchState === fetchStates.FETCHING || adminFetchState === fetchStates.NOT_FETCHED;
     const error = useAppSelector((state) => state.global.error);
 
-    const statistics = dashboardData || {
-        totalCategories: 0,
-        totalProducts: 0,
-        totalStock: 0,
-        totalUsers: 0,
-        categoryData: [],
-    };
+    const statistics = dashboardData; // Pass null if no data, Grid will handle it
 
     const handleRetry = () => {
         dispatch(fetchDashboard());
@@ -60,15 +54,15 @@ const DashboardClient = () => {
             {/* Stats Grid */}
             <DashboardStatsGrid
                 statistics={statistics}
-                moduleLoading={{ admin: loading }}
+                loading={loading}
             />
 
             {/* Chart */}
-            <DashboardChart data={statistics.categoryData} loading={loading} />
+            <DashboardChart data={statistics?.categoryData} loading={loading} />
 
             {/* Categories Table */}
             <DashboardCategoriesTable
-                data={statistics.categoryData}
+                data={statistics?.categoryData}
                 loading={loading}
             />
         </div>

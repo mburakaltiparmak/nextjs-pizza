@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useAuthRoute from "@/lib/hooks/useAuthRole";
 import { useAdminLayout } from "@/lib/contexts/AdminLayoutContext";
@@ -8,15 +8,27 @@ import { RefreshCcw, AlertTriangle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Custom Hooks
-// Removed useUsersManager
-import { useUserActions } from "@/lib/hooks/useUserActions";
-
 // Redux
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
-import { fetchAllUsers, fetchPendingUsers, fetchDashboard } from "@/lib/store/actions/adminActions";
+import {
+    fetchAllUsers,
+    fetchPendingUsers,
+    fetchDashboard,
+    createUser,
+    updateUser,
+    deleteUser,
+    approveUser,
+    rejectUser,
+    updateUserRole
+} from "@/lib/store/actions/adminActions";
 import { Pagination } from "@/components/ui/Pagination";
 import { fetchStates } from "@/lib/store/constants";
+
+// Custom Hooks
+import { useModal } from "@/lib/hooks/admin/useModal";
+import { useAdminCRUD } from "@/lib/hooks/admin/useAdminCRUD";
+import { useDebounce } from "@/lib/hooks/useDebounce";
+import { TIMEOUTS } from "@/lib/utils/adminConstants";
 
 // Components
 import { ConfirmationModal } from "@/components/admin/AdminModals";
@@ -24,8 +36,7 @@ import { UserFilters } from "@/components/admin/users/UserFilters";
 import { UsersTable } from "@/components/admin/users/UsersTable";
 import { PendingUsersTable } from "@/components/admin/users/PendingUsersTable";
 import { RoleChangeDialog } from "@/components/admin/users/RoleChangeDialog";
-import { UserFormModal } from "@/components/admin/users/UserFormModal"; // Ensure this import exists if used, or remove if not in original page but I added it
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { UserFormModal } from "@/components/admin/users/UserFormModal";
 
 const UsersClient = () => {
     const router = useRouter();
@@ -33,35 +44,44 @@ const UsersClient = () => {
     const { registerModal } = useAdminLayout();
     const dispatch = useAppDispatch();
 
+    // Modals
+    const editModal = useModal();
+    const deleteModal = useModal();
+    const roleDialog = useModal();
+
     // State
     const [activeTab, setActiveTab] = useState("all-users");
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState("ALL");
-    const [statusFilter, setStatusFilter] = useState("ALL"); // Added status filter
-    const [modalOpen, setModalOpen] = useState(false);
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [roleDialogOpen, setRoleDialogOpen] = useState(false); // Added role dialog state
-    const [selectedUserForRole, setSelectedUserForRole] = useState(null); // Added selected user for role
-    const [editingUser, setEditingUser] = useState(null);
-    const [userToDelete, setUserToDelete] = useState(null);
-
-    const users = useAppSelector((state) => state.admin.allUsers);
-    const pendingUsers = useAppSelector((state) => state.admin.pendingUsers);
-    const pagination = useAppSelector((state) => state.admin.pagination);
-    const adminFetchState = useAppSelector((state) => state.admin.fetchState);
-    const dashboardData = useAppSelector((state) => state.admin.dashboardData);
-
+    const [statusFilter, setStatusFilter] = useState("ALL");
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
+    // Debounced search term for server-side search
+    const debouncedSearchTerm = useDebounce(searchTerm, TIMEOUTS.DEBOUNCE);
+
+    // Redux selectors
+    const users = useAppSelector((state) => state.admin.users.all);
+    const pendingUsers = useAppSelector((state) => state.admin.users.pending);
+    const pagination = useAppSelector((state) => state.admin.users.pagination);
+    const adminFetchState = useAppSelector((state) => state.admin.users.fetchState);
+    const globalLoading = useAppSelector((state) => state.global.loading);
+
+    // CRUD operations
+    const { create, update, remove } = useAdminCRUD({
+        createAction: createUser,
+        updateAction: updateUser,
+        deleteAction: deleteUser,
+        refreshAction: () => refreshUsers()
+    });
+
+    // Fetch dashboard data on mount
     useEffect(() => {
-        // Only fetch Dashboard once on mount
         dispatch(fetchDashboard());
     }, [dispatch]);
 
     // Handle tab change & Initial Fetch
     useEffect(() => {
-        // Ensure loading when switching tabs or on initial load
-        if (isInitialLoad) setIsInitialLoad(true);
+        setIsInitialLoad(true);
 
         let promise;
         if (activeTab === "pending-users") {
@@ -70,11 +90,10 @@ const UsersClient = () => {
             promise = dispatch(fetchAllUsers(0, 10, searchTerm));
         }
 
-        if (isInitialLoad) {
-            promise.finally(() => setIsInitialLoad(false));
-        }
-    }, [activeTab, dispatch]); // activeTab changed
+        promise.finally(() => setIsInitialLoad(false));
+    }, [activeTab, dispatch]);
 
+    // Refresh users
     const refreshUsers = () => {
         if (activeTab === "pending-users") {
             dispatch(fetchPendingUsers(pagination.page));
@@ -83,89 +102,13 @@ const UsersClient = () => {
         }
     };
 
-    const { isUpdating, createUser, updateUser, deleteUser, approveUser, rejectUser, updateUserRole } =
-        useUserActions({
-            onSuccess: refreshUsers,
-        });
-
-
-
-    // Handlers
-    const openModal = (user = null) => {
-        setEditingUser(user);
-        setModalOpen(true);
-    };
-
     // Register modal with AdminLayoutContext
     useEffect(() => {
-        registerModal(openModal);
-    }, [registerModal]);
+        registerModal(editModal.open);
+    }, [registerModal, editModal.open]);
 
-    const closeModal = () => {
-        setModalOpen(false);
-        setEditingUser(null);
-    };
-
-    const openDeleteModal = (user) => {
-        setUserToDelete(user);
-        setDeleteModalOpen(true);
-    };
-
-    const closeDeleteModal = () => {
-        setUserToDelete(null);
-        setDeleteModalOpen(false);
-    };
-
-    const handleRoleChange = (user) => {
-        setSelectedUserForRole(user);
-        setRoleDialogOpen(true);
-    };
-
-    const handleRoleConfirm = async (newRole) => {
-        if (selectedUserForRole) {
-            const result = await updateUserRole(
-                selectedUserForRole.id,
-                newRole,
-                `${selectedUserForRole.name} ${selectedUserForRole.surname}`
-            );
-
-            if (result?.success) {
-                setRoleDialogOpen(false);
-                setSelectedUserForRole(null);
-                refreshUsers();
-            }
-        }
-    };
-
-    // Search Handler - Server side
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            if (activeTab === "all-users") {
-                dispatch(fetchAllUsers(0, 10, searchTerm));
-            }
-        }, 500); // Debounce
-        return () => clearTimeout(timeoutId);
-    }, [searchTerm, dispatch]);
-
-    const handleResetFilters = () => {
-        setSearchTerm("");
-        setRoleFilter("ALL");
-        setStatusFilter("ALL");
-    };
-
-    const formatDate = (dateString) => {
-        if (!dateString) return "-";
-        const date = new Date(dateString);
-        return date.toLocaleDateString("tr-TR", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    };
-
-    const handleFormSubmit = async (data, editingUser) => {
+    // Handlers
+    const handleFormSubmit = async (data) => {
         const userData = {
             name: data.name,
             email: data.email,
@@ -177,33 +120,58 @@ const UsersClient = () => {
             userData.password = data.password;
         }
 
-        let result;
-        if (editingUser) {
-            result = await updateUser(editingUser.id, userData);
+        if (editModal.data) {
+            await update(editModal.data.id, userData);
         } else {
-            result = await createUser(userData);
+            await create(userData);
         }
 
-        return result;
+        editModal.close();
     };
 
-    const handleDeleteUser = async () => {
-        if (!userToDelete) return;
+    const handleDelete = async () => {
+        if (deleteModal.data) {
+            await remove(deleteModal.data.id);
+            deleteModal.close();
+        }
+    };
 
-        const result = await deleteUser(userToDelete.id, userToDelete.name);
-
-        if (result && !result.error) {
-            closeDeleteModal();
+    const handleRoleConfirm = async (newRole) => {
+        if (roleDialog.data) {
+            await dispatch(updateUserRole(roleDialog.data.id, newRole));
+            roleDialog.close();
             refreshUsers();
         }
     };
+
+    const handleApproveUser = async (userId) => {
+        await dispatch(approveUser(userId));
+        refreshUsers();
+    };
+
+    const handleRejectUser = async (userId) => {
+        await dispatch(rejectUser(userId));
+        refreshUsers();
+    };
+
+    const handleResetFilters = () => {
+        setSearchTerm("");
+        setRoleFilter("ALL");
+        setStatusFilter("ALL");
+    };
+
+    // Search Handler - Server side with debounce
+    useEffect(() => {
+        if (activeTab === "all-users") {
+            dispatch(fetchAllUsers(0, 10, debouncedSearchTerm));
+        }
+    }, [debouncedSearchTerm, dispatch, activeTab]);
 
     // Auth check
     if (!isAuthorized) {
         return null;
     }
 
-    const currentList = activeTab === "pending-users" ? pendingUsers : users;
     const isLoading = isInitialLoad || adminFetchState === fetchStates.FETCHING || adminFetchState === fetchStates.NOT_FETCHED;
 
     return (
@@ -215,11 +183,14 @@ const UsersClient = () => {
                         <h1 className="text-2xl font-bold text-darkgray font-Barlow">
                             Kullanıcı Yönetimi
                         </h1>
-                        <p className="text-sm text-gray-500 mt-1 font-Barlow">
-                            Tüm kullanıcıları görüntüleyin ve yönetin
-                            <span className="ml-2">
-                                • Toplam: {pagination.totalElements}
-                            </span>
+                        <p className="text-sm text-gray-500 mt-1 font-Barlow flex items-center gap-2">
+                            {isLoading ? (
+                                <span className="h-4 w-48 bg-lightgray animate-pulse rounded inline-block"></span>
+                            ) : (
+                                <span>
+                                    Tümü görüntüleniyor • Toplam: {pagination.size}
+                                </span>
+                            )}
                         </p>
                     </div>
                     <Button
@@ -244,6 +215,7 @@ const UsersClient = () => {
                 onRoleChange={setRoleFilter}
                 onStatusChange={setStatusFilter}
                 onReset={handleResetFilters}
+                loading={isLoading}
             />
 
             {/* Tabs */}
@@ -257,14 +229,14 @@ const UsersClient = () => {
                         <Users size={16} className="mr-2" />
                         Tüm Kullanıcılar
                         <span className="ml-2 bg-gray-200 text-gray-700 text-xs font-bold px-2 py-1 rounded-full">
-                            {activeTab === "all-users" ? pagination.totalElements : ""}
+                            {users.length}
                         </span>
                     </TabsTrigger>
                     <TabsTrigger value="pending-users" className="font-Barlow">
                         <AlertTriangle size={16} className="mr-2" />
                         Onay Bekleyenler
                         <span className="ml-2 bg-red text-white text-xs font-bold px-2 py-1 rounded-full">
-                            {activeTab === "pending-users" ? pagination.totalElements : ""}
+                            {pendingUsers.length}
                         </span>
                     </TabsTrigger>
                 </TabsList>
@@ -273,12 +245,12 @@ const UsersClient = () => {
                 <TabsContent value="all-users" className="space-y-4">
                     <UsersTable
                         users={users}
-                        onApprove={approveUser}
-                        onReject={rejectUser}
-                        onRoleChange={handleRoleChange}
-                        onEdit={openModal} // Added edit
-                        onDelete={openDeleteModal} // Added delete
-                        isUpdating={isUpdating}
+                        onApprove={handleApproveUser}
+                        onReject={handleRejectUser}
+                        onRoleChange={roleDialog.open}
+                        onEdit={editModal.open}
+                        onDelete={deleteModal.open}
+                        isUpdating={globalLoading}
                         loading={isLoading}
                     />
                 </TabsContent>
@@ -287,9 +259,9 @@ const UsersClient = () => {
                 <TabsContent value="pending-users" className="space-y-4">
                     <PendingUsersTable
                         users={pendingUsers}
-                        onApprove={approveUser}
-                        onReject={rejectUser}
-                        isUpdating={isUpdating}
+                        onApprove={handleApproveUser}
+                        onReject={handleRejectUser}
+                        isUpdating={globalLoading}
                         loading={isLoading}
                     />
                 </TabsContent>
@@ -313,29 +285,29 @@ const UsersClient = () => {
 
             {/* Add/Edit User Modal */}
             <UserFormModal
-                isOpen={modalOpen}
-                onClose={closeModal}
+                isOpen={editModal.isOpen}
+                onClose={editModal.close}
                 onSubmit={handleFormSubmit}
-                editingUser={editingUser}
-                isUpdating={isUpdating}
+                editingUser={editModal.data}
+                isUpdating={globalLoading}
             />
 
             {/* Role Change Dialog */}
             <RoleChangeDialog
-                open={roleDialogOpen}
-                onOpenChange={setRoleDialogOpen}
-                user={selectedUserForRole}
+                open={roleDialog.isOpen}
+                onOpenChange={roleDialog.close}
+                user={roleDialog.data}
                 onConfirm={handleRoleConfirm}
-                isUpdating={isUpdating}
+                isUpdating={globalLoading}
             />
 
             {/* Delete Confirmation Modal */}
             <ConfirmationModal
-                isOpen={deleteModalOpen}
-                onClose={closeDeleteModal}
-                onConfirm={handleDeleteUser}
+                isOpen={deleteModal.isOpen}
+                onClose={deleteModal.close}
+                onConfirm={handleDelete}
                 title="Kullanıcıyı Sil"
-                message={`${userToDelete?.name} kullanıcısını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
+                message={`${deleteModal.data?.name} kullanıcısını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
             />
         </div>
     );

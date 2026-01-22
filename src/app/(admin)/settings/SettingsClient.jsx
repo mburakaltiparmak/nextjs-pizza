@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAppDispatch } from "@/lib/store/hooks";
-import { reindexOrders, reindexProducts, reindexCategories, reindexUsers } from "@/lib/store/actions/adminActions";
+import { reindexOrders, reindexProducts, reindexCategories, reindexAllUsers } from "@/lib/store/actions/adminActions";
 import { useToast } from "@/lib/hooks/useToast";
 import { Database, RefreshCw, AlertTriangle, Info, Package, ListOrdered, User, ShoppingCart } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -54,7 +54,7 @@ export default function SettingsClient() {
                 case 'orders': action = reindexOrders(); break;
                 case 'products': action = reindexProducts(); break;
                 case 'categories': action = reindexCategories(); break;
-                case 'users': action = reindexUsers(); break;
+                case 'users': action = reindexAllUsers(); break;
                 default: throw new Error("Unknown reindex type");
             }
 

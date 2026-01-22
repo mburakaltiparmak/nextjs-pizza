@@ -1,6 +1,7 @@
 "use client";
 
 import { GlobalLoadingOverlay } from "@/components/ui/GlobalLoadingOverlay";
+import { GlobalMessageListener } from "@/components/ui/GlobalMessageListener";
 import { useState, useEffect } from "react";
 import Loading from "@/app/loading";
 import { usePathname, useRouter } from "next/navigation";
@@ -94,6 +95,7 @@ function AdminLayoutContent({ children }) {
     return (
         <div className="flex flex-col md:flex-row h-screen font-Barlow bg-lightgray">
             <GlobalLoadingOverlay />
+            <GlobalMessageListener />
             <AdminSidebar activePage={activePage} isMobile={isMobile} />
 
             <div className="flex-1 flex flex-col overflow-hidden w-full">

@@ -1,23 +1,31 @@
 "use client";
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import useAuthRoute from "@/lib/hooks/useAuthRole";
 import { useAdminLayout } from "@/lib/contexts/AdminLayoutContext";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
-import { fetchProducts, fetchProductsByCategory, resetProductState } from "@/lib/store/actions/productActions";
+import {
+    fetchProducts,
+    fetchProductsByCategory,
+    createProduct,
+    updateProduct,
+    deleteProduct
+} from "@/lib/store/actions/productActions";
 import { fetchCategories } from "@/lib/store/actions/categoryActions";
 import { fetchStates } from "@/lib/store/constants";
 
-
 // Custom Hooks
-import { useProductActions } from "@/lib/hooks/useProductActions";
+import { useModal } from "@/lib/hooks/admin/useModal";
+import { useAdminCRUD } from "@/lib/hooks/admin/useAdminCRUD";
+import { useDebounce } from "@/lib/hooks/useDebounce";
+import { TIMEOUTS } from "@/lib/utils/adminConstants";
 
 // Components
 import { ConfirmationModal } from "@/components/admin/AdminModals";
 import { ProductFilters } from "@/components/admin/products/ProductFilters";
 import { ProductsTable } from "@/components/admin/products/ProductsTable";
 import { ProductFormModal } from "@/components/admin/products/ProductFormModal";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Pagination } from "@/components/ui/Pagination";
 
 const ProductClient = () => {
@@ -26,23 +34,35 @@ const ProductClient = () => {
     const { registerModal } = useAdminLayout();
     const dispatch = useAppDispatch();
 
-    const products = useAppSelector((state) => state.product.products);
-    const pagination = useAppSelector((state) => state.product.pagination);
-    const categoriesRoot = useAppSelector((state) => state.category.categories);
-    const fetchState = useAppSelector((state) => state.product.fetchState);
+    // Modals
+    const editModal = useModal();
+    const deleteModal = useModal();
 
+    // State
     const [searchTerm, setSearchTerm] = useState("");
     const [filterCategory, setFilterCategory] = useState("");
-
-    const [modalOpen, setModalOpen] = useState(false);
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [editingProduct, setEditingProduct] = useState(null);
-    const [productToDelete, setProductToDelete] = useState(null);
-
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
+    // Debounced search term for client-side filtering
+    const debouncedSearchTerm = useDebounce(searchTerm, TIMEOUTS.DEBOUNCE);
+
+    // Redux selectors
+    const products = useAppSelector((state) => state.product.products);
+    const pagination = useAppSelector((state) => state.product.pagination);
+    const categories = useAppSelector((state) => state.category.categories);
+    const fetchState = useAppSelector((state) => state.product.fetchState);
+    const globalLoading = useAppSelector((state) => state.global.loading);
+
+    // CRUD operations
+    const { create, update, remove } = useAdminCRUD({
+        createAction: createProduct,
+        updateAction: updateProduct,
+        deleteAction: deleteProduct,
+        refreshAction: () => refreshCurrentView()
+    });
+
+    // Initial fetch
     useEffect(() => {
-        // Ensure loading state is active until initial fetch completes
         setIsInitialLoad(true);
         Promise.all([
             dispatch(fetchProducts(0)),
@@ -52,8 +72,7 @@ const ProductClient = () => {
         });
     }, [dispatch]);
 
-
-
+    // Category change handler
     const handleCategoryChange = (categoryId) => {
         setFilterCategory(categoryId);
         if (categoryId) {
@@ -63,6 +82,7 @@ const ProductClient = () => {
         }
     };
 
+    // Refresh current view
     const refreshCurrentView = () => {
         if (filterCategory) {
             dispatch(fetchProductsByCategory(filterCategory, 0));
@@ -71,36 +91,22 @@ const ProductClient = () => {
         }
     };
 
-    const { isUpdating, createProduct, updateProduct, deleteProduct } =
-        useProductActions({
-            onSuccess: refreshCurrentView,
-        });
-
-    const openModal = useCallback((product = null) => {
-        setEditingProduct(product);
-        setModalOpen(true);
-    }, []);
-
+    // Register modal with AdminLayoutContext
     useEffect(() => {
-        registerModal(openModal);
-    }, [registerModal, openModal]);
+        registerModal(editModal.open);
+    }, [registerModal, editModal.open]);
 
-    const closeModal = () => {
-        setModalOpen(false);
-        setEditingProduct(null);
-    };
+    // Client-side filtered products
+    const filteredProducts = useMemo(() => {
+        if (!debouncedSearchTerm) return products;
 
-    const openDeleteModal = (product) => {
-        setProductToDelete(product);
-        setDeleteModalOpen(true);
-    };
+        return products.filter(product =>
+            product.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+        );
+    }, [products, debouncedSearchTerm]);
 
-    const closeDeleteModal = () => {
-        setProductToDelete(null);
-        setDeleteModalOpen(false);
-    };
-
-    const handleFormSubmit = async (data, editingProduct) => {
+    // Handlers
+    const handleFormSubmit = async (data) => {
         const productData = {
             name: data.name,
             rating: data.rating,
@@ -110,25 +116,19 @@ const ProductClient = () => {
             image: data.image,
         };
 
-        let result;
-        if (editingProduct) {
-            result = await updateProduct(editingProduct.id, productData);
+        if (editModal.data) {
+            await update(editModal.data.id, productData);
         } else {
-            result = await createProduct(productData);
+            await create(productData);
         }
-        return result;
+
+        editModal.close();
     };
 
-    const handleDeleteProduct = async () => {
-        if (!productToDelete) return;
-
-        const result = await deleteProduct(
-            productToDelete.id,
-            productToDelete.name
-        );
-
-        if (result && !result.error) {
-            closeDeleteModal();
+    const handleDelete = async () => {
+        if (deleteModal.data) {
+            await remove(deleteModal.data.id);
+            deleteModal.close();
         }
     };
 
@@ -137,25 +137,27 @@ const ProductClient = () => {
         return null;
     }
 
+    const isLoading = isInitialLoad || fetchState === fetchStates.FETCHING || fetchState === fetchStates.NOT_FETCHED;
+
     return (
         <div>
             {/* Filters */}
             <ProductFilters
                 searchTerm={searchTerm}
                 filterCategory={filterCategory}
-                categories={categoriesRoot}
+                categories={categories}
                 onSearchChange={setSearchTerm}
                 onCategoryChange={handleCategoryChange}
             />
 
             {/* Products Table */}
             <ProductsTable
-                products={products}
-                categories={categoriesRoot}
-                onEdit={openModal}
-                onDelete={openDeleteModal}
-                onAddNew={() => openModal()}
-                loading={isInitialLoad || fetchState === fetchStates.FETCHING || fetchState === fetchStates.NOT_FETCHED}
+                products={filteredProducts}
+                categories={categories}
+                onEdit={editModal.open}
+                onDelete={deleteModal.open}
+                onAddNew={() => editModal.open()}
+                loading={isLoading}
             />
 
             {/* Pagination */}
@@ -176,21 +178,21 @@ const ProductClient = () => {
 
             {/* Add/Edit Product Modal */}
             <ProductFormModal
-                isOpen={modalOpen}
-                onClose={closeModal}
+                isOpen={editModal.isOpen}
+                onClose={editModal.close}
                 onSubmit={handleFormSubmit}
-                editingProduct={editingProduct}
-                categories={categoriesRoot}
-                isUpdating={isUpdating}
+                editingProduct={editModal.data}
+                categories={categories}
+                isUpdating={globalLoading}
             />
 
             {/* Delete Confirmation Modal */}
             <ConfirmationModal
-                isOpen={deleteModalOpen}
-                onClose={closeDeleteModal}
-                onConfirm={handleDeleteProduct}
+                isOpen={deleteModal.isOpen}
+                onClose={deleteModal.close}
+                onConfirm={handleDelete}
                 title="Ürünü Sil"
-                message={`${productToDelete?.name} ürününü silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
+                message={`${deleteModal.data?.name} ürününü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
             />
         </div>
     );

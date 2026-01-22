@@ -1,6 +1,6 @@
 import { ListOrdered, Package, TrendingUp, Users } from "lucide-react";
 
-export default function DashboardStatsGrid({ statistics, moduleLoading }) {
+export default function DashboardStatsGrid({ statistics, loading }) {
   // Loading skeleton component
   const LoadingCard = () => (
     <div className="bg-white rounded-xl shadow-sm p-6 border border-lightgray animate-pulse">
@@ -13,8 +13,8 @@ export default function DashboardStatsGrid({ statistics, moduleLoading }) {
   );
 
   // Stat Card component
-  const StatCard = ({ title, value, icon, loading, color = "text-red" }) => {
-    if (loading) {
+  const StatCard = ({ title, value, icon, isLoading, color = "text-red" }) => {
+    if (isLoading) {
       return <LoadingCard />;
     }
 
@@ -37,30 +37,30 @@ export default function DashboardStatsGrid({ statistics, moduleLoading }) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <StatCard
         title="Toplam Kategoriler"
-        value={statistics?.totalCategories || 0}
+        value={statistics?.totalCategories}
         icon={<ListOrdered className="h-8 w-8" />}
-        loading={moduleLoading?.category}
+        isLoading={loading}
         color="text-yellow"
       />
       <StatCard
         title="Toplam Ürünler"
-        value={statistics?.totalProducts || 0}
+        value={statistics?.totalProducts}
         icon={<Package className="h-8 w-8" />}
-        loading={moduleLoading?.category}
+        isLoading={loading}
         color="text-red"
       />
       <StatCard
         title="Toplam Stok"
-        value={statistics?.totalStock || 0}
+        value={statistics?.totalStock}
         icon={<TrendingUp className="h-8 w-8" />}
-        loading={moduleLoading?.category}
+        isLoading={loading}
         color="text-green-600"
       />
       <StatCard
         title="Toplam Kullanıcılar"
-        value={statistics?.totalUsers || 0}
+        value={statistics?.totalUsers}
         icon={<Users className="h-8 w-8" />}
-        loading={moduleLoading?.user}
+        isLoading={loading}
         color="text-blue-600"
       />
     </div>

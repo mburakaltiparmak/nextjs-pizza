@@ -3,9 +3,22 @@
 **Frontend Project Location:** `c:\Users\phant\Desktop\Burak\Projeler\nextjs-pizza\`  
 **Backend Project Location:** `c:\Users\phant\Desktop\Burak\Backend\pizza\`
 
-**Status:** Backend Phase 3 (Socket.IO + Refund) READY for testing.
-**Socket.IO:** Port 9092 (Ready)
-**Refund API:** Port 8080 (Ready)
+**Date:** 19.01.2026
+**Status:** Backend Phase 3 COMPLETE (Socket.IO + Refund + Autocomplete + Tracking + Smart Cancellation).
+
+...
+
+### Backend to Frontend Handoff
+- **Socket.IO:** Ready (Port 9092)
+- **Refunds:** Ready (Smart logic implemented - Auto Void/Refund)
+- **Autocomplete:** Ready (Elasticsearch)
+- **Tracking:** Ready (UUID based)
+- **Cancellation:** Ready (Unified UUID based `POST /api/orders/{uuid}/cancel`)
+**Socket.IO:** Port 9092 (Active & Verified)
+**Refund API:** Port 8080 (Active & Verified)
+**Tracking API:** Port 8080 (Active & Verified)
+
+**Next Feature:** Frontend Code Quality (Phase 4) -> Ready to Start
 
 ---
 
@@ -96,6 +109,23 @@ npm install --save-dev @next/bundle-analyzer
    - Frontend must connect to `http://localhost:9092`
    - Events: `order_created`, `order_updated`
 
+### ⚠️ Critical API Changes
+- **Order Cancellation:**
+  - **OLD:** `POST /api/orders/{id}/cancel` (Requires Auth + ID)
+  - **NEW:** `POST /api/orders/{uuid}/cancel` (Unified for Guest/Auth)
+  - **Action:** Update frontend to use `uuid` instead of `id` for cancellation requests.
+- **Pending Users (Admin):**
+  - **OLD:** `/api/auth/pending-users` (REMOVED due to security risks)
+  - **NEW:** `GET /api/admin/users/pending` (Standardized & Secure)
+  - **Action:** Update Admin Dashboard to use the new endpoint.
+
+### Backend to Frontend Handoff
+- **Socket.IO:** Ready (Port 9092)
+- **Refunds:** Ready (Smart logic implemented)
+- **Autocomplete:** Ready (Elasticsearch)
+- **Tracking:** Ready (UUID based)
+- **Cancellation:** Ready (Unified UUID based)
+
 2. **Phase 8 (API Response Format Change):**
    - Backend changes all responses to use `ApiResponse<T>` wrapper
    - Frontend axios interceptors must be updated to handle new format
@@ -163,31 +193,3 @@ Both projects share the same task list. When working on frontend tasks:
    - Socket.IO: `http://localhost:9092`
    - Swagger: `http://localhost:8080/pizza/swagger-ui.html`
    - Grafana: `http://localhost:3001` (admin/Kqbf9akUe2xBW2k)
-
----
-
-## 📂 File Structure Reference
-
-### Backend Root:
-```
-c:\Users\phant\Desktop\Burak\Backend\pizza\
-├── implementation_plan.md  ✅ (copied)
-├── task.md                 ✅ (copied)
-├── backend_plans.txt       (original reference)
-├── frontend_plans.txt      (original reference)
-├── pom.xml
-├── src/
-└── ...
-```
-
-### Frontend Root (to be synced):
-```
-c:\Users\phant\Desktop\Burak\Projeler\nextjs-pizza\
-├── implementation_plan.md  ⏳ (copy manually)
-├── task.md                 ⏳ (copy manually)
-├── frontend_plans.txt      (already exists)
-├── backend_plans.txt       (already exists)
-├── package.json
-├── src/
-└── ...
-```

@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import useAuthRoute from "@/lib/hooks/useAuthRole";
 import { RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Pagination } from "@/components/ui/Pagination";
 
 // Order Components
@@ -16,144 +15,75 @@ import { OrderDetailModal } from "@/components/admin/orders/OrderDetailModal";
 // Custom Hooks
 import { useOrdersManager } from "@/lib/hooks/useOrdersManager";
 import { useOrderActions } from "@/lib/hooks/useOrderActions";
-import { SocketStatusIndicator } from "@/components/admin/SocketStatusIndicator";
+import { useOrderFilters } from "@/lib/hooks/admin/useOrderFilters";
 import { useNotificationSound } from "@/lib/hooks/useNotificationSound";
+import { useModal } from "@/lib/hooks/admin/useModal";
+
+// UI Components
+import { SocketStatusIndicator } from "@/components/admin/SocketStatusIndicator";
 import { SoundToggle } from "@/components/admin/SoundToggle";
+import { formatDateTime } from "@/lib/utils/dateUtils";
 
 const OrdersAdminClient = () => {
     // Auth
     const { isAuthorized } = useAuthRoute(["ADMIN", "PERSONAL"], "/");
     const router = useRouter();
 
-    // State
-    const [statusFilter, setStatusFilter] = useState("ALL");
-    const [searchTerm, setSearchTerm] = useState("");
-    const [isDetailOpen, setIsDetailOpen] = useState(false);
-
     // Notification Sound
     const notificationSound = useNotificationSound();
 
-    // Custom Hooks
+    // Orders Data Management
     const {
         orders,
         loading,
         isRefreshing,
         lastUpdateTime,
-        refreshOrders,
-        updateOrderLocally,
-        addOrder,
         pagination,
-        fetchOrders,
+        refreshOrders,
+        fetchOrders
     } = useOrdersManager({
-        onNewOrder: (order) => {
-            notificationSound.play();
-        }
+        onNewOrder: () => notificationSound.play()
     });
 
+    // Order Filtering
+    const {
+        filteredOrders,
+        stats,
+        statusFilter,
+        searchTerm,
+        setStatusFilter,
+        setSearchTerm,
+        resetFilters
+    } = useOrderFilters(orders);
+
+    // Order Actions
     const {
         isUpdating,
         selectedOrder,
         updateOrderStatus,
         fetchOrderDetail,
-        clearSelectedOrder,
+        clearSelectedOrder
     } = useOrderActions({
-        onSuccess: () => refreshOrders(),
-        updateOrderLocally,
+        onSuccess: refreshOrders,
+        updateOrderLocally: (id, updates) => {
+            // Updates are handled via Redux/refresh
+        }
     });
 
-    // Filter statistics
-    const filterStats = useMemo(() => {
-        if (!orders) return {
-            total: 0,
-            pending: 0,
-            confirmed: 0,
-            preparing: 0,
-            shipping: 0,
-            delivered: 0,
-            cancelled: 0,
-        };
-
-        return {
-            total: orders.length,
-            pending: orders.filter(o => o.orderStatus === "PENDING").length,
-            confirmed: orders.filter(o => o.orderStatus === "CONFIRMED").length,
-            preparing: orders.filter(o => o.orderStatus === "PREPARING").length,
-            shipping: orders.filter(o => o.orderStatus === "SHIPPING").length,
-            delivered: orders.filter(o => o.orderStatus === "DELIVERED").length,
-            cancelled: orders.filter(o => o.orderStatus === "CANCELLED").length,
-        };
-    }, [orders]);
-
-    // Filtered orders
-    const filteredOrders = useMemo(() => {
-        if (!orders) return [];
-
-        let filtered = [...orders];
-
-        // Status filter
-        if (statusFilter !== "ALL") {
-            filtered = filtered.filter(order => order.orderStatus === statusFilter);
-        }
-
-        // Search filter
-        if (searchTerm) {
-            const search = searchTerm.toLowerCase();
-            filtered = filtered.filter(order => {
-                const orderId = order.id?.toString() || "";
-                const customerName = (order.userName || order.deliveryAddress?.recipientName || "").toLowerCase();
-                const customerEmail = (order.userEmail || "").toLowerCase();
-                const address = order.deliveryAddress
-                    ? `${order.deliveryAddress.fullAddress} ${order.deliveryAddress.district} ${order.deliveryAddress.city}`.toLowerCase()
-                    : "";
-
-                return (
-                    orderId.includes(search) ||
-                    customerName.includes(search) ||
-                    customerEmail.includes(search) ||
-                    address.includes(search)
-                );
-            });
-        }
-
-        return filtered;
-    }, [orders, statusFilter, searchTerm]);
+    // Detail Modal
+    const detailModal = useModal();
 
     // Handlers
     const handleShowDetail = async (orderId) => {
         const order = await fetchOrderDetail(orderId);
         if (order) {
-            setIsDetailOpen(true);
+            detailModal.open();
         }
     };
 
     const handleCloseDetail = () => {
-        setIsDetailOpen(false);
+        detailModal.close();
         clearSelectedOrder();
-    };
-
-    const handleStatusChange = (newStatus) => {
-        setStatusFilter(newStatus);
-    };
-
-    const handleSearchChange = (value) => {
-        setSearchTerm(value);
-    };
-
-    const handleResetFilters = () => {
-        setStatusFilter("ALL");
-        setSearchTerm("");
-    };
-
-    const formatDate = (dateString) => {
-        if (!dateString) return "-";
-        const date = new Date(dateString);
-        return date.toLocaleDateString("tr-TR", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
     };
 
     if (!isAuthorized) {
@@ -169,12 +99,18 @@ const OrdersAdminClient = () => {
                         <h1 className="text-2xl font-bold text-darkgray font-Barlow">
                             Siparişler
                         </h1>
-                        <p className="text-sm text-gray-500 mt-1 font-Barlow">
-                            Toplam {filterStats.total} sipariş
-                            {lastUpdateTime && (
-                                <span className="ml-2">
-                                    • Son güncelleme: {formatDate(lastUpdateTime)}
-                                </span>
+                        <p className="text-sm text-gray-500 mt-1 font-Barlow flex items-center gap-2">
+                            {loading ? (
+                                <span className="h-4 w-24 bg-lightgray animate-pulse rounded inline-block"></span>
+                            ) : (
+                                <>
+                                    <span>Toplam {stats.total} sipariş</span>
+                                    {lastUpdateTime && (
+                                        <span className="ml-2">
+                                            • Son güncelleme: {formatDateTime(lastUpdateTime)}
+                                        </span>
+                                    )}
+                                </>
                             )}
                         </p>
                     </div>
@@ -200,10 +136,9 @@ const OrdersAdminClient = () => {
                 </div>
 
                 {/* Filter Results Info */}
-                {filteredOrders.length !== filterStats.total && (
+                {!loading && filteredOrders.length !== stats.total && (
                     <p className="text-sm text-gray-600 font-Barlow">
-                        {filteredOrders.length} sipariş gösteriliyor ({filterStats.total}{" "}
-                        siparişten)
+                        {filteredOrders.length} sipariş gösteriliyor ({stats.total} siparişten)
                     </p>
                 )}
             </div>
@@ -212,10 +147,11 @@ const OrdersAdminClient = () => {
             <OrderFilters
                 statusFilter={statusFilter}
                 searchTerm={searchTerm}
-                onStatusChange={handleStatusChange}
-                onSearchChange={handleSearchChange}
-                onReset={handleResetFilters}
-                stats={filterStats}
+                onStatusChange={setStatusFilter}
+                onSearchChange={setSearchTerm}
+                onReset={resetFilters}
+                stats={stats}
+                loading={loading}
             />
 
             {/* Orders Table/Cards */}
@@ -223,11 +159,7 @@ const OrdersAdminClient = () => {
                 orders={filteredOrders}
                 onViewDetail={handleShowDetail}
                 filteredCount={filteredOrders.length}
-                totalCount={filterStats.total} // Shows total elements from api now if we use pagination.totalElements?
-                // filterStats.total is calculated from `orders.length` currently. 
-                // If we use pagination, `orders` is just 10 items.
-                // We should display pagination.totalElements if available.
-                // Let's pass pagination.totalElements as totalCount if available.
+                totalCount={stats.total}
                 isLoading={loading || isRefreshing}
             />
 
@@ -239,15 +171,13 @@ const OrdersAdminClient = () => {
                     onPageChange={(page) => {
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                         fetchOrders(page);
-                        // Note: fetchOrders is exposed from useOrdersManager
-                        // We don't need to dispatch actions because useOrdersManager handles it.
                     }}
                 />
             )}
 
             {/* Order Detail Modal */}
             <OrderDetailModal
-                open={isDetailOpen}
+                open={detailModal.isOpen}
                 onClose={handleCloseDetail}
                 order={selectedOrder}
                 onUpdateStatus={updateOrderStatus}

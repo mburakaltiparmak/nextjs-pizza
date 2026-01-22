@@ -1,100 +1,74 @@
 "use client";
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
-import { useAdminModal } from "@/lib/contexts/AdminLayoutContext"; // Updated to use useAdminModal if separate or stick to Layout context
-import { useAdminLayout } from "@/lib/contexts/AdminLayoutContext"; // Updated path
-import { fetchCategories, deleteCategory } from "@/lib/store/actions/categoryActions";
+import { useAdminLayout } from "@/lib/contexts/AdminLayoutContext";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
+import {
+    fetchCategories,
+    deleteCategory,
+    updateCategory,
+    createCategory
+} from "@/lib/store/actions/categoryActions";
 import { fetchDashboard } from "@/lib/store/actions/adminActions";
-import { setSuccess } from "@/lib/store/actions/globalActions";
 import { fetchStates } from "@/lib/store/constants";
 
+// Custom Hooks
+import { useModal } from "@/lib/hooks/admin/useModal";
+import { useDebounce } from "@/lib/hooks/useDebounce";
+import { TIMEOUTS } from "@/lib/utils/adminConstants";
+
 // Components
-import { ConfirmationModal } from "@/components/admin/AdminModals"; // Updated path
-import { SearchBar } from "@/components/admin/AdminSearchFilter"; // Updated path
+import { ConfirmationModal } from "@/components/admin/AdminModals";
+import { SearchBar } from "@/components/admin/AdminSearchFilter";
 import { CategoryTable } from "@/components/admin/category/CategoryTable";
 import { CategoryFormModal } from "@/components/admin/category/CategoryFormModal";
-import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { Pagination } from "@/components/ui/Pagination";
 
 const CategoryClient = () => {
     const router = useRouter();
-    const dispatch = useAppDispatch();
     const { registerModal } = useAdminLayout();
+    const dispatch = useAppDispatch();
 
+    // Modals
+    const editModal = useModal();
+    const deleteModal = useModal();
+
+    // State
     const [searchTerm, setSearchTerm] = useState("");
-    const [modalOpen, setModalOpen] = useState(false);
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [editingCategory, setEditingCategory] = useState(null);
-    const [categoryToDelete, setCategoryToDelete] = useState(null);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-    // Redux state
+    // Debounced search term for client-side filtering
+    const debouncedSearchTerm = useDebounce(searchTerm, TIMEOUTS.DEBOUNCE);
+
+    // Redux selectors
     const categories = useAppSelector((state) => state.category.categories);
     const pagination = useAppSelector((state) => state.category.pagination);
     const categoryFetchState = useAppSelector((state) => state.category.fetchState);
-    const dashboardData = useAppSelector((state) => state.admin.dashboardData); // +Get Dashboard Data
-
-    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const dashboardData = useAppSelector((state) => state.admin.dashboard.data);
+    const globalLoading = useAppSelector((state) => state.global.loading);
 
     // Fetch categories AND dashboard data (for counts) on mount
     useEffect(() => {
         setIsInitialLoad(true);
         Promise.all([
             dispatch(fetchCategories(0)),
-            dispatch(fetchDashboard()) // +Fetch Dashboard
+            dispatch(fetchDashboard())
         ]).finally(() => setIsInitialLoad(false));
     }, [dispatch]);
 
     // Register modal with AdminLayoutContext
-    const openModal = useCallback((category = null) => {
-        setEditingCategory(category);
-        setModalOpen(true);
-    }, []);
-
     useEffect(() => {
-        registerModal(openModal);
-    }, [registerModal, openModal]);
+        registerModal(editModal.open);
+    }, [registerModal, editModal.open]);
 
-    const closeModal = () => {
-        setModalOpen(false);
-        setEditingCategory(null);
-    };
-
-    const openDeleteModal = (category) => {
-        setCategoryToDelete(category);
-        setDeleteModalOpen(true);
-    };
-
-    const closeDeleteModal = () => {
-        setCategoryToDelete(null);
-        setDeleteModalOpen(false);
-    };
-
-    // Mounted ref for memory leak protection
-    const mounted = useRef(true);
-    useEffect(() => {
-        return () => {
-            mounted.current = false;
-        };
-    }, []);
-
+    // Handlers
     const handleDelete = async () => {
-        if (!categoryToDelete) return;
+        if (!deleteModal.data) return;
 
-        try {
-            const result = await dispatch(deleteCategory(categoryToDelete.id));
-
-            if (mounted.current && !result.error) {
-                dispatch(
-                    setSuccess(`"${categoryToDelete.name}" kategorisi başarıyla silindi`)
-                );
-                // Refresh categories
-                dispatch(fetchCategories(pagination.page));
-                closeDeleteModal();
-            }
-        } catch (err) {
-            console.error("Kategori silme işlemi sırasında hata:", err);
-        }
+        await dispatch(deleteCategory(deleteModal.data.id));
+        dispatch(fetchCategories(pagination.page));
+        deleteModal.close();
     };
 
     // Merge categories with product counts from dashboardData
@@ -115,21 +89,24 @@ const CategoryClient = () => {
         return categories;
     }, [categories, dashboardData]);
 
+    // Filtered categories with debounced search
     const filteredCategories = useMemo(() => {
-        const source = categoriesWithCounts; // Use enriched data
+        const source = categoriesWithCounts;
         if (!source || !Array.isArray(source)) return [];
 
         return source.filter((category) => {
             if (!category || !category.name || typeof category.name !== "string") {
                 return false;
             }
-            return category.name.toLowerCase().includes(searchTerm.toLowerCase());
+            return category.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
         });
-    }, [categoriesWithCounts, searchTerm]);
+    }, [categoriesWithCounts, debouncedSearchTerm]);
+
+    const isLoading = isInitialLoad || categoryFetchState === fetchStates.FETCHING || categoryFetchState === fetchStates.NOT_FETCHED;
 
     return (
         <div>
-            {/* Arama */}
+            {/* Search */}
             <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex items-center border border-lightgray">
                 <SearchBar
                     value={searchTerm}
@@ -138,13 +115,13 @@ const CategoryClient = () => {
                 />
             </div>
 
-            {/* Tablo */}
+            {/* Table */}
             <CategoryTable
                 categories={filteredCategories}
-                onEdit={openModal}
-                onDelete={openDeleteModal}
-                onAddNew={() => openModal()}
-                loading={isInitialLoad || categoryFetchState === fetchStates.FETCHING || categoryFetchState === fetchStates.NOT_FETCHED}
+                onEdit={editModal.open}
+                onDelete={deleteModal.open}
+                onAddNew={() => editModal.open()}
+                loading={isLoading}
             />
 
             {/* Pagination */}
@@ -159,23 +136,23 @@ const CategoryClient = () => {
                 />
             )}
 
-            {/* Kategori Ekleme/Düzenleme Modal */}
+            {/* Category Add/Edit Modal */}
             <CategoryFormModal
-                open={modalOpen}
-                onClose={closeModal}
-                editingCategory={editingCategory}
+                open={editModal.isOpen}
+                onClose={editModal.close}
+                editingCategory={editModal.data}
             />
 
-            {/* Silme Onay Modalı */}
+            {/* Delete Confirmation Modal */}
             <ConfirmationModal
-                isOpen={deleteModalOpen}
-                onClose={closeDeleteModal}
+                isOpen={deleteModal.isOpen}
+                onClose={deleteModal.close}
                 onConfirm={handleDelete}
                 title="Kategoriyi Sil"
-                message={`${categoryToDelete?.name} kategorisini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
+                message={`${deleteModal.data?.name} kategorisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
                 warning={
-                    categoryToDelete?.productCount > 0
-                        ? `Bu kategori ${categoryToDelete.productCount} ürün içeriyor. Kategoriyi silmek bu ürünleri de etkileyebilir.`
+                    deleteModal.data?.productCount > 0
+                        ? `Bu kategori ${deleteModal.data.productCount} ürün içeriyor. Kategoriyi silmek bu ürünleri de etkileyebilir.`
                         : null
                 }
             />
