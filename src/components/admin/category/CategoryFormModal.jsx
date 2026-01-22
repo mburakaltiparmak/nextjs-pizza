@@ -1,12 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { z } from "zod";
 import { useDispatch, useSelector } from "react-redux";
 import { createCategory, updateCategory } from "@/lib/store/actions/categoryActions";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { useToast } from "@/lib/hooks/useToast";
 import { Modal } from "@/components/admin/modal";
 import ImageUpload from "@/components/admin/imageUpload";
 import {
@@ -19,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useFormModal } from "@/lib/hooks/admin/useFormModal";
 
 const formSchema = z.object({
     name: z.string().min(3, "Kategori adı en az 3 karakter olmalıdır."),
@@ -28,62 +25,29 @@ const formSchema = z.object({
 
 export const CategoryFormModal = ({ open, onClose, editingCategory }) => {
     const dispatch = useDispatch();
-    const { toast } = useToast();
     const loading = useSelector((state) => state.global.loading);
     const token = useSelector((state) => state.user.token);
 
-    const form = useForm({
-        resolver: zodResolver(formSchema),
+    const { form, handleImageChange, handleImageError, handleSubmit, handleClose } = useFormModal({
+        schema: formSchema,
         defaultValues: {
             name: "",
             image: null,
             preview: null,
         },
-    });
-
-    // Update form when editingCategory or open state changes
-    useEffect(() => {
-        if (open) {
-            if (editingCategory) {
-                form.reset({
-                    name: editingCategory.name,
-                    image: null,
-                    preview: editingCategory.img,
-                });
-            } else {
-                form.reset({
-                    name: "",
-                    image: null,
-                    preview: null,
-                });
-            }
-        }
-    }, [editingCategory, open, form]);
-
-    const handleImageChange = (imageData) => {
-        if (imageData && imageData.file) {
-            form.setValue("image", imageData.file);
-            form.setValue("preview", imageData.preview);
-        }
-    };
-
-    const handleImageError = (errorMessage) => {
-        toast({
-            title: "Hata",
-            description: errorMessage,
-            variant: "destructive",
-        });
-    };
-
-    const onSubmit = async (data) => {
-        try {
+        isOpen: open,
+        editingItem: editingCategory ? {
+            name: editingCategory.name,
+            image: null,
+            preview: editingCategory.img,
+        } : null,
+        onSubmit: async (data) => {
             const categoryData = {
                 name: data.name,
                 image: data.image,
             };
 
             let result;
-
             if (editingCategory) {
                 result = await dispatch(
                     updateCategory(editingCategory.id, categoryData, token)
@@ -92,22 +56,10 @@ export const CategoryFormModal = ({ open, onClose, editingCategory }) => {
                 result = await dispatch(createCategory(categoryData, token));
             }
 
-            if (!result.error) {
-                onClose();
-            }
-        } catch (err) {
-            console.error("Kategori işlemi sırasında hata:", err);
-        }
-    };
-
-    const handleClose = () => {
-        form.reset({
-            name: "",
-            image: null,
-            preview: null,
-        });
-        onClose();
-    };
+            return result;
+        },
+        onClose
+    });
 
     return (
         <Modal
@@ -128,7 +80,7 @@ export const CategoryFormModal = ({ open, onClose, editingCategory }) => {
                         type="submit"
                         className="bg-red text-lightgray hover:bg-yellow hover:text-red font-Barlow"
                         disabled={loading}
-                        onClick={form.handleSubmit(onSubmit)}
+                        onClick={form.handleSubmit(handleSubmit)}
                     >
                         {loading
                             ? "İşleniyor..."
@@ -141,7 +93,7 @@ export const CategoryFormModal = ({ open, onClose, editingCategory }) => {
         >
             <Form {...form}>
                 <form
-                    onSubmit={form.handleSubmit(onSubmit)}
+                    onSubmit={form.handleSubmit(handleSubmit)}
                     className="flex flex-col gap-4"
                 >
                     <FormField
@@ -169,7 +121,7 @@ export const CategoryFormModal = ({ open, onClose, editingCategory }) => {
                         control={form.control}
                         name="image"
                         render={({ field: { onChange, value, ...rest } }) => (
-                            <FormItem className="">
+                            <FormItem>
                                 <FormLabel className="flex flex-row items-center font-Barlow">
                                     <p className="text-darkgray">Kategori Logo</p>
                                     <p className="text-red pl-1">*</p>

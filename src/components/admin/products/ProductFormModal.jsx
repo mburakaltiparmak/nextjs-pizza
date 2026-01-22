@@ -1,5 +1,5 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+"use client";
+
 import { z } from "zod";
 import { Modal } from "@/components/admin/modal";
 import ImageUpload from "@/components/admin/imageUpload";
@@ -21,8 +21,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/lib/hooks/useToast";
-import { useEffect } from "react";
+import { useFormModal } from "@/lib/hooks/admin/useFormModal";
 
 // Form validation schema
 const formSchema = z.object({
@@ -50,11 +49,8 @@ export const ProductFormModal = ({
     categories,
     isUpdating,
 }) => {
-    const { toast } = useToast();
-
-    // Initialize form
-    const form = useForm({
-        resolver: zodResolver(formSchema),
+    const { form, handleImageChange, handleImageError, handleSubmit } = useFormModal({
+        schema: formSchema,
         defaultValues: {
             name: "",
             categoryId: "",
@@ -64,58 +60,19 @@ export const ProductFormModal = ({
             image: null,
             preview: null,
         },
+        isOpen,
+        editingItem: editingProduct ? {
+            name: editingProduct.name,
+            price: editingProduct.price,
+            stock: editingProduct.stock,
+            rating: editingProduct.rating,
+            categoryId: editingProduct.categoryId?.toString() || "",
+            image: null,
+            preview: editingProduct.img,
+        } : null,
+        onSubmit,
+        onClose
     });
-
-    // Reset form when modal opens/closes or editingProduct changes
-    useEffect(() => {
-        if (isOpen) {
-            if (editingProduct) {
-                form.reset({
-                    name: editingProduct.name,
-                    price: editingProduct.price,
-                    stock: editingProduct.stock,
-                    rating: editingProduct.rating,
-                    categoryId: editingProduct.categoryId
-                        ? editingProduct.categoryId.toString()
-                        : "",
-                    image: null,
-                    preview: editingProduct.img,
-                });
-            } else {
-                form.reset({
-                    name: "",
-                    categoryId: "",
-                    price: 0,
-                    stock: 0,
-                    rating: 0,
-                    image: null,
-                    preview: null,
-                });
-            }
-        }
-    }, [isOpen, editingProduct, form]);
-
-    const handleImageChange = (imageData) => {
-        if (imageData && imageData.file) {
-            form.setValue("image", imageData.file);
-            form.setValue("preview", imageData.preview);
-        }
-    };
-
-    const handleImageError = (errorMessage) => {
-        toast({
-            title: "Hata",
-            description: errorMessage,
-            variant: "destructive",
-        });
-    };
-
-    const handleSubmit = async (data) => {
-        const result = await onSubmit(data, editingProduct);
-        if (result && !result.error) {
-            onClose();
-        }
-    };
 
     return (
         <Modal
@@ -288,7 +245,7 @@ export const ProductFormModal = ({
                         control={form.control}
                         name="image"
                         render={({ field }) => (
-                            <FormItem className="">
+                            <FormItem>
                                 <FormLabel className="flex flex-row items-center font-Barlow">
                                     <p className="text-darkgray">Ürün Resmi</p>
                                     <p className="text-red pl-1">*</p>
