@@ -1,6 +1,8 @@
 import { User, UserCheck, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TableSkeleton } from "@/components/ui/skeletons/TableSkeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { formatDateTime } from "@/lib/utils/dateUtils";
 
 /**
  * Pending Users Table Component
@@ -13,28 +15,17 @@ export const PendingUsersTable = ({
     isUpdating,
     loading,
 }) => {
-    const formatDate = (dateString) => {
-        if (!dateString) return "-";
-        return new Date(dateString).toLocaleString("tr-TR", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    };
-
     if (loading) {
         return <TableSkeleton rowCount={8} columnCount={4} />;
     }
 
     if (!users || users.length === 0) {
         return (
-            <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-lightgray">
-                <p className="text-gray-500 font-Barlow">
-                    Onay bekleyen kullanıcı bulunmamaktadır
-                </p>
-            </div>
+            <EmptyState
+                icon={User}
+                title="Onay Bekleyen Kullanıcı Yok"
+                description="Onay bekleyen kullanıcı bulunmamaktadır."
+            />
         );
     }
 
@@ -87,7 +78,7 @@ export const PendingUsersTable = ({
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-Barlow">
-                                        {formatDate(user.createdAt)}
+                                        {formatDateTime(user.createdAt)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex justify-end space-x-3">
@@ -149,7 +140,7 @@ export const PendingUsersTable = ({
                         {/* Registration Date */}
                         <div className="text-xs text-gray-500 font-Barlow mb-3">
                             <span className="font-medium">Kayıt:</span>{" "}
-                            {formatDate(user.createdAt)}
+                            {formatDateTime(user.createdAt)}
                         </div>
 
                         {/* Actions */}

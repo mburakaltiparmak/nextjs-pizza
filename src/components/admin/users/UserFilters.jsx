@@ -8,6 +8,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { USER_ROLES, USER_ROLE_LABELS, USER_STATUS, USER_STATUS_LABELS } from "@/lib/utils/adminConstants";
 
 /**
  * User Filters Component
@@ -21,6 +22,7 @@ export const UserFilters = ({
     onRoleChange,
     onStatusChange,
     onReset,
+    loading,
 }) => {
     return (
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-lightgray">
@@ -34,34 +36,35 @@ export const UserFilters = ({
                         value={searchTerm}
                         onChange={(e) => onSearchChange(e.target.value)}
                         className="pl-10 font-Barlow"
+                        disabled={loading}
                     />
                 </div>
 
                 {/* Role Filter */}
-                <Select value={roleFilter} onValueChange={onRoleChange}>
+                <Select value={roleFilter} onValueChange={onRoleChange} disabled={loading}>
                     <SelectTrigger className="w-full md:w-48 font-Barlow">
                         <SelectValue placeholder="Rol Filtrele" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="ALL">Tüm Roller</SelectItem>
-                        <SelectItem value="ADMIN">Admin</SelectItem>
-                        <SelectItem value="PERSONAL">Personel</SelectItem>
-                        <SelectItem value="CUSTOMER">Müşteri</SelectItem>
-                        <SelectItem value="GUEST">Misafir</SelectItem>
+                        {Object.entries(USER_ROLES).map(([key, value]) => (
+                            <SelectItem key={value} value={value}>
+                                {USER_ROLE_LABELS[value]}
+                            </SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
 
                 {/* Status Filter */}
-                <Select value={statusFilter} onValueChange={onStatusChange}>
+                <Select value={statusFilter} onValueChange={onStatusChange} disabled={loading}>
                     <SelectTrigger className="w-full md:w-48 font-Barlow">
                         <SelectValue placeholder="Durum Filtrele" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="ALL">Tüm Durumlar</SelectItem>
-                        <SelectItem value="ACTIVE">Aktif</SelectItem>
-                        <SelectItem value="PENDING">Onay Bekliyor</SelectItem>
-                        <SelectItem value="LOCKED">Kilitli</SelectItem>
-                        <SelectItem value="REJECTED">Reddedildi</SelectItem>
+                        {Object.entries(USER_STATUS).map(([key, value]) => (
+                            <SelectItem key={value} value={value}>
+                                {USER_STATUS_LABELS[value]}
+                            </SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
 
