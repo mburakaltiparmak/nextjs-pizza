@@ -244,7 +244,6 @@ export const createProduct = (productData, token) => async (dispatch) => {
     // Başarılı işlem
     await Promise.all([dispatch(fetchCategories()), dispatch(fetchProducts())]);
     dispatch(setSuccess("Ürün başarıyla oluşturuldu"));
-    dispatch(setLoading(false));
 
     // Clear dashboard cache as product counts changed
     cache.clearPattern('dashboard');
@@ -276,11 +275,13 @@ export const createProduct = (productData, token) => async (dispatch) => {
     }
 
     dispatch(setError(errorMessage));
-    dispatch(setLoading(false));
     return { error: errorMessage };
+  } finally {
+    dispatch(setLoading(false));
   }
 };
 
+// Ürün güncelle
 // Ürün güncelle
 export const updateProduct = (id, productData, token) => async (dispatch) => {
   dispatch(setLoading(true));
@@ -320,7 +321,6 @@ export const updateProduct = (id, productData, token) => async (dispatch) => {
     await Promise.all([dispatch(fetchCategories()), dispatch(fetchProducts())]);
 
     dispatch(setSuccess("Ürün başarıyla güncellendi"));
-    dispatch(setLoading(false));
 
     // Clear dashboard and products cache
     cache.clearPattern('dashboard');
@@ -344,11 +344,13 @@ export const updateProduct = (id, productData, token) => async (dispatch) => {
     }
 
     dispatch(setError(errorMessage));
-    dispatch(setLoading(false));
     return { error: errorMessage };
+  } finally {
+    dispatch(setLoading(false));
   }
 };
 
+// Ürün sil
 // Ürün sil
 export const deleteProduct = (id, token) => async (dispatch) => {
   dispatch(setLoading(true));
@@ -362,7 +364,6 @@ export const deleteProduct = (id, token) => async (dispatch) => {
     await Promise.all([dispatch(fetchCategories()), dispatch(fetchProducts())]);
 
     dispatch(setSuccess("Ürün başarıyla silindi"));
-    dispatch(setLoading(false));
 
     // Clear dashboard cache
     cache.clearPattern('dashboard');
@@ -382,8 +383,9 @@ export const deleteProduct = (id, token) => async (dispatch) => {
     }
 
     dispatch(setError(errorMessage));
-    dispatch(setLoading(false));
     return { error: errorMessage };
+  } finally {
+    dispatch(setLoading(false));
   }
 };
 
@@ -413,7 +415,6 @@ export const createCustomPizza =
       );
 
       dispatch(setSuccess("Custom Pizza başarıyla oluşturuldu"));
-      dispatch(setLoading(false));
 
       return response.data;
     } catch (err) {
@@ -432,7 +433,8 @@ export const createCustomPizza =
       }
 
       dispatch(setError(errorMessage));
-      dispatch(setLoading(false));
       return { error: errorMessage };
+    } finally {
+      dispatch(setLoading(false));
     }
   };

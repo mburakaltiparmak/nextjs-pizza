@@ -112,7 +112,6 @@ export const createCategory = (categoryData, token) => async (dispatch) => {
     });
 
     dispatch(setSuccess("Kategori başarıyla eklendi"));
-    dispatch(setLoading(false));
 
     // Cache'i temizle - yeni veri eklendiği için
     cache.clear('categories_all');
@@ -121,8 +120,9 @@ export const createCategory = (categoryData, token) => async (dispatch) => {
 
     return { success: true, data: response.data };
   } catch (err) {
-    dispatch(setLoading(false));
     return handleApiError(err, dispatch, 'createCategory');
+  } finally {
+    dispatch(setLoading(false));
   }
 };
 
@@ -155,7 +155,6 @@ export const updateCategory = (categoryId, categoryData, token) => async (dispat
     });
 
     dispatch(setSuccess("Kategori başarıyla güncellendi"));
-    dispatch(setLoading(false));
 
     // Cache'i temizle
     cache.clear('categories_all');
@@ -163,8 +162,9 @@ export const updateCategory = (categoryId, categoryData, token) => async (dispat
 
     return { success: true, data: response.data };
   } catch (err) {
-    dispatch(setLoading(false));
     return handleApiError(err, dispatch, 'updateCategory');
+  } finally {
+    dispatch(setLoading(false));
   }
 };
 
@@ -182,15 +182,14 @@ export const deleteCategory = (categoryId) => async (dispatch) => {
       payload: categoryId,
     });
 
-    dispatch(setLoading(false));
-
     // Cache'i temizle
     cache.clear('categories_all');
     cache.clearPattern('dashboard');
 
     return { success: true };
   } catch (err) {
-    dispatch(setLoading(false));
     return handleApiError(err, dispatch, 'deleteCategory');
+  } finally {
+    dispatch(setLoading(false));
   }
 };
