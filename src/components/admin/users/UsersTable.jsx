@@ -2,6 +2,8 @@ import { User } from "lucide-react";
 import { StatusBadge, RoleBadge } from "./UserBadges";
 import { UserActionsCell } from "./UserActionsCell";
 import { TableSkeleton } from "@/components/ui/skeletons/TableSkeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { formatLastLogin } from "@/lib/utils/dateUtils";
 
 /**
  * Users Table Component
@@ -15,26 +17,17 @@ export const UsersTable = ({
     isUpdating,
     loading,
 }) => {
-    const formatDate = (dateString) => {
-        if (!dateString) return "Hiç giriş yapmadı";
-        return new Date(dateString).toLocaleString("tr-TR", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    };
-
     if (loading) {
         return <TableSkeleton rowCount={8} columnCount={5} />;
     }
 
     if (!users || users.length === 0) {
         return (
-            <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-lightgray">
-                <p className="text-gray-500 font-Barlow">Kullanıcı bulunamadı</p>
-            </div>
+            <EmptyState
+                icon={User}
+                title="Kullanıcı Bulunamadı"
+                description="Arama kriterlerinizle eşleşen kullanıcı bulunamadı."
+            />
         );
     }
 
@@ -96,7 +89,7 @@ export const UsersTable = ({
                                         <RoleBadge role={user.role} />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-Barlow">
-                                        {formatDate(user.lastLoginAt)}
+                                        {formatLastLogin(user.lastLoginAt)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <UserActionsCell
@@ -151,7 +144,7 @@ export const UsersTable = ({
                         {/* Last Login */}
                         <div className="text-xs text-gray-500 font-Barlow mb-3">
                             <span className="font-medium">Son Giriş:</span>{" "}
-                            {formatDate(user.lastLoginAt)}
+                            {formatLastLogin(user.lastLoginAt)}
                         </div>
 
                         {/* Actions */}

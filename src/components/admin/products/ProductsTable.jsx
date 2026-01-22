@@ -2,6 +2,8 @@ import Image from "next/image";
 import { Edit, Trash2, Package, Plus } from "lucide-react";
 import RatingStars from "@/components/admin/ratingStars";
 import { TableSkeleton } from "@/components/ui/skeletons/TableSkeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { getCategoryName, formatPrice } from "@/lib/utils/formatters";
 
 export const ProductsTable = ({
     products,
@@ -11,24 +13,20 @@ export const ProductsTable = ({
     onAddNew,
     loading,
 }) => {
-
-    const getCategoryName = (categoryId) => {
-        if (!categoryId) return "Bilinmeyen Kategori";
-
-        const categoryIdStr = categoryId.toString();
-
-        if (!categories || !Array.isArray(categories) || categories.length === 0) {
-            return "Kategoriler yükleniyor...";
-        }
-
-        const foundCategory = categories.find(
-            (cat) => cat.id && cat.id.toString() === categoryIdStr
-        );
-        return foundCategory ? foundCategory.name : "Bilinmeyen Kategori";
-    };
-
     if (loading) {
         return <TableSkeleton rowCount={10} columnCount={6} />;
+    }
+
+    if (!products || products.length === 0) {
+        return (
+            <EmptyState
+                icon={Package}
+                title="Ürün Bulunamadı"
+                description="Henüz hiç ürün eklenmemiş."
+                actionLabel="Yeni Ürün Ekle"
+                onAction={onAddNew}
+            />
+        );
     }
 
     return (
@@ -76,86 +74,66 @@ export const ProductsTable = ({
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {products && products.length > 0 ? (
-                            products.map((product) => (
-                                <tr key={product.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <div className="h-10 w-10 flex-shrink-0">
-                                                {product.img ? (
-                                                    <Image
-                                                        className="h-10 w-10 rounded-full object-cover"
-                                                        src={product.img}
-                                                        alt={product.name}
-                                                        width={40}
-                                                        height={40}
-                                                    />
-                                                ) : (
-                                                    <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                                        <Package size={16} className="text-gray-500" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="ml-4">
-                                                <div className="text-sm font-medium text-darkgray font-Barlow">
-                                                    {product.name}
+                        {products.map((product) => (
+                            <tr key={product.id} className="hover:bg-gray-50">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex items-center">
+                                        <div className="h-10 w-10 flex-shrink-0">
+                                            {product.img ? (
+                                                <Image
+                                                    className="h-10 w-10 rounded-full object-cover"
+                                                    src={product.img}
+                                                    alt={product.name}
+                                                    width={40}
+                                                    height={40}
+                                                />
+                                            ) : (
+                                                <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                                    <Package size={16} className="text-gray-500" />
                                                 </div>
+                                            )}
+                                        </div>
+                                        <div className="ml-4">
+                                            <div className="text-sm font-medium text-darkgray font-Barlow">
+                                                {product.name}
                                             </div>
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray font-Barlow">
-                                            {getCategoryName(product.categoryId)}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-darkgray font-Barlow">
-                                            {product.price.toFixed(2)} ₺
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-darkgray font-Barlow">
-                                            {product.stock}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <RatingStars rating={product.rating} />
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button
-                                            onClick={() => onEdit(product)}
-                                            className="text-blue-600 hover:text-blue-900 mr-3"
-                                        >
-                                            <Edit size={18} />
-                                        </button>
-                                        <button
-                                            onClick={() => onDelete(product)}
-                                            className="text-red hover:text-red-900"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td
-                                    colSpan="6"
-                                    className="px-6 py-4 text-center text-gray"
-                                >
-                                    <div className="py-10">
-                                        <p className="text-gray font-Barlow">Ürün bulunamadı</p>
-                                        <button
-                                            onClick={onAddNew}
-                                            className="mt-4 px-4 py-2 bg-red text-lightgray rounded-lg hover:bg-yellow hover:text-red transition-colors inline-flex items-center font-Barlow"
-                                        >
-                                            <Plus size={16} className="mr-2" />
-                                            <span>Yeni Ürün Ekle</span>
-                                        </button>
                                     </div>
                                 </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-gray font-Barlow">
+                                        {getCategoryName(product.categoryId, categories)}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-darkgray font-Barlow">
+                                        {formatPrice(product.price)}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-darkgray font-Barlow">
+                                        {product.stock}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <RatingStars rating={product.rating} />
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button
+                                        onClick={() => onEdit(product)}
+                                        className="text-blue-600 hover:text-blue-900 mr-3"
+                                    >
+                                        <Edit size={18} />
+                                    </button>
+                                    <button
+                                        onClick={() => onDelete(product)}
+                                        className="text-red hover:text-red-900"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </td>
                             </tr>
-                        )}
+                        ))}
                     </tbody>
                 </table>
             </div>
