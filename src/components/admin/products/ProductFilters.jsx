@@ -2,7 +2,7 @@ import {
     SearchBar,
     CategoryFilter,
     SearchFilterContainer,
-} from "@/components/admin/searchAndFilter";
+} from "@/components/admin/search";
 
 export const ProductFilters = ({
     searchTerm,

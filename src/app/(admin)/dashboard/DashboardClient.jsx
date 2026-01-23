@@ -9,7 +9,7 @@ import {
     DashboardChart,
     DashboardCategoriesTable,
     DashboardErrorBanner,
-} from "@/components/dashboard";
+} from "@/components/admin/dashboard";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useAppSelector } from "@/lib/store/hooks";
 import { fetchStates } from "@/lib/store/constants";

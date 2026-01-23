@@ -3,8 +3,8 @@
 import { z } from "zod";
 import { useDispatch, useSelector } from "react-redux";
 import { createCategory, updateCategory } from "@/lib/store/actions/categoryActions";
-import { Modal } from "@/components/admin/modal";
-import ImageUpload from "@/components/admin/imageUpload";
+import { Modal } from "@/components/admin/modals";
+import { ImageUpload } from "@/components/admin/common";
 import {
     Form,
     FormControl,

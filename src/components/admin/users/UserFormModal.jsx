@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Modal } from "@/components/admin/modal";
+import { Modal } from "@/components/admin/modals";
 import {
     Form,
     FormControl,

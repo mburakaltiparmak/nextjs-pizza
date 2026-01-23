@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { selectProductList, selectProductPagination } from "@/lib/store/selectors/productSelectors";
 import { selectAuthLoading as selectGlobalLoading } from "@/lib/store/selectors/userSelectors";
 import { useToast } from "@/lib/hooks/useToast";
-import RatingStars from "../admin/ratingStars";
+import { RatingStars } from "@/components/admin/common";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";

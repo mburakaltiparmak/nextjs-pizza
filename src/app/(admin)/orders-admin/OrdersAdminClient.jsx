@@ -20,8 +20,7 @@ import { useNotificationSound } from "@/lib/hooks/useNotificationSound";
 import { useModal } from "@/lib/hooks/admin/useModal";
 
 // UI Components
-import { SocketStatusIndicator } from "@/components/admin/SocketStatusIndicator";
-import { SoundToggle } from "@/components/admin/SoundToggle";
+import { SocketStatusIndicator, SoundToggle } from "@/components/admin/layout";
 import { formatDateTime } from "@/lib/utils/dateUtils";
 
 const OrdersAdminClient = () => {

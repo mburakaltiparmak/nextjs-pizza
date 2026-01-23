@@ -1,9 +1,8 @@
 "use client";
 
 import { z } from "zod";
-import { Modal } from "@/components/admin/modal";
-import ImageUpload from "@/components/admin/imageUpload";
-import RatingStars from "@/components/admin/ratingStars";
+import { Modal } from "@/components/admin/modals";
+import { ImageUpload, RatingStars } from "@/components/admin/common";
 import {
     Form,
     FormControl,

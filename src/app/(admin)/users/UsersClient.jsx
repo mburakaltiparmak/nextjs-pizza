@@ -31,7 +31,7 @@ import { useDebounce } from "@/lib/hooks/useDebounce";
 import { TIMEOUTS } from "@/lib/utils/adminConstants";
 
 // Components
-import { ConfirmationModal } from "@/components/admin/AdminModals";
+import { ConfirmationModal } from "@/components/admin/modals";
 import { UserFilters } from "@/components/admin/users/UserFilters";
 import { UsersTable } from "@/components/admin/users/UsersTable";
 import { PendingUsersTable } from "@/components/admin/users/PendingUsersTable";

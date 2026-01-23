@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { addToCart } from "@/lib/store/actions/orderActions";
 import { fetchProductById } from "@/lib/store/actions/productActions";
 import { useToast } from "@/lib/hooks/useToast";
-import RatingStars from "@/components/admin/ratingStars";
+import { RatingStars } from "@/components/admin/common";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";

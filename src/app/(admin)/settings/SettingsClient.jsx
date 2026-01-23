@@ -14,7 +14,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ConfirmationModal } from "@/components/admin/AdminModals";
+import { ConfirmationModal } from "@/components/admin/modals";
 
 export default function SettingsClient() {
     const dispatch = useAppDispatch();

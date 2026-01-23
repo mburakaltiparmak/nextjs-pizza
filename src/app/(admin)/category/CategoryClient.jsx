@@ -19,8 +19,8 @@ import { useDebounce } from "@/lib/hooks/useDebounce";
 import { TIMEOUTS } from "@/lib/utils/adminConstants";
 
 // Components
-import { ConfirmationModal } from "@/components/admin/AdminModals";
-import { SearchBar } from "@/components/admin/AdminSearchFilter";
+import { ConfirmationModal } from "@/components/admin/modals";
+import { SearchBar } from "@/components/admin/search";
 import { CategoryTable } from "@/components/admin/category/CategoryTable";
 import { CategoryFormModal } from "@/components/admin/category/CategoryFormModal";
 import { Pagination } from "@/components/ui/Pagination";

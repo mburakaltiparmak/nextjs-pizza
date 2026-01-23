@@ -22,7 +22,7 @@ import { useDebounce } from "@/lib/hooks/useDebounce";
 import { TIMEOUTS } from "@/lib/utils/adminConstants";
 
 // Components
-import { ConfirmationModal } from "@/components/admin/AdminModals";
+import { ConfirmationModal } from "@/components/admin/modals";
 import { ProductFilters } from "@/components/admin/products/ProductFilters";
 import { ProductsTable } from "@/components/admin/products/ProductsTable";
 import { ProductFormModal } from "@/components/admin/products/ProductFormModal";

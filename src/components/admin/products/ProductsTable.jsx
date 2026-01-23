@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Edit, Trash2, Package, Plus } from "lucide-react";
-import RatingStars from "@/components/admin/ratingStars";
+import { RatingStars } from "@/components/admin/common";
 import { TableSkeleton } from "@/components/ui/skeletons/TableSkeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getCategoryName, formatPrice } from "@/lib/utils/formatters";
