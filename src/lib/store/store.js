@@ -8,6 +8,7 @@ import { orderReducer } from "./reducers/orderReducer";
 import { globalReducer } from "./reducers/globalReducer";
 import { guestReducer } from "./reducers/guestReducer";
 import appReducer from "./reducers/appReducer";
+import { promoCodeReducer } from "./reducers/promoCodeReducer";
 import { errorMiddleware } from "./middleware/errorMiddleware";
 
 export const store = configureStore({
@@ -20,18 +21,19 @@ export const store = configureStore({
     guest: guestReducer,
     global: globalReducer,
     app: appReducer,
+    promoCode: promoCodeReducer,
   },
   middleware: (getDefaultMiddleware) => {
     const middleware = getDefaultMiddleware({
       serializableCheck: false,
       immutableCheck: { warnAfter: 200 },
     }).concat(errorMiddleware);
-    if (process.env.NODE_ENV !== "production") {
-      middleware.push(logger);
-    }
+    // Force logger for debugging
+     middleware.push(logger);
+    
     return middleware;
   },
-  devTools: process.env.NODE_ENV !== "production",
+  devTools: true, // Force devTools on
 });
 
 

@@ -7,6 +7,7 @@ import { orderReducer } from "./orderReducer";
 import { globalReducer } from "./globalReducer";
 import { guestReducer } from "./guestReducer";
 import appReducer from "./appReducer";
+import { promoCodeReducer } from "./promoCodeReducer";
 
 const rootReducer = combineReducers({
     user: userReducer,
@@ -17,6 +18,7 @@ const rootReducer = combineReducers({
     guest: guestReducer,
     global: globalReducer,
     app: appReducer,
+    promoCode: promoCodeReducer,
 });
 
 export default rootReducer;

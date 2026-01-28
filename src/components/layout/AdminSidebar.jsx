@@ -16,6 +16,7 @@ import {
     Menu,
     X,
     Settings,
+    Tag,
 } from "lucide-react";
 import { Separator } from "../ui/separator";
 
@@ -176,6 +177,17 @@ export default function AdminSidebar({ activePage = "dashboard", isOpen, onToggl
                 />
             ),
             id: "orders",
+        },
+        {
+            path: "/promo-codes",
+            name: "Promo Kodları",
+            icon: (
+                <Tag
+                    className={`${collapsed ? "mx-auto" : "mr-3"}`}
+                    size={20}
+                />
+            ),
+            id: "promo-codes",
         },
         {
             path: "/users",

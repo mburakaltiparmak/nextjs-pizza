@@ -8,6 +8,7 @@ import { useToast } from "@/lib/hooks/useToast";
 import { selectPaymentMethod, selectCartItems, selectOrderUserData, selectSelectedAddress } from "@/lib/store/selectors/orderSelectors";
 import { selectIsAuthenticated, selectUserRole } from "@/lib/store/selectors/userSelectors";
 import { selectGuestData } from "@/lib/store/selectors/guestSelectors";
+import { PromoCodeInput } from "@/components/cart/PromoCodeInput";
 
 const SecondStep = ({ setCurrentStep, setStep2 }) => {
   const dispatch = useAppDispatch();
@@ -22,6 +23,7 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
   const guestData = useAppSelector(selectGuestData);
   const userData = useAppSelector(selectOrderUserData);
   const selectedAddress = useAppSelector(selectSelectedAddress);
+  const { promoCode, discountAmount } = useAppSelector((state) => state.order);
 
   const [selectedTab, setSelectedTab] = useState("default");
 
@@ -135,15 +137,32 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
           ))}
         </div>
 
+        {/* Promo Code Input */}
+        <div className="border-t pt-3 mb-3">
+            <PromoCodeInput />
+        </div>
+
         {/* Özet bilgiler */}
         <div className="border-t pt-3 mt-3">
           <div className="flex justify-between text-sm mb-1">
             <span>Toplam Ürün:</span>
             <span>{totalItems}</span>
           </div>
-          <div className="flex justify-between text-sm font-semibold">
+          <div className="flex justify-between text-sm mb-1">
+            <span>Ara Toplam:</span>
+            <span>{totalAmount.toFixed(2)} ₺</span>
+          </div>
+          {discountAmount > 0 && (
+            <div className="flex justify-between text-sm mb-1 text-green-600 font-medium">
+              <span>İndirim:</span>
+              <span>-{discountAmount.toFixed(2)} ₺</span>
+            </div>
+          )}
+          <div className="flex justify-between text-sm font-semibold mt-2">
             <span>Toplam Tutar:</span>
-            <span className="text-red">{totalAmount.toFixed(2)} ₺</span>
+            <span className="text-red">
+                {(Math.max(0, totalAmount - (discountAmount || 0))).toFixed(2)} ₺
+            </span>
           </div>
         </div>
 

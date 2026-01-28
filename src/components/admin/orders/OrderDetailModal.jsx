@@ -17,7 +17,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { formatDateTime, formatPrice } from "@/lib/utils/formatters";
+import { formatPrice } from "@/lib/utils/formatters";
+import { formatDateTime } from "@/lib/utils/dateUtils";
 import { ORDER_STATUS, ORDER_STATUS_LABELS } from "@/lib/utils/adminConstants";
 
 export const OrderDetailModal = ({

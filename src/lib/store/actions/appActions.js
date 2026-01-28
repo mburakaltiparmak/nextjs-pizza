@@ -1,5 +1,3 @@
-// src/lib/store/actions/appActions.js
-
 export const appActions = {
     SET_GUEST_MODE: "SET_GUEST_MODE",
     SET_LOADING: "SET_APP_LOADING",

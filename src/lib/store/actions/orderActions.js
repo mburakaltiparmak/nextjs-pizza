@@ -20,7 +20,9 @@ export const orderActions = {
   SET_PAYMENT_METHOD: "SET_PAYMENT_METHOD",
   SET_ORDER_DATA: "SET_ORDER_DATA",
   SET_SELECTED_ADDRESS: "SET_SELECTED_ADDRESS",
-  LOAD_CART_FROM_STORAGE: "LOAD_CART_FROM_STORAGE", // Yeni action type ekle
+  LOAD_CART_FROM_STORAGE: "LOAD_CART_FROM_STORAGE",
+  SET_PROMO_CODE: "SET_PROMO_CODE",
+  REMOVE_PROMO_CODE: "REMOVE_PROMO_CODE",
 };
 
 // localStorage yardımcı fonksiyonları
@@ -95,6 +97,15 @@ export const setPaymentMethod = (method) => ({
 export const setOrderData = (orderData) => ({
   type: orderActions.SET_ORDER_DATA,
   payload: orderData,
+});
+
+export const setPromoCode = (code, discountAmount) => ({
+  type: orderActions.SET_PROMO_CODE,
+  payload: { code, discountAmount },
+});
+
+export const removePromoCode = () => ({
+  type: orderActions.REMOVE_PROMO_CODE,
 });
 
 // Thunk Actions
@@ -250,9 +261,10 @@ export const fetchGuestOrderDetail = (orderId, email) => async (dispatch) => {
 
 export const createOrder =
   ({ orderData, paymentData }) =>
-    async (dispatch) => {
+    async (dispatch, getState) => { // Access getState
       dispatch(setLoading(true));
       try {
+        const { promoCode } = getState().order; // Get promoCode from state
         // Sipariş öğelerini hazırla - Backend sadece productId ve quantity bekliyor
         const processedItems = orderData.items.map((item) => {
           return {
@@ -266,6 +278,7 @@ export const createOrder =
           items: processedItems,
           paymentMethod: orderData.paymentMethod,
           notes: orderData.notes || "",
+          promoCode: promoCode || null, // Add promoCode to payload
         };
 
         // Adres bilgilerini ekle
@@ -440,4 +453,60 @@ export const cancelGuestOrder = (uuid, email) => async (dispatch) => {
 
     return { error: errorMessage };
   }
+};
+
+
+// Verify and Apply Promo Code
+export const verifyPromoCode = (code) => async (dispatch, getState) => {
+  dispatch(setLoading(true));
+  
+  try {
+    const { cart } = getState().order; // Cart from order state
+    const totalAmount = cart.reduce((sum, item) => sum + item.product.price * item.count, 0);
+
+    // Backend expects @RequestParam
+    // GET /promo-codes/validate?code=CODE&amount=100
+    console.log(`Verifying Promo Code: ${code} with amount: ${totalAmount}`);
+    
+    // Using GET request as per implementation plan
+    const response = await instance.get("/promo-codes/validate", {
+        params: {
+            code,
+            amount: totalAmount
+        }
+    });
+
+    console.log("Promo Code Verify Response:", response.data);
+
+    const { valid, discountAmount, code: validCode, message } = response.data;
+
+    if (valid) {
+        dispatch(setPromoCode(validCode, discountAmount));
+        dispatch(setSuccess(`Promo kod uygulandı: ${formatPrice(discountAmount)} indirim`));
+        dispatch(setLoading(false));
+        return { success: true, discountAmount };
+    } else {
+        // Backend might return valid: false even with 200 OK
+        throw new Error(message || "Geçersiz promo kod");
+    }
+
+  } catch (err) {
+    let errorMessage = "Promo kod doğrulanamadı";
+
+    if (err.response) {
+      // Backend might send error message in body
+      errorMessage = err.response.data?.message || errorMessage;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+
+    dispatch(setError(errorMessage));
+    dispatch(setLoading(false));
+    return { error: errorMessage };
+  }
+};
+
+// Helper for formatted price (reused logic)
+const formatPrice = (price) => {
+    return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(price);
 };

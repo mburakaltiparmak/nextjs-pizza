@@ -48,10 +48,16 @@ export const useCartButton = () => {
         return cart.reduce((sum, item) => sum + item.count, 0);
     }, [isClient, cart]);
 
+    const { discountAmount } = useAppSelector((state) => state.order);
+
     const totalAmount = useMemo(() => {
         if (!isClient) return 0;
         return cart.reduce((sum, item) => sum + item.product.price * item.count, 0);
     }, [isClient, cart]);
+
+    const finalAmount = useMemo(() => {
+        return Math.max(0, totalAmount - (discountAmount || 0));
+    }, [totalAmount, discountAmount]);
 
     const hasItems = isClient && cart.length > 0;
 
@@ -84,6 +90,8 @@ export const useCartButton = () => {
         // Computed
         totalItems,
         totalAmount,
+        discountAmount,
+        finalAmount,
         hasItems,
 
         // Handlers

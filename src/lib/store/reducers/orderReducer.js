@@ -11,6 +11,8 @@ const orderInitialState = {
   selectedAddress: null, // Seçilen veya oluşturulan adres bilgisi
   fetchState: fetchStates.NOT_FETCHED,
   error: null,
+  promoCode: null, // Applied promo code object
+  discountAmount: 0, // Calculated discount amount
 };
 
 export const orderReducer = (state = orderInitialState, action) => {
@@ -126,6 +128,20 @@ export const orderReducer = (state = orderInitialState, action) => {
       return {
         ...state,
         orderData: action.payload,
+      };
+    
+    case orderActions.SET_PROMO_CODE:
+      return {
+        ...state,
+        promoCode: action.payload.code,
+        discountAmount: action.payload.discountAmount,
+      };
+
+    case orderActions.REMOVE_PROMO_CODE:
+      return {
+        ...state,
+        promoCode: null,
+        discountAmount: 0,
       };
 
     case orderActions.SET_SELECTED_ADDRESS:

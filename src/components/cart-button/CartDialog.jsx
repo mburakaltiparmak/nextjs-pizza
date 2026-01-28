@@ -13,6 +13,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { CartItemCard } from "./CartItemCard";
+import { PromoCodeInput } from "@/components/cart/PromoCodeInput";
 
 export const CartDialog = ({
   isOpen,
@@ -21,6 +22,8 @@ export const CartDialog = ({
   cart,
   totalItems,
   totalAmount,
+  discountAmount,
+  finalAmount,
   hasItems,
   triggerButtonRef,
   onUpdateQuantity,
@@ -114,11 +117,33 @@ export const CartDialog = ({
           {/* Footer - Total & Checkout */}
           {hasItems && (
             <div className="bg-lightgray p-5 sm:p-6 space-y-4 shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.05)]">
-              <div className="flex justify-between items-end">
-                <span className="font-medium text-gray font-Barlow text-base mb-1">Toplam Tutar</span>
-                <span className="font-bold text-darkgray text-xl sm:text-2xl font-Barlow">
-                  {totalAmount.toFixed(2)} <span className="text-lg text-gray font-normal">₺</span>
-                </span>
+              <div className="space-y-3">
+                {/* Promo Code Input */}
+                <PromoCodeInput />
+
+                {/* Price Breakdown */}
+                <div className="space-y-1 py-2 border-t border-gray-100">
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-500 font-Barlow">Ara Toplam</span>
+                        <span className="font-medium text-gray-700 font-Barlow">
+                            {totalAmount.toFixed(2)} ₺
+                        </span>
+                    </div>
+                    {discountAmount > 0 && (
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-green-600 font-Barlow">İndirim</span>
+                            <span className="font-medium text-green-600 font-Barlow">
+                                -{discountAmount.toFixed(2)} ₺
+                            </span>
+                        </div>
+                    )}
+                    <div className="flex justify-between items-end pt-2">
+                        <span className="font-bold text-darkgray font-Barlow text-base">Toplam</span>
+                        <span className="font-bold text-darkgray text-xl sm:text-2xl font-Barlow">
+                            {(finalAmount !== undefined ? finalAmount : totalAmount).toFixed(2)} <span className="text-lg text-gray font-normal">₺</span>
+                        </span>
+                    </div>
+                </div>
               </div>
 
               <AlertDialogFooter className="flex-col sm:flex-col gap-3 sm:space-x-0">

@@ -12,13 +12,13 @@ const FloatingCartButton = () => {
     triggerButtonRef,
     totalItems,
     totalAmount,
+    discountAmount,
+    finalAmount,
     hasItems,
     handleCheckout,
     handleUpdateQuantity,
     handleRemoveItem,
   } = useCartButton();
-
-
 
   return (
     <CartDialog
@@ -28,6 +28,8 @@ const FloatingCartButton = () => {
       cart={cart}
       totalItems={totalItems}
       totalAmount={totalAmount}
+      discountAmount={discountAmount}
+      finalAmount={finalAmount}
       hasItems={hasItems}
       triggerButtonRef={triggerButtonRef}
       onUpdateQuantity={handleUpdateQuantity}

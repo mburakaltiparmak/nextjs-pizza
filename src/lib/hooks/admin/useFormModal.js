@@ -37,17 +37,23 @@ export const useFormModal = ({
     /**
      * Auto-reset form when modal opens/closes or editingItem changes
      */
+    /**
+     * Auto-reset form when modal opens/closes or editingItem changes
+     * Uses stringified dependencies to avoid infinite loops with unstable objects
+     */
     useEffect(() => {
         if (isOpen) {
+            // Edit mode: populate with existing data
             if (editingItem) {
-                // Edit mode: populate with existing data
                 form.reset(editingItem);
-            } else {
-                // Create mode: reset to defaults
+            } 
+            // Create mode: reset to defaults
+            else {
                 form.reset(defaultValues);
             }
         }
-    }, [isOpen, editingItem, form, defaultValues]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, JSON.stringify(editingItem), JSON.stringify(defaultValues), form]);
 
     /**
      * Handle image upload change

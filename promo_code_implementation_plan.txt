@@ -1,0 +1,80 @@
+# Frontend Implementation Guide: Admin Panel Promo Codes
+
+This guide outlines the tasks required to implement the Promo Code management interface in the Admin Panel.
+
+## Backend Integration Details
+
+### Base URL
+`/api/promo-codes`
+
+### Data Model (PromoCode)
+The backend `PromoCode` entity has the following fields. Ensure the frontend form supports these:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `id` | number | - | Auto-generated ID |
+| `code` | string | Yes | Unique code (e.g., "SUMMER2025"). Uppercase automatically handled by BE, but nice to enforce in UI. |
+| `discountType` | enum | Yes | Values: `PERCENTAGE`, `FIXED_AMOUNT` |
+| `discountValue` | number | Yes | value > 0. If percentage, usually 1-100. |
+| `minOrderAmount` | number | No | Minimum cart total to apply. |
+| `maxDiscountAmount`| number | No | Cap on discount amount (mostly for percentage). |
+| `validFrom` | datetime | No | Start date/time. |
+| `validUntil` | datetime | No | Expiration date/time. |
+| `usageLimit` | number | No | Total global uses allowed. |
+| `perUserLimit` | number | No | Max uses per single user. |
+| `isActive` | boolean | Yes | Default: true. Switch to enable/disable. |
+
+### API Endpoints
+
+1.  **List All Promo Codes**
+    *   **Method**: `GET`
+    *   **URL**: `/api/promo-codes`
+    *   **Response**: Array of `PromoCode` objects.
+    *   **Auth**: Requires Admin Token.
+
+2.  **Create Promo Code**
+    *   **Method**: `POST`
+    *   **URL**: `/api/promo-codes`
+    *   **Body**: JSON object matching Data Model (excluding `id`, `createdAt`, `updatedAt`).
+    *   **Auth**: Requires Admin Token.
+
+3.  **Validate Promo Code**
+    *   **Method**: `GET`
+    *   **URL**: `/api/promo-codes/validate`
+    *   **Params**: `code` (string), `amount` (number)
+    *   **Auth**: Public (or User Token)
+
+## Frontend Requirements (Admin Panel)
+
+### 1. Promo Code List Page
+*   **Path**: `/admin/promo-codes`
+*   **Components**:
+    *   **Data Table**: Display columns: `Code`, `Type`, `Value`, `Status` (Active/Inactive), `Valid Until`, `Usage`.
+    *   **Actions**: "Create New" button.
+
+### 2. Create/Edit Promo Code Modal (or Page)
+*   **Form Fields**:
+    *   **Code**: Text input (Validation: required, no spaces).
+    *   **Discount Type**: Dropdown/Select (`Percentage` vs `Fixed Amount`).
+    *   **Discount Value**: Number input.
+    *   **Active Status**: Toggle switch.
+    *   **Constraints Section** (Collapsible or clearly separated):
+        *   Min Order Amount (Number).
+        *   Max Discount Amount (Number).
+        *   Dates (Date Range Picker or separate From/Until inputs).
+        *   Usage Limits (Global Limit, Per User Limit).
+*   **Validation**:
+    *   `validUntil` cannot be before `validFrom`.
+    *   `discountValue` must be positive.
+    *   If `PERCENTAGE`, warn if value > 100.
+
+### 3. State Management
+*   Fetch list on mount.
+*   Invalidate/Refetch list after successful creation.
+*   Handle API errors (e.g., "Code already exists") and display toast notifications.
+
+## Suggested Tech Stack (Based on existing project)
+*   React / Next.js
+*   Existing Admin Table components (reuse `datatable` or similar).
+*   React Hook Form (if used in project) or controlled inputs.
+*   Axios / Fetch for API calls.
