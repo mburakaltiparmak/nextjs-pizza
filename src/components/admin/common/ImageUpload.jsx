@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { setError, setLoading } from "@/lib/store/actions/globalActions";
 import { useState, useEffect } from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import Image from "next/image";
 
 const ImageUpload = ({ preview, onChange }) => {
   // State for tracking loading and errors
@@ -66,11 +67,13 @@ const ImageUpload = ({ preview, onChange }) => {
           {loading ? (
             <LoadingSpinner size="small" />
           ) : localPreview ? (
-            <div className={`relative `}>
-              <img
+            <div className={`relative h-36 max-md:h-24 w-full`}>
+              <Image
                 src={localPreview}
                 alt="Preview"
-                className="h-36 max-md:h-24 mx-auto object-cover"
+                fill
+                className="mx-auto object-cover rounded-md"
+                unoptimized
               />
               <button
                 type="button"

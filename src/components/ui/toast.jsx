@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
+import Image from "next/image";
 import { Check, X, AlertCircle, Info, ShoppingBag, ArrowRight } from 'lucide-react';
 
 /* 
@@ -94,8 +95,8 @@ const CartToast = ({ toast, onRemove }) => (
     {/* Body */}
     <div className="flex items-start gap-4 p-4">
       {toast.product?.img ? (
-        <div className="w-16 h-16 rounded-lg bg-lightgray overflow-hidden flex-shrink-0 border border-lightgray2">
-          <img src={toast.product.img} alt={toast.product.name} className="w-full h-full object-cover" />
+        <div className="w-16 h-16 rounded-lg bg-lightgray overflow-hidden flex-shrink-0 border border-lightgray2 relative">
+          <Image src={toast.product.img} alt={toast.product.name} fill className="object-cover" sizes="64px" />
         </div>
       ) : (
         <div className="w-16 h-16 rounded-lg bg-lightgray flex items-center justify-center text-gray flex-shrink-0">

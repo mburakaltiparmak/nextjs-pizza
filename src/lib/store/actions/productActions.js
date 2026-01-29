@@ -20,7 +20,7 @@ export const resetProductState = () => ({
   type: productActions.RESET_PRODUCT_STATE,
 });
 
-export const fetchProducts = (page = 0, size = 8) => async (dispatch) => {
+export const fetchProducts = (page = 0, size = 8, params = {}) => async (dispatch) => {
   dispatch(setModuleLoading('product', true)); // ✅ Module loading kullan
   dispatch({
     type: productActions.SET_FETCH_STATE,
@@ -33,7 +33,11 @@ export const fetchProducts = (page = 0, size = 8) => async (dispatch) => {
       params: {
         page,
         size,
-        sort: "id,desc"
+        sort: params.sort || "id,desc",
+        ...(params.search && { name: params.search }),
+        // Backend uyumluluğu için hem camelCase hem snake_case gönderelim
+        ...(params.minPrice && { minPrice: params.minPrice, min_price: params.minPrice }),
+        ...(params.maxPrice && { maxPrice: params.maxPrice, max_price: params.maxPrice }),
       }
     });
 
@@ -85,6 +89,75 @@ export const fetchProducts = (page = 0, size = 8) => async (dispatch) => {
   }
 };
 
+// YENİ: Tüm ürünleri tek seferde (sayfalama ile) çekmek için
+export const fetchGetAllProducts = (size = 100) => async (dispatch) => {
+  dispatch(setModuleLoading('product', true));
+  dispatch({ type: productActions.SET_FETCH_STATE, payload: fetchStates.FETCHING });
+
+  try {
+    let allProducts = [];
+    let currentPage = 0;
+    let totalPages = 1;
+
+    // İlk sayfayı çek
+    const firstPage = await instance.get("/product/paged", {
+      params: { page: 0, size }
+    });
+    
+    if (firstPage?.data) {
+       const content = firstPage.data.content || firstPage.data;
+       allProducts = [...content];
+       
+       if (firstPage.data.page) {
+         totalPages = firstPage.data.page.totalPages;
+       }
+    }
+
+    // Kalan sayfaları çek
+    if (totalPages > 1) {
+       const pagePromises = [];
+       for (let i = 1; i < totalPages; i++) {
+         pagePromises.push(
+           instance.get("/product/paged", { params: { page: i, size } })
+         );
+       }
+       
+       const responses = await Promise.all(pagePromises);
+       responses.forEach(response => {
+         const content = response.data.content || response.data;
+         allProducts = [...allProducts, ...content];
+       });
+    }
+
+    // Tek seferde store'a yükle
+    dispatch({
+      type: productActions.SET_PRODUCTS,
+      payload: allProducts,
+    });
+
+    // Pagination bilgisini "hepsi tek sayfa" gibi güncelle
+    dispatch({
+      type: productActions.SET_PAGINATION,
+      payload: {
+        page: 0,
+        size: allProducts.length,
+        totalPages: 1,
+        totalElements: allProducts.length
+      }
+    });
+
+    dispatch({ type: productActions.SET_FETCH_STATE, payload: fetchStates.FETCHED });
+    dispatch(setModuleLoading('product', false));
+    return allProducts;
+
+  } catch (err) {
+    console.error("Tüm ürünleri getirme hatası:", err);
+    dispatch({ type: productActions.SET_FETCH_STATE, payload: fetchStates.FAILED });
+    dispatch(setModuleLoading('product', false));
+    return handleApiError(err, dispatch, 'fetchGetAllProducts');
+  }
+};
+
 export const fetchProductById = (productId) => async (dispatch, getState) => {
   const state = getState();
 
@@ -122,9 +195,9 @@ export const fetchProductById = (productId) => async (dispatch, getState) => {
 };
 
 // Kategori ID'sine göre ürünleri getir
-export const fetchProductsByCategory = (categoryId, page = 0, size = 8) => async (dispatch) => {
+export const fetchProductsByCategory = (categoryId, page = 0, size = 8, params = {}) => async (dispatch) => {
   if (!categoryId) {
-    return dispatch(fetchProducts(page, size));
+    return dispatch(fetchProducts(page, size, params));
   }
 
   dispatch(setModuleLoading('product', true));
@@ -139,7 +212,11 @@ export const fetchProductsByCategory = (categoryId, page = 0, size = 8) => async
       params: {
         page,
         size,
-        sort: "id,desc"
+        sort: params.sort || "id,desc",
+        ...(params.search && { name: params.search }),
+        // Backend uyumluluğu için hem camelCase hem snake_case gönderelim
+        ...(params.minPrice && { minPrice: params.minPrice, min_price: params.minPrice }),
+        ...(params.maxPrice && { maxPrice: params.maxPrice, max_price: params.maxPrice }),
       }
     });
 

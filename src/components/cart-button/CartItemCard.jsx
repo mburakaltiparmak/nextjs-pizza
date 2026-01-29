@@ -1,6 +1,7 @@
 // src/components/cart-button/CartItemCard.jsx
 "use client";
 import React from "react";
+import Image from "next/image";
 import { Plus, Minus, Trash2 } from "lucide-react";
 
 export const CartItemCard = ({
@@ -12,12 +13,14 @@ export const CartItemCard = ({
     <div className="flex items-center justify-between p-3 mb-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-lg transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
       <div className="flex items-center space-x-4 w-full">
         {/* Product Image */}
-        <div className="w-16 h-16 border-2 border-black rounded-md overflow-hidden bg-lightgray flex-shrink-0">
+        <div className="w-16 h-16 border-2 border-black rounded-md overflow-hidden bg-lightgray flex-shrink-0 relative">
           {item.product.img ? (
-            <img
+            <Image
               src={item.product.img}
               alt={item.product.name}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="64px"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-100">

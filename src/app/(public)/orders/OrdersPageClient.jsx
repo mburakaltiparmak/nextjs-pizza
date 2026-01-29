@@ -27,6 +27,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner"; // Updated import
 
 export default function OrdersPageClient() {
@@ -312,11 +313,15 @@ export default function OrdersPageClient() {
                                                         <li key={index} className="text-sm flex justify-between items-center">
                                                             <div className="flex items-center">
                                                                 {item.product?.img && (
-                                                                    <img
-                                                                        src={item.product.img}
-                                                                        alt={item.product?.name || "Ürün"}
-                                                                        className="w-8 h-8 mr-2 object-cover rounded-full"
-                                                                    />
+                                                                    <div className="relative w-8 h-8 mr-2 flex-shrink-0">
+                                                                        <Image
+                                                                            src={item.product.img}
+                                                                            alt={item.product?.name || "Ürün"}
+                                                                            fill
+                                                                            sizes="32px"
+                                                                            className="object-cover rounded-full"
+                                                                        />
+                                                                    </div>
                                                                 )}
                                                                 <span>
                                                                     {item.quantity}x {item.product?.name || "Ürün"}

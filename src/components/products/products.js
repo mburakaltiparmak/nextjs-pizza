@@ -1,31 +1,21 @@
 "use client";
-import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import { useAppDispatch } from "@/lib/hooks";
 import { addToCart } from "@/lib/store/actions/orderActions";
-import { useMemo } from "react";
-import { selectProductList, selectProductPagination } from "@/lib/store/selectors/productSelectors";
-import { selectAuthLoading as selectGlobalLoading } from "@/lib/store/selectors/userSelectors";
 import { useToast } from "@/lib/hooks/useToast";
 import { RatingStars } from "@/components/admin/common";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { Pagination } from "@/components/ui/Pagination";
 import { ShoppingCart } from "lucide-react";
 import { ProductCardSkeleton } from "@/components/ui/skeletons/ProductCardSkeleton";
+import Image from "next/image";
 
-const Products = ({ categoryFilter = "", onPageChange, products: propProducts, pagination: propPagination }) => {
+// Products component is now strictly presentational (Dumb Component)
+const Products = ({ 
+  products = [], 
+  loading = false 
+}) => {
   const dispatch = useAppDispatch();
-  const { cartNotification } = useToast(); // useToast'dan cartNotification metodunu al
-
-  // Redux state
-
-
-  const reduxProducts = useAppSelector(selectProductList);
-  const reduxPagination = useAppSelector(selectProductPagination);
-  const globalLoading = useAppSelector((state) => state.global.loading); // Optimized global selector later if needed
-
-  const products = propProducts || reduxProducts;
-  const pagination = propPagination || reduxPagination;
+  const { cartNotification } = useToast(); 
 
   const handleAddToCart = (product, e) => {
     e.preventDefault(); // Link tıklamasını önle
@@ -37,10 +27,8 @@ const Products = ({ categoryFilter = "", onPageChange, products: propProducts, p
     });
   };
 
-  // ... (inside Products component)
-
   // Ürünler yüklenene kadar loading göster
-  if (globalLoading || !products) {
+  if (loading || !products) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-md:py-6 w-full">
         {Array.from({ length: 8 }).map((_, i) => (
@@ -78,11 +66,16 @@ const Products = ({ categoryFilter = "", onPageChange, products: propProducts, p
                 {/* Image Container */}
                 <div className="flex items-center justify-center py-8">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.img}
-                    alt={item.name}
-                    className="object-cover group-hover:scale-110 transition-transform duration-500 h-36"
-                  />
+                  <div className="relative w-full h-36">
+                    <Image
+                      src={item.img}
+                      alt={item.name}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover group-hover:scale-110 transition-transform duration-500"
+                      priority={index < 4}
+                    />
+                  </div>
                   {/* Stock Badge */}
                   {item.stock < 10 && item.stock > 0 && (
                     <div className="absolute top-3 right-3 bg-red text-white text-xs font-bold px-3 py-1 rounded-full">
@@ -145,12 +138,6 @@ const Products = ({ categoryFilter = "", onPageChange, products: propProducts, p
           </motion.div>
         ))}
       </div>
-
-      <Pagination
-        currentPage={pagination?.page || 0}
-        totalPages={pagination?.totalPages || 0}
-        onPageChange={(page) => onPageChange(page)}
-      />
     </div>
   );
 };

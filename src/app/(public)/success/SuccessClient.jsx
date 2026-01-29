@@ -7,6 +7,7 @@ import { clearCartAction, saveCartToStorage, setSelectedAddress } from "@/lib/st
 import { clearGuestData } from "@/lib/store/reducers/guestReducer";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner"; // Updated import
 import { Separator } from "@/components/ui/separator";
+import Image from "next/image";
 import { Home } from "lucide-react";
 // import NotFound from "@/app/not-found"; // If needed, or handle differently.
 
@@ -171,11 +172,15 @@ const SuccessClient = () => {
                 >
                     <div className="grid grid-cols-3 items-center w-full">
                         <span className="flex flex-row items-center gap-1">
-                            <img
-                                className="object-cover w-12"
-                                src={item.product?.img || "/assets/images/fe/pizza-icon.png"}
-                                alt={item.product?.name || "Ürün"}
-                            />
+                            <div className="relative w-12 h-12">
+                                <Image
+                                    className="object-cover rounded-full"
+                                    src={item.product?.img || "/assets/images/fe/pizza-icon.png"}
+                                    alt={item.product?.name || "Ürün"}
+                                    fill
+                                    sizes="48px"
+                                />
+                            </div>
                             <p className="font-normal"># {item.quantity} </p>
                         </span>
                         <p className="">{item.product?.name || "Ürün"}</p>

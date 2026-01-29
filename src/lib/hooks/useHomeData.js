@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useCallback } from 'react';
-import { fetchProducts } from '@/lib/store/actions/productActions';
+import { fetchProducts, fetchGetAllProducts } from '@/lib/store/actions/productActions';
 import { fetchCategories } from '@/lib/store/actions/categoryActions';
 import { setLoading, setError } from '@/lib/store/actions/globalActions';
 
@@ -23,7 +23,9 @@ export const useHomeData = () => {
         dispatch(setLoading(true));
         try {
             await Promise.all([
-                dispatch(fetchProducts(0, 8)), // Sayfa boyutu 8 olarak ayarlandı
+                // Fetch ALL products for client-side filtering (91 products total)
+                // Using helper to fetch all pages if backend limits response size
+                dispatch(fetchGetAllProducts(100)),
                 dispatch(fetchCategories(0, 100))
             ]);
         } catch (error) {
