@@ -1,43 +1,35 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { setUserData, setSelectedAddress } from "@/lib/store/actions/orderActions";
-import { ChevronRight, CheckCircle, MapPin, Plus } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useToast } from "@/lib/hooks/useToast";
-import AddressForm from "./AddressForm";
-import AddressList from "./AddressList";
-import GuestInfoForm from "./GuestInfoForm";
-
-
 import { personalInfoSchema } from "@/lib/validations/order";
 import { selectUserProfile, selectIsAuthenticated, selectUserAddresses } from "@/lib/store/selectors/userSelectors";
 import { useGuestMode } from "@/lib/hooks/useGuestMode";
 
-// Schema imported from central validation file
-
+import GuestSection from "./GuestSection";
+import AddressSelectionSection from "./AddressSelectionSection";
 
 const FirstStep = ({ setCurrentStep, setStep1 }) => {
   const dispatch = useAppDispatch();
   const { success, error, warning } = useToast();
 
-  // Get user profile from redux store
-  // Get user profile from redux store
+  // Get user profile from Redux
   const userProfile = useAppSelector(selectUserProfile);
   const isAuthenticated = useAppSelector(selectIsAuthenticated) || false;
   
   // Custom hook for guest mode
   const { isGuest, guestData } = useGuestMode();
-
-  // Mevcut adresleri redux'tan al (AddressList bunları kullanacak)
   const addresses = useAppSelector(selectUserAddresses) || [];
 
   const [newAddress, setNewAddress] = useState(null);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [selectedAddressObj, setSelectedAddressObj] = useState(null);
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+  const [guestInfoSubmitted, setGuestInfoSubmitted] = useState(false);
 
   const {
     register,
@@ -52,46 +44,30 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
     }
   });
 
-  // Prefill form with user data when component mounts
+  // Prefill form
   useEffect(() => {
-    if (userProfile && !isGuest) {
-      // Combine user's name and surname for the fullname field
-      if (userProfile.name && userProfile.surname) {
+    if (userProfile && !isGuest && userProfile.name && userProfile.surname) {
         setValue("fullname", `${userProfile.name} ${userProfile.surname}`);
-      }
-    } else if (isGuest && guestData) {
-      // Prefill with guest data if available
-      if (guestData.name && guestData.surname) {
+    } else if (isGuest && guestData && guestData.name && guestData.surname) {
         setValue("fullname", `${guestData.name} ${guestData.surname}`);
-      }
     }
   }, [userProfile, guestData, isGuest, setValue]);
 
-  const fullname = watch("fullname");
-
-  // İlerleme butonu aktif olması için isim ve adres kontrolü
-  const isStep1Valid = fullname && (selectedAddressId || newAddress);
-
-  // Guests need additional validation for email and phone
-  const isGuestDataValid = !isGuest || (
-    guestData &&
-    guestData.name &&
-    guestData.surname &&
-    guestData.email &&
-    guestData.phoneNumber
-  );
-
-  // Guest info form submit durumunu izlemek için
-  const [guestInfoSubmitted, setGuestInfoSubmitted] = useState(false);
-
-  // Guest bilgileri submit edildiğinde
+  // Guest Submitted Check
   useEffect(() => {
     if (isGuest && guestData.name && guestData.surname && guestData.email && guestData.phoneNumber) {
       setGuestInfoSubmitted(true);
     }
   }, [isGuest, guestData]);
 
-  // Adres seçimi
+  const fullname = watch("fullname");
+  const isStep1Valid = fullname && (selectedAddressId || newAddress);
+
+  const isGuestDataValid = !isGuest || (
+    guestData && guestData.name && guestData.surname && guestData.email && guestData.phoneNumber
+  );
+
+  // Handlers
   const handleAddressSelect = (addressOrId) => {
     let selectedAddress;
     let newAddressId;
@@ -100,7 +76,6 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
       selectedAddress = addressOrId;
       newAddressId = addressOrId.id;
     } else {
-      // Fallback for ID based
       selectedAddress = addresses.find(addr => addr.id === addressOrId);
       newAddressId = addressOrId;
     }
@@ -110,21 +85,17 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
     setShowNewAddressForm(false);
     setNewAddress(null);
 
-    // Seçilen adresi Redux'a kaydet
     if (selectedAddress) {
       dispatch(setSelectedAddress(selectedAddress));
     }
   };
 
-  // Yeni adres formu göster
   const handleAddNewClick = () => {
     setShowNewAddressForm(true);
     setSelectedAddressId(null);
   };
 
-  // Adres formu gönderimi
   const handleAddressSubmit = (addressData) => {
-
     // Adres verisini standart formata dönüştür
     const formattedAddress = {
       id: addressData.id || null,
@@ -138,56 +109,36 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
       isDefault: addressData.isDefault || false
     };
 
-    // Eğer adres backend'e kaydedilmiş ve bir ID aldıysa
     if (formattedAddress.id) {
-      // Listeden seçilen adres olarak işaretle
       setSelectedAddressId(formattedAddress.id);
       setNewAddress(null);
       setShowNewAddressForm(false);
-
-      // Adresi Redux'a kaydet
       dispatch(setSelectedAddress(formattedAddress));
-    }
-    // Eğer yeni bir adres ise (backend'e kaydedilmemiş veya misafir kullanıcı için)
-    else {
-      // Misafir siparişi ise ve guest email varsa adrese ekle
+    } else {
       if (isGuest && guestData && guestData.email) {
         formattedAddress.email = guestData.email;
       }
-
-      // Adresi state'e kaydet
       setNewAddress(formattedAddress);
       setSelectedAddressId(null);
       setShowNewAddressForm(false);
-
-      // Adresi Redux'a da kaydet
       dispatch(setSelectedAddress(formattedAddress));
     }
   };
 
-  const onSubmit = () => {
+  const onStepSubmit = () => {
     try {
-      // Misafir bilgilerini kontrol et
       if (isGuest && !isGuestDataValid) {
-        error("Lütfen tüm kişisel bilgilerinizi eksiksiz doldurun", {
-          title: "Eksik bilgi"
-        });
+        error("Lütfen tüm kişisel bilgilerinizi eksiksiz doldurun", { title: "Eksik bilgi" });
         return;
       }
 
-      // Adres bilgilerini kontrol et
       if (!selectedAddressId && !newAddress) {
-        warning("Lütfen bir adres seçin veya yeni adres ekleyin", {
-          title: "Adres eksik"
-        });
+        warning("Lütfen bir adres seçin veya yeni adres ekleyin", { title: "Adres eksik" });
         return;
       }
 
-      // Seçilen adresi bul
       let addressData = null;
-
       if (selectedAddressId) {
-        // Use local object if available (handles synchronization issues)
         if (selectedAddressObj && selectedAddressObj.id === selectedAddressId) {
           addressData = selectedAddressObj;
         } else {
@@ -197,23 +148,18 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
         addressData = newAddress;
       }
 
-      // FIX: Misafir emailini adrese ekle (Eğer ilk başta eklenmediyse)
       if (isGuest && addressData && guestData?.email) {
         addressData = { ...addressData, email: guestData.email };
       }
 
-
-
-      // Kullanıcı verileri objesi oluştur
       const userData = {
         fullname,
-        addressId: addressData?.id || null, // Misafir kullanıcılar için null olacak
+        addressId: addressData?.id || null,
         userAddress: addressData,
-        newAddress: selectedAddressId ? null : addressData, // Misafir kullanıcılar için yeni adres olarak işaretle
+        newAddress: selectedAddressId ? null : addressData,
         isGuestOrder: isGuest
       };
 
-      // Eğer misafir siparişi ise guest bilgilerini ekle
       if (isGuest) {
         userData.guestName = guestData.name;
         userData.guestSurname = guestData.surname;
@@ -221,23 +167,17 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
         userData.guestPhone = guestData.phoneNumber;
       }
 
-      // Redux'a kullanıcı verilerini kaydet
       dispatch(setUserData(userData));
-
-      // Seçilen adresi ayrıca Redux state'ine kaydet
       if (addressData) {
         dispatch(setSelectedAddress(addressData));
       }
 
-      // Adım 1 tamamlandı, sonraki adıma geç
       setStep1(true);
       setCurrentStep(2);
 
-    } catch (error) {
-      console.error("Adım 1 tamamlanırken hata:", error);
-      error("Bilgiler kaydedilirken bir sorun oluştu", {
-        title: "Hata"
-      });
+    } catch (err) {
+        console.error("Adım 1 hatası:", err);
+        error("Bilgiler kaydedilirken bir sorun oluştu.");
     }
   };
 
@@ -247,50 +187,21 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
         <div className="mb-8">
           <h2 className="text-2xl lg:text-3xl font-bold mb-3 text-darkgray">Kişisel Bilgiler</h2>
           <p className="text-gray text-base leading-relaxed">
-            Siparişinizi güvenli bir şekilde size ulaştırabilmemiz için bazı
-            bilgilere ihtiyacımız var.
+            Siparişinizi güvenli bir şekilde size ulaştırabilmemiz için bazı bilgilere ihtiyacımız var.
           </p>
         </div>
 
         <div className="space-y-8">
-          {/* Misafir modunda ise Misafir bilgileri formunu göster */}
-          {isGuest ? (
-            <>
-              {guestInfoSubmitted ? (
-                <div className="bg-gradient-to-r from-green-50 to-lightgray border-2 border-green-300 rounded-xl p-6">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-green-100 rounded-full p-2 mr-4">
-                      <CheckCircle className="w-6 h-6 text-green-600" />
-                    </div>
-                    <h3 className="text-xl font-bold text-green-800">Bilgileriniz Kaydedildi</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-green-700">
-                    <div>
-                      <span className="font-semibold">İsim Soyisim:</span>
-                      <p className="mt-1">{guestData.name} {guestData.surname}</p>
-                    </div>
-                    <div>
-                      <span className="font-semibold">E-posta:</span>
-                      <p className="mt-1">{guestData.email}</p>
-                    </div>
-                    <div>
-                      <span className="font-semibold">Telefon:</span>
-                      <p className="mt-1">{guestData.phoneNumber}</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setGuestInfoSubmitted(false)}
-                    className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
-                  >
-                    Düzenle
-                  </button>
-                </div>
-              ) : (
-                <GuestInfoForm />
-              )}
-            </>
-          ) : (
+          {/* Guest Section */}
+          <GuestSection 
+            isGuest={isGuest} 
+            guestData={guestData} 
+            isSubmitted={guestInfoSubmitted}
+            onEdit={() => setGuestInfoSubmitted(false)}
+          />
+
+          {/* User Fullname Input (Only if not guest) */}
+          {!isGuest && (
             <div className="space-y-3">
               <label htmlFor="fullname" className="block text-base font-semibold text-darkgray">
                 İsim & Soyisim
@@ -307,87 +218,19 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
             </div>
           )}
 
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-yellow rounded-full p-2">
-                <MapPin className="w-6 h-6 text-red" />
-              </div>
-              <h3 className="text-xl lg:text-2xl font-bold text-darkgray">Teslimat Adresi</h3>
-            </div>
-
-            {/* Adres Listesi veya Form */}
-            {!showNewAddressForm ? (
-              <div>
-                {isAuthenticated && !isGuest ? (
-                  // Kullanıcı girişi yapılmışsa adres listesini göster (misafir değilse)
-                  <AddressList
-                    onSelectAddress={handleAddressSelect}
-                    selectedAddressId={selectedAddressId}
-                    onAddNewAddress={handleAddNewClick}
-                    fullname={fullname}
-                    handleAddressSubmit={handleAddressSubmit}
-                    isAuthenticated={isAuthenticated && !isGuest}
-                  />
-                ) : (
-                  // Misafir için yeni adres ekle butonu göster
-                  <div className="text-center space-y-6">
-                    <div className="bg-gradient-to-r from-lightgray to-lightgray2 rounded-xl p-6">
-                      <p className="text-gray text-base mb-6 leading-relaxed">
-                        {newAddress ?
-                          "✅ Adres bilgileriniz alındı. Düzenlemek için yeni adres ekleyebilirsiniz." :
-                          "📍 Siparişinizin teslim edileceği adresi belirtin."}
-                      </p>
-
-                      {newAddress && (
-                        <div className="mb-6 p-4 bg-white rounded-xl border-2 border-yellow shadow-md">
-                          <div className="text-left space-y-2">
-                            <p className="font-bold text-darkgray text-lg">{newAddress.recipientName || fullname}</p>
-                            <p className="text-gray">{newAddress.fullAddress}</p>
-                            <p className="text-gray">{newAddress.district}, {newAddress.city}</p>
-                            {newAddress.phoneNumber && (
-                              <p className="text-gray">📱 {newAddress.phoneNumber}</p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={handleAddNewClick}
-                        className="inline-flex items-center gap-3 px-6 py-3 bg-yellow text-red font-bold rounded-xl hover:bg-red hover:text-yellow transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
-                      >
-                        <Plus className="w-5 h-5" />
-                        {newAddress ? "Adresi Değiştir" : "Adres Ekle"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="bg-gradient-to-r from-lightgray to-lightgray2 rounded-xl p-6 border border-lightgray2">
-                <h4 className="font-bold text-xl text-darkgray mb-6 flex items-center gap-2">
-                  <Plus className="w-6 h-6 text-red" />
-                  Yeni Adres Ekle
-                </h4>
-                <AddressForm
-                  onSubmit={handleAddressSubmit}
-                  submitText="Adresi Kaydet"
-                  initialData={{
-                    saveAddress: isAuthenticated && !isGuest,
-                    recipientName: fullname || ""
-                  }}
-                  isGuest={isGuest}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewAddressForm(false)}
-                  className="mt-4 w-full py-3 bg-lightgray text-darkgray font-semibold rounded-xl hover:bg-gray hover:text-white transition-colors"
-                >
-                  İptal
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Address Section */}
+          <AddressSelectionSection
+             isAuthenticated={isAuthenticated}
+             isGuest={isGuest}
+             showNewAddressForm={showNewAddressForm}
+             setShowNewAddressForm={setShowNewAddressForm}
+             selectedAddressId={selectedAddressId}
+             newAddress={newAddress}
+             fullname={fullname}
+             onAddressSelect={handleAddressSelect}
+             onAddressSubmit={handleAddressSubmit}
+             onAddNewClick={handleAddNewClick}
+          />
         </div>
       </div>
 
@@ -395,7 +238,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
         <div className="flex justify-end">
           <button
             type="button"
-            onClick={handleSubmit(onSubmit)}
+            onClick={handleSubmit(onStepSubmit)}
             disabled={!isStep1Valid}
             className={`inline-flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${isStep1Valid
               ? "bg-yellow text-red hover:bg-red hover:text-yellow hover:scale-105 hover:shadow-xl border-2 border-transparent hover:border-yellow"

@@ -14,8 +14,6 @@ import {
 import { guestInfoSchema } from "@/lib/validations/order";
 import { selectGuestData } from "@/lib/store/selectors/guestSelectors";
 
-// Schema imported from central validation file
-
 
 const GuestInfoForm = () => {
   const dispatch = useAppDispatch();

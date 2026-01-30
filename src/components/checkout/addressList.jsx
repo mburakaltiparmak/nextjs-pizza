@@ -3,8 +3,9 @@ import React, { useState, useEffect } from "react";
 import { useAppDispatch } from "@/lib/hooks";
 import { instance } from "@/lib/hooks";
 import { useToast } from "@/lib/hooks/useToast";
-import { Check, Trash2, MapPin, Star, SquarePen, Plus, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Loader2, AlertCircle, MapPin, SquarePen } from "lucide-react";
 import AddressForm from "./AddressForm";
+import { AddressCard } from "@/components/common";
 
 const AddressList = ({
   onSelectAddress,
@@ -184,111 +185,17 @@ const AddressList = ({
     <div className="space-y-6">
       <div className="grid gap-4">
         {addresses.map((address) => (
-          <div
+          <AddressCard
             key={address.id}
-            className={`group relative border-2 rounded-2xl p-6 cursor-pointer transition-all duration-300 transform hover:scale-102 hover:shadow-lg ${selectedAddressId === address.id
-              ? "border-red bg-gradient-to-r from-yellow to-lightyellow shadow-lg scale-102"
-              : "border-lightgray2 bg-white hover:border-yellow"
-              }`}
-            onClick={() => onSelectAddress(address)}
-          >
-            {/* Header */}
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg border-2 ${selectedAddressId === address.id
-                  ? "bg-red border-red"
-                  : "bg-yellow border-yellow"
-                  }`}>
-                  <MapPin className={`w-5 h-5 ${selectedAddressId === address.id ? "text-yellow" : "text-red"
-                    }`} />
-                </div>
-
-                <div>
-                  <h4 className={`font-bold text-lg ${selectedAddressId === address.id ? "text-red" : "text-darkgray"
-                    }`}>
-                    {address.addressTitle || `Adres ${address.id}`}
-                  </h4>
-
-                  {address.isDefault && (
-                    <div className="flex items-center gap-1 mt-1">
-                      <Star className="w-4 h-4 text-red fill-current" />
-                      <span className="text-sm font-medium text-red">Varsayılan</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Action Buttons - Kontrast Düzeltildi */}
-              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                {!address.isDefault && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSetDefault(address.id);
-                    }}
-                    disabled={processingId === address.id}
-                    className="p-2 bg-white text-yellow border-2 border-yellow rounded-lg hover:bg-yellow hover:text-red transition-colors shadow-md hover:shadow-lg disabled:opacity-50"
-                    title="Varsayılan Yap"
-                  >
-                    {processingId === address.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Star className="w-4 h-4" />
-                    )}
-                  </button>
-                )}
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    startEditingAddress(address);
-                  }}
-                  className="p-2 bg-white text-darkgray border-2 border-darkgray rounded-lg hover:bg-darkgray hover:text-white transition-colors shadow-md hover:shadow-lg"
-                  title="Düzenle"
-                >
-                  <SquarePen className="w-4 h-4" />
-                </button>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteAddress(address.id);
-                  }}
-                  disabled={processingId === address.id}
-                  className="p-2 bg-white text-red border-2 border-red rounded-lg hover:bg-red hover:text-white transition-colors shadow-md hover:shadow-lg disabled:opacity-50"
-                  title="Sil"
-                >
-                  {processingId === address.id ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Address Details */}
-            <div className={`space-y-2 text-sm ${selectedAddressId === address.id ? "text-red" : "text-gray"
-              }`}>
-              <p className="font-semibold text-base">{address.recipientName}</p>
-              <p className="leading-relaxed">{address.fullAddress}</p>
-              <div className="flex flex-wrap gap-4">
-                <span>📍 {address.district}, {address.city}</span>
-                {address.postalCode && <span>📮 {address.postalCode}</span>}
-                {address.phoneNumber && <span>📱 {address.phoneNumber}</span>}
-              </div>
-            </div>
-
-            {/* Selected Indicator */}
-            {selectedAddressId === address.id && (
-              <div className="absolute bottom-4 right-4">
-                <div className="bg-red text-yellow px-3 py-1 rounded-full text-sm font-bold flex items-center gap-2 shadow-lg border-2 border-red">
-                  <Check className="w-4 h-4" />
-                  Seçili
-                </div>
-              </div>
-            )}
-          </div>
+            address={address}
+            isSelected={selectedAddressId === address.id}
+            onSelect={() => onSelectAddress(address)}
+            onEdit={() => startEditingAddress(address)}
+            onDelete={() => handleDeleteAddress(address.id)}
+            isProcessing={processingId === address.id}
+            onSetDefault={() => handleSetDefault(address.id)}
+            showActions={true}
+          />
         ))}
       </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch } from "@/lib/store/hooks";
 
@@ -18,9 +18,9 @@ import {
     Settings,
     Tag,
 } from "lucide-react";
-import { Separator } from "../ui/separator";
+import { AdminSidebarItem } from "./AdminSidebarItem";
 
-// LogoutHandler bileşeni aynı
+// LogoutHandler bileşeni
 const LogoutButton = ({ collapsed, onLogoutStart }) => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const router = useRouter();
@@ -84,10 +84,6 @@ export default function AdminSidebar({ activePage = "dashboard", isOpen, onToggl
     const [localMobileOpen, setLocalMobileOpen] = useState(false);
 
     const collapsed = isOpen !== undefined ? !isOpen : localCollapsed;
-    const setCollapsed = (val) => {
-        if (onToggle) onToggle();
-        else setLocalCollapsed(val);
-    };
 
     const mobileOpen = isOpen !== undefined ? isOpen : localMobileOpen;
     const setMobileOpen = (val) => {
@@ -127,7 +123,7 @@ export default function AdminSidebar({ activePage = "dashboard", isOpen, onToggl
                 setIsNavigating(false);
             }, 500);
         },
-        [router, isMobile]
+        [router, isMobile, setMobileOpen]
     );
 
     // Çıkış işlemi başladığında çağrılacak
@@ -140,65 +136,43 @@ export default function AdminSidebar({ activePage = "dashboard", isOpen, onToggl
         {
             path: "/dashboard",
             name: "Dashboard",
-            icon: (
-                <LayoutDashboard
-                    className={`${collapsed ? "mx-auto" : "mr-3"}`}
-                    size={20}
-                />
-            ),
+            icon: LayoutDashboard,
             id: "dashboard",
         },
         {
             path: "/category",
             name: "Kategoriler",
-            icon: (
-                <ListOrdered
-                    className={`${collapsed ? "mx-auto" : "mr-3"}`}
-                    size={20}
-                />
-            ),
+            icon: ListOrdered,
             id: "category",
         },
         {
             path: "/product",
             name: "Ürünler",
-            icon: (
-                <Package className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />
-            ),
+            icon: Package,
             id: "product",
         },
         {
             path: "/orders-admin",
             name: "Siparişler",
-            icon: (
-                <ShoppingCart
-                    className={`${collapsed ? "mx-auto" : "mr-3"}`}
-                    size={20}
-                />
-            ),
+            icon: ShoppingCart,
             id: "orders",
         },
         {
             path: "/promo-codes",
             name: "Promo Kodları",
-            icon: (
-                <Tag
-                    className={`${collapsed ? "mx-auto" : "mr-3"}`}
-                    size={20}
-                />
-            ),
+            icon: Tag,
             id: "promo-codes",
         },
         {
             path: "/users",
             name: "Kullanıcılar",
-            icon: <User className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />,
+            icon: User,
             id: "users",
         },
         {
             path: "/settings",
             name: "Ayarlar",
-            icon: <Settings className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />,
+            icon: Settings,
             id: "settings",
         },
     ];
@@ -253,25 +227,28 @@ export default function AdminSidebar({ activePage = "dashboard", isOpen, onToggl
 
                 <div className="py-3 w-full px-2">
                     <ul className="flex flex-col items-start gap-1 font-Barlow w-full">
-                        {menuItems.map((item) => (
-                            <li className="space-y-1 w-full " key={item.id}>
-                                <button
-                                    onClick={() => navigateTo(item.path)}
-                                    disabled={isNavigating}
-                                    className={`flex flex-row gap-1 items-center justify-start rounded-xl p-3  w-full ${activePage === item.id
-                                        ? "bg-yellow text-black"
-                                        : "text-white hover:bg-yellow hover:text-black"
-                                        } border border-red font-medium ${isNavigating ? "opacity-70 cursor-not-allowed" : ""
-                                        }`}
-                                >
-                                    <span>{item.icon}</span>
-                                    {(!collapsed || (isMobile && mobileOpen)) && (
-                                        <span>{item.name}</span>
-                                    )}
-                                </button>
-                                <Separator orientation="horizontal" />
-                            </li>
-                        ))}
+                        {menuItems.map((item) => {
+                             const Icon = item.icon;
+                             
+                             // Prepare the item with the rendered icon for the component
+                             const itemWithIcon = {
+                                 ...item,
+                                 icon: <Icon className={`${collapsed ? "mx-auto" : "mr-3"}`} size={20} />
+                             };
+
+                            return (
+                                <AdminSidebarItem 
+                                    key={item.id}
+                                    item={itemWithIcon}
+                                    collapsed={collapsed}
+                                    isMobile={isMobile}
+                                    mobileOpen={mobileOpen}
+                                    activePage={activePage}
+                                    navigateTo={navigateTo}
+                                    isNavigating={isNavigating}
+                                />
+                            );
+                        })}
 
                         <li className="w-full">
                             <LogoutButton
@@ -293,3 +270,4 @@ export default function AdminSidebar({ activePage = "dashboard", isOpen, onToggl
         </>
     );
 }
+

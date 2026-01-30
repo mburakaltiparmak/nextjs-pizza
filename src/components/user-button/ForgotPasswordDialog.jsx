@@ -1,4 +1,3 @@
-// src/components/user-button/ForgotPasswordDialog.jsx
 "use client";
 import React from "react";
 import { X } from "lucide-react";

@@ -4,7 +4,6 @@ import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { useRouter } from "next/navigation";
 import { instance } from "@/lib/hooks";
 import { clearCartAction, saveCartToStorage, setSelectedAddress } from "@/lib/store/actions/orderActions";
-import { useOrderStatus } from "@/lib/hooks/useOrderStatus";
 import { useGuestMode } from "@/lib/hooks/useGuestMode";
 import { 
     selectOrderDetail, 
@@ -14,19 +13,17 @@ import {
     selectOrderError, 
     selectPaymentMethod 
 } from "@/lib/store/selectors/orderSelectors";
-import { OrderStatusBadge, PaymentMethodBadge, EmptyState } from "@/components/common";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner"; // Updated import
+import { EmptyState } from "@/components/common";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Separator } from "@/components/ui/separator";
-import Image from "next/image";
 import { Home } from "lucide-react";
-// import NotFound from "@/app/not-found"; // If needed, or handle differently.
+import { GuestInfoSection } from "@/components/success/GuestInfoSection";
+import { SuccessOrderSummary } from "@/components/success/SuccessOrderSummary";
 
 const SuccessClient = () => {
     const router = useRouter();
     const dispatch = useAppDispatch();
 
-    // Redux state'ten gerekli verileri al
-    // Redux state'ten gerekli verileri al
     const orderDetail = useAppSelector(selectOrderDetail);
     const userData = useAppSelector(selectOrderUserData);
     const selectedAddress = useAppSelector(selectSelectedAddress);
@@ -35,7 +32,6 @@ const SuccessClient = () => {
     const error = useAppSelector(selectOrderError);
     const paymentMethod = useAppSelector(selectPaymentMethod);
 
-    // Custom Hooks
     const { isGuest, guestData, clearGuest, isGuestMode } = useGuestMode();
     const [latestOrder, setLatestOrder] = useState(null);
     const [addressLoading, setAddressLoading] = useState(false);
@@ -49,15 +45,20 @@ const SuccessClient = () => {
         return null;
     };
 
+    const getCustomerInfo = () => {
+        if (isGuest && guestData) {
+            return `${guestData.name} ${guestData.surname}`;
+        } else if (userData && userData.fullname) {
+            return userData.fullname;
+        }
+        return "Belirtilmemiş";
+    };
+
     useEffect(() => {
-        // Clear guest info after successful order
-        if (isGuestMode) {
         if (isGuestMode) {
             clearGuest();
         }
-        }
 
-        // Sayfa başarıyla render edildi, sepeti temizle
         if (!loading && !error) {
             dispatch(clearCartAction());
             saveCartToStorage([]);
@@ -66,14 +67,11 @@ const SuccessClient = () => {
 
     useEffect(() => {
         const fetchAddressIfNeeded = async () => {
-            // Misafir kullanıcılar için API çağrısı yapma
             if (isGuest) return;
 
-            // Adres ID var ama adres nesnesi yok ise
             if (userData?.addressId && !selectedAddress && !addressLoading) {
                 try {
                     setAddressLoading(true);
-                    // API'den adres bilgisini getir
                     const response = await instance.get(
                         `user/addresses/${userData.addressId}`
                     );
@@ -97,10 +95,6 @@ const SuccessClient = () => {
             setLatestOrder(orderDetail);
         }
     }, [orderDetail]);
-
-    // Helper functions removed, replaced by centralized imports
-
-    // Order status helper removed
 
     const goToHomePage = () => {
         router.push("/");
@@ -140,57 +134,6 @@ const SuccessClient = () => {
         );
     }
 
-    const renderOrderItems = () => {
-        if (latestOrder.items && Array.isArray(latestOrder.items)) {
-            return latestOrder.items.map((item, index) => (
-                <div
-                    key={index}
-                    className="flex flex-col justify-start items-start gap-4 font-semibold text-sm "
-                >
-                    <div className="grid grid-cols-3 items-center w-full">
-                        <span className="flex flex-row items-center gap-1">
-                            <div className="relative w-12 h-12">
-                                <Image
-                                    className="object-cover rounded-full"
-                                    src={item.product?.img || "/assets/images/fe/pizza-icon.png"}
-                                    alt={item.product?.name || "Ürün"}
-                                    fill
-                                    sizes="48px"
-                                />
-                            </div>
-                            <p className="font-normal"># {item.quantity} </p>
-                        </span>
-                        <p className="">{item.product?.name || "Ürün"}</p>
-                        <p>
-                            {item.quantity} x {item.product?.price} TL
-                        </p>
-                    </div>
-                </div>
-            ));
-        } else if (Array.isArray(latestOrder)) {
-            // Fallback for array format
-            return latestOrder.map((item, index) => (
-                <div key={index} className="">
-                    <div className="">
-                        <h4 className="font-semibold text-sm">
-                            {item.product?.name || "Ürün"}
-                        </h4>
-                        <span className="text-sm">
-                            {item.count} x {item.product?.price} TL
-                        </span>
-                    </div>
-                    <div className="text-sm ">
-                        <p>Toplam: {item.count * (item.product?.price || 0)} TL</p>
-                    </div>
-                </div>
-            ));
-        }
-
-        return (
-            <p className="text-center text-yellow">Sipariş öğeleri bulunamadı.</p>
-        );
-    };
-
     const calculateTotal = () => {
         if (latestOrder.totalAmount) {
             return latestOrder.totalAmount;
@@ -206,31 +149,6 @@ const SuccessClient = () => {
             );
         }
         return 0;
-    };
-
-    const getDeliveryAddress = () => {
-        if (selectedAddress) {
-            return `${selectedAddress.fullAddress}, ${selectedAddress.district}/${selectedAddress.city}`;
-        }
-        if (latestOrder && latestOrder.orderAddress) {
-            const address = latestOrder.orderAddress;
-            return `${address.fullAddress}, ${address.district}/${address.city}`;
-        }
-        if (latestOrder && latestOrder.address && typeof latestOrder.address === "object") {
-            const address = latestOrder.address;
-            return `${address.fullAddress}, ${address.district}/${address.city}`;
-        }
-        // ... Simplified logic for conciseness, assuming robust parsing in original or simplified here
-        return "Belirtilmemiş";
-    };
-
-    const getCustomerInfo = () => {
-        if (isGuest && guestData) {
-            return `${guestData.name} ${guestData.surname}`;
-        } else if (userData && userData.fullname) {
-            return userData.fullname;
-        }
-        return "Belirtilmemiş";
     };
 
     return (
@@ -252,51 +170,18 @@ const SuccessClient = () => {
                     )}
                     <Separator orientation="horizontal" className="bg-red" />
 
-                    {isGuest && guestData && (
-                        <div className="flex flex-col gap-2">
-                            <h3 className="font-semibold">Müşteri Bilgileri</h3>
-                            <div className="text-sm">
-                                <p>
-                                    <span className="font-medium">Ad Soyad:</span>{" "}
-                                    {getCustomerInfo()}
-                                </p>
-                                <p>
-                                    <span className="font-medium">E-posta:</span>{" "}
-                                    {guestData.email}
-                                </p>
-                                <p>
-                                    <span className="font-medium">Telefon:</span>{" "}
-                                    {guestData.phoneNumber}
-                                </p>
-                            </div>
-                            <Separator orientation="horizontal" className="bg-red mt-2" />
-                        </div>
-                    )}
+                    <GuestInfoSection 
+                        guestData={guestData} 
+                        isGuest={isGuest} 
+                        userData={userData}
+                        getCustomerInfo={getCustomerInfo} 
+                    />
 
-                    <div className="">{renderOrderItems()}</div>
-                    <Separator orientation="horizontal" className="bg-red" />
-
-                    <div className="flex flex-col gap-2 w-full text-sm">
-                        <h3 className="font-semibold">Sipariş Özeti</h3>
-                        <div className="flex flex-col items-start gap-2">
-                            <div>
-                                <span>Toplam Tutar:</span>
-                                <span className="font-bold"> {calculateTotal()} TL</span>
-                            </div>
-                            <div className="">
-                                <span>Ödeme Yöntemi:</span>
-                                <div><PaymentMethodBadge method={paymentMethod} /></div>
-                            </div>
-                            {/* Address rendering omitted for brevity or use helper */}
-                        </div>
-                    </div>
-                    <Separator orientation="horizontal" className="bg-red" />
-
-                    <div className="py-2">
-                        <div className="">
-                             <OrderStatusBadge status={latestOrder.orderStatus} className="text-sm px-4 py-2" />
-                        </div>
-                    </div>
+                    <SuccessOrderSummary 
+                        latestOrder={latestOrder} 
+                        paymentMethod={paymentMethod} 
+                        calculateTotal={calculateTotal} 
+                    />
 
                     {getCustomerEmail() && (
                         <div className="flex flex-col gap-2 p-3 bg-red text-yellow rounded-lg mt-2 border-t border-yellow/20 pt-4">

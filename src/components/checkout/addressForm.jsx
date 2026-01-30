@@ -6,9 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { User, Phone, MapPin, Building, Mail, Star, Save, Loader2 } from "lucide-react";
 
-// Schema imported from central validation file
-
-
 const AddressForm = ({
   onSubmit,
   isGuest = false,

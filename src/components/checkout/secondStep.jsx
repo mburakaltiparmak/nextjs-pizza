@@ -1,40 +1,32 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { setPaymentMethod, setUserData } from "@/lib/store/actions/orderActions";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronLeft, ChevronRight, CreditCard, Banknote, GiftIcon, UserIcon } from "lucide-react";
+import { setPaymentMethod } from "@/lib/store/actions/orderActions";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/lib/hooks/useToast";
 import { selectPaymentMethod, selectCartItems, selectOrderUserData, selectSelectedAddress } from "@/lib/store/selectors/orderSelectors";
 import { selectIsAuthenticated, selectUserRole } from "@/lib/store/selectors/userSelectors";
 import { selectGuestData } from "@/lib/store/selectors/guestSelectors";
-import { PromoCodeInput } from "@/components/cart/PromoCodeInput";
-import { PriceSummary, AddressSummary } from "@/components/common";
+import { AddressSummary } from "@/components/common";
+
+import PaymentMethodSelector from "./PaymentMethodSelector";
+import CheckoutOrderSummary from "./CheckoutOrderSummary";
 
 const SecondStep = ({ setCurrentStep, setStep2 }) => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
 
-  // Redux'tan gerekli verileri al
   const paymentMethod = useAppSelector(selectPaymentMethod) || "CASH";
   const cart = useAppSelector(selectCartItems);
   const isAuthenticated = useAppSelector(selectIsAuthenticated) || false;
   const role = useAppSelector(selectUserRole);
   const isGuest = role === "GUEST";
   const guestData = useAppSelector(selectGuestData);
-  const userData = useAppSelector(selectOrderUserData);
   const selectedAddress = useAppSelector(selectSelectedAddress);
-  const { promoCode, discountAmount } = useAppSelector((state) => state.order);
+  const { discountAmount } = useAppSelector((state) => state.order);
 
-  const [selectedTab, setSelectedTab] = useState("default");
-
-  // Toplam tutarları hesapla
-  const totalItems = cart.reduce((sum, item) => sum + item.count, 0);
+  // Totals
   const totalAmount = cart.reduce((sum, item) => sum + (item.product.price * item.count), 0);
-
-  useEffect(() => {
-    setSelectedTab("default");
-  }, [isAuthenticated, isGuest]);
 
   const handlePaymentMethodSelect = (method) => {
     dispatch(setPaymentMethod(method));
@@ -42,36 +34,27 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
 
   const handleContinue = () => {
     if (!paymentMethod) {
-      toast.error("Ödeme yöntemi seçilmedi", {
-        title: "Hata"
-      });
+      toast.error("Ödeme yöntemi seçilmedi", { title: "Hata" });
       return;
     }
 
     if (isGuest) {
       if (!guestData.name || !guestData.surname || !guestData.email || !guestData.phoneNumber) {
-        toast.error("Lütfen önceki adımda tüm kişisel bilgilerinizi doldurun.", {
-          title: "Eksik bilgi"
-        });
+        toast.error("Lütfen önceki adımda tüm kişisel bilgilerinizi doldurun.", { title: "Eksik bilgi" });
         setCurrentStep(1);
         return;
       }
     }
 
     if (!selectedAddress) {
-      toast.error("Lütfen önceki adımda bir teslimat adresi belirtin.", {
-        title: "Adres bilgisi eksik"
-      });
+      toast.error("Lütfen önceki adımda bir teslimat adresi belirtin.", { title: "Adres bilgisi eksik" });
       setCurrentStep(1);
       return;
     }
 
     setStep2(true);
     setCurrentStep(3);
-
-    toast.success("Şimdi siparişinizi tamamlayabilirsiniz.", {
-      title: "Ödeme yöntemi seçildi"
-    });
+    toast.success("Şimdi siparişinizi tamamlayabilirsiniz.", { title: "Ödeme yöntemi seçildi" });
   };
 
   const renderUserInfo = () => {
@@ -111,51 +94,6 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
     return null;
   };
 
-  // Sipariş özetini gösterme
-  const renderOrderSummary = () => {
-    if (cart.length === 0) return null;
-
-    return (
-      <div className="mb-6 p-4 border rounded-md bg-gray-50">
-        <h3 className="text-md font-semibold mb-3">Sipariş Özeti</h3>
-
-        {/* Ürün listesi */}
-        <div className="space-y-2 mb-3">
-          {cart.map((item, index) => (
-            <div key={index} className="flex items-center justify-between text-sm">
-              <div className="flex items-center space-x-2">
-                <span className="font-medium">{item.count}x</span>
-                <span>{item.product.name}</span>
-              </div>
-              <span>{(item.product.price * item.count).toFixed(2)} ₺</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Promo Code Input */}
-        <div className="border-t pt-3 mb-3">
-            <PromoCodeInput />
-        </div>
-
-        {/* Özet bilgiler */}
-        <div className="mt-3">
-             <PriceSummary 
-                subtotal={totalAmount}
-                discountAmount={discountAmount}
-                totalAmount={Math.max(0, totalAmount - (discountAmount || 0))}
-            />
-        </div>
-
-        <button
-          onClick={() => setCurrentStep(1)}
-          className="mt-3 text-xs text-red underline"
-        >
-          Sepeti Düzenle
-        </button>
-      </div>
-    );
-  };
-
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden font-Barlow">
       <div className="p-6">
@@ -166,66 +104,23 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
           Sipariş özetinizi kontrol edin ve bir ödeme yöntemi seçin.
         </p>
 
-        {/* Tüm özet bilgiler */}
-        {renderOrderSummary()}
+        {/* Sipariş Özeti */}
+        <CheckoutOrderSummary 
+            cart={cart}
+            totalAmount={totalAmount}
+            discountAmount={discountAmount}
+            onEditCart={() => setCurrentStep(1)} // Or separate edit
+        />
+
         {isGuest && renderUserInfo()}
         {renderAddressInfo()}
 
         {/* Ödeme Seçenekleri */}
-        <div>
-          <h3 className="text-lg font-medium mb-4">Ödeme Yöntemi</h3>
-          <div className="grid gap-3">
-            <button
-              type="button"
-              className={`flex items-center border p-3 rounded-md ${paymentMethod === "ONLINE_CREDIT_CARD"
-                ? "border-yellow bg-darkred text-yellow"
-                : "border-gray-300 hover:border-gray-400"
-                }`}
-              onClick={() => handlePaymentMethodSelect("ONLINE_CREDIT_CARD")}
-            >
-              <CreditCard className="mr-3" size={20} />
-              <span>Online Kredi Kartı</span>
-            </button>
-
-            <button
-              type="button"
-              className={`flex items-center border p-3 rounded-md ${paymentMethod === "CREDIT_CARD"
-                ? "border-yellow bg-darkred text-yellow"
-                : "border-gray-300 hover:border-gray-400"
-                }`}
-              onClick={() => handlePaymentMethodSelect("CREDIT_CARD")}
-            >
-              <CreditCard className="mr-3" size={20} />
-              <span>Kapıda Kredi Kartı</span>
-            </button>
-
-            <button
-              type="button"
-              className={`flex items-center border p-3 rounded-md ${paymentMethod === "CASH"
-                ? "border-yellow bg-darkred text-yellow"
-                : "border-gray-300 hover:border-gray-400"
-                }`}
-              onClick={() => handlePaymentMethodSelect("CASH")}
-            >
-              <Banknote className="mr-3" size={20} />
-              <span>Kapıda Nakit Ödeme</span>
-            </button>
-
-            {!isGuest && (
-              <button
-                type="button"
-                className={`flex items-center border p-3 rounded-md ${paymentMethod === "GIFT_CARD"
-                  ? "border-yellow bg-darkred text-yellow"
-                  : "border-gray-300 hover:border-gray-400"
-                  }`}
-                onClick={() => handlePaymentMethodSelect("GIFT_CARD")}
-              >
-                <GiftIcon className="mr-3" size={20} />
-                <span>Yemek Kartı</span>
-              </button>
-            )}
-          </div>
-        </div>
+        <PaymentMethodSelector 
+            paymentMethod={paymentMethod}
+            isGuest={isGuest}
+            onSelect={handlePaymentMethodSelect}
+        />
       </div>
 
       <div className="px-6 py-4 bg-gray-50 flex justify-between">
