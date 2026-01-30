@@ -31,4 +31,5 @@ class CategoryService extends BaseService {
   }
 }
 
-export default new CategoryService();
+const categoryService = new CategoryService();
+export default categoryService;

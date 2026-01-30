@@ -93,4 +93,5 @@ class AdminService extends BaseService {
   }
 }
 
-export default new AdminService();
+const adminService = new AdminService();
+export default adminService;

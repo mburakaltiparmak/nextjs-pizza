@@ -26,4 +26,5 @@ class PromoCodeService extends BaseService {
   }
 }
 
-export default new PromoCodeService();
+const promoCodeService = new PromoCodeService();
+export default promoCodeService;
