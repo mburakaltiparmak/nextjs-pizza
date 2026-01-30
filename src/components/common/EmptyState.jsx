@@ -11,10 +11,18 @@ export const EmptyState = ({
     onAction, 
     className = "" 
 }) => {
+    // Determine if the icon is a FontAwesome object (has iconName) or a React Component (function/object)
+    const isFontAwesome = icon && typeof icon === 'object' && 'iconName' in icon;
+    const IconComponent = icon;
+
     return (
         <div className={`flex flex-col items-center justify-center py-12 px-4 text-center font-Barlow ${className}`}>
-            <div className="bg-gray-100 rounded-full p-6 mb-4">
-                <FontAwesomeIcon icon={icon} className="text-4xl text-gray-400" />
+            <div className="bg-gray-100 rounded-full p-6 mb-4 flex items-center justify-center">
+                {isFontAwesome ? (
+                    <FontAwesomeIcon icon={icon} className="text-4xl text-gray-400" />
+                ) : (
+                    <IconComponent className="w-10 h-10 text-gray-400" />
+                )}
             </div>
             <h3 className="text-lg font-semibold text-darkgray mb-2">
                 {title}

@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -7,7 +5,7 @@ import { useSocket } from "@/lib/providers/SocketProvider";
 import { OrderTracker } from "@/components/order/OrderTracker";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/lib/hooks/useToast";
-import { instance as axios } from "@/lib/axios/config"; // Fixed import
+import orderService from "@/lib/services/OrderService";
 import { useAppDispatch } from "@/lib/store/hooks";
 import { cancelGuestOrder } from "@/lib/store/actions/orderActions";
 
@@ -24,8 +22,8 @@ export default function TrackOrderPage() {
     useEffect(() => {
         const fetchOrder = async () => {
             try {
-                // Using the new public endpoint
-                const response = await axios.get(`/orders/track/${uuid}`);
+                // Using the service layer
+                const response = await orderService.fetchGuestOrder(uuid);
                 setOrder(response.data);
                 setLoading(false);
             } catch (err) {
@@ -113,14 +111,14 @@ export default function TrackOrderPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <Loader2 className="w-8 h-8 animate-spin text-red" />
-                <span className="ml-2 font-medium text-gray-600">Sipariş aranıyor...</span>
+                <span className="ml-2 font-medium text-gray-600 font-Barlow">Sipariş aranıyor...</span>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+            <div className="min-h-screen flex flex-col font-Barlow items-center justify-center bg-gray-50 p-4">
                 <div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md w-full">
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">Sipariş Bulunamadı</h1>
                     <p className="text-gray-500 mb-6">{error}</p>
@@ -133,7 +131,7 @@ export default function TrackOrderPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-Barlow">
             <div className="max-w-3xl mx-auto space-y-8">
 
                 {/* Header Section */}
@@ -166,12 +164,12 @@ export default function TrackOrderPage() {
                     {/* Order Details Summary */}
                     <div className="mt-10 pt-8 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
-                            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Teslimat Bilgileri</h3>
+                            <h3 className="text-sm font-semibold text-gray-400 tracking-wider mb-3">Teslimat Bilgileri</h3>
                             <p className="font-medium text-gray-900">{order.customerName}</p>
                             <p className="text-gray-500 text-sm mt-1">{order.deliveryAddress?.district}, {order.deliveryAddress?.city}</p>
                         </div>
                         <div>
-                            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Sipariş Özeti</h3>
+                            <h3 className="text-sm font-semibold text-gray-400 tracking-wider mb-3">Sipariş Özeti</h3>
                             <ul className="space-y-2">
                                 {order.items?.map((item, idx) => (
                                     <li key={idx} className="flex justify-between text-sm">

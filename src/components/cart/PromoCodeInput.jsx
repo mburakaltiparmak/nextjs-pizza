@@ -48,7 +48,7 @@ export const PromoCodeInput = ({ className }) => {
                         <p className="text-sm font-medium text-green-900 font-Barlow">
                             {promoCode}
                         </p>
-                        <p className="text-xs text-green-700">
+                        <p className="text-xs text-green-700 font-Barlow">
                             İndirim uygulandı
                         </p>
                     </div>

@@ -32,7 +32,7 @@ export const CartDialog = ({
   onCheckout,
 }) => {
   return (
-    <div className="fixed top-4 right-4 z-[9999]">
+    <div className="fixed top-4 right-4 z-50">
       <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
         {/* Trigger Button */}
         <AlertDialogTrigger asChild>
@@ -43,7 +43,7 @@ export const CartDialog = ({
           >
             <ShoppingCart size={24} />
             {isClient && totalItems > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red border-2 border-white text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold font-Barlow">
+              <span className="absolute -top-1 -right-1 bg-red border-2 border-white text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold font-Barlow shadow-sm">
                 {totalItems}
               </span>
             )}
@@ -51,7 +51,7 @@ export const CartDialog = ({
         </AlertDialogTrigger>
 
         {/* Dialog Content */}
-        <AlertDialogContent className="bg-white border-none shadow-2xl rounded-2xl sm:rounded-3xl p-0 w-[95%] max-w-lg sm:w-full overflow-hidden gap-0">
+        <AlertDialogContent className="bg-white border-none shadow-2xl rounded-2xl sm:rounded-3xl p-0 w-11/12 max-w-lg sm:w-full overflow-hidden gap-0">
 
           {/* Header */}
           <AlertDialogHeader className="bg-white border-b border-lightgray p-5 sm:p-6 flex flex-row items-center justify-between space-y-0">
@@ -71,7 +71,7 @@ export const CartDialog = ({
             </AlertDialogCancel>
           </AlertDialogHeader>
 
-          <div className="p-5 sm:p-6 bg-white min-h-[250px] sm:min-h-[300px] flex flex-col">
+          <div className="p-5 sm:p-6 bg-white min-h-64 sm:min-h-80 flex flex-col">
             {hasItems ? (
               <AlertDialogDescription className="text-gray font-Barlow mb-4 text-sm font-medium">
                 Sepetinizde <span className="text-red font-bold">{totalItems}</span> ürün bulunmaktadır.
@@ -88,7 +88,7 @@ export const CartDialog = ({
 
             {/* Cart Items List */}
             {hasItems && (
-              <div className="flex-grow overflow-y-auto pr-2 -mr-2 max-h-[50vh] sm:max-h-[45vh] scrollbar-thin scrollbar-thumb-gray scrollbar-track-transparent">
+              <div className="flex-grow overflow-y-auto pr-2 -mr-2 max-h-96 scrollbar-thin scrollbar-thumb-gray scrollbar-track-transparent">
                 <div className="space-y-3 pb-2">
                   {cart.map((item, index) => (
                     <CartItemCard
@@ -105,7 +105,7 @@ export const CartDialog = ({
 
           {/* Footer - Total & Checkout */}
           {hasItems && (
-            <div className="bg-lightgray p-5 sm:p-6 space-y-4 shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.05)]">
+            <div className="bg-lightgray p-5 sm:p-6 space-y-4 border-t border-gray-100">
               <div className="space-y-3">
                 {/* Promo Code Input */}
                 <PromoCodeInput />
@@ -121,7 +121,7 @@ export const CartDialog = ({
               <AlertDialogFooter className="flex-col sm:flex-col gap-3 sm:space-x-0">
                 <AlertDialogAction
                   onClick={onCheckout}
-                  className="w-full btn-primary flex items-center justify-center gap-2 py-4 sm:py-6 text-base sm:text-lg"
+                  className="w-full btn-primary flex items-center justify-center gap-2 py-4 sm:py-6 text-base sm:text-lg shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
                   Siparişi Tamamla
                 </AlertDialogAction>

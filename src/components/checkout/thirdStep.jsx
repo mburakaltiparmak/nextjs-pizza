@@ -21,7 +21,7 @@ import { PAYMENT_METHOD } from "@/lib/constants";
 // Diğer ödeme yöntemleri için component - Sadece not alanı
 import PaymentForm from "./PaymentForm";
 
-const ThirdStep = ({ setCurrentStep, setStep3, onSuccess }) => {
+const ThirdStep = ({ onSuccess, onBack }) => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
   const router = useRouter();
@@ -63,7 +63,6 @@ const ThirdStep = ({ setCurrentStep, setStep3, onSuccess }) => {
     // console.log("Form verileri:", formData);
 
     try {
-      setStep3(true);
       // Backup cart before starting the process
       cartStorage.backup();
 
@@ -131,7 +130,6 @@ const ThirdStep = ({ setCurrentStep, setStep3, onSuccess }) => {
         toast.error(result.error || "Sipariş oluşturulamadı.", {
           title: "Hata"
         });
-        setStep3(false);
         return;
       }
 
@@ -159,14 +157,12 @@ const ThirdStep = ({ setCurrentStep, setStep3, onSuccess }) => {
       toast.error(error.message || "Beklenmeyen bir hata oluştu.", {
         title: "İşlem Başarısız"
       });
-      setStep3(false);
       setIsSuccess(false); // Hata durumunda loading'i kapat
     }
   };
 
   const handleBack = () => {
-    setCurrentStep(2);
-    setStep3(false);
+    if (onBack) onBack();
   };
 
   return (

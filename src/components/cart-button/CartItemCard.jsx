@@ -1,4 +1,3 @@
-// src/components/cart-button/CartItemCard.jsx
 "use client";
 import React from "react";
 import Image from "next/image";
@@ -10,10 +9,10 @@ export const CartItemCard = ({
   onRemove,
 }) => {
   return (
-    <div className="flex items-center justify-between p-3 mb-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-lg transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+    <div className="flex items-center justify-between p-3 mb-3 bg-white border-b border-gray shadow-md rounded-lg transition-all hover:shadow-lg">
       <div className="flex items-center space-x-4 w-full">
         {/* Product Image */}
-        <div className="w-16 h-16 border-2 border-black rounded-md overflow-hidden bg-lightgray flex-shrink-0 relative">
+        <div className="w-16 h-16 rounded-md overflow-hidden bg-lightgray flex-shrink-0 relative">
           {item.product.img ? (
             <Image
               src={item.product.img}
@@ -24,7 +23,7 @@ export const CartItemCard = ({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-100">
-              <span className="text-gray-500 text-[10px] font-Barlow text-center p-1 leading-tight">Görsel Yok</span>
+              <span className="text-gray-500 text-xs font-Barlow text-center p-1 leading-tight">Görsel Yok</span>
             </div>
           )}
         </div>
@@ -49,21 +48,21 @@ export const CartItemCard = ({
           {/* Footer Row: Controls & Price */}
           <div className="flex items-center justify-between">
             {/* Quantity Controls */}
-            <div className="flex items-center bg-lightgray rounded border border-black">
+            <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
               <button
                 onClick={() => onUpdateQuantity(item.id, item.count, "decrease")}
-                className="w-7 h-7 flex items-center justify-center text-darkgray hover:bg-red hover:text-white border-r border-black disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-darkgray transition-colors"
+                className="w-6 h-6 flex items-center justify-center bg-white text-darkgray rounded hover:bg-gray-200 disabled:opacity-50 transition-colors shadow-sm"
                 disabled={item.count <= 1}
                 aria-label="Azalt"
               >
                 <Minus size={12} strokeWidth={3} />
               </button>
-              <span className="w-8 text-center text-sm font-bold font-Barlow text-darkgray">
+              <span className="w-6 text-center text-sm font-bold font-Barlow text-darkgray">
                 {item.count}
               </span>
               <button
                 onClick={() => onUpdateQuantity(item.id, item.count, "increase")}
-                className="w-7 h-7 flex items-center justify-center text-darkgray hover:bg-green-600 hover:text-white border-l border-black transition-colors"
+                className="w-6 h-6 flex items-center justify-center bg-white text-darkgray rounded hover:bg-green-100 hover:text-green-600 transition-colors shadow-sm"
                 aria-label="Arttır"
               >
                 <Plus size={12} strokeWidth={3} />

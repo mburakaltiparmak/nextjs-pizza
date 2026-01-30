@@ -198,6 +198,7 @@ export const createOrder = ({ orderData, paymentData }) => async (dispatch, getS
       quantity: item.quantity || item.count,
     }));
 
+    // Construct Base Request Data
     const requestData = {
       items: processedItems,
       paymentMethod: orderData.paymentMethod,
@@ -205,9 +206,16 @@ export const createOrder = ({ orderData, paymentData }) => async (dispatch, getS
       promoCode: promoCode || null,
     };
 
+    // Handle Address & Contact Info
     if (orderData.addressId) {
       requestData.addressId = orderData.addressId;
+      // For existing addresses, allow backend to use stored info, 
+      // but if we have phone/email in orderData (passed from UI), send them.
+      if (orderData.phone) requestData.phone = orderData.phone;
+      if (orderData.email) requestData.email = orderData.email;
+      
     } else if (orderData.newAddress) {
+      // Structure specific to 'New Address' flow
       requestData.newAddress = {
         fullAddress: orderData.newAddress.fullAddress,
         city: orderData.newAddress.city,
@@ -220,8 +228,15 @@ export const createOrder = ({ orderData, paymentData }) => async (dispatch, getS
         isDefault: orderData.newAddress.isDefault === true,
         email: orderData.newAddress.email || null,
       };
+
+      // CRITICAL FIX: Backend expects 'phone' and 'email' at root level for guests/new addresses
+      requestData.phone = orderData.newAddress.phoneNumber;
+      requestData.email = orderData.newAddress.email;
       
-      if (!requestData.newAddress.email) {
+      // Also map 'deliveryAddress' to match what might be expected if newAddress fails (fallback)
+      // But keeping newAddress object for now as it seems intentional for backend DTO.
+      
+      if (!requestData.email) {
         console.warn("⚠️ Warning: Email is missing in newAddress - guest order may fail!");
       }
     }

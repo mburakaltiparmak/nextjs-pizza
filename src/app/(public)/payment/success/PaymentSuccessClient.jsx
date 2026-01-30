@@ -81,9 +81,9 @@ const PaymentSuccessClient = () => {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.5 }}
-                            className="w-full bg-gray-50 border border-gray-200 border-dashed rounded-xl p-4 mb-8 relative group active:scale-[0.99] transition-transform"
+                            className="w-full bg-gray-50 border border-gray-200 border-dashed rounded-xl p-4 mb-8 text-center relative group active:scale-[0.99] transition-transform"
                         >
-                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5 block">Sipariş Takip No</span>
+                            <span className="text-sm font-semibold text-red tracking-widest mb-4 block">Sipariş Takip No</span>
                             <div className="flex items-center justify-between gap-3">
                                 <span className="font-mono text-lg font-bold text-gray-800 break-all pl-2">
                                     {orderUuid}

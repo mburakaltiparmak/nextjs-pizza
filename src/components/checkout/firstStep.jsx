@@ -13,7 +13,7 @@ import { useGuestMode } from "@/lib/hooks/useGuestMode";
 import GuestSection from "./GuestSection";
 import AddressSelectionSection from "./AddressSelectionSection";
 
-const FirstStep = ({ setCurrentStep, setStep1 }) => {
+const FirstStep = ({ onComplete }) => {
   const dispatch = useAppDispatch();
   const { success, error, warning } = useToast();
 
@@ -172,8 +172,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
         dispatch(setSelectedAddress(addressData));
       }
 
-      setStep1(true);
-      setCurrentStep(2);
+      if (onComplete) onComplete();
 
     } catch (err) {
         console.error("Adım 1 hatası:", err);
@@ -182,11 +181,11 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl overflow-hidden font-Barlow border border-lightgray2">
+    <div className="bg-white rounded-2xl shadow-lg overflow-hidden font-Barlow border border-gray-100">
       <div className="p-6 lg:p-8">
-        <div className="mb-8">
+        <div className="mb-8 border-b border-gray-100 pb-4">
           <h2 className="text-2xl lg:text-3xl font-bold mb-3 text-darkgray">Kişisel Bilgiler</h2>
-          <p className="text-gray text-base leading-relaxed">
+          <p className="text-gray-500 text-base leading-relaxed">
             Siparişinizi güvenli bir şekilde size ulaştırabilmemiz için bazı bilgilere ihtiyacımız var.
           </p>
         </div>
@@ -210,7 +209,7 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
                 {...register("fullname")}
                 id="fullname"
                 placeholder="Lütfen isminizi girin"
-                className="w-full px-4 py-3 border-2 border-lightgray2 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow focus:border-yellow transition-all text-base"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow focus:border-yellow transition-all text-base bg-gray-50 focus:bg-white"
               />
               {errors?.fullname?.message && (
                 <p className="text-red text-sm font-medium">{errors.fullname.message}</p>
@@ -234,15 +233,15 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
         </div>
       </div>
 
-      <div className="px-6 lg:px-8 py-6 bg-gradient-to-r from-lightgray to-lightgray2 border-t border-lightgray2">
+      <div className="px-6 lg:px-8 py-6 bg-gray-50 border-t border-gray-100">
         <div className="flex justify-end">
           <button
             type="button"
             onClick={handleSubmit(onStepSubmit)}
             disabled={!isStep1Valid}
-            className={`inline-flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg transform ${isStep1Valid
-              ? "bg-yellow text-red hover:bg-red hover:text-yellow hover:scale-105 hover:shadow-xl border-2 border-transparent hover:border-yellow"
-              : "bg-gray text-lightgray cursor-not-allowed opacity-60"
+            className={`inline-flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-md transform ${isStep1Valid
+              ? "bg-yellow text-darkgray hover:bg-red hover:text-white hover:shadow-lg hover:-translate-y-1"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
           >
             İLERLE

@@ -12,7 +12,7 @@ import { AddressSummary } from "@/components/common";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import CheckoutOrderSummary from "./CheckoutOrderSummary";
 
-const SecondStep = ({ setCurrentStep, setStep2 }) => {
+const SecondStep = ({ onComplete, onBack }) => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
 
@@ -41,19 +41,18 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
     if (isGuest) {
       if (!guestData.name || !guestData.surname || !guestData.email || !guestData.phoneNumber) {
         toast.error("Lütfen önceki adımda tüm kişisel bilgilerinizi doldurun.", { title: "Eksik bilgi" });
-        setCurrentStep(1);
+        if (onBack) onBack();
         return;
       }
     }
 
     if (!selectedAddress) {
       toast.error("Lütfen önceki adımda bir teslimat adresi belirtin.", { title: "Adres bilgisi eksik" });
-      setCurrentStep(1);
+        if (onBack) onBack();
       return;
     }
 
-    setStep2(true);
-    setCurrentStep(3);
+    if (onComplete) onComplete();
     toast.success("Şimdi siparişinizi tamamlayabilirsiniz.", { title: "Ödeme yöntemi seçildi" });
   };
 
@@ -66,7 +65,7 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
           <p className="text-sm"><span className="font-medium">E-posta:</span> {guestData.email}</p>
           <p className="text-sm"><span className="font-medium">Telefon:</span> {guestData.phoneNumber}</p>
           <button
-            onClick={() => setCurrentStep(1)}
+            onClick={onBack}
             className="mt-2 text-xs text-red underline"
           >
             Düzenle
@@ -83,7 +82,7 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
         <div className="mb-6">
             <AddressSummary address={selectedAddress} />
           <button
-            onClick={() => setCurrentStep(1)}
+            onClick={onBack}
             className="mt-2 text-xs text-red underline"
           >
             Değiştir
@@ -109,7 +108,7 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
             cart={cart}
             totalAmount={totalAmount}
             discountAmount={discountAmount}
-            onEditCart={() => setCurrentStep(1)} // Or separate edit
+            onEditCart={onBack} // Send back to step 1 (implied cart editing)
         />
 
         {isGuest && renderUserInfo()}
@@ -126,7 +125,7 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
       <div className="px-6 py-4 bg-gray-50 flex justify-between">
         <button
           type="button"
-          onClick={() => setCurrentStep(1)}
+          onClick={onBack}
           className="flex items-center font-semibold gap-2 px-6 py-2 rounded-md border border-darkgray bg-white text-darkgray shadow-md hover:shadow-lg "
         >
           <ChevronLeft className="w-5 h-5" />

@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
+import { useAppSelector } from "@/lib/store/hooks";
 import { useToast } from "@/lib/hooks/useToast";
+import { useCheckoutStepper } from "@/lib/hooks/useCheckoutStepper";
 import {
     Check,
     User,
@@ -16,109 +17,101 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { motion, AnimatePresence } from "framer-motion";
 
 const CheckoutClient = () => {
-    const { error, warning } = useToast();
+    const { warning } = useToast();
     const router = useRouter();
     const cart = useAppSelector((state) => state.order.cart);
-    const role = useAppSelector((state) => state.user.role);
-    const isLogin = useAppSelector((state) => state.user.isLogin);
-    const isGuestMode = useAppSelector((state) => state.app?.isGuestMode);
-
-    // Hydration ve yönlendirme için gerekli durumlar
+    
+    // Hydration states
     const [isClient, setIsClient] = useState(false);
     const [isRedirecting, setIsRedirecting] = useState(false);
-    const [currentStep, setCurrentStep] = useState(1);
-    const [step1, setStep1] = useState(false);
-    const [step2, setStep2] = useState(false);
-    const [step3, setStep3] = useState(false);
-
     const [isOrderCompleted, setIsOrderCompleted] = useState(false);
 
-    // Client tarafında olduğumuzu belirten useEffect
+    // Initial check for client side
     useEffect(() => {
         setIsClient(true);
     }, []);
 
-    // Yönlendirme fonksiyonları - useCallback ile optimize
+    // Stepper Hook
+    const { 
+        currentStep, 
+        completedSteps, 
+        completeStep, 
+        goToStep 
+    } = useCheckoutStepper([1, 2, 3]); // Config array just for length or IDs if needed
+
+    // Redirect Logic
     const redirectToHome = useCallback(() => {
-        if (!isRedirecting && !isOrderCompleted) { // Sipariş tamamlandıysa yönlendirme yapma
+        if (!isRedirecting && !isOrderCompleted) {
             setIsRedirecting(true);
             warning("Sepetiniz boş", {
                 title: "Yönlendirme",
                 message: "Anasayfaya yönlendiriliyorsunuz."
             });
-
-            setTimeout(() => {
-                router.push("/");
-            }, 1500);
+            setTimeout(() => router.push("/"), 1500);
         }
     }, [isRedirecting, isOrderCompleted, router, warning]);
 
-    // İstemci tarafında kontroller - ayrı useEffect
     useEffect(() => {
-        if (!isClient || isRedirecting || isOrderCompleted) return; // Sipariş tamamlandıysa çık
-
-        // Sepet kontrolü
+        if (!isClient || isRedirecting || isOrderCompleted) return;
         if (!cart || cart.length === 0) {
             redirectToHome();
-            return;
         }
-
     }, [isClient, cart, isRedirecting, isOrderCompleted, redirectToHome]);
 
-    // Define steps
+    // Step Configuration
     const steps = [
         {
             id: 1,
             title: "Kişisel Bilgiler",
             icon: <User className="w-5 h-5" />,
-            completed: step1,
-            disabled: !cart || cart.length <= 0,
-            isClickable: true,
+            isCompleted: completedSteps[1],
+            isDisabled: !cart || cart.length <= 0,
         },
         {
             id: 2,
             title: "Sipariş Özeti",
             icon: <ShoppingCart className="w-5 h-5" />,
-            completed: step2,
-            disabled: !step1,
-            isClickable: step1,
+            isCompleted: completedSteps[2],
+            isDisabled: !completedSteps[1],
         },
         {
             id: 3,
             title: "Ödeme",
             icon: <CreditCard className="w-5 h-5" />,
-            completed: step3,
-            disabled: !step1 || !step2,
-            isClickable: step1 && step2,
+            isCompleted: completedSteps[3],
+            isDisabled: !completedSteps[2],
         },
     ];
 
-    const totalSteps = steps.length;
+    // Handlers
+    const handleStepCompletion = (stepId) => {
+        completeStep(stepId, true); // Mark complete and auto-advance
+    };
 
-    // Handle step click
-    const handleStepClick = (stepId, isClickable) => {
-        if (isClickable && stepId < currentStep) {
-            setCurrentStep(stepId);
+    const handleStepClick = (stepId, isDisabled) => {
+        if (!isDisabled) {
+            goToStep(stepId);
         }
     };
 
-    // Render current step component
-    const displaySteps = () => {
+    // Render Logic
+    const renderCurrentStep = () => {
         switch (currentStep) {
             case 1:
-                return (
-                    <FirstStep setCurrentStep={setCurrentStep} setStep1={setStep1} />
-                );
+                return <FirstStep onComplete={() => handleStepCompletion(1)} />;
             case 2:
                 return (
-                    <SecondStep setCurrentStep={setCurrentStep} setStep2={setStep2} />
+                    <SecondStep 
+                        onComplete={() => handleStepCompletion(2)} 
+                        onBack={() => goToStep(1)}
+                    />
                 );
             case 3:
                 return (
-                    <ThirdStep
-                        setCurrentStep={setCurrentStep}
-                        setStep3={setStep3}
-                        onSuccess={() => setIsOrderCompleted(true)}
+                    <ThirdStep 
+                        setStep3={(isSuccess) => isSuccess && completeStep(3, false)} // Optional: keep update logic if needed
+                        onSuccess={() => setIsOrderCompleted(true)} 
+                        onBack={() => goToStep(2)}
                     />
                 );
             default:
@@ -126,61 +119,50 @@ const CheckoutClient = () => {
         }
     };
 
-    // Loading durumları
-    if (!isClient) {
-        return <LoadingSpinner size="fullPage" />; // Hydration bekleniyor
-    }
-
-    if (isRedirecting) {
-        return <LoadingSpinner size="fullPage" />; // Yönlendirme yapılıyor
-    }
-
-    // Sepet boş veya kullanıcı yetkisiz ama henüz yönlendirme başlamamış, 
-    // ancak sipariş tamamlanmadıysa (normal boş sepet durumu)
-    if ((!cart || cart.length === 0) && !isOrderCompleted) {
-        return <LoadingSpinner size="fullPage" />; // Yönlendirme effect'i çalışacak
+    // Loading State
+    if (!isClient || isRedirecting || ((!cart || cart.length === 0) && !isOrderCompleted)) {
+        return <LoadingSpinner size="fullPage" />;
     }
 
     return (
         <div className="container mx-auto max-w-4xl px-4 py-8">
-            {/* Functional Stepper */}
+            {/* Stepper UI */}
             <div className="mb-12">
                 <div className="relative">
                     {/* Background Line */}
-                    <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full h-1 bg-lightgray2 rounded-full -z-0" />
+                    <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full h-1 bg-gray-200 rounded-full -z-0" />
 
                     {/* Active Progress Line */}
                     <motion.div
-                        className="absolute top-1/2 left-0 -translate-y-1/2 h-1 bg-red rounded-full -z-0"
+                        className="absolute top-6 left-0 -translate-y-1/2 h-1 bg-gradient-to-r from-red to-yellow rounded-full -z-0"
                         initial={{ width: 0 }}
                         animate={{
-                            width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%`,
+                            width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
                         }}
                         transition={{ duration: 0.5, ease: "easeInOut" }}
                     />
 
-                    {/* Steps */}
+                    {/* Steps Items */}
                     <div className="relative z-10 flex justify-between w-full">
                         {steps.map((step) => {
                             const isActive = step.id === currentStep;
-                            const isCompleted = step.completed || step.id < currentStep;
-                            const isClickable = step.isClickable && step.id < currentStep;
+                            const isCompleted = step.isCompleted || step.id < currentStep;
+                            const isClickable = !step.isDisabled;
 
                             return (
                                 <div
                                     key={step.id}
-                                    className="flex flex-col items-center gap-3 cursor-pointer group"
-                                    onClick={() => handleStepClick(step.id, isClickable)}
+                                    className={`flex flex-col items-center gap-3 group ${isClickable ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
+                                    onClick={() => handleStepClick(step.id, step.isDisabled)}
                                 >
                                     <motion.div
-                                        className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-colors duration-300 shadow-sm
+                                        className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 shadow-sm
                                             ${isActive
                                                 ? "bg-yellow border-yellow text-darkgray scale-110 shadow-md ring-4 ring-yellow/20"
                                                 : isCompleted
                                                     ? "bg-red border-red text-white"
-                                                    : "bg-white border-lightgray2 text-gray"
+                                                    : "bg-white border-gray-200 text-gray-400"
                                             }
-                                            ${isClickable ? "hover:scale-105" : ""}
                                         `}
                                         whileTap={isClickable ? { scale: 0.95 } : {}}
                                     >
@@ -196,7 +178,7 @@ const CheckoutClient = () => {
                                                 ? "text-darkgray"
                                                 : isCompleted
                                                     ? "text-red"
-                                                    : "text-gray"
+                                                    : "text-gray-400"
                                             }
                                         `}
                                     >
@@ -209,7 +191,7 @@ const CheckoutClient = () => {
                 </div>
             </div>
 
-            {/* Content with Animation */}
+            {/* Step Content */}
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentStep}
@@ -218,7 +200,7 @@ const CheckoutClient = () => {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.3 }}
                 >
-                    {displaySteps()}
+                    {renderCurrentStep()}
                 </motion.div>
             </AnimatePresence>
         </div>
