@@ -1,19 +1,10 @@
 "use client";
 import React, { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useAppDispatch, useAppSelector } from "@/lib/hooks";
-import { instance } from "@/lib/hooks";
-import { useToast } from "@/lib/hooks/useToast";
+import { Controller } from "react-hook-form";
+import { useAddressForm } from "@/lib/hooks/useAddressForm";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { User, Phone, MapPin, Building, Mail, Star, Save, Loader2 } from "lucide-react";
-
-import { addressSchema } from "@/lib/validations/order";
-import { selectIsAuthenticated, selectUserRole } from "@/lib/store/selectors/userSelectors";
 
 // Schema imported from central validation file
 
@@ -25,116 +16,26 @@ const AddressForm = ({
   submitText = "Adresi Kaydet",
   existingAddressId = null
 }) => {
-  const { success, error } = useToast();
-  const dispatch = useAppDispatch();
-  const isAuthenticated = useAppSelector(selectIsAuthenticated) || false;
-  const role = useAppSelector(selectUserRole);
-  const isGuestUser = role === "GUEST" || isGuest;
-  const [isSaving, setIsSaving] = useState(false);
+  const { 
+    form, 
+    isSaving, 
+    handleFormSubmit, 
+    isGuestUser, 
+    isAuthenticated 
+  } = useAddressForm({
+    initialData,
+    existingAddressId,
+    isGuest,
+    onSubmitSuccess: onSubmit
+  });
 
   const {
     control,
-    handleSubmit,
     formState: { errors, isSubmitting },
     watch
-  } = useForm({
-    resolver: zodResolver(addressSchema),
-    defaultValues: {
-      fullAddress: initialData.fullAddress || "",
-      city: initialData.city || "",
-      district: initialData.district || "",
-      postalCode: initialData.postalCode || "",
-      addressTitle: initialData.addressTitle || "",
-      phoneNumber: initialData.phoneNumber || "",
-      recipientName: initialData.recipientName || "",
-      saveAddress: existingAddressId ? true : (initialData.saveAddress || false),
-      isDefault: initialData.isDefault || false
-    }
-  });
+  } = form;
 
   const saveAddressChecked = watch("saveAddress");
-
-  const onFormSubmit = async (data) => {
-    try {
-      // Misafir kullanıcı kontrolü
-      if (isGuestUser) {
-        onSubmit({
-          ...data,
-          id: null,
-          saveAddress: false
-        });
-
-        success("Adres bilgileri alındı", {
-          title: "Adres Kaydedildi",
-          message: "Siparişiniz için kullanılacak."
-        });
-
-        return;
-      }
-
-      // Kayıtlı kullanıcı için adres kaydetme
-      if (isAuthenticated && data.saveAddress) {
-        setIsSaving(true);
-
-        const isNewAddress = !existingAddressId;
-
-        try {
-          let response;
-          const addressPayload = {
-            fullAddress: data.fullAddress,
-            city: data.city,
-            district: data.district,
-            postalCode: data.postalCode || "",
-            addressTitle: data.addressTitle || `Adres ${new Date().toLocaleDateString()}`,
-            phoneNumber: data.phoneNumber || "",
-            recipientName: data.recipientName,
-            isDefault: data.isDefault || false
-          };
-
-          if (isNewAddress) {
-            response = await instance.post("user/addresses", addressPayload);
-          } else {
-            response = await instance.put(`user/addresses/${existingAddressId}`, addressPayload);
-          }
-
-          setIsSaving(false);
-
-          if (response.data) {
-            onSubmit({
-              ...data,
-              id: isNewAddress ? response.data.id : existingAddressId,
-              saveAddress: false
-            });
-
-            success(isNewAddress ? "Adres başarıyla kaydedildi" : "Adres başarıyla güncellendi", {
-              title: "İşlem Başarılı",
-              message: data.isDefault ? "Varsayılan adresiniz olarak ayarlandı." : ""
-            });
-          }
-        } catch (apiError) {
-          setIsSaving(false);
-          console.error("Adres kaydedilirken hata:", apiError);
-
-          error(apiError.response?.data?.message || "Adres kaydedilemedi", {
-            title: "Hata"
-          });
-
-          onSubmit(data);
-        }
-      } else {
-        onSubmit(data);
-      }
-    } catch (error) {
-      setIsSaving(false);
-      console.error("Adres işleminde hata:", error);
-
-      error("Lütfen daha sonra tekrar deneyin", {
-        title: "Adres kaydedilemedi"
-      });
-
-      onSubmit(data);
-    }
-  };
 
   const inputClasses = "w-full px-4 py-3 border-2 border-lightgray2 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow focus:border-yellow transition-all text-base placeholder-gray";
   const errorInputClasses = "border-red focus:ring-red focus:border-red";
@@ -372,7 +273,7 @@ const AddressForm = ({
       {/* Submit Button */}
       <div className="pt-4">
         <button
-          onClick={handleSubmit(onFormSubmit)}
+          onClick={handleFormSubmit}
           disabled={isSubmitting || isSaving}
           className="w-full py-4 bg-yellow text-red font-bold text-lg rounded-xl hover:bg-red hover:text-yellow transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-3"
         >

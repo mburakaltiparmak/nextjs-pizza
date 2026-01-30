@@ -8,8 +8,18 @@ For existing projects, migrate to the ESLint CLI:
 npx @next/codemod@canary next-lint-to-eslint-cli .
 
 
-./src/app/(public)/success/SuccessClient.jsx
-14:4  Error: Parsing error: Identifier 'selectOrderFetchState' has already been declared. (14:4)
+./src/components/checkout/AddressForm.jsx
+52:14  Error: 'Label' is not defined.  react/jsx-no-undef
+73:14  Error: 'Label' is not defined.  react/jsx-no-undef
+97:14  Error: 'Label' is not defined.  react/jsx-no-undef
+130:12  Error: 'Label' is not defined.  react/jsx-no-undef
+153:14  Error: 'Label' is not defined.  react/jsx-no-undef
+174:14  Error: 'Label' is not defined.  react/jsx-no-undef
+195:14  Error: 'Label' is not defined.  react/jsx-no-undef
+234:20  Error: 'Checkbox' is not defined.  react/jsx-no-undef
+242:16  Error: 'Label' is not defined.  react/jsx-no-undef
+253:22  Error: 'Checkbox' is not defined.  react/jsx-no-undef
+261:18  Error: 'Label' is not defined.  react/jsx-no-undef
 
 ./src/components/home/MenuSection.jsx
 160:51  Warning: The ref value 'observerTarget.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'observerTarget.current' to a variable inside the effect, and use that variable in the cleanup function.  react-hooks/exhaustive-deps

@@ -63,7 +63,7 @@ const SuccessClient = () => {
             dispatch(clearCartAction());
             saveCartToStorage([]);
         }
-    }, [dispatch, loading, error, isGuestMode]);
+    }, [dispatch, loading, error, isGuestMode, clearGuest]);
 
     useEffect(() => {
         const fetchAddressIfNeeded = async () => {
