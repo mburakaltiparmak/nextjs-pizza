@@ -1,5 +1,5 @@
 "use client";
-import FloatingCartButton from "@/components/cart-button/floatingCartButton";
+import FloatingCartButton from "@/components/cart-button/FloatingCartButton";
 import { selectUserRole } from "@/lib/store/selectors/userSelectors";
 import { useAppSelector } from "@/lib/store/hooks";
 

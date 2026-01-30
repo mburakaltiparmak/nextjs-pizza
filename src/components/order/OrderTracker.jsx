@@ -3,33 +3,35 @@
 import { Check, ChefHat, Clock, MapPin, Package, Truck, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { ORDER_STATUS } from "@/lib/constants";
+
 const STEPS = [
     {
-        status: "PENDING",
+        status: ORDER_STATUS.PENDING,
         label: "Sipariş Alındı",
         icon: Clock,
         color: "bg-gray-500",
     },
     {
-        status: "CONFIRMED",
+        status: ORDER_STATUS.CONFIRMED,
         label: "Onaylandı",
         icon: Check,
         color: "bg-blue-500",
     },
     {
-        status: "PREPARING",
+        status: ORDER_STATUS.PREPARING,
         label: "Hazırlanıyor",
         icon: ChefHat,
         color: "bg-yellow-500",
     },
     {
-        status: "SHIPPING",
+        status: ORDER_STATUS.SHIPPING,
         label: "Yolda",
         icon: Truck,
         color: "bg-purple-500",
     },
     {
-        status: "DELIVERED",
+        status: ORDER_STATUS.DELIVERED,
         label: "Teslim Edildi",
         icon: MapPin,
         color: "bg-green-500",

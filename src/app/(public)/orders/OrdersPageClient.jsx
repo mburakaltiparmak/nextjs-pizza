@@ -5,6 +5,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { fetchUserOrders } from "@/lib/store/actions/orderActions";
 import { fetchStates } from "@/lib/store/constants";
+import { 
+    getOrderStatusConfig, 
+    getPaymentMethodDisplay, 
+    PAYMENT_STATUS_CONFIG 
+} from "@/lib/constants";
 import { useToast } from "@/lib/hooks/useToast";
 import useAuth from "@/lib/hooks/useAuth";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -113,61 +118,23 @@ export default function OrdersPageClient() {
         }
     }, [error, toast]);
 
-    // Sipariş durumuna göre ikon ve renk belirleme
+    // Sipariş durumuna göre ikon ve renk belirleme - Merkezi sabitten al
     const getOrderStatusInfo = (status) => {
-        switch (status) {
-            case "PENDING":
-                return { icon: faClock, color: "bg-yellow text-red", text: "İşleme Alındı" };
-            case "CONFIRMED":
-                return { icon: faCheck, color: "bg-green-600 text-white", text: "Onaylandı" };
-            case "PREPARING":
-                return { icon: faShoppingBag, color: "bg-blue-600 text-white", text: "Hazırlanıyor" };
-            case "SHIPPING":
-                return { icon: faTruck, color: "bg-indigo-600 text-white", text: "Yola Çıktı" };
-            case "DELIVERED":
-                return { icon: faCheck, color: "bg-green-700 text-white", text: "Teslim Edildi" };
-            case "CANCELLED":
-                return { icon: faExclamationCircle, color: "bg-red text-white", text: "İptal Edildi" };
-            default:
-                return { icon: faShoppingBag, color: "bg-gray text-white", text: status || "Belirtilmemiş" };
-        }
+        const config = getOrderStatusConfig(status);
+        // Map string icon to FontAwesome if needed, or just use config properties directly
+        // For now, adapting to retain FontAwesome usage or simplify
+        // Let's simplify and use the centralized text/color, but we might need to map icons if we want to keep FontAwesome
+        return {
+           color: config.color,
+           text: config.label,
+           // Fallback icon logic if needed or just use generic
+           icon: faShoppingBag
+        };
     };
 
-    const formatOrderDate = (dateString) => {
-        if (!dateString) return "Tarih belirtilmemiş";
-
-        try {
-            const date = new Date(dateString);
-            return new Intl.DateTimeFormat('tr-TR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            }).format(date);
-        } catch (e) {
-            return dateString.toString();
-        }
-    };
-
-    const formatPaymentMethod = (method) => {
-        switch (method) {
-            case "ONLINE_CREDIT_CARD": return "Online Kredi Kartı";
-            case "CREDIT_CARD": return "Kapıda Kredi Kartı";
-            case "CASH": return "Kapıda Nakit Ödeme";
-            case "GIFT_CARD": return "Hediye Kartı";
-            default: return method || "Belirtilmemiş";
-        }
-    };
-
-    const formatPaymentStatus = (status) => {
-        switch (status) {
-            case "PENDING": return "Bekliyor";
-            case "SUCCESS": return "Başarılı";
-            case "FAILED": return "Başarısız";
-            default: return status || "Belirtilmemiş";
-        }
-    };
+    // Helper yerine direkt importları kullanacağız, ancak JSX içinde kolay kullanım için:
+    // formatPaymentMethod -> getPaymentMethodDisplay
+    // formatPaymentStatus -> PAYMENT_STATUS_CONFIG[status].label
 
     const goToHome = () => {
         router.push("/");
@@ -291,16 +258,14 @@ export default function OrdersPageClient() {
                                                 <div className="flex justify-between mt-1">
                                                     <span className="text-gray-700 font-medium">Ödeme Yöntemi:</span>
                                                     <span className="text-darkgray">
-                                                        {order.payment ? formatPaymentMethod(order.payment.paymentMethod) : "Belirtilmemiş"}
+                                                        {order.payment ? getPaymentMethodDisplay(order.payment.paymentMethod) : "Belirtilmemiş"}
                                                     </span>
                                                 </div>
 
                                                 <div className="flex justify-between mt-1">
                                                     <span className="text-gray-700 font-medium">Ödeme Durumu:</span>
-                                                    <span className={`px-2 py-0.5 rounded-full text-white text-xs ${order.payment?.paymentStatus === "SUCCESS" ? "bg-green-600" :
-                                                        order.payment?.paymentStatus === "FAILED" ? "bg-red" : "bg-yellow text-red"
-                                                        }`}>
-                                                        {order.payment ? formatPaymentStatus(order.payment.paymentStatus) : "Belirtilmemiş"}
+                                                    <span className={`px-2 py-0.5 rounded-full text-white text-xs ${PAYMENT_STATUS_CONFIG[order.payment?.paymentStatus]?.color || "bg-gray-400"}`}>
+                                                        {order.payment ? (PAYMENT_STATUS_CONFIG[order.payment.paymentStatus]?.label || order.payment.paymentStatus) : "Belirtilmemiş"}
                                                     </span>
                                                 </div>
                                             </div>

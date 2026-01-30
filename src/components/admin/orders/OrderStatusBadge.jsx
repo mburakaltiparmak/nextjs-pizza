@@ -1,6 +1,6 @@
 "use client";
 
-import { ORDER_STATUS_CONFIG, PAYMENT_STATUS_CONFIG, PAYMENT_METHOD_DISPLAY } from "@/lib/utils/adminConstants";
+import { ORDER_STATUS_CONFIG, PAYMENT_STATUS_CONFIG, PAYMENT_METHOD_DISPLAY } from "@/lib/constants";
 
 export const OrderStatusBadge = ({ status }) => {
     const config = ORDER_STATUS_CONFIG[status] || {

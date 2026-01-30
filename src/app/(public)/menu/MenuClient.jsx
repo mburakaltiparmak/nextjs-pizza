@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { FilterSidebar } from "@/components/menu/FilterSidebar";
-import Products from "@/components/products/products";
+import Products from "@/components/products/Products";
 import { useProductsManager } from "@/lib/hooks/useProductsManager";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { TableSkeleton } from "@/components/ui/skeletons/TableSkeleton"; // Maybe create a GridSkeleton?

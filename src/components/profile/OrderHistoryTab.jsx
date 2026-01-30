@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { fetchUserOrders } from "@/lib/store/actions/orderActions";
+import { getOrderStatusConfig, getOrderStatusDisplay } from "@/lib/constants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShoppingBag, faEye } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -41,27 +42,7 @@ export const OrderHistoryTab = () => {
         loadOrders();
     }, [dispatch]);
 
-    const getStatusColor = (status) => {
-        const statusColors = {
-            PENDING: "bg-yellow text-red",
-            PREPARING: "bg-blue-500 text-white",
-            READY: "bg-green-500 text-white",
-            DELIVERED: "bg-gray text-white",
-            CANCELLED: "bg-red text-white",
-        };
-        return statusColors[status] || "bg-gray text-white";
-    };
-
-    const getStatusText = (status) => {
-        const statusTexts = {
-            PENDING: "Beklemede",
-            PREPARING: "Hazırlanıyor",
-            READY: "Hazır",
-            DELIVERED: "Teslim Edildi",
-            CANCELLED: "İptal Edildi",
-        };
-        return statusTexts[status] || status;
-    };
+    // Merkezi sabitler direkt JSX içinde kullanılacak
 
     if (loading) {
         return <LoadingSpinner size="fullPage" />;
@@ -122,11 +103,9 @@ export const OrderHistoryTab = () => {
                                 </CardDescription>
                             </div>
                             <span
-                                className={`px-3 py-1 rounded-full text-sm font-bold ${getStatusColor(
-                                    order.status
-                                )}`}
+                                className={`px-3 py-1 rounded-full text-sm font-bold ${getOrderStatusConfig(order.status).color}`}
                             >
-                                {getStatusText(order.status)}
+                                {getOrderStatusDisplay(order.status)}
                             </span>
                         </div>
                     </CardHeader>

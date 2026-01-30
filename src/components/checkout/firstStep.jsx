@@ -7,8 +7,8 @@ import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { setUserData, setSelectedAddress } from "@/lib/store/actions/orderActions";
 import { ChevronRight, CheckCircle, MapPin, Plus } from "lucide-react";
 import { useToast } from "@/lib/hooks/useToast";
-import AddressForm from "./addressForm";
-import AddressList from "./addressList";
+import AddressForm from "./AddressForm";
+import AddressList from "./AddressList";
 import GuestInfoForm from "./guestInfoForm";
 
 import { personalInfoSchema } from "@/lib/validations/order";

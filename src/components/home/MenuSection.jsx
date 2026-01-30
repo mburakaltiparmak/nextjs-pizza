@@ -11,8 +11,8 @@ import { useDebounce } from "@/lib/hooks/useDebounce";
 
 // Components
 import FeaturedProductsSection from "./FeaturedProductsSection";
-import Categories from "@/components/categories/categories";
-import Products from "@/components/products/products";
+import Categories from "@/components/categories/Categories";
+import Products from "@/components/products/Products";
 import ProductFilters from "@/components/products/ProductFilters";
 
 export default function MenuSection() {

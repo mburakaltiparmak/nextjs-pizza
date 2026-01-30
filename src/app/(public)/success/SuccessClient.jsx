@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { useRouter } from "next/navigation";
 import { instance } from "@/lib/hooks";
 import { clearCartAction, saveCartToStorage, setSelectedAddress } from "@/lib/store/actions/orderActions";
+import { getOrderStatusDisplay, getPaymentMethodDisplay } from "@/lib/constants";
 import { clearGuestData } from "@/lib/store/reducers/guestReducer";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner"; // Updated import
 import { Separator } from "@/components/ui/separator";
@@ -92,37 +93,9 @@ const SuccessClient = () => {
         }
     }, [orderDetail]);
 
-    const getPaymentMethodText = (method) => {
-        switch (method) {
-            case "ONLINE_CREDIT_CARD":
-                return "Online Kredi Kartı";
-            case "CREDIT_CARD":
-                return "Kapıda Kredi Kartı";
-            case "CASH":
-                return "Kapıda Nakit Ödeme";
-            case "GIFT_CARD":
-                return "Hediye Kartı";
-            default:
-                return method || "Belirtilmemiş";
-        }
-    };
+    // Helper functions removed, replaced by centralized imports
 
-    const getOrderStatusText = (status) => {
-        switch (status) {
-            case "PENDING":
-                return "İşleme Alındı";
-            case "PROCESSING":
-                return "Hazırlanıyor";
-            case "SHIPPED":
-                return "Yola Çıktı";
-            case "DELIVERED":
-                return "Teslim Edildi";
-            case "CANCELLED":
-                return "İptal Edildi";
-            default:
-                return status || "İşleme Alındı";
-        }
-    };
+    // Order status helper removed
 
     const goToHomePage = () => {
         router.push("/");
@@ -308,7 +281,7 @@ const SuccessClient = () => {
                             </div>
                             <div className="">
                                 <span>Ödeme Yöntemi:</span>
-                                <span> {getPaymentMethodText(paymentMethod)}</span>
+                                <span> {getPaymentMethodDisplay(paymentMethod)}</span>
                             </div>
                             {/* Address rendering omitted for brevity or use helper */}
                         </div>
@@ -318,7 +291,7 @@ const SuccessClient = () => {
                     <div className="py-2">
                         <div className="">
                             <span className="font-semibold bg-red text-yellow px-3 py-1 rounded-full text-sm">
-                                {getOrderStatusText(latestOrder.orderStatus)}
+                                {getOrderStatusDisplay(latestOrder.orderStatus)}
                             </span>
                         </div>
                     </div>

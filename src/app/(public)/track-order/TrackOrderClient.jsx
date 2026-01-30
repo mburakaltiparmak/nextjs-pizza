@@ -150,7 +150,7 @@ export default function TrackOrderClient() {
                         <div className="mt-8 p-6 bg-yellow/10 rounded-xl border border-yellow">
                             <h2 className="text-xl font-bold mb-2 text-darkgray">Uyarı</h2>
                             <p className="text-darkgray">
-                                Bu sipariş eski bir versiyonda oluşturulmuş ve takip ID'si (UUID) bulunmuyor.
+                                Bu sipariş eski bir versiyonda oluşturulmuş ve takip ID&apos;si (UUID) bulunmuyor.
                                 Durum: <b>{order.orderStatus}</b>
                             </p>
                         </div>

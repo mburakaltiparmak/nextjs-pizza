@@ -4,7 +4,7 @@ import { useAppDispatch } from "@/lib/hooks";
 import { instance } from "@/lib/hooks";
 import { useToast } from "@/lib/hooks/useToast";
 import { Check, Trash2, MapPin, Star, SquarePen, Plus, Loader2, AlertCircle } from "lucide-react";
-import AddressForm from "./addressForm";
+import AddressForm from "./AddressForm";
 
 const AddressList = ({
   onSelectAddress,

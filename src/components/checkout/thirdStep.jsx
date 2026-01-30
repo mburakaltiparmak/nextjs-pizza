@@ -16,29 +16,30 @@ import DOMPurify from "dompurify";
 import { selectOrderUserData, selectSelectedAddress, selectCartItems, selectPaymentMethod } from "@/lib/store/selectors/orderSelectors";
 import { selectIsAuthenticated, selectUserRole } from "@/lib/store/selectors/userSelectors";
 import { selectGuestData } from "@/lib/store/selectors/guestSelectors";
+import { PAYMENT_METHOD } from "@/lib/constants";
 
 // Diğer ödeme yöntemleri için component - Sadece not alanı
 const PaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, paymentMethod }) => {
   // Ödeme yöntemine göre başlık ve açıklama
   const getPaymentTitle = () => {
     switch (paymentMethod) {
-      case "CREDIT_CARD": return "Kapıda Kredi Kartı";
-      case "ONLINE_CREDIT_CARD": return "Online Kredi Kartı (Güvenli Ödeme Sayfası)";
-      case "CASH": return "Kapıda Nakit Ödeme";
-      case "GIFT_CARD": return "Hediye Kartı ile Ödeme";
+      case PAYMENT_METHOD.CREDIT_CARD: return "Kapıda Kredi Kartı";
+      case PAYMENT_METHOD.ONLINE_CREDIT_CARD: return "Online Kredi Kartı (Güvenli Ödeme Sayfası)";
+      case PAYMENT_METHOD.CASH: return "Kapıda Nakit Ödeme";
+      case PAYMENT_METHOD.GIFT_CARD: return "Hediye Kartı ile Ödeme";
       default: return "Ödeme Bilgileri";
     }
   };
 
   const getPaymentDescription = () => {
     switch (paymentMethod) {
-      case "CREDIT_CARD":
+      case PAYMENT_METHOD.CREDIT_CARD:
         return "Siparişiniz teslim edilirken kredi kartı ile ödeme yapabilirsiniz.";
-      case "ONLINE_CREDIT_CARD":
+      case PAYMENT_METHOD.ONLINE_CREDIT_CARD:
         return "Siparişinizi tamamlamak için güvenli ödeme sayfasına yönlendirileceksiniz.";
-      case "CASH":
+      case PAYMENT_METHOD.CASH:
         return "Siparişiniz teslim edilirken nakit ödeme yapabilirsiniz.";
-      case "GIFT_CARD":
+      case PAYMENT_METHOD.GIFT_CARD:
         return "Siparişiniz teslim edilirken hediye kartı ile ödeme yapabilirsiniz.";
       default:
         return "Siparişiniz teslim edilirken ödeme yapabilirsiniz.";
