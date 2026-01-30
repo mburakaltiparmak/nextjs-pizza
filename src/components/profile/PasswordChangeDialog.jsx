@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { selectGlobalLoading } from "@/lib/store/selectors/appSelectors";
 import { changePassword } from "@/lib/store/actions/userActions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLock } from "@fortawesome/free-solid-svg-icons";
@@ -19,7 +20,7 @@ import { Label } from "@/components/ui/label";
 
 export const PasswordChangeDialog = ({ open, onOpenChange }) => {
     const dispatch = useDispatch();
-    const loading = useSelector((state) => state.global.loading);
+    const loading = useSelector(selectGlobalLoading);
 
     const [passwordData, setPasswordData] = useState({
         currentPassword: "",

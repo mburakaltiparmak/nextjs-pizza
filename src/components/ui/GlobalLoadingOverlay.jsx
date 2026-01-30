@@ -1,10 +1,11 @@
 "use client";
 
 import { useSelector } from "react-redux";
+import { selectGlobalLoading } from "@/lib/store/selectors/appSelectors";
 import { Loader2 } from "lucide-react";
 
 export const GlobalLoadingOverlay = () => {
-    const loading = useSelector((state) => state.global.loading);
+    const loading = useSelector(selectGlobalLoading);
 
     if (!loading) return null;
 

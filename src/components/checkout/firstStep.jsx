@@ -9,7 +9,7 @@ import { ChevronRight, CheckCircle, MapPin, Plus } from "lucide-react";
 import { useToast } from "@/lib/hooks/useToast";
 import AddressForm from "./AddressForm";
 import AddressList from "./AddressList";
-import GuestInfoForm from "./guestInfoForm";
+import GuestInfoForm from "./GuestInfoForm";
 
 import { personalInfoSchema } from "@/lib/validations/order";
 import { selectUserProfile, selectIsAuthenticated, selectUserRole, selectUserAddresses } from "@/lib/store/selectors/userSelectors";

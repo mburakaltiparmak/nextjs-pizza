@@ -10,6 +10,14 @@ import {
     forgotPassword,
     logout
 } from "@/lib/store/actions/userActions";
+import { 
+    selectIsAuthenticated, 
+    selectUserEmail, 
+    selectUserProfile, 
+    selectUserRole, 
+    selectAuthProvider 
+} from "@/lib/store/selectors/userSelectors";
+import { selectGlobalLoading } from "@/lib/store/selectors/appSelectors";
 
 export const useUserButton = () => {
     const dispatch = useDispatch();
@@ -17,12 +25,13 @@ export const useUserButton = () => {
     const { success, error: showError } = useToast();
 
     // Redux state
-    const isLogin = useSelector((state) => state.user.isLogin);
-    const userEmail = useSelector((state) => state.user.email);
-    const name = useSelector((state) => state.user.profile?.name);
-    const loading = useSelector((state) => state.global.loading);
-    const role = useSelector((state) => state.user.role);
-    const authProvider = useSelector((state) => state.user.authProvider);
+    const isLogin = useSelector(selectIsAuthenticated);
+    const userEmail = useSelector(selectUserEmail);
+    const userProfile = useSelector(selectUserProfile);
+    const name = userProfile?.name;
+    const loading = useSelector(selectGlobalLoading);
+    const role = useSelector(selectUserRole);
+    const authProvider = useSelector(selectAuthProvider);
 
     // Local state
     const [loginOpen, setLoginOpen] = useState(false);

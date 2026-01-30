@@ -5,6 +5,17 @@ import { useRouter } from "next/navigation";
 import { instance } from "@/lib/hooks";
 import { clearCartAction, saveCartToStorage, setSelectedAddress } from "@/lib/store/actions/orderActions";
 import { getOrderStatusDisplay, getPaymentMethodDisplay } from "@/lib/constants";
+import { selectGuestData } from "@/lib/store/selectors/guestSelectors";
+import { 
+    selectOrderDetail, 
+    selectOrderUserData, 
+    selectSelectedAddress, 
+    selectOrderFetchState, 
+    selectOrderError, 
+    selectPaymentMethod 
+} from "@/lib/store/selectors/orderSelectors";
+import { selectUserRole } from "@/lib/store/selectors/userSelectors";
+import { selectIsGuestMode } from "@/lib/store/selectors/appSelectors";
 import { clearGuestData } from "@/lib/store/reducers/guestReducer";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner"; // Updated import
 import { Separator } from "@/components/ui/separator";
@@ -17,22 +28,20 @@ const SuccessClient = () => {
     const dispatch = useAppDispatch();
 
     // Redux state'ten gerekli verileri al
-    const orderDetail = useAppSelector((state) => state.order.orderDetail);
-    const userData = useAppSelector((state) => state.order.userData);
-    const selectedAddress = useAppSelector(
-        (state) => state.order.selectedAddress
-    );
-    const loading = useAppSelector(
-        (state) => state.order.fetchState === "FETCHING"
-    );
-    const error = useAppSelector((state) => state.order.error);
-    const paymentMethod = useAppSelector((state) => state.order.paymentMethod);
+    // Redux state'ten gerekli verileri al
+    const orderDetail = useAppSelector(selectOrderDetail);
+    const userData = useAppSelector(selectOrderUserData);
+    const selectedAddress = useAppSelector(selectSelectedAddress);
+    const fetchState = useAppSelector(selectOrderFetchState);
+    const loading = fetchState === "FETCHING";
+    const error = useAppSelector(selectOrderError);
+    const paymentMethod = useAppSelector(selectPaymentMethod);
 
     // Misafir kullanıcı kontrolü
-    const role = useAppSelector((state) => state.user.role);
-    const isGuestMode = useAppSelector((state) => state.app?.isGuestMode);
+    const role = useAppSelector(selectUserRole);
+    const isGuestMode = useAppSelector(selectIsGuestMode);
     const isGuest = role === "GUEST" || isGuestMode;
-    const guestData = useAppSelector((state) => state.guest);
+    const guestData = useAppSelector(selectGuestData);
     const [latestOrder, setLatestOrder] = useState(null);
     const [addressLoading, setAddressLoading] = useState(false);
 

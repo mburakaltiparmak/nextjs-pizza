@@ -30,6 +30,14 @@ import { supabase, syncSupabaseUser } from "@/lib/supabase";
 import { initializeAuth } from "@/lib/store/actions/initAuth";
 import { initializeCart } from "@/lib/store/actions/orderActions";
 import { startTokenRefreshMonitor, stopTokenRefreshMonitor } from "@/lib/utils/tokenRefresh";
+import { 
+    selectIsAuthenticated, 
+    selectUserProfile, 
+    selectUserRole, 
+    selectUserAddresses, 
+    selectAuthError, 
+    selectAuthToken 
+} from "@/lib/store/selectors/userSelectors";
 
 // Auth context oluşturma
 export const AuthContext = createContext(null);
@@ -50,12 +58,12 @@ export function AuthProvider({ children }) {
   const storeInitializedRef = useRef(false); // ✅ YENİ: Store initialization kontrolü
 
   // Redux state'inden kullanıcı bilgilerini al
-  const isLogin = useSelector((state) => state.user.isLogin);
-  const user = useSelector((state) => state.user.profile);
-  const role = useSelector((state) => state.user.role);
-  const addresses = useSelector((state) => state.user.addresses);
-  const error = useSelector((state) => state.user.error);
-  const token = useSelector((state) => state.user.token);
+  const isLogin = useSelector(selectIsAuthenticated);
+  const user = useSelector(selectUserProfile);
+  const role = useSelector(selectUserRole);
+  const addresses = useSelector(selectUserAddresses);
+  const error = useSelector(selectAuthError);
+  const token = useSelector(selectAuthToken);
 
   useEffect(() => {
     if (!storeInitializedRef.current && typeof window !== "undefined") {

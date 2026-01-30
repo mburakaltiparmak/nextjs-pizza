@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import Loading from "@/app/loading";
 import { usePathname, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
+import { selectIsAuthenticated, selectUserRole } from "@/lib/store/selectors/userSelectors";
 import { userRoles } from "@/lib/store/constants";
 import { useMobileDetection } from "@/lib/hooks/useMobileDetection";
 import { AdminLayoutProvider, useAdminLayout } from "@/lib/contexts/AdminLayoutContext";
@@ -16,7 +17,8 @@ function AdminLayoutContent({ children }) {
     const [isMounted, setIsMounted] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
-    const { isLogin, role } = useSelector((state) => state.user);
+    const isLogin = useSelector(selectIsAuthenticated);
+    const role = useSelector(selectUserRole);
     const isMobile = useMobileDetection(768);
     const { openModal } = useAdminLayout();
 

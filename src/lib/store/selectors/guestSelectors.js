@@ -28,3 +28,8 @@ export const selectGuestPhone = createSelector(
     [selectGuestState],
     (guest) => guest.phoneNumber
 );
+
+export const selectIsGuestDataValid = createSelector(
+    [selectGuestState],
+    (guest) => Boolean(guest.name && guest.surname && guest.email && guest.phoneNumber)
+);

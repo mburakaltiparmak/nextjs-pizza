@@ -9,9 +9,9 @@ import {
     ShoppingCart,
     CreditCard,
 } from "lucide-react";
-import FirstStep from "@/components/checkout/firstStep.jsx";
-import SecondStep from "@/components/checkout/secondStep.jsx";
-import ThirdStep from "@/components/checkout/thirdStep.jsx";
+import FirstStep from "@/components/checkout/FirstStep.jsx";
+import SecondStep from "@/components/checkout/SecondStep.jsx";
+import ThirdStep from "@/components/checkout/ThirdStep.jsx";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { motion, AnimatePresence } from "framer-motion";
 

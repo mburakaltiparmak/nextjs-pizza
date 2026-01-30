@@ -10,6 +10,11 @@ import {
     getPaymentMethodDisplay, 
     PAYMENT_STATUS_CONFIG 
 } from "@/lib/constants";
+import { 
+    selectUserOrders, 
+    selectOrderFetchState, 
+    selectOrderError 
+} from "@/lib/store/selectors/orderSelectors";
 import { useToast } from "@/lib/hooks/useToast";
 import useAuth from "@/lib/hooks/useAuth";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -53,19 +58,9 @@ export default function OrdersPageClient() {
     }, [isAuthenticated, authLoading, router]);
 
     // Redux state'inden verileri al
-    const reduxOrders = useSelector((state) => {
-        // Her durumu kontrol et
-        if (!state || !state.order) {
-            return [];
-        }
-        return state.order.orders;
-    });
-
-    const orderFetchState = useSelector((state) =>
-        state?.order?.fetchState || fetchStates.NOT_FETCHED
-    );
-
-    const error = useSelector((state) => state?.order?.error);
+    const reduxOrders = useSelector(selectUserOrders);
+    const orderFetchState = useSelector(selectOrderFetchState);
+    const error = useSelector(selectOrderError);
 
     // Doğrudan ve güvenli veri erişimi için - Redux verileri veya yerel verileri kullan
     const orders = Array.isArray(reduxOrders) ? reduxOrders : localOrders;

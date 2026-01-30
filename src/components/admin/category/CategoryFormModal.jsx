@@ -2,6 +2,8 @@
 
 import { z } from "zod";
 import { useDispatch, useSelector } from "react-redux";
+import { selectGlobalLoading } from "@/lib/store/selectors/appSelectors";
+import { selectAuthToken } from "@/lib/store/selectors/userSelectors";
 import { createCategory, updateCategory } from "@/lib/store/actions/categoryActions";
 import { Modal } from "@/components/admin/modals";
 import { ImageUpload } from "@/components/admin/common";
@@ -25,8 +27,8 @@ const formSchema = z.object({
 
 export const CategoryFormModal = ({ open, onClose, editingCategory }) => {
     const dispatch = useDispatch();
-    const loading = useSelector((state) => state.global.loading);
-    const token = useSelector((state) => state.user.token);
+    const loading = useSelector(selectGlobalLoading);
+    const token = useSelector(selectAuthToken);
 
     const { form, handleImageChange, handleImageError, handleSubmit, handleClose } = useFormModal({
         schema: formSchema,

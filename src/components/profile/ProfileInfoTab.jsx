@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { selectGlobalLoading } from "@/lib/store/selectors/appSelectors";
 import { updateUserProfile } from "@/lib/store/actions/userActions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -26,7 +27,7 @@ import { Label } from "@/components/ui/label";
 
 export const ProfileInfoTab = ({ userProfile, userEmail, onPasswordChange }) => {
     const dispatch = useDispatch();
-    const loading = useSelector((state) => state.global.loading);
+    const loading = useSelector(selectGlobalLoading);
 
     const [editMode, setEditMode] = useState(false);
     const [formData, setFormData] = useState({

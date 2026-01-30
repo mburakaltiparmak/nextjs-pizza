@@ -35,3 +35,23 @@ export const selectPaymentMethod = createSelector(
     [selectOrderState],
     (order) => order.paymentMethod
 );
+
+export const selectOrderDetail = createSelector(
+    [selectOrderState],
+    (order) => order.orderDetail
+);
+
+export const selectOrderFetchState = createSelector(
+    [selectOrderState],
+    (order) => order.fetchState
+);
+
+export const selectOrderError = createSelector(
+    [selectOrderState],
+    (order) => order.error
+);
+
+export const selectUserOrders = createSelector(
+    [selectOrderState],
+    (order) => order.orders || []
+);
