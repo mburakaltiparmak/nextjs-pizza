@@ -59,7 +59,6 @@ const SuccessClient = () => {
 
         // Sayfa başarıyla render edildi, sepeti temizle
         if (!loading && !error) {
-            console.log("Success sayfası yüklendi, sepet temizleniyor...");
             dispatch(clearCartAction());
             saveCartToStorage([]);
         }

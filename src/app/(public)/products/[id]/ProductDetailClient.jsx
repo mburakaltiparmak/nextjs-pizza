@@ -39,7 +39,6 @@ export default function ProductDetailClient() {
         if (!fetchStartedRef.current) {
             const fetchProduct = async () => {
                 try {
-                    console.log("Ürün getirme isteği gönderiliyor, ID:", params.id);
                     fetchStartedRef.current = true;
 
                     // Action'ı dispatch et ve sonucu bekle

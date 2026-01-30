@@ -113,7 +113,6 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
     // Seçilen adresi Redux'a kaydet
     if (selectedAddress) {
       dispatch(setSelectedAddress(selectedAddress));
-      console.log(`Adres seçildi ve Redux'a kaydedildi: ID ${newAddressId}`, selectedAddress);
     }
   };
 
@@ -125,7 +124,6 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
 
   // Adres formu gönderimi
   const handleAddressSubmit = (addressData) => {
-    console.log("Adres form verisi:", addressData);
 
     // Adres verisini standart formata dönüştür
     const formattedAddress = {
@@ -201,11 +199,10 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
 
       // FIX: Misafir emailini adrese ekle (Eğer ilk başta eklenmediyse)
       if (isGuest && addressData && guestData?.email) {
-        console.log("Adrese misafir emaili ekleniyor:", guestData.email);
         addressData = { ...addressData, email: guestData.email };
       }
 
-      console.log("Seçilen adres:", addressData);
+
 
       // Kullanıcı verileri objesi oluştur
       const userData = {
