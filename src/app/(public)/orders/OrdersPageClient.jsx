@@ -15,6 +15,12 @@ import {
     selectOrderFetchState, 
     selectOrderError 
 } from "@/lib/store/selectors/orderSelectors";
+import { 
+    OrderStatusBadge, 
+    PaymentMethodBadge, 
+    AddressCard, 
+    EmptyState 
+} from "@/components/common";
 import { useToast } from "@/lib/hooks/useToast";
 import useAuth from "@/lib/hooks/useAuth";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -27,7 +33,6 @@ import {
     faHome,
     faArrowLeft,
     faSync,
-    faLocationDot,
 } from "@fortawesome/free-solid-svg-icons";
 import {
     Card,
@@ -44,7 +49,6 @@ export default function OrdersPageClient() {
     const router = useRouter();
     const dispatch = useDispatch();
     const { toast } = useToast();
-    const { getStatusConfig, getStatusColor, getStatusIcon } = useOrderStatus();
 
     // Korumalı yerel state ekle
     const [localOrders, setLocalOrders] = useState([]);
@@ -208,13 +212,7 @@ export default function OrdersPageClient() {
 
                                             <div className="mt-2 md:mt-0 flex items-center space-x-2">
                                                 {order.orderStatus && (
-                                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.orderStatus)}`}>
-                                                        {/* Icon handling might need verify if it returns FA object or string. Config has emojis usually. */}
-                                                        {/* If config has emoji, render it as text. If FA icon, use FA. */}
-                                                        {/* Assuming config has emojis based on previous context. */}
-                                                        <span className="mr-1">{getStatusConfig(order.orderStatus)?.icon}</span>
-                                                        {getStatusConfig(order.orderStatus)?.label}
-                                                    </span>
+                                                    <OrderStatusBadge status={order.orderStatus} />
                                                 )}
                                             </div>
                                         </div>
@@ -222,27 +220,9 @@ export default function OrdersPageClient() {
                                         <div className="p-4">
                                             {/* Teslimat Adresi */}
                                             {order.deliveryAddress && (
-                                                <div className="mb-4 bg-gray-50 p-3 rounded-md">
-                                                    <h4 className="font-semibold flex items-center text-sm text-darkgray mb-2">
-                                                        <FontAwesomeIcon icon={faLocationDot} className="mr-2 text-red" />
-                                                        Teslimat Adresi
-                                                        {order.deliveryAddress.addressTitle && (
-                                                            <span className="ml-2 px-2 py-0.5 bg-yellow text-red text-xs rounded-full">
-                                                                {order.deliveryAddress.addressTitle}
-                                                            </span>
-                                                        )}
-                                                    </h4>
-                                                    <p className="text-sm text-gray-700">
-                                                        {order.deliveryAddress.recipientName}
-                                                    </p>
-                                                    <p className="text-sm text-gray-700">
-                                                        {order.deliveryAddress.fullAddress}, {order.deliveryAddress.district}/{order.deliveryAddress.city}
-                                                    </p>
-                                                    {order.deliveryAddress.phoneNumber && (
-                                                        <p className="text-sm text-gray-700">
-                                                            Tel: {order.deliveryAddress.phoneNumber}
-                                                        </p>
-                                                    )}
+                                                <div className="mb-4">
+                                                    <h4 className="font-semibold text-sm text-darkgray mb-2">Teslimat Adresi</h4>
+                                                    <AddressCard address={order.deliveryAddress} />
                                                 </div>
                                             )}
 
@@ -255,9 +235,11 @@ export default function OrdersPageClient() {
 
                                                 <div className="flex justify-between mt-1">
                                                     <span className="text-gray-700 font-medium">Ödeme Yöntemi:</span>
-                                                    <span className="text-darkgray">
-                                                        {order.payment ? getPaymentMethodDisplay(order.payment.paymentMethod) : "Belirtilmemiş"}
-                                                    </span>
+                                                    <div className="text-darkgray">
+                                                        {order.payment ? (
+                                                            <PaymentMethodBadge method={order.payment.paymentMethod} />
+                                                        ) : "Belirtilmemiş"}
+                                                    </div>
                                                 </div>
 
                                                 <div className="flex justify-between mt-1">
@@ -310,26 +292,13 @@ export default function OrdersPageClient() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-8 text-gray font-Barlow">
-                                <FontAwesomeIcon icon={faShoppingBag} className="text-4xl mb-4 text-gray-400" />
-                                <p>Henüz bir sipariş vermemişsiniz veya siparişleriniz yüklenemedi.</p>
-                                <div className="flex justify-center gap-4 mt-4">
-                                    <Button
-                                        onClick={handleRefreshOrders}
-                                        className="bg-gray-500 text-white hover:bg-gray-600"
-                                    >
-                                        <FontAwesomeIcon icon={faSync} className="mr-2" />
-                                        Yenile
-                                    </Button>
-
-                                    <Button
-                                        onClick={goToHome}
-                                        className="bg-red text-lightgray hover:bg-yellow hover:text-red font-Barlow"
-                                    >
-                                        Alışverişe Başla
-                                    </Button>
-                                </div>
-                            </div>
+                             <EmptyState
+                                icon={faShoppingBag}
+                                title="Henüz siparişiniz yok"
+                                description="Henüz bir sipariş vermemişsiniz veya siparişleriniz yüklenemedi."
+                                actionLabel="Alışverişe Başla"
+                                onAction={goToHome}
+                            />
                         )}
                     </CardContent>
                 </Card>

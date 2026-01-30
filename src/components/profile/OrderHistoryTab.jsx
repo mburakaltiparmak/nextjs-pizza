@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { fetchUserOrders } from "@/lib/store/actions/orderActions";
-import { getOrderStatusConfig, getOrderStatusDisplay } from "@/lib/constants";
+import { OrderStatusBadge, EmptyState } from "@/components/common";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShoppingBag, faEye } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -52,28 +52,13 @@ export const OrderHistoryTab = () => {
         return (
             <Card className="border-gray">
                 <CardContent className="py-12">
-                    <div className="text-center space-y-4">
-                        <div className="bg-lightgray rounded-full p-6 w-24 h-24 mx-auto flex items-center justify-center">
-                            <FontAwesomeIcon
-                                icon={faShoppingBag}
-                                size="3x"
-                                className="text-gray"
-                            />
-                        </div>
-                        <h3 className="text-xl font-bold text-darkgray font-Barlow">
-                            Henüz Sipariş Yok
-                        </h3>
-                        <p className="text-gray font-Barlow">
-                            Henüz bir siparişiniz bulunmuyor. İlk siparişinizi vermek için
-                            menüyü inceleyin.
-                        </p>
-                        <Button
-                            onClick={() => router.push("/menu")}
-                            className="bg-red text-lightgray hover:bg-yellow hover:text-red font-Barlow"
-                        >
-                            Menüye Git
-                        </Button>
-                    </div>
+                     <EmptyState
+                        title="Henüz Sipariş Yok"
+                        description="Henüz bir siparişiniz bulunmuyor. İlk siparişinizi vermek için menüyü inceleyin."
+                        actionLabel="Menüye Git"
+                        onAction={() => router.push("/menu")}
+                        icon={faShoppingBag}
+                    />
                 </CardContent>
             </Card>
         );
@@ -102,11 +87,7 @@ export const OrderHistoryTab = () => {
                                     })}
                                 </CardDescription>
                             </div>
-                            <span
-                                className={`px-3 py-1 rounded-full text-sm font-bold ${getOrderStatusConfig(order.status).color}`}
-                            >
-                                {getOrderStatusDisplay(order.status)}
-                            </span>
+                            <OrderStatusBadge status={order.status} />
                         </div>
                     </CardHeader>
                     <CardContent>

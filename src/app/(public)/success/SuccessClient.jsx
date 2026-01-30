@@ -14,6 +14,7 @@ import {
     selectOrderError, 
     selectPaymentMethod 
 } from "@/lib/store/selectors/orderSelectors";
+import { OrderStatusBadge, PaymentMethodBadge, EmptyState } from "@/components/common";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner"; // Updated import
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
@@ -36,7 +37,6 @@ const SuccessClient = () => {
 
     // Custom Hooks
     const { isGuest, guestData, clearGuest, isGuestMode } = useGuestMode();
-    const { getStatusDisplay } = useOrderStatus();
     const [latestOrder, setLatestOrder] = useState(null);
     const [addressLoading, setAddressLoading] = useState(false);
 
@@ -129,15 +129,14 @@ const SuccessClient = () => {
 
     if (!latestOrder) {
         return (
-            <div className="bg-red flex flex-col items-center justify-center p-4 py-16">
-                <p className="text-white text-lg">Sipariş verisi bulunamadı.</p>
-                <button
-                    onClick={goToHomePage}
-                    className="mt-8 bg-yellow text-red py-3 px-8 rounded-md font-semibold flex items-center"
-                >
-                    <Home className="mr-2" size={18} />
-                    Anasayfaya Git
-                </button>
+            <div className="flex justify-center items-center py-16">
+                 <EmptyState
+                    title="Sipariş Verisi Bulunamadı"
+                    description="Sipariş detaylarına şu an ulaşılamıyor."
+                    actionLabel="Anasayfaya Git"
+                    onAction={goToHomePage}
+                    icon={Home}
+                />
             </div>
         );
     }
@@ -287,7 +286,7 @@ const SuccessClient = () => {
                             </div>
                             <div className="">
                                 <span>Ödeme Yöntemi:</span>
-                                <span> {paymentMethod}</span>
+                                <div><PaymentMethodBadge method={paymentMethod} /></div>
                             </div>
                             {/* Address rendering omitted for brevity or use helper */}
                         </div>
@@ -296,9 +295,7 @@ const SuccessClient = () => {
 
                     <div className="py-2">
                         <div className="">
-                            <span className="font-semibold bg-red text-yellow px-3 py-1 rounded-full text-sm">
-                                {getStatusDisplay(latestOrder.orderStatus)}
-                            </span>
+                             <OrderStatusBadge status={latestOrder.orderStatus} className="text-sm px-4 py-2" />
                         </div>
                     </div>
 
