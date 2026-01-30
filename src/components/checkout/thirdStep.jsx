@@ -17,6 +17,7 @@ import { selectOrderUserData, selectSelectedAddress, selectCartItems, selectPaym
 import { selectIsAuthenticated, selectUserRole } from "@/lib/store/selectors/userSelectors";
 import { selectGuestData } from "@/lib/store/selectors/guestSelectors";
 import { PAYMENT_METHOD } from "@/lib/constants";
+import { AddressSummary } from "@/components/common";
 
 // Diğer ödeme yöntemleri için component - Sadece not alanı
 const PaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, paymentMethod }) => {
@@ -56,19 +57,9 @@ const PaymentForm = ({ onSubmit, onBack, isSubmitting, errors, control, paymentM
     // Seçilen adres varsa göster
     if (selectedAddress) {
       return (
-        <div className="mt-6 p-4 bg-gray-50 rounded-md">
-          <h3 className="font-medium text-gray-800 mb-2">Teslimat Bilgileri</h3>
-          <div className="space-y-2 text-sm">
-            {selectedAddress.addressTitle && (
-              <p><span className="font-medium">Adres Başlığı:</span> {selectedAddress.addressTitle}</p>
-            )}
-            <p><span className="font-medium">Alıcı:</span> {selectedAddress.recipientName}</p>
-            <p><span className="font-medium">Adres:</span> {selectedAddress.fullAddress}</p>
-            <p><span className="font-medium">Konum:</span> {selectedAddress.district}, {selectedAddress.city}</p>
-            {selectedAddress.phoneNumber && (
-              <p><span className="font-medium">Telefon:</span> {selectedAddress.phoneNumber}</p>
-            )}
-          </div>
+        <div className="mt-6">
+             <h3 className="font-medium text-gray-800 mb-2">Teslimat Bilgileri</h3>
+             <AddressSummary address={selectedAddress} />
         </div>
       );
     }

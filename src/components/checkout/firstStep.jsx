@@ -11,9 +11,10 @@ import AddressForm from "./AddressForm";
 import AddressList from "./AddressList";
 import GuestInfoForm from "./GuestInfoForm";
 
+
 import { personalInfoSchema } from "@/lib/validations/order";
-import { selectUserProfile, selectIsAuthenticated, selectUserRole, selectUserAddresses } from "@/lib/store/selectors/userSelectors";
-import { selectGuestData } from "@/lib/store/selectors/guestSelectors";
+import { selectUserProfile, selectIsAuthenticated, selectUserAddresses } from "@/lib/store/selectors/userSelectors";
+import { useGuestMode } from "@/lib/hooks/useGuestMode";
 
 // Schema imported from central validation file
 
@@ -26,13 +27,9 @@ const FirstStep = ({ setCurrentStep, setStep1 }) => {
   // Get user profile from redux store
   const userProfile = useAppSelector(selectUserProfile);
   const isAuthenticated = useAppSelector(selectIsAuthenticated) || false;
-  const role = useAppSelector(selectUserRole);
-  const isGuestMode = useAppSelector((state) => state.app?.isGuestMode);
-  // Kullanıcı giriş yapmamışsa otomatik olarak misafir sayılır
-  const isGuest = role === "GUEST" || isGuestMode || !isAuthenticated;
-
-  // Get guest data from redux store if role is GUEST
-  const guestData = useAppSelector(selectGuestData);
+  
+  // Custom hook for guest mode
+  const { isGuest, guestData } = useGuestMode();
 
   // Mevcut adresleri redux'tan al (AddressList bunları kullanacak)
   const addresses = useAppSelector(selectUserAddresses) || [];

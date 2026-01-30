@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { CartItemCard } from "./CartItemCard";
 import { PromoCodeInput } from "@/components/cart/PromoCodeInput";
+import { EmptyState, PriceSummary } from "@/components/common";
 
 export const CartDialog = ({
   isOpen,
@@ -76,25 +77,13 @@ export const CartDialog = ({
                 Sepetinizde <span className="text-red font-bold">{totalItems}</span> ürün bulunmaktadır.
               </AlertDialogDescription>
             ) : (
-              <div className="flex-grow flex flex-col items-center justify-center py-6 sm:py-8 gap-6 opacity-60">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-lightgray rounded-full flex items-center justify-center">
-                  <ShoppingCart size={32} className="text-gray sm:w-10 sm:h-10" />
-                </div>
-                <div className="text-center">
-                  <AlertDialogDescription className="text-lg sm:text-xl font-bold font-Barlow text-darkgray mb-2">
-                    Sepetiniz boş
-                  </AlertDialogDescription>
-                  <p className="text-sm text-gray font-Barlow max-w-[200px] mx-auto">
-                    Lezzetli pizzalarımızdan dilediğinizi hemen ekleyin.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="btn-primary text-sm sm:text-base"
-                >
-                  Menüye Git
-                </button>
-              </div>
+                <EmptyState
+                    icon={ShoppingCart}
+                    title="Sepetiniz boş"
+                    description="Lezzetli pizzalarımızdan dilediğinizi hemen ekleyin."
+                    actionLabel="Menüye Git"
+                    onAction={() => setIsOpen(false)}
+                />
             )}
 
             {/* Cart Items List */}
@@ -122,28 +111,11 @@ export const CartDialog = ({
                 <PromoCodeInput />
 
                 {/* Price Breakdown */}
-                <div className="space-y-1 py-2 border-t border-gray-100">
-                    <div className="flex justify-between items-center text-sm">
-                        <span className="text-gray-500 font-Barlow">Ara Toplam</span>
-                        <span className="font-medium text-gray-700 font-Barlow">
-                            {totalAmount.toFixed(2)} ₺
-                        </span>
-                    </div>
-                    {discountAmount > 0 && (
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-green-600 font-Barlow">İndirim</span>
-                            <span className="font-medium text-green-600 font-Barlow">
-                                -{discountAmount.toFixed(2)} ₺
-                            </span>
-                        </div>
-                    )}
-                    <div className="flex justify-between items-end pt-2">
-                        <span className="font-bold text-darkgray font-Barlow text-base">Toplam</span>
-                        <span className="font-bold text-darkgray text-xl sm:text-2xl font-Barlow">
-                            {(finalAmount !== undefined ? finalAmount : totalAmount).toFixed(2)} <span className="text-lg text-gray font-normal">₺</span>
-                        </span>
-                    </div>
-                </div>
+                <PriceSummary 
+                    subtotal={totalAmount}
+                    discountAmount={discountAmount}
+                    totalAmount={finalAmount !== undefined ? finalAmount : totalAmount}
+                />
               </div>
 
               <AlertDialogFooter className="flex-col sm:flex-col gap-3 sm:space-x-0">

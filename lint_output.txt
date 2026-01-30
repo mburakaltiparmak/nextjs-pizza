@@ -1,0 +1,30 @@
+
+> nextjs-pizza@0.1.0 lint
+> next lint
+
+`next lint` is deprecated and will be removed in Next.js 16.
+For new projects, use create-next-app to choose your preferred linter.
+For existing projects, migrate to the ESLint CLI:
+npx @next/codemod@canary next-lint-to-eslint-cli .
+
+
+./src/components/checkout/FirstStep.jsx
+15:9  Error: Parsing error: Identifier 'personalInfoSchema' has already been declared. (15:9)
+
+./src/components/home/MenuSection.jsx
+160:51  Warning: The ref value 'observerTarget.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'observerTarget.current' to a variable inside the effect, and use that variable in the cleanup function.  react-hooks/exhaustive-deps
+
+./src/components/layout/AdminSidebar.jsx
+130:9  Warning: React Hook useCallback has a missing dependency: 'setMobileOpen'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/lib/contexts/AdminLayoutContext.jsx
+21:6  Warning: React Hook useCallback has a missing dependency: 'modalState'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/lib/contexts/AuthContext.jsx
+261:30  Warning: React Hook useCallback received a function whose dependencies are unknown. Pass an inline function instead.  react-hooks/exhaustive-deps
+371:6  Warning: React Hook useEffect has a missing dependency: 'context'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/lib/providers/providers.js
+98:6  Warning: React Hook useEffect has missing dependencies: 'router' and 'toast'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

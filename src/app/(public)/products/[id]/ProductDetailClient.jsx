@@ -9,7 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
-import Loading from "@/app/loading";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import NotFound from "@/app/not-found";
 
 export default function ProductDetailClient() {
@@ -69,7 +69,7 @@ export default function ProductDetailClient() {
 
     // Yükleme durumu ve hata durumunu Redux'tan değil kendi state'imizden yönet
     if (pageState === "loading") {
-        return <Loading />;
+        return <LoadingSpinner size="fullPage" />;
     }
 
     if (pageState === "error" || !product) {

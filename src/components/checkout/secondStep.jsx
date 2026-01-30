@@ -9,6 +9,7 @@ import { selectPaymentMethod, selectCartItems, selectOrderUserData, selectSelect
 import { selectIsAuthenticated, selectUserRole } from "@/lib/store/selectors/userSelectors";
 import { selectGuestData } from "@/lib/store/selectors/guestSelectors";
 import { PromoCodeInput } from "@/components/cart/PromoCodeInput";
+import { PriceSummary, AddressSummary } from "@/components/common";
 
 const SecondStep = ({ setCurrentStep, setStep2 }) => {
   const dispatch = useAppDispatch();
@@ -96,14 +97,8 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
   const renderAddressInfo = () => {
     if (selectedAddress) {
       return (
-        <div className="mb-6 p-4 border rounded-md bg-gray-50">
-          <h3 className="text-md font-semibold mb-2">Teslimat Adresi</h3>
-          <p className="text-sm"><span className="font-medium">Alıcı:</span> {selectedAddress.recipientName}</p>
-          <p className="text-sm"><span className="font-medium">Adres:</span> {selectedAddress.fullAddress}</p>
-          <p className="text-sm"><span className="font-medium">İlçe/Şehir:</span> {selectedAddress.district}, {selectedAddress.city}</p>
-          {selectedAddress.phoneNumber && (
-            <p className="text-sm"><span className="font-medium">Telefon:</span> {selectedAddress.phoneNumber}</p>
-          )}
+        <div className="mb-6">
+            <AddressSummary address={selectedAddress} />
           <button
             onClick={() => setCurrentStep(1)}
             className="mt-2 text-xs text-red underline"
@@ -143,27 +138,12 @@ const SecondStep = ({ setCurrentStep, setStep2 }) => {
         </div>
 
         {/* Özet bilgiler */}
-        <div className="border-t pt-3 mt-3">
-          <div className="flex justify-between text-sm mb-1">
-            <span>Toplam Ürün:</span>
-            <span>{totalItems}</span>
-          </div>
-          <div className="flex justify-between text-sm mb-1">
-            <span>Ara Toplam:</span>
-            <span>{totalAmount.toFixed(2)} ₺</span>
-          </div>
-          {discountAmount > 0 && (
-            <div className="flex justify-between text-sm mb-1 text-green-600 font-medium">
-              <span>İndirim:</span>
-              <span>-{discountAmount.toFixed(2)} ₺</span>
-            </div>
-          )}
-          <div className="flex justify-between text-sm font-semibold mt-2">
-            <span>Toplam Tutar:</span>
-            <span className="text-red">
-                {(Math.max(0, totalAmount - (discountAmount || 0))).toFixed(2)} ₺
-            </span>
-          </div>
+        <div className="mt-3">
+             <PriceSummary 
+                subtotal={totalAmount}
+                discountAmount={discountAmount}
+                totalAmount={Math.max(0, totalAmount - (discountAmount || 0))}
+            />
         </div>
 
         <button
