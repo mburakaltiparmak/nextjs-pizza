@@ -4,8 +4,8 @@ import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { useRouter } from "next/navigation";
 import { instance } from "@/lib/hooks";
 import { clearCartAction, saveCartToStorage, setSelectedAddress } from "@/lib/store/actions/orderActions";
-import { getOrderStatusDisplay, getPaymentMethodDisplay } from "@/lib/constants";
-import { selectGuestData } from "@/lib/store/selectors/guestSelectors";
+import { useOrderStatus } from "@/lib/hooks/useOrderStatus";
+import { useGuestMode } from "@/lib/hooks/useGuestMode";
 import { 
     selectOrderDetail, 
     selectOrderUserData, 
@@ -14,9 +14,6 @@ import {
     selectOrderError, 
     selectPaymentMethod 
 } from "@/lib/store/selectors/orderSelectors";
-import { selectUserRole } from "@/lib/store/selectors/userSelectors";
-import { selectIsGuestMode } from "@/lib/store/selectors/appSelectors";
-import { clearGuestData } from "@/lib/store/reducers/guestReducer";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner"; // Updated import
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
@@ -37,11 +34,9 @@ const SuccessClient = () => {
     const error = useAppSelector(selectOrderError);
     const paymentMethod = useAppSelector(selectPaymentMethod);
 
-    // Misafir kullanıcı kontrolü
-    const role = useAppSelector(selectUserRole);
-    const isGuestMode = useAppSelector(selectIsGuestMode);
-    const isGuest = role === "GUEST" || isGuestMode;
-    const guestData = useAppSelector(selectGuestData);
+    // Custom Hooks
+    const { isGuest, guestData, clearGuest, isGuestMode } = useGuestMode();
+    const { getStatusDisplay } = useOrderStatus();
     const [latestOrder, setLatestOrder] = useState(null);
     const [addressLoading, setAddressLoading] = useState(false);
 
@@ -57,7 +52,9 @@ const SuccessClient = () => {
     useEffect(() => {
         // Clear guest info after successful order
         if (isGuestMode) {
-            dispatch(clearGuestData());
+        if (isGuestMode) {
+            clearGuest();
+        }
         }
 
         // Sayfa başarıyla render edildi, sepeti temizle
@@ -290,7 +287,7 @@ const SuccessClient = () => {
                             </div>
                             <div className="">
                                 <span>Ödeme Yöntemi:</span>
-                                <span> {getPaymentMethodDisplay(paymentMethod)}</span>
+                                <span> {paymentMethod}</span>
                             </div>
                             {/* Address rendering omitted for brevity or use helper */}
                         </div>
@@ -300,7 +297,7 @@ const SuccessClient = () => {
                     <div className="py-2">
                         <div className="">
                             <span className="font-semibold bg-red text-yellow px-3 py-1 rounded-full text-sm">
-                                {getOrderStatusDisplay(latestOrder.orderStatus)}
+                                {getStatusDisplay(latestOrder.orderStatus)}
                             </span>
                         </div>
                     </div>

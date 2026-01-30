@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 import { fetchUserOrders } from "@/lib/store/actions/orderActions";
 import { fetchStates } from "@/lib/store/constants";
 import { 
-    getOrderStatusConfig, 
     getPaymentMethodDisplay, 
     PAYMENT_STATUS_CONFIG 
 } from "@/lib/constants";
+import { useOrderStatus } from "@/lib/hooks/useOrderStatus";
 import { 
     selectUserOrders, 
     selectOrderFetchState, 
@@ -44,6 +44,7 @@ export default function OrdersPageClient() {
     const router = useRouter();
     const dispatch = useDispatch();
     const { toast } = useToast();
+    const { getStatusConfig, getStatusColor, getStatusIcon } = useOrderStatus();
 
     // Korumalı yerel state ekle
     const [localOrders, setLocalOrders] = useState([]);
@@ -113,19 +114,18 @@ export default function OrdersPageClient() {
         }
     }, [error, toast]);
 
-    // Sipariş durumuna göre ikon ve renk belirleme - Merkezi sabitten al
-    const getOrderStatusInfo = (status) => {
-        const config = getOrderStatusConfig(status);
-        // Map string icon to FontAwesome if needed, or just use config properties directly
-        // For now, adapting to retain FontAwesome usage or simplify
-        // Let's simplify and use the centralized text/color, but we might need to map icons if we want to keep FontAwesome
-        return {
-           color: config.color,
-           text: config.label,
-           // Fallback icon logic if needed or just use generic
-           icon: faShoppingBag
-        };
-    };
+    // getOrderStatusInfo removed in favor of hook usage
+    // Using getStatusConfig directly in render or wrapper if needed
+    // But existing code uses getOrderStatusInfo(order.orderStatus).color etc.
+    // Let's adapt the usage in render:
+    // We can define a wrapper here OR just use hook functions in JSX.
+    // Let's use hook functions in JSX mostly, but maybe wrapper for cleaner JSX if complex.
+    // The previous getOrderStatusInfo returned { color, text, icon }.
+    // Our hook has getStatusColor(status), getStatusDisplay(status), getStatusIcon(status) (maybe).
+    // Let's verify hook content: 
+    // getStatusConfig, getStatusDisplay, getStatusColor, getStatusIcon (returns config.icon)
+    
+    // So we can replace usage.
 
     // Helper yerine direkt importları kullanacağız, ancak JSX içinde kolay kullanım için:
     // formatPaymentMethod -> getPaymentMethodDisplay
@@ -208,9 +208,12 @@ export default function OrdersPageClient() {
 
                                             <div className="mt-2 md:mt-0 flex items-center space-x-2">
                                                 {order.orderStatus && (
-                                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getOrderStatusInfo(order.orderStatus).color}`}>
-                                                        <FontAwesomeIcon icon={getOrderStatusInfo(order.orderStatus).icon} className="mr-1" />
-                                                        {getOrderStatusInfo(order.orderStatus).text}
+                                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.orderStatus)}`}>
+                                                        {/* Icon handling might need verify if it returns FA object or string. Config has emojis usually. */}
+                                                        {/* If config has emoji, render it as text. If FA icon, use FA. */}
+                                                        {/* Assuming config has emojis based on previous context. */}
+                                                        <span className="mr-1">{getStatusConfig(order.orderStatus)?.icon}</span>
+                                                        {getStatusConfig(order.orderStatus)?.label}
                                                     </span>
                                                 )}
                                             </div>

@@ -21,8 +21,8 @@ import { useLoginForm } from "@/lib/hooks/useLoginForm";
 import { useSignupForm } from "@/lib/hooks/useSignupForm";
 import { useForgotPassword } from "@/lib/hooks/useForgotPassword";
 import useAuth from "@/lib/hooks/useAuth";
+import { useGuestMode } from "@/lib/hooks/useGuestMode";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
-import { setGuestMode } from "@/lib/store/actions/appActions";
 import { selectIsAuthenticated, selectUserProfile, selectUserRole, selectAuthLoading } from "@/lib/store/selectors/userSelectors";
 import Link from "next/link";
 import { LoadingSpinner } from "../ui/LoadingSpinner";
@@ -31,7 +31,8 @@ import { useRouter, usePathname } from "next/navigation";
 const Sidebar = () => {
     // Auth loading from Redux selector
     const authLoading = useAppSelector(selectAuthLoading);
-    const { refreshAuth } = useAuth([], "/", false);
+    const { refreshAuth } = useAuth();
+    const { enableGuestMode } = useGuestMode();
     const dispatch = useAppDispatch();
     const [isOpen, setIsOpen] = useState(false);
 
@@ -98,7 +99,7 @@ const Sidebar = () => {
     };
 
     const handleGuestCheckout = () => {
-        dispatch(setGuestMode(true));
+        enableGuestMode();
         setLoginOpen(false);
         router.push("/checkout");
     };
