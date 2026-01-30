@@ -1,44 +1,50 @@
-import { instance } from "@/lib/hooks";
 import { setModuleLoading, setSuccess } from "./globalActions";
 import { handleApiError } from "../middleware/errorMiddleware";
 import { fetchStates } from "../constants";
 import { promoCodeActions } from "../reducers/promoCodeReducer";
+import PromoCodeService from "@/lib/services/PromoCodeService";
+import cache from "@/lib/utils/cacheManager";
 
-export const fetchPromoCodes = () => async (dispatch) => {
+// ========================================
+// CACHE KEYS
+// ========================================
+const CACHE_KEY_ALL = 'promo_codes_all';
+const CACHE_DURATION = 5 * 60 * 1000;
+
+export const fetchPromoCodes = (forceRefresh = false) => async (dispatch) => {
+  if (!forceRefresh) {
+    const cached = cache.get(CACHE_KEY_ALL);
+    if (cached) {
+      console.log('✅ Cache hit (Promo Codes)');
+      dispatch({ type: promoCodeActions.SET_PROMO_CODES, payload: cached });
+      dispatch({ type: promoCodeActions.SET_FETCH_STATE, payload: fetchStates.FETCHED });
+      return cached;
+    }
+  }
+
   dispatch(setModuleLoading('promoCode', true));
-  dispatch({
-    type: promoCodeActions.SET_FETCH_STATE,
-    payload: fetchStates.FETCHING,
-  });
+  dispatch({ type: promoCodeActions.SET_FETCH_STATE, payload: fetchStates.FETCHING });
 
   try {
-    const response = await instance.get("/promo-codes");
-
-    if (!response || !response.data) {
+    const response = await PromoCodeService.fetchAll();
+    
+    // Check if response.data is the array or if it's wrapped
+    const data = response.data;
+    if (!data) {
       throw new Error("Promo kodları alınamadı");
     }
 
-    dispatch({
-      type: promoCodeActions.SET_PROMO_CODES,
-      payload: response.data,
-    });
-
-    dispatch({
-      type: promoCodeActions.SET_FETCH_STATE,
-      payload: fetchStates.FETCHED,
-    });
+    dispatch({ type: promoCodeActions.SET_PROMO_CODES, payload: data });
+    dispatch({ type: promoCodeActions.SET_FETCH_STATE, payload: fetchStates.FETCHED });
+    
+    cache.set(CACHE_KEY_ALL, data, CACHE_DURATION);
 
     dispatch(setModuleLoading('promoCode', false));
 
-    return response.data;
+    return data;
   } catch (err) {
     console.error("Promo kodları getirme hatası:", err);
-
-    dispatch({
-      type: promoCodeActions.SET_FETCH_STATE,
-      payload: fetchStates.FAILED,
-    });
-
+    dispatch({ type: promoCodeActions.SET_FETCH_STATE, payload: fetchStates.FAILED });
     dispatch(setModuleLoading('promoCode', false));
     return handleApiError(err, dispatch, 'fetchPromoCodes');
   }
@@ -48,7 +54,7 @@ export const createPromoCode = (data) => async (dispatch) => {
   dispatch(setModuleLoading('promoCode', true));
 
   try {
-    const response = await instance.post("/promo-codes", data);
+    const response = await PromoCodeService.create(data);
 
     dispatch({
       type: promoCodeActions.ADD_PROMO_CODE,
@@ -58,9 +64,9 @@ export const createPromoCode = (data) => async (dispatch) => {
     dispatch(setSuccess("Promo kodu başarıyla oluşturuldu"));
     dispatch(setModuleLoading('promoCode', false));
     
-    // Refresh list to ensure sync
-    dispatch(fetchPromoCodes());
-
+    // Invalidate cache
+    cache.clear(CACHE_KEY_ALL);
+    
     return response.data;
   } catch (err) {
     dispatch(setModuleLoading('promoCode', false));
@@ -72,7 +78,7 @@ export const updatePromoCode = (id, data) => async (dispatch) => {
   dispatch(setModuleLoading('promoCode', true));
 
   try {
-    const response = await instance.put(`/promo-codes/${id}`, data);
+    const response = await PromoCodeService.update(id, data);
 
     dispatch({
       type: promoCodeActions.UPDATE_PROMO_CODE,
@@ -81,6 +87,9 @@ export const updatePromoCode = (id, data) => async (dispatch) => {
 
     dispatch(setSuccess("Promo kodu güncellendi"));
     dispatch(setModuleLoading('promoCode', false));
+    
+    // Invalidate cache
+    cache.clear(CACHE_KEY_ALL);
 
     return response.data;
   } catch (err) {
@@ -89,28 +98,16 @@ export const updatePromoCode = (id, data) => async (dispatch) => {
   }
 };
 
-// Toggle status helper - backend might might have specific endpoint or just use update
 export const togglePromoCodeStatus = (id, isActive) => async (dispatch) => {
-    // Assuming backend supports partial update or we need to send full object. 
-    // Implementation plan says "Switch to enable/disable". 
-    // If backend requires full object, we usually need to fetch it first or use what's in store.
-    // For now assuming we can just PUT with the change or use a specific endpoint if exists.
-    // Based on typical patterns in this project, likely a PUT to /promo-codes/{id} with full body or PATCH.
-    // I will assume standard PUT for now, but since we might not have the full object here easily without selecting it,
-    // let's try a patch-like approach or fetch-then-update if needed. 
-    // Actually, updatePromoCode above can be used if we pass the modified object.
-    
-    // BUT, usually toggle is a simple action. Let's create a specific action for it if the backend supports it, 
-    // otherwise we rely on the UI passing the full updated object to updatePromoCode.
-    // I will leave this out for now and let the UI handle calling updatePromoCode with the new status.
-    return Promise.resolve();
+    // If backend has specific endpoint or if we just use update
+    return dispatch(updatePromoCode(id, { isActive }));
 }
 
 export const deletePromoCode = (id) => async (dispatch) => {
   dispatch(setModuleLoading('promoCode', true));
 
   try {
-    await instance.delete(`/promo-codes/${id}`);
+    await PromoCodeService.remove(id);
 
     dispatch({
       type: promoCodeActions.DELETE_PROMO_CODE,
@@ -119,6 +116,10 @@ export const deletePromoCode = (id) => async (dispatch) => {
 
     dispatch(setSuccess("Promo kodu silindi"));
     dispatch(setModuleLoading('promoCode', false));
+    
+    // Invalidate cache
+    cache.clear(CACHE_KEY_ALL);
+
   } catch (err) {
     dispatch(setModuleLoading('promoCode', false));
     return handleApiError(err, dispatch, 'deletePromoCode');

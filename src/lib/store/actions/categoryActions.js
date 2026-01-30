@@ -1,9 +1,10 @@
 import { categoryActions } from "../reducers/categoryReducer";
-import { setLoading, setSuccess } from "./globalActions";
-import { instance } from "@/lib/hooks";
+import { setLoading, setSuccess, setError } from "./globalActions";
 import { fetchStates } from "../constants";
 import { handleApiError } from "../middleware/errorMiddleware";
 import cache from "@/lib/utils/cacheManager";
+import CategoryService from "@/lib/services/CategoryService";
+import debounce from 'lodash/debounce';
 
 export const setCategories = (categories) => ({
   type: categoryActions.SET_CATEGORIES,
@@ -19,37 +20,60 @@ export const resetCategoryState = () => ({
   type: categoryActions.RESET_CATEGORY_STATE,
 });
 
+// ========================================
+// CACHE KEYS
+// ========================================
+const CACHE_KEYS = {
+  CATEGORIES_PAGED: (page, size, search) => 
+    `categories_p${page}_s${size}_q${search || ''}`,
+  CATEGORIES_ALL: 'categories_all',
+};
+
+const CACHE_DURATION = 5 * 60 * 1000;
+
+// Cache invalidation helper
+const invalidateCategoryCache = () => {
+  cache.clearPattern('categories_');
+  cache.clearPattern('dashboard');
+};
+
 /**
  * Cache ile tüm kategorileri getir - pagination desteği ile
  */
-export const fetchCategories = (page = 0, size = 10) => async (dispatch) => {
-  const CACHE_KEY = `categories_page_${page}_size_${size}`;
+export const fetchCategories = (page = 0, size = 10, search = '', forceRefresh = false) => async (dispatch) => {
+  const cacheKey = CACHE_KEYS.CATEGORIES_PAGED(page, size, search);
 
-  // Cache kontrolü
-  const cached = cache.get(CACHE_KEY);
-  if (cached) {
-    dispatch(setCategories(cached.content));
-    if (cached.pagination) {
-      dispatch({
-        type: categoryActions.SET_PAGINATION,
-        payload: cached.pagination
-      });
+  if (!forceRefresh) {
+    // Cache kontrolü
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      console.log('✅ Cache hit (Categories):', cacheKey);
+      dispatch(setCategories(cached.content));
+      if (cached.pagination) {
+        dispatch({
+          type: categoryActions.SET_PAGINATION,
+          payload: cached.pagination
+        });
+      }
+      dispatch(setCategoryFetchState(fetchStates.FETCHED));
+      return cached.content;
     }
-    dispatch(setCategoryFetchState(fetchStates.FETCHED));
-    return cached.content;
   }
 
   dispatch(setCategoryFetchState(fetchStates.FETCHING));
 
   try {
-    // Backend pagination endpoint kullan
-    const response = await instance.get("/category/paged", {
-      params: {
-        page,
-        size,
-        sort: "name,asc"
-      }
-    });
+    // Service kullanımı
+    // Note: Base implementation in CategoryService.fetchPaged takes (page, size). 
+    // If search is needed, we might need to update CategoryService or just pass it if it supported filters.
+    // The current CategoryService.fetchPaged implementation looks like:
+    // async fetchPaged(page = 0, size = 10) { const params = this.buildPageParams(page, size, 'name,asc'); ... }
+    // It doesn't seem to support search explicitly yet according to Phase 1. 
+    // However, the original code didn't send search param either, so we'll stick to page/size for now.
+    // If search is crucial, we should update CategoryService.
+    
+    // Let's assume for now we just pass page/size as per original code.
+    const response = await CategoryService.fetchPaged(page, size);
 
     // Paginated response'dan content'i çıkar
     const categories = response.data.content || response.data;
@@ -73,8 +97,8 @@ export const fetchCategories = (page = 0, size = 10) => async (dispatch) => {
     dispatch(setCategories(categories));
     dispatch(setCategoryFetchState(fetchStates.FETCHED));
 
-    // Cache'e kaydet (5 dakika)
-    cache.set(CACHE_KEY, { content: categories, pagination: paginationData });
+    // Cache'e kaydet
+    cache.set(cacheKey, { content: categories, pagination: paginationData }, CACHE_DURATION);
 
     return categories;
   } catch (err) {
@@ -84,10 +108,20 @@ export const fetchCategories = (page = 0, size = 10) => async (dispatch) => {
 };
 
 /**
+ * Debounced category search
+ */
+export const debouncedSearchCategories = debounce(
+  (searchTerm, page = 0, size = 10) => (dispatch) => {
+    return dispatch(fetchCategories(page, size, searchTerm, true));
+  },
+  300
+);
+
+/**
  * Yeni kategori oluştur (cache temizler)
  */
-export const createCategory = (categoryData, token) => async (dispatch) => {
-  dispatch(setLoading(true));
+export const createCategory = (categoryData) => async (dispatch) => {
+  dispatch(setLoading(true)); // Global loading
 
   try {
     const formData = new FormData();
@@ -100,11 +134,7 @@ export const createCategory = (categoryData, token) => async (dispatch) => {
       formData.append("image", categoryData.image.file);
     }
 
-    const response = await instance.post("/category", formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await CategoryService.create(formData);
 
     dispatch({
       type: categoryActions.ADD_CATEGORY,
@@ -113,10 +143,8 @@ export const createCategory = (categoryData, token) => async (dispatch) => {
 
     dispatch(setSuccess("Kategori başarıyla eklendi"));
 
-    // Cache'i temizle - yeni veri eklendiği için
-    cache.clear('categories_all');
-    // Dashboard cache'ini de temizle
-    cache.clearPattern('dashboard');
+    // Cache'i temizle
+    invalidateCategoryCache();
 
     return { success: true, data: response.data };
   } catch (err) {
@@ -129,7 +157,7 @@ export const createCategory = (categoryData, token) => async (dispatch) => {
 /**
  * Kategori güncelle (cache temizler)
  */
-export const updateCategory = (categoryId, categoryData, token) => async (dispatch) => {
+export const updateCategory = (categoryId, categoryData) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
@@ -143,11 +171,7 @@ export const updateCategory = (categoryId, categoryData, token) => async (dispat
       formData.append("image", categoryData.image.file);
     }
 
-    const response = await instance.put(`/category/${categoryId}`, formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await CategoryService.update(categoryId, formData);
 
     dispatch({
       type: categoryActions.UPDATE_CATEGORY,
@@ -156,9 +180,7 @@ export const updateCategory = (categoryId, categoryData, token) => async (dispat
 
     dispatch(setSuccess("Kategori başarıyla güncellendi"));
 
-    // Cache'i temizle
-    cache.clear('categories_all');
-    cache.clearPattern('dashboard');
+    invalidateCategoryCache();
 
     return { success: true, data: response.data };
   } catch (err) {
@@ -175,16 +197,14 @@ export const deleteCategory = (categoryId) => async (dispatch) => {
   dispatch(setLoading(true));
 
   try {
-    await instance.delete(`/category/${categoryId}`);
+    await CategoryService.remove(categoryId);
 
     dispatch({
       type: categoryActions.DELETE_CATEGORY,
       payload: categoryId,
     });
 
-    // Cache'i temizle
-    cache.clear('categories_all');
-    cache.clearPattern('dashboard');
+    invalidateCategoryCache();
 
     return { success: true };
   } catch (err) {

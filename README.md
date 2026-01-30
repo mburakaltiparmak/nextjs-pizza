@@ -67,10 +67,12 @@ Pizza Restoranı web uygulaması aşağıdaki özellikleri sunar:
 
 ### Performans
 
+- **Service Layer Mimarisi**: API çağrılarının merkezi yönetimi ve optimizasyonu
+- **Gelişmiş Caching**: Redux tarafında özel cache mekanizması (TTL ve invalidation destekli)
+- **Debouncing & Throttling**: Arama ve input işlemlerinde performans koruması
 - **Lazy Loading**: Gerektiğinde yüklenen bileşenler
 - **Image Optimization**: Next.js image optimizasyonu
-- **State Management**: Verimli Redux Toolkit entegrasyonu
-- **API Önbelleğe Alma**: SWR ile otomatik veri yenileme ve önbelleğe alma
+- **State Management**: Optimize edilmiş Redux Toolkit entegrasyonu
 - **Code Splitting**: Daha hızlı yükleme süreleri için kod bölümleme
 
 ## Kurulum ve Çalıştırma

@@ -1,9 +1,13 @@
 import { adminActions } from "../reducers/adminReducer";
 import { setError, setSuccess } from "./globalActions";
-import { instance } from "@/lib/hooks";
 import { fetchStates, userStatus } from "../constants";
 import { handleApiError } from "../middleware/errorMiddleware";
 import cache from "@/lib/utils/cacheManager";
+import AdminService from "@/lib/services/AdminService";
+import ProductService from "@/lib/services/ProductService";
+import CategoryService from "@/lib/services/CategoryService";
+import OrderService from "@/lib/services/OrderService";
+import debounce from 'lodash/debounce';
 
 // ========================================
 // CACHE KEYS
@@ -11,181 +15,35 @@ import cache from "@/lib/utils/cacheManager";
 const DASHBOARD_CACHE_KEY = 'dashboard_data';
 
 // ========================================
-// SIMPLE ACTION CREATORS - User Management
+// SIMPLE ACTION CREATORS
 // ========================================
-
-/**
- * Tüm kullanıcıları state'e set eder
- */
-export const setAllUsers = (users) => ({
-  type: adminActions.SET_ALL_USERS,
-  payload: users,
-});
-
-/**
- * Bekleyen kullanıcıları state'e set eder
- */
-export const setPendingUsers = (users) => ({
-  type: adminActions.SET_PENDING_USERS,
-  payload: users,
-});
-
-/**
- * Kullanıcı pagination bilgisini set eder
- */
-export const setUsersPagination = (pagination) => ({
-  type: adminActions.SET_USERS_PAGINATION,
-  payload: pagination,
-});
-
-/**
- * Kullanıcı durumunu state'de günceller
- */
-export const updateUserStatusInState = (userId, status) => ({
-  type: adminActions.UPDATE_USER_STATUS,
-  payload: { userId, status },
-});
-
-/**
- * Kullanıcı rolünü state'de günceller
- */
-export const updateUserRoleInState = (userId, role) => ({
-  type: adminActions.UPDATE_USER_ROLE,
-  payload: { userId, role },
-});
-
-/**
- * Kullanıcı fetch state'ini set eder
- */
-export const setUsersFetchState = (state) => ({
-  type: adminActions.SET_USERS_FETCH_STATE,
-  payload: state,
-});
-
-// ========================================
-// SIMPLE ACTION CREATORS - Dashboard
-// ========================================
-
-/**
- * Dashboard verilerini state'e set eder
- */
-export const setDashboardData = (data) => ({
-  type: adminActions.SET_DASHBOARD_DATA,
-  payload: data,
-});
-
-/**
- * Dashboard fetch state'ini set eder
- */
-export const setDashboardFetchState = (state) => ({
-  type: adminActions.SET_DASHBOARD_FETCH_STATE,
-  payload: state,
-});
-
-// ========================================
-// SIMPLE ACTION CREATORS - Analytics
-// ========================================
-
-/**
- * Analytics verilerini state'e set eder
- */
-export const setAnalyticsData = (data) => ({
-  type: adminActions.SET_ANALYTICS_DATA,
-  payload: data,
-});
-
-/**
- * Gelir verilerini state'e set eder
- */
-export const setRevenueData = (revenue) => ({
-  type: adminActions.SET_REVENUE_DATA,
-  payload: revenue,
-});
-
-/**
- * Stok metriklerini state'e set eder
- */
-export const setStockMetrics = (metrics) => ({
-  type: adminActions.SET_STOCK_METRICS,
-  payload: metrics,
-});
-
-/**
- * Kullanıcı metriklerini state'e set eder
- */
-export const setUserMetrics = (metrics) => ({
-  type: adminActions.SET_USER_METRICS,
-  payload: metrics,
-});
-
-// ========================================
-// SIMPLE ACTION CREATORS - Reindex
-// ========================================
-
-/**
- * Reindex durumunu set eder
- * @param {string} entity - 'orders' | 'products' | 'categories' | 'users'
- * @param {string} status - 'idle' | 'loading' | 'success' | 'error'
- * @param {string} message - Durum mesajı
- */
-export const setReindexStatus = (entity, status, message = null) => ({
-  type: adminActions.SET_REINDEX_STATUS,
-  payload: { entity, status, message },
-});
-
-// ========================================
-// SIMPLE ACTION CREATORS - Global
-// ========================================
-
-/**
- * Admin loading state'ini set eder
- */
-export const setAdminLoading = (loading) => ({
-  type: adminActions.SET_LOADING,
-  payload: loading,
-});
-
-/**
- * Admin error state'ini set eder
- */
-export const setAdminError = (error) => ({
-  type: adminActions.SET_ERROR,
-  payload: error,
-});
-
-/**
- * Admin state'ini resetler
- */
-export const resetAdminState = () => ({
-  type: adminActions.RESET_STATE,
-});
+export const setAllUsers = (users) => ({ type: adminActions.SET_ALL_USERS, payload: users });
+export const setPendingUsers = (users) => ({ type: adminActions.SET_PENDING_USERS, payload: users });
+export const setUsersPagination = (pagination) => ({ type: adminActions.SET_USERS_PAGINATION, payload: pagination });
+export const updateUserStatusInState = (userId, status) => ({ type: adminActions.UPDATE_USER_STATUS, payload: { userId, status } });
+export const updateUserRoleInState = (userId, role) => ({ type: adminActions.UPDATE_USER_ROLE, payload: { userId, role } });
+export const setUsersFetchState = (state) => ({ type: adminActions.SET_USERS_FETCH_STATE, payload: state });
+export const setDashboardData = (data) => ({ type: adminActions.SET_DASHBOARD_DATA, payload: data });
+export const setDashboardFetchState = (state) => ({ type: adminActions.SET_DASHBOARD_FETCH_STATE, payload: state });
+export const setAnalyticsData = (data) => ({ type: adminActions.SET_ANALYTICS_DATA, payload: data });
+export const setRevenueData = (revenue) => ({ type: adminActions.SET_REVENUE_DATA, payload: revenue });
+export const setStockMetrics = (metrics) => ({ type: adminActions.SET_STOCK_METRICS, payload: metrics });
+export const setUserMetrics = (metrics) => ({ type: adminActions.SET_USER_METRICS, payload: metrics });
+export const setReindexStatus = (entity, status, message = null) => ({ type: adminActions.SET_REINDEX_STATUS, payload: { entity, status, message } });
+export const setAdminLoading = (loading) => ({ type: adminActions.SET_LOADING, payload: loading });
+export const setAdminError = (error) => ({ type: adminActions.SET_ERROR, payload: error });
+export const resetAdminState = () => ({ type: adminActions.RESET_STATE });
 
 // ========================================
 // ASYNC THUNKS - User Management
 // ========================================
 
-/**
- * Tüm kullanıcıları getirir (Paginated + Search)
- * @param {number} page - Sayfa numarası (0-indexed)
- * @param {number} size - Sayfa başına kayıt
- * @param {string} search - Arama terimi
- * @returns {Promise<{success: boolean, data?: any, error?: string}>}
- */
 export const fetchAllUsers = (page = 0, size = 10, search = "") => async (dispatch) => {
   dispatch(setUsersFetchState(fetchStates.FETCHING));
   dispatch(setAdminLoading(true));
 
   try {
-    const response = await instance.get("/admin/users/paged", {
-      params: {
-        page,
-        size,
-        search,
-        sort: "id,desc"
-      }
-    });
-
-    // Handle paged response
+    const response = await AdminService.fetchAllUsers(page, size, search);
     const users = response.data.content || response.data;
 
     if (response.data.page) {
@@ -210,24 +68,21 @@ export const fetchAllUsers = (page = 0, size = 10, search = "") => async (dispat
 };
 
 /**
- * Bekleyen kullanıcıları getirir (Paginated)
- * @param {number} page - Sayfa numarası (0-indexed)
- * @param {number} size - Sayfa başına kayıt
- * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+ * Debounced user search
  */
+export const debouncedSearchUsers = debounce(
+  (searchTerm, page = 0, size = 10) => (dispatch) => {
+    return dispatch(fetchAllUsers(page, size, searchTerm));
+  },
+  300
+);
+
 export const fetchPendingUsers = (page = 0, size = 10) => async (dispatch) => {
   dispatch(setUsersFetchState(fetchStates.FETCHING));
   dispatch(setAdminLoading(true));
 
   try {
-    const response = await instance.get("/admin/users/pending", {
-      params: {
-        page,
-        size,
-        sort: "id,desc"
-      }
-    });
-
+    const response = await AdminService.fetchPendingUsers(page, size);
     const users = response.data.content || response.data;
 
     if (response.data.page) {
@@ -251,16 +106,11 @@ export const fetchPendingUsers = (page = 0, size = 10) => async (dispatch) => {
   }
 };
 
-/**
- * Kullanıcıyı onaylar
- * @param {number} userId - Kullanıcı ID
- * @returns {Promise<{success: boolean}>}
- */
 export const approveUser = (userId) => async (dispatch) => {
   dispatch(setAdminLoading(true));
 
   try {
-    await instance.post(`/admin/users/${userId}/approve`);
+    await AdminService.approveUser(userId);
     dispatch(updateUserStatusInState(userId, userStatus.ACTIVE));
     dispatch(setSuccess("Kullanıcı onaylandı"));
     clearDashboardCache();
@@ -272,16 +122,11 @@ export const approveUser = (userId) => async (dispatch) => {
   }
 };
 
-/**
- * Kullanıcıyı reddeder
- * @param {number} userId - Kullanıcı ID
- * @returns {Promise<{success: boolean}>}
- */
 export const rejectUser = (userId) => async (dispatch) => {
   dispatch(setAdminLoading(true));
 
   try {
-    await instance.post(`/admin/users/${userId}/reject`);
+    await AdminService.rejectUser(userId);
     dispatch(updateUserStatusInState(userId, userStatus.REJECTED));
     dispatch(setSuccess("Kullanıcı reddedildi"));
     clearDashboardCache();
@@ -293,20 +138,11 @@ export const rejectUser = (userId) => async (dispatch) => {
   }
 };
 
-/**
- * Kullanıcı rolünü günceller
- * @param {number} userId - Kullanıcı ID
- * @param {string} role - Yeni rol
- * @returns {Promise<{success: boolean}>}
- */
 export const updateUserRole = (userId, role) => async (dispatch) => {
   dispatch(setAdminLoading(true));
 
   try {
-    await instance.put(`/admin/users/${userId}/role`, null, {
-      params: { role }
-    });
-
+    await AdminService.updateUserRole(userId, role);
     dispatch(updateUserRoleInState(userId, role));
     dispatch(setSuccess("Kullanıcı rolü güncellendi"));
     clearDashboardCache();
@@ -318,20 +154,10 @@ export const updateUserRole = (userId, role) => async (dispatch) => {
   }
 };
 
-/**
- * Kullanıcıları rollerine göre getirir (Paginated)
- * @param {string} role - Kullanıcı rolü
- * @param {number} page - Sayfa numarası
- * @param {number} size - Sayfa başına kayıt
- * @returns {Promise<{success: boolean, data?: any}>}
- */
 export const getUsersByRole = (role, page = 0, size = 10) => async (dispatch) => {
   dispatch(setAdminLoading(true));
-
   try {
-    const response = await instance.get(`/admin/users/role/${role}`, {
-      params: { page, size, sort: "id,desc" }
-    });
+    const response = await AdminService.getUsersByRole(role, page, size);
     dispatch(setSuccess("Kullanıcılar başarıyla getirildi"));
     return { success: true, data: response.data };
   } catch (err) {
@@ -341,20 +167,10 @@ export const getUsersByRole = (role, page = 0, size = 10) => async (dispatch) =>
   }
 };
 
-/**
- * Kullanıcıları duruma göre getirir (Paginated)
- * @param {string} status - Kullanıcı durumu
- * @param {number} page - Sayfa numarası
- * @param {number} size - Sayfa başına kayıt
- * @returns {Promise<{success: boolean, data?: any}>}
- */
 export const getUsersByStatus = (status, page = 0, size = 10) => async (dispatch) => {
   dispatch(setAdminLoading(true));
-
   try {
-    const response = await instance.get(`/admin/users/status/${status}`, {
-      params: { page, size, sort: "id,desc" }
-    });
+    const response = await AdminService.getUsersByStatus(status, page, size);
     dispatch(setSuccess("Kullanıcılar başarıyla getirildi"));
     return { success: true, data: response.data };
   } catch (err) {
@@ -364,16 +180,10 @@ export const getUsersByStatus = (status, page = 0, size = 10) => async (dispatch
   }
 };
 
-/**
- * Yeni kullanıcı oluşturur
- * @param {Object} userData - Kullanıcı verileri
- * @returns {Promise<{success: boolean, data?: any}>}
- */
 export const createUser = (userData) => async (dispatch) => {
   dispatch(setAdminLoading(true));
-
   try {
-    const response = await instance.post("/admin/users", userData);
+    const response = await AdminService.createUser(userData);
     dispatch(setSuccess("Kullanıcı başarıyla oluşturuldu"));
     clearDashboardCache();
     return { success: true, data: response.data };
@@ -384,17 +194,10 @@ export const createUser = (userData) => async (dispatch) => {
   }
 };
 
-/**
- * Kullanıcı bilgilerini günceller
- * @param {number} userId - Kullanıcı ID
- * @param {Object} userData - Güncellenecek veriler
- * @returns {Promise<{success: boolean, data?: any}>}
- */
 export const updateUser = (userId, userData) => async (dispatch) => {
   dispatch(setAdminLoading(true));
-
   try {
-    const response = await instance.put(`/admin/users/${userId}`, userData);
+    const response = await AdminService.updateUser(userId, userData);
     dispatch(setSuccess("Kullanıcı başarıyla güncellendi"));
     clearDashboardCache();
     return { success: true, data: response.data };
@@ -405,16 +208,10 @@ export const updateUser = (userId, userData) => async (dispatch) => {
   }
 };
 
-/**
- * Kullanıcıyı siler
- * @param {number} userId - Kullanıcı ID
- * @returns {Promise<{success: boolean}>}
- */
 export const deleteUser = (userId) => async (dispatch) => {
   dispatch(setAdminLoading(true));
-
   try {
-    await instance.delete(`/admin/users/${userId}`);
+    await AdminService.deleteUser(userId);
     dispatch(setSuccess("Kullanıcı başarıyla silindi"));
     clearDashboardCache();
     return { success: true };
@@ -425,18 +222,10 @@ export const deleteUser = (userId) => async (dispatch) => {
   }
 };
 
-/**
- * Kullanıcıları arar
- * @param {string} search - Arama terimi
- * @returns {Promise<{success: boolean, data?: any}>}
- */
 export const searchUsers = (search) => async (dispatch) => {
   dispatch(setAdminLoading(true));
-
   try {
-    const response = await instance.get(`/admin/users/search`, {
-      params: { search, sort: "id,desc" }
-    });
+    const response = await AdminService.searchUsers(search);
     dispatch(setSuccess("Kullanıcılar başarıyla getirildi"));
     return { success: true, data: response.data };
   } catch (err) {
@@ -450,65 +239,34 @@ export const searchUsers = (search) => async (dispatch) => {
 // ASYNC THUNKS - Dashboard
 // ========================================
 
-/**
- * Dashboard verilerini getirir (Optimized DTO endpoint)
- * @param {boolean} forceRefresh - Cache'i bypass et
- * @returns {Promise<Object>}
- */
 export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
-  // Cache kontrolü
   if (!forceRefresh) {
     const cachedData = cache.get(DASHBOARD_CACHE_KEY);
     if (cachedData) {
-      console.log("✅ Dashboard Cache Hit - Returning cached data");
+      console.log("✅ Dashboard Cache Hit");
       dispatch(setDashboardData(cachedData));
       dispatch(setDashboardFetchState(fetchStates.FETCHED));
       return cachedData;
     }
   }
 
-  console.log("🔄 Fetching dashboard data from optimized DTO endpoint...");
   dispatch(setDashboardFetchState(fetchStates.FETCHING));
   dispatch(setAdminLoading(true));
 
   try {
-    const response = await instance.get("/admin/dashboard");
+    const response = await AdminService.fetchDashboard();
     const dto = response.data;
-
-    console.log("📊 Backend DTO Response:", {
-      totalCategories: dto.totalCategories,
-      totalProducts: dto.totalProducts,
-      totalStock: dto.totalStock,
-      totalUsers: dto.totalUsers,
-      categoriesCount: dto.categories?.length || 0
-    });
-
-    // DTO'dan categories array'ini al
+    
+    // Process DTO (Logic from original file)
     const categories = dto.categories || [];
-
-    // CUSTOM_BASE kategorisini filtrele
-    const filteredCategories = categories.filter(
-      cat => cat.name !== "CUSTOM_BASE"
-    );
-
-    // Frontend için categoryData hazırla
-    const categoryData = filteredCategories.map(category => {
-      console.log(`📦 Category "${category.name}":`, {
-        productCount: category.productCount,
-        totalStock: category.totalStock
-      });
-
-      return {
+    const filteredCategories = categories.filter(cat => cat.name !== "CUSTOM_BASE");
+    const categoryData = filteredCategories.map(category => ({
         id: category.id,
         name: category.name,
         ürünSayısı: category.productCount || 0,
         stokMiktarı: category.totalStock || 0
-      };
-    }).filter(cat => cat.ürünSayısı > 0);
+      })).filter(cat => cat.ürünSayısı > 0);
 
-    console.log("📊 Processed Category Data:", categoryData);
-
-    // Dashboard state'i oluştur
     const dashboardData = {
       totalCategories: filteredCategories.length,
       totalProducts: dto.totalProducts || 0,
@@ -519,19 +277,8 @@ export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
       recentProducts: dto.recentProducts || []
     };
 
-    console.log("✅ Final Dashboard Data:", {
-      totalCategories: dashboardData.totalCategories,
-      totalProducts: dashboardData.totalProducts,
-      totalStock: dashboardData.totalStock,
-      totalUsers: dashboardData.totalUsers,
-      categoryDataLength: dashboardData.categoryData.length,
-      sampleCategory: dashboardData.categoryData[0]
-    });
+    cache.set(DASHBOARD_CACHE_KEY, dashboardData, 60000); // 1 min cache
 
-    // Cache'e kaydet (1 dakika)
-    cache.set(DASHBOARD_CACHE_KEY, dashboardData, 60000);
-
-    // Redux'a kaydet
     dispatch(setDashboardData(dashboardData));
     dispatch(setDashboardFetchState(fetchStates.FETCHED));
 
@@ -546,45 +293,23 @@ export const fetchDashboard = (forceRefresh = false) => async (dispatch) => {
   }
 };
 
-/**
- * Dashboard cache'ini temizler
- */
 export const clearDashboardCache = () => {
   cache.clear(DASHBOARD_CACHE_KEY);
-  console.log("🗑️ Dashboard cache cleared");
 };
 
-/**
- * Dashboard istatistiklerini getirir
- * @returns {Promise<{success: boolean, data?: any}>}
- */
 export const getDashboardStats = () => async (dispatch) => {
-  dispatch(setAdminLoading(true));
-
-  try {
-    const response = await instance.get(`/admin/dashboard`);
-    dispatch(setSuccess("Dashboard istatistikleri başarıyla getirildi"));
-    return { success: true, data: response.data };
-  } catch (err) {
-    return handleApiError(err, dispatch, 'getDashboardStats');
-  } finally {
-    dispatch(setAdminLoading(false));
-  }
+    // This seems redundant given fetchDashboard but kept for compatibility
+    return dispatch(fetchDashboard());
 };
 
 // ========================================
-// ASYNC THUNKS - Analytics
+// ASYNC THUNKS - Analytics (Proxied to AdminService)
 // ========================================
 
-/**
- * Toplam geliri getirir
- * @returns {Promise<{success: boolean, data?: any}>}
- */
 export const getTotalRevenue = () => async (dispatch) => {
   dispatch(setAdminLoading(true));
-
   try {
-    const response = await instance.get(`/admin/analytics/revenue/total`);
+    const response = await AdminService.getTotalRevenue();
     dispatch(setRevenueData(response.data));
     dispatch(setSuccess("Toplam gelir başarıyla getirildi"));
     return { success: true, data: response.data };
@@ -595,15 +320,10 @@ export const getTotalRevenue = () => async (dispatch) => {
   }
 };
 
-/**
- * Stokta olmayan ürün sayısını getirir
- * @returns {Promise<{success: boolean, data?: any}>}
- */
 export const getOutOfStockProductsCount = () => async (dispatch) => {
   dispatch(setAdminLoading(true));
-
   try {
-    const response = await instance.get(`/admin/analytics/stock/out-of-stock`);
+    const response = await AdminService.getOutOfStockCount();
     dispatch(setSuccess("Stokta olmayan ürünler başarıyla getirildi"));
     return { success: true, data: response.data };
   } catch (err) {
@@ -613,96 +333,70 @@ export const getOutOfStockProductsCount = () => async (dispatch) => {
   }
 };
 
-/**
- * Stokta az olan ürün sayısını getirir
- * @returns {Promise<{success: boolean, data?: any}>}
- */
 export const getLowStockProductsCount = () => async (dispatch) => {
-  dispatch(setAdminLoading(true));
-
-  try {
-    const response = await instance.get(`/admin/analytics/stock/low`);
-    dispatch(setSuccess("Stokta az olan ürünler başarıyla getirildi"));
-    return { success: true, data: response.data };
-  } catch (err) {
-    return handleApiError(err, dispatch, 'getLowStockProductsCount');
-  } finally {
-    dispatch(setAdminLoading(false));
-  }
+    dispatch(setAdminLoading(true));
+    try {
+      const response = await AdminService.getLowStockCount();
+      dispatch(setSuccess("Stokta az olan ürünler başarıyla getirildi"));
+      return { success: true, data: response.data };
+    } catch (err) {
+      return handleApiError(err, dispatch, 'getLowStockProductsCount');
+    } finally {
+      dispatch(setAdminLoading(false));
+    }
 };
 
-/**
- * Kategoriye göre toplam stok miktarını getirir
- * @param {number} categoryId - Kategori ID
- * @returns {Promise<{success: boolean, data?: any}>}
- */
 export const getTotalStockByCategory = (categoryId) => async (dispatch) => {
-  dispatch(setAdminLoading(true));
-
-  try {
-    const response = await instance.get(`/admin/analytics/stock/category/${categoryId}`);
-    dispatch(setSuccess("Kategorilerin toplam stokları başarıyla getirildi"));
-    return { success: true, data: response.data };
-  } catch (err) {
-    return handleApiError(err, dispatch, 'getTotalStockByCategory');
-  } finally {
-    dispatch(setAdminLoading(false));
-  }
+    dispatch(setAdminLoading(true));
+    try {
+      const response = await AdminService.getTotalStockByCategory(categoryId);
+      dispatch(setSuccess("Kategorilerin toplam stokları başarıyla getirildi"));
+      return { success: true, data: response.data };
+    } catch (err) {
+      return handleApiError(err, dispatch, 'getTotalStockByCategory');
+    } finally {
+      dispatch(setAdminLoading(false));
+    }
 };
 
-/**
- * Rol bazında kullanıcı sayısını getirir
- * @param {string} role - Kullanıcı rolü
- * @returns {Promise<{success: boolean, data?: any}>}
- */
 export const getUserCountByRole = (role) => async (dispatch) => {
-  dispatch(setAdminLoading(true));
-
-  try {
-    const response = await instance.get(`/admin/analytics/users/role/${role}/count`);
-    dispatch(setSuccess("Kullanıcı sayısına göre rol başarıyla getirildi"));
-    return { success: true, data: response.data };
-  } catch (err) {
-    return handleApiError(err, dispatch, 'getUserCountByRole');
-  } finally {
-    dispatch(setAdminLoading(false));
-  }
+    dispatch(setAdminLoading(true));
+    try {
+      const response = await AdminService.getUserCountByRole(role);
+      dispatch(setSuccess("Kullanıcı sayısına göre rol başarıyla getirildi"));
+      return { success: true, data: response.data };
+    } catch (err) {
+      return handleApiError(err, dispatch, 'getUserCountByRole');
+    } finally {
+      dispatch(setAdminLoading(false));
+    }
 };
 
-/**
- * Bekleyen kullanıcı sayısını getirir
- * @returns {Promise<{success: boolean, data?: any}>}
- */
 export const getPendingUsersCount = () => async (dispatch) => {
-  dispatch(setAdminLoading(true));
-
-  try {
-    const response = await instance.get(`/admin/analytics/users/pending/count`);
-    dispatch(setSuccess("Onaylanmamış kullanıcı sayısına göre rol başarıyla getirildi"));
-    return { success: true, data: response.data };
-  } catch (err) {
-    return handleApiError(err, dispatch, 'getPendingUsersCount');
-  } finally {
-    dispatch(setAdminLoading(false));
-  }
+    dispatch(setAdminLoading(true));
+    try {
+      const response = await AdminService.getPendingUsersCount();
+      dispatch(setSuccess("Onaylanmamış kullanıcı sayısına göre rol başarıyla getirildi"));
+      return { success: true, data: response.data };
+    } catch (err) {
+      return handleApiError(err, dispatch, 'getPendingUsersCount');
+    } finally {
+      dispatch(setAdminLoading(false));
+    }
 };
 
 // ========================================
 // ASYNC THUNKS - Elasticsearch Reindex
 // ========================================
 
-/**
- * Siparişleri yeniden indeksler
- * @returns {Promise<{success: boolean, message?: string}>}
- */
 export const reindexOrders = () => async (dispatch) => {
   dispatch(setReindexStatus('orders', 'loading'));
   dispatch(setAdminLoading(true));
 
   try {
-    const response = await instance.post("/orders/admin/reindex");
+    const response = await OrderService.reindex();
     dispatch(setReindexStatus('orders', 'success', response.data));
-    dispatch(setSuccess("Siparişler yeniden indeksleniyor. Bu işlem arka planda devam edecek."));
+    dispatch(setSuccess("Siparişler yeniden indeksleniyor."));
     return { success: true, message: response.data };
   } catch (err) {
     dispatch(setReindexStatus('orders', 'error', err.message));
@@ -712,16 +406,12 @@ export const reindexOrders = () => async (dispatch) => {
   }
 };
 
-/**
- * Ürünleri yeniden indeksler
- * @returns {Promise<{success: boolean, message?: string}>}
- */
 export const reindexProducts = () => async (dispatch) => {
   dispatch(setReindexStatus('products', 'loading'));
   dispatch(setAdminLoading(true));
 
   try {
-    const response = await instance.post("/product/reindex");
+    const response = await ProductService.reindex();
     dispatch(setReindexStatus('products', 'success', response.data));
     dispatch(setSuccess("Ürünler yeniden indeksleniyor."));
     return { success: true, message: response.data };
@@ -733,16 +423,12 @@ export const reindexProducts = () => async (dispatch) => {
   }
 };
 
-/**
- * Kategorileri yeniden indeksler
- * @returns {Promise<{success: boolean, message?: string}>}
- */
 export const reindexCategories = () => async (dispatch) => {
   dispatch(setReindexStatus('categories', 'loading'));
   dispatch(setAdminLoading(true));
 
   try {
-    const response = await instance.post("/category/reindex");
+    const response = await CategoryService.reindex();
     dispatch(setReindexStatus('categories', 'success', response.data));
     dispatch(setSuccess("Kategoriler yeniden indeksleniyor."));
     return { success: true, message: response.data };
@@ -754,16 +440,12 @@ export const reindexCategories = () => async (dispatch) => {
   }
 };
 
-/**
- * Kullanıcıları yeniden indeksler
- * @returns {Promise<{success: boolean, data?: any}>}
- */
 export const reindexAllUsers = () => async (dispatch) => {
   dispatch(setReindexStatus('users', 'loading'));
   dispatch(setAdminLoading(true));
 
   try {
-    const response = await instance.post(`/admin/users/reindex`);
+    const response = await AdminService.reindexUsers();
     dispatch(setReindexStatus('users', 'success', 'Kullanıcılar başarıyla yeniden indekslendi'));
     dispatch(setSuccess("Kullanıcılar başarıyla yeniden indekslendi"));
     return { success: true, data: response.data };
