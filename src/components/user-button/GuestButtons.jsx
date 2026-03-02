@@ -10,27 +10,46 @@ import { useLoginForm } from "@/lib/hooks/useLoginForm";
 import { useSignupForm } from "@/lib/hooks/useSignupForm";
 import { useForgotPassword } from "@/lib/hooks/useForgotPassword";
 import useAuth from "@/lib/hooks/useAuth";
-import { useAppDispatch } from "@/lib/hooks";
-import { setGuestMode } from "@/lib/store/actions/appActions";
 
 export const GuestButtons = ({ router }) => {
   const searchParams = useSearchParams();
   const { loading: authLoading, refreshAuth } = useAuth([], "/", false);
-  const dispatch = useAppDispatch();
 
   const [loginOpen, setLoginOpen] = React.useState(false);
   const [signupOpen, setSignupOpen] = React.useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = React.useState(false);
 
+  // Helper to clean URL params
+  const cleanUrlParams = () => {
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("login") || url.searchParams.has("signup")) {
+        url.searchParams.delete("login");
+        url.searchParams.delete("signup");
+        window.history.replaceState({}, "", url.pathname);
+      }
+    }
+  };
+
+  const handleLoginClose = (isOpen) => {
+    setLoginOpen(isOpen);
+    if (!isOpen) cleanUrlParams();
+  };
+
+  const handleSignupClose = (isOpen) => {
+    setSignupOpen(isOpen);
+    if (!isOpen) cleanUrlParams();
+  };
+
   // Login form state and handlers
   const loginForm = useLoginForm(async () => {
-    setLoginOpen(false);
+    handleLoginClose(false);
     await refreshAuth();
   });
 
   // Signup form state and handlers
   const signupFormProps = useSignupForm(async () => {
-    setSignupOpen(false);
+    handleSignupClose(false);
     await refreshAuth();
   });
 
@@ -38,29 +57,30 @@ export const GuestButtons = ({ router }) => {
   const forgotPassword = useForgotPassword();
 
   const handleForgotPasswordClick = () => {
-    setLoginOpen(false);
+    handleLoginClose(false);
     setForgotPasswordOpen(true);
     forgotPassword.setForgotPasswordEmail(loginForm.email);
   };
 
   const handleBackToLogin = () => {
     setForgotPasswordOpen(false);
-    setLoginOpen(true);
+    handleLoginClose(true);
   };
 
   const openSignup = () => {
-    setLoginOpen(false);
-    setSignupOpen(true);
+    handleLoginClose(false);
+    handleSignupClose(true);
   };
 
   const openLogin = () => {
-    setSignupOpen(false);
-    setLoginOpen(true);
+    handleSignupClose(false);
+    handleLoginClose(true);
   };
 
+  // Guest checkout — no need to dispatch setGuestMode anymore.
+  // Unauthenticated users are automatically treated as guests.
   const handleGuestCheckout = () => {
-    dispatch(setGuestMode(true));
-    setLoginOpen(false);
+    handleLoginClose(false);
     router.push("/checkout");
   };
 
@@ -86,7 +106,7 @@ export const GuestButtons = ({ router }) => {
 
       <LoginDialog
         loginOpen={loginOpen}
-        setLoginOpen={setLoginOpen}
+        setLoginOpen={handleLoginClose}
         onGuestCheckout={handleGuestCheckout}
         email={loginForm.email}
         setEmail={loginForm.setEmail}
@@ -105,7 +125,7 @@ export const GuestButtons = ({ router }) => {
 
       <SignupDialog
         signupOpen={signupOpen}
-        setSignupOpen={setSignupOpen}
+        setSignupOpen={handleSignupClose}
         onLoginClick={openLogin}
         {...signupFormProps}
       />

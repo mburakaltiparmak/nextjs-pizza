@@ -60,12 +60,11 @@ const FirstStep = ({ onComplete }) => {
     }
   }, [isGuest, guestData]);
 
-  const fullname = watch("fullname");
-  const isStep1Valid = fullname && (selectedAddressId || newAddress);
-
   const isGuestDataValid = !isGuest || (
-    guestData && guestData.name && guestData.surname && guestData.email && guestData.phoneNumber
+    guestData && guestData.name && guestData.surname && guestData.email && guestData.phoneNumber && guestInfoSubmitted
   );
+
+  const isStep1Valid = fullname && (selectedAddressId || newAddress) && isGuestDataValid;
 
   // Handlers
   const handleAddressSelect = (addressOrId) => {

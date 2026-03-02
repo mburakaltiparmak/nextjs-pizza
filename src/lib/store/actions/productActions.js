@@ -364,24 +364,3 @@ export const deleteProduct = (id) => async (dispatch) => {
   }
 };
 
-export const createCustomPizza = (customPizzaData, total) => async (dispatch) => {
-  dispatch(setLoading(true));
-  dispatch(setError(null));
-
-  try {
-    const requestData = {
-      name: customPizzaData.name,
-      totalPrice: total,
-      customDetails: customPizzaData.description,
-    };
-
-    const response = await ProductService.createCustomPizza(requestData);
-
-    dispatch(setSuccess("Custom Pizza başarıyla oluşturuldu"));
-    return response.data;
-  } catch (err) {
-    return handleApiError(err, dispatch, 'createCustomPizza');
-  } finally {
-    dispatch(setLoading(false));
-  }
-};

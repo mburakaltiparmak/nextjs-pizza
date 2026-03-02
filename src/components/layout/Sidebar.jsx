@@ -50,7 +50,7 @@ const UserProfileHeader = ({ displayName }) => (
 const Sidebar = () => {
     // Hooks
     const authLoading = useAppSelector(selectAuthLoading);
-    const { refreshAuth } = useAuth();
+    const { refreshAuth } = useAuth([], "/", false);
     const { enableGuestMode } = useGuestMode();
     const [isOpen, setIsOpen] = useState(false);
     const pathname = usePathname();

@@ -64,14 +64,7 @@ class ProductService extends BaseService {
     return this.delete(`/${id}`);
   }
 
-  /**
-   * Create custom pizza
-   */
-  async createCustomPizza(data) {
-    return this.post('/custom-pizza', data, {
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
+
 
   /**
    * Reindex products (Elasticsearch)

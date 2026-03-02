@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAppDispatch } from "@/lib/store/hooks";
-import { clearCartAction } from "@/lib/store/actions/orderActions";
+import { clearCart } from "@/lib/store/actions/orderActions";
 import { CheckCircle, Copy, ArrowRight, Home, ShoppingBag, Truck } from "lucide-react";
 import { useToast } from "@/lib/hooks/useToast";
 import { instance } from "@/lib/hooks"; // Correct import
@@ -17,9 +17,14 @@ const PaymentSuccessClient = () => {
     const orderUuid = searchParams.get("uuid") || searchParams.get("orderId");
 
     useEffect(() => {
-        // Ödeme başarılı olduğunda sepeti temizle
+        // Ödeme başarılı olduğunda sepeti ve locale storage'ı temizle
         if (orderUuid) {
-            dispatch(clearCartAction());
+            // Küçük bir gecikme ekleyerek component mount olduktan sonra temizlenmesini garantile
+            // (Strict mode timing sorunlarını önlemek için)
+            const timer = setTimeout(() => {
+                dispatch(clearCart());
+            }, 100);
+            return () => clearTimeout(timer);
         }
     }, [orderUuid, dispatch]);
 

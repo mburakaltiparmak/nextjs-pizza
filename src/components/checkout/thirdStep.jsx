@@ -74,17 +74,20 @@ const ThirdStep = ({ onSuccess, onBack }) => {
       // Sipariş verisini hazırla
       const orderRequest = {
         // Backend'in beklediği format
-        items: cartData.map(item => ({
-          quantity: item.count,
-          product: {
-            id: item.product.id,
-            name: item.product.name,
-            price: item.product.price,
-            image: item.product.img,
-            description: item.product.description,
-          },
-          unitPrice: item.product.price
-        })),
+        items: cartData.map(item => {
+          if (!item.product.id) throw new Error("Sepetinizde geçersiz bir ürün bulunuyor: " + item.product.name);
+          return {
+            quantity: item.count,
+            product: {
+              id: item.product.id,
+              name: item.product.name,
+              price: item.product.price,
+              image: item.product.img,
+              description: item.product.description,
+            },
+            unitPrice: item.product.price
+          };
+        }),
         paymentMethod: paymentMethod,
         notes: formData.notes || ""
       };

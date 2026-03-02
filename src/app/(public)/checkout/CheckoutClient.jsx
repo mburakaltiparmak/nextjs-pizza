@@ -37,9 +37,11 @@ const CheckoutClient = () => {
         completedSteps, 
         completeStep, 
         goToStep 
-    } = useCheckoutStepper([1, 2, 3]); // Config array just for length or IDs if needed
+    } = useCheckoutStepper([1, 2, 3]);
 
-    // Redirect Logic
+    // Redirect Logic — only check: is the cart empty?
+    // Auth is NOT required for checkout. Unauthenticated users are guests.
+    // Guest info (name, email, phone) is collected in Step 1 via GuestInfoForm.
     const redirectToHome = useCallback(() => {
         if (!isRedirecting && !isOrderCompleted) {
             setIsRedirecting(true);
@@ -85,7 +87,7 @@ const CheckoutClient = () => {
 
     // Handlers
     const handleStepCompletion = (stepId) => {
-        completeStep(stepId, true); // Mark complete and auto-advance
+        completeStep(stepId, true);
     };
 
     const handleStepClick = (stepId, isDisabled) => {
@@ -109,7 +111,7 @@ const CheckoutClient = () => {
             case 3:
                 return (
                     <ThirdStep 
-                        setStep3={(isSuccess) => isSuccess && completeStep(3, false)} // Optional: keep update logic if needed
+                        setStep3={(isSuccess) => isSuccess && completeStep(3, false)}
                         onSuccess={() => setIsOrderCompleted(true)} 
                         onBack={() => goToStep(2)}
                     />

@@ -40,7 +40,7 @@ export default function OrdersPageClient() {
     const [localOrders, setLocalOrders] = useState([]);
 
     // Auth kontrolü - giriş yapmamış kullanıcıları yönlendir
-    const { isAuthenticated, loading: authLoading } = useAuth();
+    const { isAuthenticated, loading: authLoading } = useAuth([], "/", false);
 
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {

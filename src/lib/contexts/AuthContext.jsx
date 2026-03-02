@@ -334,11 +334,11 @@ export function AuthProvider({ children }) {
   );
 }
 
-// useAuthContext hook
 export const useAuthContext = (
   allowedRoles = [],
   redirectPath = "/",
-  requireAuth = true
+  requireAuth = true,
+  skipAuthRedirect = false // Added to skip redirect for guests
 ) => {
   const context = useContext(AuthContext);
   const router = useRouter();
@@ -356,7 +356,7 @@ export const useAuthContext = (
     const checkPermissions = async () => {
       hasCheckedAuth.current = true;
 
-      if (requireAuth && !context.isAuthenticated) {
+      if (requireAuth && !context.isAuthenticated && !skipAuthRedirect) {
         router.push("/?login=true");
         return;
       }
@@ -389,12 +389,13 @@ export const useAuthContext = (
 };
 
 // Basitleştirilmiş useAuth hook
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error("useAuth hook must be used within an AuthProvider");
-  }
+export const useAuth = (
+  allowedRoles = [],
+  redirectPath = "/",
+  requireAuth = true,
+  skipAuthRedirect = false
+) => {
+  const context = useAuthContext(allowedRoles, redirectPath, requireAuth, skipAuthRedirect);
 
   return {
     isAuthenticated: context.isAuthenticated,
@@ -404,6 +405,7 @@ export const useAuth = () => {
     refreshAuth: context.refreshAuth,
     logout: context.logout,
     googleLogin: context.googleLogin,
+    isAuthorized: context.isAuthorized,
   };
 };
 

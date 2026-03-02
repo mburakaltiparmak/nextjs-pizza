@@ -111,7 +111,6 @@ This full-stack application simulates a complete pizza ordering system with ente
 
 #### Order Management
 
-- **Custom Pizza Builder**: Interactive interface to create personalized pizzas with real-time price calculation
 - **Smart Cart System**: Persistent cart across sessions with local storage synchronization
 - **Guest Checkout**: Complete order process without registration
 - **Order Tracking**: Real-time status updates with visual progress indicators

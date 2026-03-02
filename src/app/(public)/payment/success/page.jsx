@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import PaymentSuccessClient from "./PaymentSuccessClient";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 export const metadata = {
     title: "Ödeme Başarılı",
@@ -6,5 +8,9 @@ export const metadata = {
 };
 
 export default function PaymentSuccessPage() {
-    return <PaymentSuccessClient />;
+    return (
+        <Suspense fallback={<LoadingSpinner size="fullPage" />}>
+            <PaymentSuccessClient />
+        </Suspense>
+    );
 }

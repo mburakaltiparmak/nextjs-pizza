@@ -10,6 +10,7 @@ import {
 } from '@/lib/store/selectors/guestSelectors';
 import { selectUserRole } from '@/lib/store/selectors/userSelectors';
 import { setGuestMode } from '@/lib/store/actions/appActions';
+import { selectIsAuthenticated } from '@/lib/store/selectors/userSelectors';
 
 export const useGuestMode = () => {
     const dispatch = useDispatch();
@@ -21,7 +22,8 @@ export const useGuestMode = () => {
     const isGuestDataValid = useSelector(selectIsGuestDataValid);
 
     // Derived state
-    const isGuest = role === 'GUEST' || isGuestMode;
+    const isAuthenticated = useSelector(selectIsAuthenticated);
+    const isGuest = !isAuthenticated;
 
     // Actions
     const clearGuest = () => dispatch(clearGuestData());

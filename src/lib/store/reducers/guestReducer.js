@@ -36,32 +36,28 @@ export const guestActions = {
 };
 
 export const guestReducer = (state = initialState, action) => {
+    let newState;
     switch (action.type) {
         case guestActions.SET_GUEST_NAME:
-            return {
-                ...state,
-                name: action.payload,
-            };
+            newState = { ...state, name: action.payload };
+            saveGuestInfo(newState);
+            return newState;
         case guestActions.SET_GUEST_SURNAME:
-            return {
-                ...state,
-                surname: action.payload,
-            };
+            newState = { ...state, surname: action.payload };
+            saveGuestInfo(newState);
+            return newState;
         case guestActions.SET_GUEST_EMAIL:
-            return {
-                ...state,
-                email: action.payload,
-            };
+            newState = { ...state, email: action.payload };
+            saveGuestInfo(newState);
+            return newState;
         case guestActions.SET_GUEST_PHONE:
-            return {
-                ...state,
-                phoneNumber: action.payload,
-            };
+            newState = { ...state, phoneNumber: action.payload };
+            saveGuestInfo(newState);
+            return newState;
         case guestActions.SET_GUEST_ADDRESS:
-            return {
-                ...state,
-                address: action.payload,
-            };
+            newState = { ...state, address: action.payload };
+            saveGuestInfo(newState);
+            return newState;
         case guestActions.SET_GUEST_INFO:
             saveGuestInfo(action.payload);
             return action.payload;
