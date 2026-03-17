@@ -5,9 +5,20 @@ class CategoryService extends BaseService {
     super('/category');
   }
 
+  /**
+   * Fetch paginated categories (full data with images etc.)
+   */
   async fetchPaged(page = 0, size = 10) {
     const params = this.buildPageParams(page, size, 'name,asc');
     return this.get('/paged', { params });
+  }
+
+  /**
+   * Fetch lightweight category list (id + name only)
+   * Dashboard, dropdown, filter gibi yerlerde kullanılır
+   */
+  async fetchSimple() {
+    return this.get('/simple');
   }
 
   async fetchById(id) {

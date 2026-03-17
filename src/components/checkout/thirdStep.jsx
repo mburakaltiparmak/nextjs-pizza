@@ -8,9 +8,6 @@ import { createOrder, clearCart } from "@/lib/store/actions/orderActions";
 import { cartStorage } from "@/lib/utils/cartPersistence";
 import { useToast } from "@/lib/hooks/useToast";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react"; // Still used in ThirdStep? No, used in PaymentForm. 
-// Wait, ChevronLeft is used in PaymentForm, but is it used in ThirdStep? 
-// No, the buttons are in PaymentForm now.
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import DOMPurify from "dompurify";
 import { selectOrderUserData, selectSelectedAddress, selectCartItems, selectPaymentMethod } from "@/lib/store/selectors/orderSelectors";
@@ -18,14 +15,13 @@ import { selectIsAuthenticated, selectUserRole } from "@/lib/store/selectors/use
 import { selectGuestData } from "@/lib/store/selectors/guestSelectors";
 import { PAYMENT_METHOD } from "@/lib/constants";
 
-// Diğer ödeme yöntemleri için component - Sadece not alanı
 import PaymentForm from "./PaymentForm";
 
 const ThirdStep = ({ onSuccess, onBack }) => {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
   const router = useRouter();
-  const [isSuccess, setIsSuccess] = useState(false); // Başarılı işlem durumu
+  const [isSuccess, setIsSuccess] = useState(false);
 
   // Redux state
   const userData = useAppSelector(selectOrderUserData);
@@ -37,7 +33,6 @@ const ThirdStep = ({ onSuccess, onBack }) => {
 
   const isGuest = role === "GUEST";
   const guestData = useAppSelector(selectGuestData);
-
 
   // Basit schema - sadece not alanı
   const formSchema = z.object({
@@ -55,13 +50,11 @@ const ThirdStep = ({ onSuccess, onBack }) => {
     },
   });
 
-  if (isSubmitting || isSuccess) { // Success durumunda da loading göster
+  if (isSubmitting || isSuccess) {
     return <LoadingSpinner text={isSuccess ? "Yönlendiriliyorsunuz..." : "Siparişiniz Alınıyor"} size="fullPage" />;
   }
 
   const submitOrder = async (formData) => {
-    // console.log("Form verileri:", formData);
-
     try {
       // Backup cart before starting the process
       cartStorage.backup();
@@ -71,9 +64,19 @@ const ThirdStep = ({ onSuccess, onBack }) => {
         throw new Error("Lütfen bir teslimat adresi seçin veya ekleyin.");
       }
 
+      // ✅ FIX: Guest/unauthenticated kullanıcılar için email null guard
+      if (!isAuthenticated) {
+        const resolvedEmail = guestData?.email || selectedAddress?.email || userData?.guestEmail;
+        if (!resolvedEmail) {
+          toast.error("Sipariş verebilmek için e-posta adresiniz gereklidir. Lütfen önceki adıma dönüp bilgilerinizi tamamlayın.", {
+            title: "E-posta Eksik"
+          });
+          return;
+        }
+      }
+
       // Sipariş verisini hazırla
       const orderRequest = {
-        // Backend'in beklediği format
         items: cartData.map(item => {
           if (!item.product.id) throw new Error("Sepetinizde geçersiz bir ürün bulunuyor: " + item.product.name);
           return {
@@ -96,7 +99,11 @@ const ThirdStep = ({ onSuccess, onBack }) => {
       if (isAuthenticated && selectedAddress.id) {
         orderRequest.addressId = selectedAddress.id;
       } else {
-        // Yeni adres objesini oluştur
+        // Yeni adres objesini oluştur — email fallback zinciri güçlendirildi
+        const resolvedEmail = (isGuest && guestData?.email)
+          ? guestData.email
+          : selectedAddress?.email || userData?.guestEmail || null;
+
         orderRequest.newAddress = {
           fullAddress: selectedAddress.fullAddress,
           city: selectedAddress.city,
@@ -104,26 +111,21 @@ const ThirdStep = ({ onSuccess, onBack }) => {
           postalCode: selectedAddress.postalCode || "",
           addressTitle: selectedAddress.addressTitle || "Yeni Adres",
           phoneNumber: selectedAddress.phoneNumber || "",
-          recipientName: selectedAddress.recipientName || userData.fullname || "",
+          recipientName: selectedAddress.recipientName || userData?.fullname || "",
           saveAddress: selectedAddress.saveAddress === true,
           isDefault: selectedAddress.isDefault === true,
-          // Email önceliği: Misafir Guest Data > Adres Email > User Guest Email
-          email: isGuest && guestData?.email
-            ? guestData.email
-            : selectedAddress.email || userData.guestEmail || null
+          email: resolvedEmail
         };
       }
 
       // Sipariş oluştur
       const result = await dispatch(createOrder({
         orderData: orderRequest,
-        paymentData: null, // Iyzico için null
+        paymentData: null,
       }));
 
       // 1. Durum: Redirect işlemi (Iyzico Hosted Checkout)
-      // Result undefined dönerse, action içinde window.location.href yapılmıştır.
       if (!result) {
-        // Redirecting...
         return;
       }
 
@@ -138,20 +140,16 @@ const ThirdStep = ({ onSuccess, onBack }) => {
 
       // 3. Durum: Başarılı (Nakit / Gift Card)
       if (result && result.id) {
-        setIsSuccess(true); // Loading ekranını tetikle
+        setIsSuccess(true);
 
-        // Parent component'e başarili olduğunu bildir (redirect'i engellemesi için)
         if (onSuccess) onSuccess();
 
-        // Sepeti temizle
         dispatch(clearCart());
 
-        // Başarılı toast
         toast.success("Teşekkür ederiz, siparişiniz alındı.", {
           title: "Siparişiniz Oluşturuldu!"
         });
 
-        // Başarı sayfasına yönlendir (Order UUID ile)
         router.push(`/payment/success?orderId=${result.uuid || result.id}`);
       }
 
@@ -160,7 +158,7 @@ const ThirdStep = ({ onSuccess, onBack }) => {
       toast.error(error.message || "Beklenmeyen bir hata oluştu.", {
         title: "İşlem Başarısız"
       });
-      setIsSuccess(false); // Hata durumunda loading'i kapat
+      setIsSuccess(false);
     }
   };
 
@@ -173,8 +171,6 @@ const ThirdStep = ({ onSuccess, onBack }) => {
       onSubmit={handleSubmit(submitOrder)}
       onBack={handleBack}
       isSubmitting={isSubmitting}
-      // errors prop is not strictly used in the extracted form for fields other than notes (handled by Controller), 
-      // but if we extend it we might need it. For now it's fine.
       control={control}
       paymentMethod={paymentMethod}
       userData={userData}

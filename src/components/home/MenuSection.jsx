@@ -19,7 +19,7 @@ export default function MenuSection() {
     const dispatch = useAppDispatch();
     const { loadHomeData } = useHomeData();
     const [isInitialLoad, setIsInitialLoad] = useState(true);
-    
+
     // Filter states (controlled)
     const [selectedCategoryId, setSelectedCategoryId] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
@@ -42,7 +42,7 @@ export default function MenuSection() {
     // Initial data fetch
     useEffect(() => {
         if (!isInitialLoad) return;
-        
+
         setIsInitialLoad(false);
         if (!hasProductData && !hasCategoryData) {
             loadHomeData();
@@ -52,7 +52,7 @@ export default function MenuSection() {
     // Client-side filtering with useMemo
     const filteredProducts = useMemo(() => {
         if (!products) return [];
-        
+
         let result = [...products];
 
         // Search filter
@@ -77,7 +77,7 @@ export default function MenuSection() {
         // Sorting
         result.sort((a, b) => {
             const [field, order] = sortBy.split(",");
-            
+
             let comparison = 0;
             if (field === "price") {
                 comparison = Number(a.price) - Number(b.price);
@@ -86,7 +86,7 @@ export default function MenuSection() {
             } else if (field === "id") {
                 comparison = a.id - b.id;
             }
-            
+
             return order === "desc" ? -comparison : comparison;
         });
 
@@ -117,11 +117,11 @@ export default function MenuSection() {
 
     const isSearching = searchTerm !== debouncedSearchTerm;
     const isLoading = isInitialLoad || fetchState === fetchStates.FETCHING || fetchState === fetchStates.NOT_FETCHED || isSearching;
-    
+
     // Client-side Infinite Scroll
     const [visibleCount, setVisibleCount] = useState(8);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
-    
+
     // Reset visible count when filters change
     useEffect(() => {
         setVisibleCount(8);
@@ -140,12 +140,12 @@ export default function MenuSection() {
             (entries) => {
                 const target = entries[0];
                 if (target.isIntersecting && !isLoadingMore && visibleCount < filteredProducts.length) {
-                   setIsLoadingMore(true);
-                   // Artificial delay for premium feel
-                   setTimeout(() => {
-                       setVisibleCount((prev) => Math.min(prev + 8, filteredProducts.length));
-                       setIsLoadingMore(false);
-                   }, 1000);
+                    setIsLoadingMore(true);
+                    // Artificial delay for premium feel
+                    setTimeout(() => {
+                        setVisibleCount((prev) => Math.min(prev + 8, filteredProducts.length));
+                        setIsLoadingMore(false);
+                    }, 1000);
                 }
             },
             { threshold: 0.1 }
@@ -163,14 +163,14 @@ export default function MenuSection() {
     }, [visibleCount, filteredProducts.length, isLoadingMore]);
 
     return (
-        <div id="menu" className="flex flex-col items-center gap-12 md:gap-24 w-full max-w-7xl mx-auto px-4 md:px-8 pb-24">
+        <div id="menu" className="flex flex-col items-center gap-6 w-full max-w-7xl mx-auto px-4 md:px-8 pb-24">
             <FeaturedProductsSection />
-            
+
             <Categories
                 selectedCategoryId={selectedCategoryId}
                 onCategorySelect={handleCategorySelect}
             />
-            
+
             <ProductFilters
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
@@ -182,12 +182,12 @@ export default function MenuSection() {
                 onSortChange={setSortBy}
                 onClearAll={handleClearFilters}
             />
-            
+
             <Products
                 products={visibleProducts}
                 loading={isLoading}
             />
-            
+
             {/* Infinite Scroll Sentinel */}
             {!isLoading && visibleCount < filteredProducts.length && (
                 <div ref={observerTarget} className="w-full h-20 flex items-center justify-center transition-opacity duration-300">

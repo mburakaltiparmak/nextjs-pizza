@@ -20,7 +20,7 @@ const FirstStep = ({ onComplete }) => {
   // Get user profile from Redux
   const userProfile = useAppSelector(selectUserProfile);
   const isAuthenticated = useAppSelector(selectIsAuthenticated) || false;
-  
+
   // Custom hook for guest mode
   const { isGuest, guestData } = useGuestMode();
   const addresses = useAppSelector(selectUserAddresses) || [];
@@ -44,12 +44,15 @@ const FirstStep = ({ onComplete }) => {
     }
   });
 
+  // ✅ FIX: watch ile fullname değişkenini oku
+  const fullname = watch("fullname");
+
   // Prefill form
   useEffect(() => {
     if (userProfile && !isGuest && userProfile.name && userProfile.surname) {
-        setValue("fullname", `${userProfile.name} ${userProfile.surname}`);
+      setValue("fullname", `${userProfile.name} ${userProfile.surname}`);
     } else if (isGuest && guestData && guestData.name && guestData.surname) {
-        setValue("fullname", `${guestData.name} ${guestData.surname}`);
+      setValue("fullname", `${guestData.name} ${guestData.surname}`);
     }
   }, [userProfile, guestData, isGuest, setValue]);
 
@@ -64,7 +67,13 @@ const FirstStep = ({ onComplete }) => {
     guestData && guestData.name && guestData.surname && guestData.email && guestData.phoneNumber && guestInfoSubmitted
   );
 
-  const isStep1Valid = fullname && (selectedAddressId || newAddress) && isGuestDataValid;
+  // ✅ FIX: Guest ise fullname guestData'dan gelir, form input'u gösterilmez
+  // Bu yüzden guest için fullname validasyonu guestData üzerinden yapılmalı
+  const hasFullname = isGuest
+    ? !!(guestData?.name && guestData?.surname)
+    : !!fullname;
+
+  const isStep1Valid = hasFullname && (selectedAddressId || newAddress) && isGuestDataValid;
 
   // Handlers
   const handleAddressSelect = (addressOrId) => {
@@ -104,7 +113,7 @@ const FirstStep = ({ onComplete }) => {
       postalCode: addressData.postalCode || "",
       addressTitle: addressData.addressTitle || "",
       phoneNumber: addressData.phoneNumber || "",
-      recipientName: addressData.recipientName || fullname,
+      recipientName: addressData.recipientName || resolvedFullname,
       isDefault: addressData.isDefault || false
     };
 
@@ -123,6 +132,11 @@ const FirstStep = ({ onComplete }) => {
       dispatch(setSelectedAddress(formattedAddress));
     }
   };
+
+  // ✅ Guest ve authenticated kullanıcı için fullname resolve
+  const resolvedFullname = isGuest
+    ? `${guestData?.name || ""} ${guestData?.surname || ""}`.trim()
+    : fullname || "";
 
   const onStepSubmit = () => {
     try {
@@ -152,7 +166,7 @@ const FirstStep = ({ onComplete }) => {
       }
 
       const userData = {
-        fullname,
+        fullname: resolvedFullname,
         addressId: addressData?.id || null,
         userAddress: addressData,
         newAddress: selectedAddressId ? null : addressData,
@@ -174,8 +188,8 @@ const FirstStep = ({ onComplete }) => {
       if (onComplete) onComplete();
 
     } catch (err) {
-        console.error("Adım 1 hatası:", err);
-        error("Bilgiler kaydedilirken bir sorun oluştu.");
+      console.error("Adım 1 hatası:", err);
+      error("Bilgiler kaydedilirken bir sorun oluştu.");
     }
   };
 
@@ -191,9 +205,9 @@ const FirstStep = ({ onComplete }) => {
 
         <div className="space-y-8">
           {/* Guest Section */}
-          <GuestSection 
-            isGuest={isGuest} 
-            guestData={guestData} 
+          <GuestSection
+            isGuest={isGuest}
+            guestData={guestData}
             isSubmitted={guestInfoSubmitted}
             onEdit={() => setGuestInfoSubmitted(false)}
           />
@@ -218,16 +232,16 @@ const FirstStep = ({ onComplete }) => {
 
           {/* Address Section */}
           <AddressSelectionSection
-             isAuthenticated={isAuthenticated}
-             isGuest={isGuest}
-             showNewAddressForm={showNewAddressForm}
-             setShowNewAddressForm={setShowNewAddressForm}
-             selectedAddressId={selectedAddressId}
-             newAddress={newAddress}
-             fullname={fullname}
-             onAddressSelect={handleAddressSelect}
-             onAddressSubmit={handleAddressSubmit}
-             onAddNewClick={handleAddNewClick}
+            isAuthenticated={isAuthenticated}
+            isGuest={isGuest}
+            showNewAddressForm={showNewAddressForm}
+            setShowNewAddressForm={setShowNewAddressForm}
+            selectedAddressId={selectedAddressId}
+            newAddress={newAddress}
+            fullname={resolvedFullname}
+            onAddressSelect={handleAddressSelect}
+            onAddressSubmit={handleAddressSubmit}
+            onAddNewClick={handleAddNewClick}
           />
         </div>
       </div>

@@ -1,17 +1,17 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { useRouter } from "next/navigation";
 import { instance } from "@/lib/hooks";
 import { clearCartAction, saveCartToStorage, setSelectedAddress } from "@/lib/store/actions/orderActions";
 import { useGuestMode } from "@/lib/hooks/useGuestMode";
-import { 
-    selectOrderDetail, 
-    selectOrderUserData, 
-    selectSelectedAddress, 
-    selectOrderFetchState, 
-    selectOrderError, 
-    selectPaymentMethod 
+import {
+    selectOrderDetail,
+    selectOrderUserData,
+    selectSelectedAddress,
+    selectOrderFetchState,
+    selectOrderError,
+    selectPaymentMethod
 } from "@/lib/store/selectors/orderSelectors";
 import { EmptyState } from "@/components/common";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -36,34 +36,40 @@ const SuccessClient = () => {
     const [latestOrder, setLatestOrder] = useState(null);
     const [addressLoading, setAddressLoading] = useState(false);
 
-    const getCustomerEmail = () => {
-        if ((isGuest || isGuestMode) && guestData) {
-            return guestData.email;
-        } else if (userData && userData.guestEmail) {
-            return userData.guestEmail;
-        }
-        return null;
-    };
+    // ✅ FIX: Guest bilgilerini temizlemeden ÖNCE local state'e kaydet
+    const [savedGuestInfo, setSavedGuestInfo] = useState(null);
+    const guestCleanedRef = useRef(false);
 
-    const getCustomerInfo = () => {
-        if (isGuest && guestData) {
-            return `${guestData.name} ${guestData.surname}`;
-        } else if (userData && userData.fullname) {
-            return userData.fullname;
-        }
-        return "Belirtilmemiş";
-    };
-
+    // ✅ Adım 1: Guest bilgilerini local state'e kaydet (temizlemeden önce)
     useEffect(() => {
-        if (isGuestMode) {
+        if ((isGuestMode || isGuest) && guestData && !savedGuestInfo) {
+            const hasData = guestData.name || guestData.email || guestData.phoneNumber;
+            if (hasData) {
+                setSavedGuestInfo({
+                    name: guestData.name || "",
+                    surname: guestData.surname || "",
+                    email: guestData.email || "",
+                    phoneNumber: guestData.phoneNumber || "",
+                });
+            }
+        }
+    }, [isGuestMode, isGuest, guestData, savedGuestInfo]);
+
+    // ✅ Adım 2: Bilgiler kaydedildikten SONRA temizle (tek seferlik)
+    useEffect(() => {
+        if (savedGuestInfo && !guestCleanedRef.current) {
+            guestCleanedRef.current = true;
             clearGuest();
         }
+    }, [savedGuestInfo, clearGuest]);
 
+    // ✅ Adım 3: Sepeti temizle (guest temizliğinden bağımsız)
+    useEffect(() => {
         if (!loading && !error) {
             dispatch(clearCartAction());
             saveCartToStorage([]);
         }
-    }, [dispatch, loading, error, isGuestMode, clearGuest]);
+    }, [dispatch, loading, error]);
 
     useEffect(() => {
         const fetchAddressIfNeeded = async () => {
@@ -96,6 +102,30 @@ const SuccessClient = () => {
         }
     }, [orderDetail]);
 
+    // ✅ savedGuestInfo'yu öncelikli kullanan helper fonksiyonlar
+    const getCustomerEmail = () => {
+        // Önce kaydedilmiş guest bilgisini kontrol et
+        if (savedGuestInfo?.email) return savedGuestInfo.email;
+        // Sonra hala mevcut olabilecek guestData'yı kontrol et
+        if ((isGuest || isGuestMode) && guestData?.email) return guestData.email;
+        // Son olarak userData'dan kontrol et
+        if (userData?.guestEmail) return userData.guestEmail;
+        return null;
+    };
+
+    const getCustomerInfo = () => {
+        if (savedGuestInfo?.name) {
+            return `${savedGuestInfo.name} ${savedGuestInfo.surname}`.trim();
+        }
+        if (isGuest && guestData?.name) {
+            return `${guestData.name} ${guestData.surname}`.trim();
+        }
+        if (userData?.fullname) {
+            return userData.fullname;
+        }
+        return "Belirtilmemiş";
+    };
+
     const goToHomePage = () => {
         router.push("/");
     };
@@ -123,7 +153,7 @@ const SuccessClient = () => {
     if (!latestOrder) {
         return (
             <div className="flex justify-center items-center py-16">
-                 <EmptyState
+                <EmptyState
                     title="Sipariş Verisi Bulunamadı"
                     description="Sipariş detaylarına şu an ulaşılamıyor."
                     actionLabel="Anasayfaya Git"
@@ -151,6 +181,9 @@ const SuccessClient = () => {
         return 0;
     };
 
+    // ✅ GuestInfoSection'a savedGuestInfo'yu geç
+    const guestInfoForDisplay = savedGuestInfo || guestData;
+
     return (
         <div className="bg-red flex flex-col items-center py-8 px-4 rounded-xl my-4">
             <div className="flex flex-col items-center gap-4 max-w-md w-full">
@@ -170,17 +203,17 @@ const SuccessClient = () => {
                     )}
                     <Separator orientation="horizontal" className="bg-red" />
 
-                    <GuestInfoSection 
-                        guestData={guestData} 
-                        isGuest={isGuest} 
+                    <GuestInfoSection
+                        guestData={guestInfoForDisplay}
+                        isGuest={isGuest || !!savedGuestInfo}
                         userData={userData}
-                        getCustomerInfo={getCustomerInfo} 
+                        getCustomerInfo={getCustomerInfo}
                     />
 
-                    <SuccessOrderSummary 
-                        latestOrder={latestOrder} 
-                        paymentMethod={paymentMethod} 
-                        calculateTotal={calculateTotal} 
+                    <SuccessOrderSummary
+                        latestOrder={latestOrder}
+                        paymentMethod={paymentMethod}
+                        calculateTotal={calculateTotal}
                     />
 
                     {getCustomerEmail() && (
