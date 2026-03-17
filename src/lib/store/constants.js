@@ -1,5 +1,5 @@
 // Backend API base URL with /pizza/api prefix
-export const API_BASE_URL = "http://localhost:8080/pizza/api";
+export const API_BASE_URL = "https://api.burakaltiparmak.site/pizza/api";
 
 export const fetchStates = {
   NOT_FETCHED: "NOT_FETCHED",

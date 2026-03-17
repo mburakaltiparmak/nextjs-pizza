@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/pizza/api";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.burakaltiparmak.site/pizza/api";
 
 export const ENDPOINTS = {
     PRODUCTS: '/products',

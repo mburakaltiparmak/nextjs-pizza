@@ -1291,7 +1291,7 @@ CREATE INDEX idx_payments_order ON payments(order_id);
 
 ### Base URLs
 
-- **Development**: `http://localhost:8080/pizza/api`
+- **Development**: `https://api.burakaltiparmak.site/pizza/api`
 - **Production**: `https://api.burakaltiparmak.site/pizza/api`
 
 ### Authentication Endpoints
